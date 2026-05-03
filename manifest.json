@@ -1,0 +1,133 @@
+{
+    "manifest_version": 2,
+    "name": "FunPay Tools",
+    "version": "2.7.6",
+    "description": "Глобальное расширение для FunPay ⚡ 100+ инструментов • ИИ-помощник • Автоответчик • Аналитика • Автоматизация • Больше продаж",
+    "permissions": [
+        "storage",
+        "tabs",
+        "cookies",
+        "alarms",
+        "notifications",
+        "https://fptools-ai-server.vercel.app/*",
+        "https://funpay.com/*",
+        "https://cdn.jsdelivr.net/*",
+        "https://fonts.googleapis.com/*",
+        "https://fonts.gstatic.com/*",
+        "https://support.funpay.com/*"
+    ],
+    "browser_action": {
+        "default_popup": "popup/popup.html",
+        "default_title": "FP Tools"
+    },
+    "icons": {
+        "128": "icons/icon128.png"
+    },
+    "background": {
+        "scripts": [
+            "background/browser-polyfill.js",
+            "background/parsers.js",
+            "background/ai-ff.js",
+            "background/autobump-ff.js",
+            "background/autoresponder-ff.js",
+            "background/background-ff.js"
+        ],
+        "persistent": false
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://funpay.com/*"
+            ],
+            "js": [
+                "content/theme_flash_fix.js"
+            ],
+            "run_at": "document_start",
+            "all_frames": true
+        },
+        {
+            "matches": [
+                "https://funpay.com/*"
+            ],
+            "js": [
+                "content/scripts/jquery.js",
+                "content/utils.js",
+                "content/features/cursor_fx.js",
+                "content/ui/settings_loader.js",
+                "content/features/font_tools.js",
+                "content/features/accounts.js",
+                "content/features/ai_chat.js",
+                "content/features/auto_delivery.js",
+                "content/features/homepage_redesign.js",
+                "content/features/lot_cloning.js",
+                "content/features/market_analytics.js",
+                "content/features/lot_management.js",
+                "content/features/inline_price_editor.js",
+                "content/features/quick_lot_search.js",
+                "content/features/templates.js",
+                "content/features/theme.js",
+                "content/features/exact_price.js",
+                "content/features/user_notes.js",
+                "content/features/image_generator.js",
+                "content/features/custom_sound.js",
+                "content/features/misc.js",
+                "content/features/ui_enhancements.js",
+                "content/features/review_sorter.js",
+                "content/features/ai_lot_creator.js",
+                "content/features/currency_calculator.js",
+                "content/features/notes.js",
+                "content/features/overview_tour.js",
+                "content/features/magicstick.js",
+                "content/features/piggy_bank.js",
+                "content/features/lot_io.js",
+                "content/features/auto_review.js",
+                "content/features/fpt_identifier.js",
+                "content/ui/popup_templates.js",
+                "content/ui/main_popup.js",
+                "content/ui/header_button_styler.js",
+                "content/features/lot_context_menu.js",
+                "content/features/ai_lot_audit.js",
+                "content/features/settings_io.js",
+                "content/features/bulk_lot_editor.js",
+                "content/features/buyer_history.js",
+                "content/features/chat_enhancements.js",
+                "content/features/order_enhancements.js",
+                "content/features/order_timer.js",
+                "content/features/blacklist.js",
+                "content/features/auto_delivery_ui.js",
+                "content/features/rmthub_search.js",
+                "content/features/support.js",
+                "content/content_script.js",
+                "content/features/auto_restore_lots.js",
+                "content/features/order_page_enhancements.js",
+                "content/features/sales_chart.js"
+            ],
+            "css": [
+                "css/content_styles.css",
+                "css/popup_styles.css",
+                "css/image_generator.css",
+                "css/ai_creator.css",
+                "css/live_styler.css"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        "sounds/*.mp3",
+        "background/remake.html",
+        "background/remake.js",
+        "icons/magic.png"
+    ],
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "funpay-tools-firefox@sanosenpay",
+            "strict_min_version": "109.0",
+            "data_collection_permissions": {
+                "required": [
+                    "none"
+                ],
+                "optional": []
+            }
+        }
+    }
+}

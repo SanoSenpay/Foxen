@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конвертер лотов | FunPay Tools</title>
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes rotate-cube {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        :root {
+            --bg-start: #1d1033;
+            --bg-end: #0f0c29;
+            --card-bg-color: rgba(26, 28, 44, 0.75);
+            --border-color: rgba(123, 77, 255, 0.3);
+            --text-primary: #e8e6e3;
+            --text-secondary: #9a95b3;
+            --accent-color: #8A2BE2;
+            --accent-hover: #9932CC;
+            --accent-glow: rgba(138, 43, 226, 0.5);
+            --success-color: #00ff9d;
+            --error-color: #ff4757;
+            --cube-size: 180px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-end), var(--bg-start));
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .background-cubes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            perspective: 1200px;
+        }
+
+        .cube-wrapper {
+            position: absolute;
+            width: var(--cube-size);
+            height: var(--cube-size);
+            animation: float 15s infinite ease-in-out;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            text-decoration: none;
+        }
+
+        .cube-wrapper:hover { transform: scale(1.1); }
+        .cube-wrapper:hover .cube-3d { animation-play-state: paused; }
+
+        .cube-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate-cube 30s infinite linear;
+        }
+        
+        .face {
+            position: absolute;
+            width: var(--cube-size);
+            height: var(--cube-size);
+            background: rgba(22, 17, 48, 0.3);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .face.front { transform: rotateY(0deg) translateZ(calc(var(--cube-size) / 2)); }
+        .face.back { transform: rotateY(180deg) translateZ(calc(var(--cube-size) / 2)); }
+        .face.right { transform: rotateY(90deg) translateZ(calc(var(--cube-size) / 2)); }
+        .face.left { transform: rotateY(-90deg) translateZ(calc(var(--cube-size) / 2)); }
+        .face.top { transform: rotateX(90deg) translateZ(calc(var(--cube-size) / 2)); }
+        .face.bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube-size) / 2)); }
+
+        .face > div { display: flex; flex-direction: column; gap: 10px; }
+        .face h4 { margin: 0; color: var(--text-primary); font-size: 16px; }
+        .face p { margin: 0; font-size: 13px; line-height: 1.4; }
+        .face .click-hint { font-size: 12px; color: var(--success-color); font-weight: bold; opacity: 0.7; margin-top: 5px; }
+        
+        .face.back > div {
+            transform: rotateY(180deg);
+        }
+        
+        .cube-wrapper:nth-child(1) { top: 10%; left: 5%; animation-delay: -2s; }
+        .cube-wrapper:nth-child(2) { top: 25%; left: 80%; animation-delay: -18s; transform: scale(0.8); }
+        .cube-wrapper:nth-child(3) { top: 70%; left: 85%; animation-delay: -5s; }
+        .cube-wrapper:nth-child(4) { top: 80%; left: 10%; animation-delay: -12s; transform: scale(0.9); }
+        .cube-wrapper:nth-child(5) { top: 5%; left: 40%; animation-delay: -8s; transform: scale(0.75); }
+        .cube-wrapper:nth-child(6) { top: 50%; left: 50%; animation-delay: -15s; }
+        .cube-wrapper:nth-child(7) { top: -5%; left: 75%; animation-delay: -10s; }
+        .cube-wrapper:nth-child(8) { top: 40%; left: 20%; animation-delay: -3s; transform: scale(0.9); }
+        .cube-wrapper:nth-child(9) { top: 85%; left: 60%; animation-delay: -20s; }
+        .cube-wrapper:nth-child(10) { top: 60%; left: 5%; animation-delay: -7s; transform: scale(0.85); }
+        .cube-wrapper:nth-child(11) { top: 5%; left: 90%; animation-delay: -14s; }
+        .cube-wrapper:nth-child(12) { top: 90%; left: 35%; animation-delay: -1s; transform: scale(0.95); }
+
+        .container {
+            width: 100%; max-width: 700px; background-color: var(--card-bg-color); border-radius: 16px;
+            border: 1px solid var(--border-color); box-shadow: 0 10px 60px rgba(0, 0, 0, 0.5); overflow: hidden;
+            display: flex; flex-direction: column; position: relative; z-index: 1; backdrop-filter: blur(10px);
+        }
+        header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1 { margin: 0; font-size: 24px; font-weight: 600; text-shadow: 0 0 10px var(--accent-glow); }
+        main { padding: 25px; flex-grow: 1; }
+        #drop-zone { border: 2px dashed var(--border-color); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease; }
+        #drop-zone.dragover { background-color: rgba(138, 43, 226, 0.1); border-color: var(--accent-color); transform: scale(1.02); }
+        #drop-zone p { margin: 0; font-size: 16px; color: var(--text-secondary); pointer-events: none; }
+        #drop-zone p strong { color: var(--accent-color); font-weight: 600; }
+        #file-input { display: none; }
+        #log { margin-top: 20px; background-color: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 15px; height: 150px; overflow-y: auto; font-family: 'SF Mono', 'Courier New', Courier, monospace; font-size: 13px; color: var(--text-secondary); white-space: pre-wrap; border: 1px solid var(--border-color); transition: box-shadow 0.3s; }
+        #log:focus-within { box-shadow: 0 0 15px var(--accent-glow); }
+        #log .log-success { color: var(--success-color); }
+        #log .log-error { color: var(--error-color); }
+        #log .log-info { color: #55acee; }
+        footer { padding: 20px 25px; border-top: 1px solid var(--border-color); display: flex; gap: 15px; justify-content: flex-end; }
+        .btn { padding: 12px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-sizing: border-box; outline: none; }
+        #download-btn { background: linear-gradient(45deg, var(--accent-color), var(--accent-hover)); color: white; box-shadow: 0 4px 20px var(--accent-glow); }
+        #download-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 30px var(--accent-glow); }
+        #download-btn:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; }
+        #clear-btn { background-color: rgba(255,255,255,0.1); color: var(--text-primary); }
+        #clear-btn:hover { background-color: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body>
+
+    <div class="background-cubes">
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>FunPay Tools — это мощь!</h4><p>Расскажи о нём всем друзьям, они скажут спасибо!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>FunPay Tools — это мощь!</h4><p>Расскажи о нём всем друзьям, они скажут спасибо!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>FunPay Tools — это мощь!</h4><p>Расскажи о нём всем друзьям, они скажут спасибо!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>FunPay Tools — это мощь!</h4><p>Расскажи о нём всем друзьям, они скажут спасибо!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>FunPay Tools — это мощь!</h4><p>Расскажи о нём всем друзьям, они скажут спасибо!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>FunPay Tools — это мощь!</h4><p>Расскажи о нём всем друзьям, они скажут спасибо!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Поставь 5 звёзд!</h4><p>Нравится? Оставь отзыв в магазине Chrome. Это очень поможет!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Поставь 5 звёзд!</h4><p>Нравится? Оставь отзыв в магазине Chrome. Это очень поможет!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Поставь 5 звёзд!</h4><p>Нравится? Оставь отзыв в магазине Chrome. Это очень поможет!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Поставь 5 звёзд!</h4><p>Нравится? Оставь отзыв в магазине Chrome. Это очень поможет!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Поставь 5 звёзд!</h4><p>Нравится? Оставь отзыв в магазине Chrome. Это очень поможет!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Поставь 5 звёзд!</h4><p>Нравится? Оставь отзыв в магазине Chrome. Это очень поможет!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Просто. Пиздато.</h4><p>Да, именно так. Поделись ссылкой с коллегами по цеху!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Просто. Пиздато.</h4><p>Да, именно так. Поделись ссылкой с коллегами по цеху!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Просто. Пиздато.</h4><p>Да, именно так. Поделись ссылкой с коллегами по цеху!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Просто. Пиздато.</h4><p>Да, именно так. Поделись ссылкой с коллегами по цеху!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Просто. Пиздато.</h4><p>Да, именно так. Поделись ссылкой с коллегами по цеху!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Просто. Пиздато.</h4><p>Да, именно так. Поделись ссылкой с коллегами по цеху!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                 <div class="face front"><div><h4>Твои друзья еще не в курсе?</h4><p>Срочно исправляй это! Пусть тоже кайфуют от удобства.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                 <div class="face back"><div><h4>Твои друзья еще не в курсе?</h4><p>Срочно исправляй это! Пусть тоже кайфуют от удобства.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                 <div class="face right"><div><h4>Твои друзья еще не в курсе?</h4><p>Срочно исправляй это! Пусть тоже кайфуют от удобства.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                 <div class="face left"><div><h4>Твои друзья еще не в курсе?</h4><p>Срочно исправляй это! Пусть тоже кайфуют от удобства.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                 <div class="face top"><div><h4>Твои друзья еще не в курсе?</h4><p>Срочно исправляй это! Пусть тоже кайфуют от удобства.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                 <div class="face bottom"><div><h4>Твои друзья еще не в курсе?</h4><p>Срочно исправляй это! Пусть тоже кайфуют от удобства.</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Один клик — и ты бог</h4><p>Не забудь оставить отзыв, если тоже так считаешь!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Один клик — и ты бог</h4><p>Не забудь оставить отзыв, если тоже так считаешь!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Один клик — и ты бог</h4><p>Не забудь оставить отзыв, если тоже так считаешь!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Один клик — и ты бог</h4><p>Не забудь оставить отзыв, если тоже так считаешь!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Один клик — и ты бог</h4><p>Не забудь оставить отзыв, если тоже так считаешь!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Один клик — и ты бог</h4><p>Не забудь оставить отзыв, если тоже так считаешь!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Распространяй знание</h4><p>Сарафанное радио — лучшая реклама для FunPay Tools!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Распространяй знание</h4><p>Сарафанное радио — лучшая реклама для FunPay Tools!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Распространяй знание</h4><p>Сарафанное радио — лучшая реклама для FunPay Tools!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Распространяй знание</h4><p>Сарафанное радио — лучшая реклама для FunPay Tools!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Распространяй знание</h4><p>Сарафанное радио — лучшая реклама для FunPay Tools!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Распространяй знание</h4><p>Сарафанное радио — лучшая реклама для FunPay Tools!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Бомбическое расширение</h4><p>Ты уже оценил? А твои друзья? Время делиться лучшим!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Бомбическое расширение</h4><p>Ты уже оценил? А твои друзья? Время делиться лучшим!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Бомбическое расширение</h4><p>Ты уже оценил? А твои друзья? Время делиться лучшим!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Бомбическое расширение</h4><p>Ты уже оценил? А твои друзья? Время делиться лучшим!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Бомбическое расширение</h4><p>Ты уже оценил? А твои друзья? Время делиться лучшим!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Бомбическое расширение</h4><p>Ты уже оценил? А твои друзья? Время делиться лучшим!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Твой фидбек важен</h4><p>Каждый отзыв помогает сделать проект еще лучше. Потрать минуту!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Твой фидбек важен</h4><p>Каждый отзыв помогает сделать проект еще лучше. Потрать минуту!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Твой фидбек важен</h4><p>Каждый отзыв помогает сделать проект еще лучше. Потрать минуту!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Твой фидбек важен</h4><p>Каждый отзыв помогает сделать проект еще лучше. Потрать минуту!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Твой фидбек важен</h4><p>Каждый отзыв помогает сделать проект еще лучше. Потрать минуту!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Твой фидбек важен</h4><p>Каждый отзыв помогает сделать проект еще лучше. Потрать минуту!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Это просто маст-хэв</h4><p>Если ты на FunPay, то это расширение — обязательная вещь. Поделись!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Это просто маст-хэв</h4><p>Если ты на FunPay, то это расширение — обязательная вещь. Поделись!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Это просто маст-хэв</h4><p>Если ты на FunPay, то это расширение — обязательная вещь. Поделись!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Это просто маст-хэв</h4><p>Если ты на FunPay, то это расширение — обязательная вещь. Поделись!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Это просто маст-хэв</h4><p>Если ты на FunPay, то это расширение — обязательная вещь. Поделись!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Это просто маст-хэв</h4><p>Если ты на FunPay, то это расширение — обязательная вещь. Поделись!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Сделай доброе дело</h4><p>Помоги другим узнать о FunPay Tools. Кинь ссылку в чат или другу.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Сделай доброе дело</h4><p>Помоги другим узнать о FunPay Tools. Кинь ссылку в чат или другу.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Сделай доброе дело</h4><p>Помоги другим узнать о FunPay Tools. Кинь ссылку в чат или другу.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Сделай доброе дело</h4><p>Помоги другим узнать о FunPay Tools. Кинь ссылку в чат или другу.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Сделай доброе дело</h4><p>Помоги другим узнать о FunPay Tools. Кинь ссылку в чат или другу.</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Сделай доброе дело</h4><p>Помоги другим узнать о FunPay Tools. Кинь ссылку в чат или другу.</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Расширение-пушка!</h4><p>Установил сам? Помоги установить другу. И оставьте отзывы!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Расширение-пушка!</h4><p>Установил сам? Помоги установить другу. И оставьте отзывы!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Расширение-пушка!</h4><p>Установил сам? Помоги установить другу. И оставьте отзывы!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Расширение-пушка!</h4><p>Установил сам? Помоги установить другу. И оставьте отзывы!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Расширение-пушка!</h4><p>Установил сам? Помоги установить другу. И оставьте отзывы!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Расширение-пушка!</h4><p>Установил сам? Помоги установить другу. И оставьте отзывы!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+        <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb?hl=ru" target="_blank" class="cube-wrapper">
+            <div class="cube-3d">
+                <div class="face front"><div><h4>Сила в сообществе</h4><p>Чем больше нас, тем круче он становится. Внеси свой вклад!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face back"><div><h4>Сила в сообществе</h4><p>Чем больше нас, тем круче он становится. Внеси свой вклад!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face right"><div><h4>Сила в сообществе</h4><p>Чем больше нас, тем круче он становится. Внеси свой вклад!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face left"><div><h4>Сила в сообществе</h4><p>Чем больше нас, тем круче он становится. Внеси свой вклад!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face top"><div><h4>Сила в сообществе</h4><p>Чем больше нас, тем круче он становится. Внеси свой вклад!</p><span class="click-hint">› Кликни ‹</span></div></div>
+                <div class="face bottom"><div><h4>Сила в сообществе</h4><p>Чем больше нас, тем круче он становится. Внеси свой вклад!</p><span class="click-hint">› Кликни ‹</span></div></div>
+            </div>
+        </a>
+    </div>
+
+    <div class="container">
+        <header><h1>Конвертер лотов → FunPay Tools</h1></header>
+        <main>
+            <div id="drop-zone">
+                <p>Перетащите сюда <strong>JSON-файлы</strong><br>или нажмите для выбора</p>
+                <input type="file" id="file-input" multiple accept=".json">
+            </div>
+            <div id="log"></div>
+        </main>
+        <footer>
+            <button id="clear-btn" class="btn">Очистить</button>
+            <button id="download-btn" class="btn" disabled>Скачать для импорта в FunPay Tools</button>
+        </footer>
+    </div>
+
+    <script src="browser-polyfill.js"></script>
+    <script src="remake.js"></script>
+</body>
+</html>
