@@ -100,14 +100,18 @@
                 "content/content_script.js",
                 "content/features/auto_restore_lots.js",
                 "content/features/order_page_enhancements.js",
-                "content/features/sales_chart.js"
+                "content/features/sales_chart.js",
+                "content/features/demo_chat.js"
             ],
             "css": [
+
                 "css/content_styles.css",
                 "css/popup_styles.css",
                 "css/image_generator.css",
                 "css/ai_creator.css",
-                "css/live_styler.css"
+                "css/live_styler.css",
+                "css/demo_chat.css"
+
             ],
             "run_at": "document_idle"
         }

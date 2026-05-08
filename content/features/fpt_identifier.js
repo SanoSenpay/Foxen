@@ -13,11 +13,12 @@ function initializeFPTIdentifier() {
     const ALLOWED = ['/chat/', '/lots/offer', '/orders/', '/users/'];
     if (!ALLOWED.some(p => path.startsWith(p))) return;
 
-    const FPT_SIGNATURE   = '\u200B\u200D\u200C';
+    const FPT_CHROME_SIG = '\u200B\u200D\u200C'; // Original Chrome
+    const FPT_FF_SIG = '\u200B\u200D\u200C\u200C'; // Firefox Port (added extra \u200C)
     const FPT_LABEL_CLASS = 'fpt-status-label';
-    const identifiedUsers = new Set();
+    const identifiedUsers = new Map();
     let currentChatUserId = null;
-    let lastSeenAuthorId  = null;
+    let lastSeenAuthorId = null;
 
     // ── Styles ──────────────────────────────────────────────────────────────
     function addIdentifierStyles() {
@@ -47,17 +48,31 @@ function initializeFPTIdentifier() {
     function updateHeaderStatus() {
         const header = document.querySelector('.chat-header');
         if (!header) return;
-        const statusEl  = header.querySelector('.media-user-status');
-        const userLink  = header.querySelector('.media-user-name a');
+        const statusEl = header.querySelector('.media-user-status');
+        const userLink = header.querySelector('.media-user-name a');
         if (!statusEl || !userLink) return;
 
         statusEl.querySelector(`.${FPT_LABEL_CLASS}`)?.remove();
         const userId = getUserIdFromUrl(userLink.href);
         currentChatUserId = userId;
+
         if (userId && identifiedUsers.has(userId)) {
+            const clientType = identifiedUsers.get(userId);
+            const DEVELOPER_IDS = ['15508026'];
+
+            const isDev = DEVELOPER_IDS.includes(userId);
+
             const lbl = document.createElement('span');
             lbl.className = FPT_LABEL_CLASS;
-            lbl.textContent = '· FunPay Tools';
+            
+            if (isDev) {
+                lbl.textContent = '· Разработчик FF-FunPay Tools';
+                lbl.style.color = '#ff9800';
+                lbl.style.textShadow = '0 0 5px rgba(255,152,0,0.5)';
+            } else {
+                lbl.textContent = clientType === 'ff' ? '· FF-FunPay Tools' : '· FunPay Tools';
+            }
+
             statusEl.appendChild(lbl);
         }
     }
@@ -73,10 +88,20 @@ function initializeFPTIdentifier() {
         }
         if (!authorId) return;
         const txt = node.querySelector('.chat-msg-text');
-        if (txt?.textContent.includes(FPT_SIGNATURE)) {
-            if (!identifiedUsers.has(authorId)) {
-                identifiedUsers.add(authorId);
-                if (authorId === currentChatUserId) updateHeaderStatus();
+        if (txt) {
+            const content = txt.textContent;
+            let type = null;
+            
+            // Сначала проверяем более длинную FF-сигнатуру
+            if (content.includes(FPT_FF_SIG)) type = 'ff';
+            else if (content.includes(FPT_CHROME_SIG)) type = 'chrome';
+
+            if (type) {
+                const existing = identifiedUsers.get(authorId);
+                if (existing !== 'ff' || existing === undefined) {
+                    identifiedUsers.set(authorId, type);
+                    if (authorId === currentChatUserId) updateHeaderStatus();
+                }
             }
         }
     }
@@ -112,9 +137,9 @@ function initializeFPTIdentifier() {
         const injectSig = () => {
             const val = textarea.value;
             if (!shouldInject(val)) return;
-            if (!val.endsWith(FPT_SIGNATURE)) {
+            if (!val.endsWith(FPT_FF_SIG)) {
                 if (!val.endsWith(' ')) textarea.value += ' ';
-                textarea.value += FPT_SIGNATURE;
+                textarea.value += FPT_FF_SIG;
             }
         };
 
@@ -145,7 +170,7 @@ function initializeFPTIdentifier() {
         const observer = new MutationObserver(() => {
             // Detect chat switch (clicking a different contact in the list)
             const headerLink = document.querySelector('.chat-header .media-user-name a');
-            const newUserId  = headerLink ? getUserIdFromUrl(headerLink.href) : null;
+            const newUserId = headerLink ? getUserIdFromUrl(headerLink.href) : null;
             if (newUserId !== currentChatUserId) {
                 lastSeenAuthorId = null;
                 container.querySelectorAll('.chat-msg-item').forEach(processMessage);

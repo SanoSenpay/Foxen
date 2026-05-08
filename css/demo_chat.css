@@ -1,0 +1,189 @@
+/* demo_chat.css — Premium Modal UI for Demo Chat */
+
+#fpdm-entry { border-left: 3px solid #6B66FF !important; }
+#fpdm-entry:hover { background: rgba(107,102,255,.15) !important; }
+#fpdm-entry.active { background: rgba(107,102,255,.25) !important; }
+
+/* ── Common Premium Overlay ── */
+.fpdm-overlay {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    font-family: Inter, -apple-system, sans-serif;
+    animation: fpdm-fade .2s ease;
+}
+@keyframes fpdm-fade { from{opacity:0} to{opacity:1} }
+
+/* ── Main Chat Modal ── */
+.fpdm-chat-window {
+    height: 80vh; max-width: 95vw; max-height: 900px;
+    background: #090a12;
+    border: 1px solid rgba(107,102,255,0.3);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 40px rgba(107,102,255,0.1);
+    display: flex; overflow: hidden;
+}
+
+/* Sidebar support */
+.fpdm-sidebar {
+    width: 260px;
+    border-left: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+    display: flex; flex-direction: column;
+    padding: 20px; overflow-y: auto;
+    flex-shrink: 0;
+}
+.fpdm-sidebar-title {
+    font-size: 11px; font-weight: 700; color: #5a5f7a;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+}
+.fpdm-sidebar-tools {
+    display: flex; flex-direction: column; gap: 8px;
+}
+.fpdm-sidebar-templates {
+    display: flex; flex-direction: column; gap: 6px;
+}
+
+/* Chat structure */
+.fpdm-chat-header {
+    background: linear-gradient(90deg, rgba(107,102,255,0.15), rgba(76,175,130,0.05));
+    border-bottom: 1px solid rgba(107,102,255,0.2);
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+
+.fpdm-close-btn {
+    background: rgba(255,255,255,0.05); border: none; color: #7a7f9a;
+    width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+}
+.fpdm-close-btn:hover { background: rgba(255,92,92,0.2); color: #ff5c5c; }
+
+.fpdm-tools-bar {
+    padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap;
+}
+
+.fpdm-msg-list {
+    flex: 1; overflow-y: auto; padding: 24px;
+    display: flex; flex-direction: column; gap: 16px;
+    background: rgba(0,0,0,0.2);
+}
+
+.fpdm-msg-item { display: flex; flex-direction: column; max-width: 80%; }
+.fpdm-msg-item.sys { align-self: center; max-width: 95%; }
+.fpdm-msg-item.me { align-self: flex-end; align-items: flex-end; }
+.fpdm-msg-item.other { align-self: flex-start; align-items: flex-start; }
+
+.fpdm-msg-bubble {
+    padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5;
+    color: #e2e4f0;
+}
+.fpdm-msg-item.me .fpdm-msg-bubble {
+    background: #6B66FF; color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.fpdm-msg-item.other .fpdm-msg-bubble {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-bottom-left-radius: 4px;
+}
+.fpdm-msg-item.sys .fpdm-msg-bubble {
+    background: rgba(0,188,212,0.15); color: #84d8e4;
+    border: 1px solid rgba(0,188,212,0.3); text-align: center;
+    font-size: 13px; border-radius: 8px;
+}
+
+.fpdm-msg-meta {
+    font-size: 11px; color: #5a5f7a; margin-bottom: 4px;
+    display: flex; gap: 6px; align-items: center;
+}
+.fpdm-msg-item.me .fpdm-msg-meta { justify-content: flex-end; }
+
+.fpdm-input-area {
+    padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex; gap: 12px; flex-shrink: 0; align-items: flex-end;
+}
+.fpdm-textarea {
+    flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(107,102,255,0.3);
+    border-radius: 10px; padding: 12px; color: #d8dae8; font-size: 14px;
+    resize: none; outline: none; box-sizing: border-box; font-family: inherit;
+    min-height: 44px; max-height: 120px;
+}
+.fpdm-textarea:focus { border-color: #6B66FF; }
+
+.fpdm-send-btn {
+    height: 44px; width: 44px; padding: 0; border-radius: 10px;
+    flex-shrink: 0; /* Prevents vertical squishing */
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Order Overlay ── */
+.fpdm-order-window {
+    width: 680px; max-width: 95vw; max-height: 90vh;
+    background: #0d0e15; border: 1px solid rgba(107,102,255,0.3);
+    border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    display: flex; flex-direction: column; overflow: hidden;
+}
+.fpdm-order-header {
+    background: linear-gradient(90deg, rgba(107,102,255,0.15), rgba(76,175,130,0.05));
+    border-bottom: 1px solid rgba(107,102,255,0.2); padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.fpdm-order-header h2 { margin: 0; font-size: 18px; color: #d8dae8; font-weight: 700; }
+.fpdm-order-body { padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+
+.fpdm-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 16px 20px;
+}
+.fpdm-card-title {
+    font-size: 11px; font-weight: 700; color: #5a5f7a;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+}
+
+.fpdm-status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 6px; font-size: 13px; font-weight: 700;
+}
+.fpdm-status-paid { background: rgba(255,152,0,0.15); color: #ff9800; border: 1px solid rgba(255,152,0,0.3); }
+.fpdm-status-done { background: rgba(76,175,130,0.15); color: #4caf82; border: 1px solid rgba(76,175,130,0.3); }
+.fpdm-status-idle { background: rgba(138,109,59,0.15); color: #8a6d3b; border: 1px solid rgba(138,109,59,0.3); }
+
+.fpdm-flex-row { display: flex; gap: 16px; align-items: flex-start; }
+.fpdm-flex-col { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+.fpdm-buyer-info { display: flex; align-items: center; gap: 14px; }
+.fpdm-buyer-ava {
+    width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg,#6B66FF,#4caf82);
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.fpdm-buyer-name { font-size: 16px; font-weight: 700; color: #c8cae0; margin-bottom: 2px; }
+.fpdm-buyer-sub { font-size: 12px; color: #5a5f7a; }
+.fpdm-price { font-size: 28px; font-weight: 800; color: #a09ef8; margin: 0; }
+.fpdm-actions { display: flex; flex-direction: column; gap: 8px; }
+
+.fpdm-btn {
+    padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s; text-align: center; display: inline-flex; justify-content: center; align-items: center;
+}
+.fpdm-btn.primary { background: #6B66FF; color: #fff; }
+.fpdm-btn.primary:hover { background: #5850e0; transform: translateY(-1px); }
+.fpdm-btn.success { background: #4caf82; color: #fff; }
+.fpdm-btn.success:hover { background: #3d9a6e; transform: translateY(-1px); }
+.fpdm-btn.ghost { background: rgba(255,255,255,0.05); color: #a09ef8; border: 1px solid rgba(107,102,255,0.2); }
+.fpdm-btn.ghost:hover { background: rgba(107,102,255,0.1); color: #fff; }
+.fpdm-btn.danger { background: rgba(255,92,92,0.15); color: #ff5c5c; border: 1px solid rgba(255,92,92,0.3); }
+.fpdm-btn.danger:hover { background: rgba(255,92,92,0.25); transform: translateY(-1px); }
+
+/* ── Review Modal ── */
+.fpdm-review-box {
+    width: 400px; background: #0d0e15; border: 1px solid rgba(107,102,255,0.4);
+    border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+}
+.fpdm-review-box h3 { margin: 0 0 16px; font-size: 18px; color: #fff; text-align: center; }
+.fpdm-stars { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+.fpdm-star { font-size: 36px; cursor: pointer; color: #ff9800; transition: transform .1s; user-select: none; }
+.fpdm-star:hover { transform: scale(1.15); }
+.fpdm-rev-actions { display: flex; gap: 10px; justify-content: flex-end; }

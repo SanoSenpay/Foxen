@@ -478,7 +478,11 @@ async function runAutoResponderCycle() {
             if (!chat.isUnread) continue;
             if (processedIds.has(chat.msgId)) continue;
 
+            // ИСПРАВЛЕНИЕ БАГА: Если последнее сообщение исходящее (от нас) —
+            // пропускаем все обработчики, кроме системных событий платформы.
+            // Это предотвращает авто-приветствие и авто-отзыв при написании продавцу.
             const msgType = getMessageType(chat.messageText);
+            const isOutgoing = chat.isOutgoing === true;
 
             const msg = {
                 chatId:      chat.chatId,
@@ -488,15 +492,23 @@ async function runAutoResponderCycle() {
                 msgType
             };
 
-            
             if (msgType === 'DEAR_VENDORS') {
+                // Системные уведомления обрабатываем всегда
                 await notifyDearVendors(msg);
+            } else if (isOutgoing) {
+                // Исходящее сообщение — ничего не делаем, просто помечаем как обработанное
+                console.log(`FP Tools AR: пропускаем исходящее сообщение в чате ${chat.chatId}`);
             } else if (msgType === 'ORDER_PURCHASED') {
                 await handleOrderPurchased(msg, auth, fresh);
                 await handleAutoDelivery(msg, auth, fresh);
             } else if (msgType === 'ORDER_CONFIRMED') {
                 await handleOrderConfirmed(msg, auth, fresh);
             } else if (msgType === 'NEW_FEEDBACK' || msgType === 'FEEDBACK_CHANGED') {
+                // ИСПРАВЛЕНИЕ БАГА С ОТЗЫВОМ:
+                // Системное сообщение "Вася написал отзыв" появляется как у покупателя,
+                // так и у продавца. parseChatList не знает кто написал. Если isOutgoing = false
+                // и это системное событие отзыва — handleReview сам проверит через parsers.js
+                // что отзыв написан покупателем (там уже есть проверка автора).
                 await handleReview(msg, auth, fresh);
             } else if (msgType === 'NON_SYSTEM') {
                 await handleGreeting(msg, auth, fresh);

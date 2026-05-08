@@ -17,7 +17,7 @@ async function loadTemplateSettings() {
     const saved = data.fpToolsTemplateSettings || {};
     
     templateSettings.buttonPosition = saved.buttonPosition || 'bottom';
-    templateSettings.sendTemplatesImmediately = saved.sendTemplatesImmediately !== false;
+    templateSettings.sendTemplatesImmediately = saved.sendTemplatesImmediately === true; // Default to false
     templateSettings.custom = saved.custom || [];
     
     templateSettings.standard = {};
@@ -219,7 +219,7 @@ async function useTemplate(templateConfig) {
     }
     
     const data = await browser.storage.local.get('fpToolsTemplateSettings');
-    const sendTemplatesImmediately = data.fpToolsTemplateSettings?.sendTemplatesImmediately !== false;
+    const sendTemplatesImmediately = data.fpToolsTemplateSettings?.sendTemplatesImmediately === true; // Default to false
 
     const chatInput = document.querySelector('.chat-form-input .form-control');
     if (!chatInput) return;

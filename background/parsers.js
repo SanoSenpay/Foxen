@@ -170,12 +170,20 @@ function parseChatList(html) {
         return Array.from(chatItems).map(item => {
             const nameEl = item.querySelector('.media-user-name');
             const avatarEl = item.querySelector('.avatar-photo');
+            const msgEl = item.querySelector('.contact-item-message');
+            // FunPay помечает ИСХОДЯЩИЕ сообщения классом contact-item-message-my
+            // или data-last-author содержит ID самого пользователя (проверяем оба варианта)
+            const isOutgoing = !!(msgEl && msgEl.classList.contains('contact-item-message-my'))
+                || item.classList.contains('contact-item-my')
+                || item.dataset.lastAuthor === 'me'
+                || item.dataset.lastAuthorType === 'self';
             return {
                 chatId: item.dataset.id,
                 chatName: nameEl ? nameEl.textContent.trim() : 'Unknown',
                 msgId: item.dataset.nodeMsg,
-                messageText: item.querySelector('.contact-item-message')?.textContent.trim() || '',
+                messageText: msgEl?.textContent.trim() || '',
                 isUnread: item.classList.contains('unread'),
+                isOutgoing: isOutgoing,
                 avatarUrl: avatarEl ? avatarEl.style.backgroundImage.slice(5, -2) : null
             };
         });
