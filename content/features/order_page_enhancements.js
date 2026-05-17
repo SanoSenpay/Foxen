@@ -167,22 +167,35 @@ function initOfferListFilter() {
     bar.style.cssText = 'display:flex;gap:6px;margin:8px 0;flex-wrap:wrap;font-family:Inter,sans-serif;';
 
     const filters = [
-        { label: 'Все',          fn: () => true },
-        { label: '⚡ Автовыдача', fn: b => b.querySelectorAll('a.tc-item .auto-dlv-icon, a.tc-item i.auto-dlv-icon').length > 0 },
+        { label: 'Все',          onlyAuto: false },
+        { label: '⚡ Автовыдача', onlyAuto: true },
     ];
 
-    let active = 0;
-    filters.forEach(({ label, fn }, i) => {
+    filters.forEach(({ label, onlyAuto }, i) => {
         const btn = document.createElement('button');
         btn.className = 'btn btn-default';
         btn.style.cssText = 'padding:4px 10px;font-size:11px;font-weight:700;';
         btn.textContent = label;
         if (i === 0) { btn.style.background = '#252847'; btn.style.color = '#a09ef8'; }
+        
         btn.addEventListener('click', () => {
             bar.querySelectorAll('button').forEach(b => { b.style.background=''; b.style.color=''; });
             btn.style.background = '#252847'; btn.style.color = '#a09ef8';
-            active = i;
-            offerBlocks.forEach(b => { b.style.display = fn(b) ? '' : 'none'; });
+            
+            offerBlocks.forEach(block => {
+                let visibleCount = 0;
+                block.querySelectorAll('a.tc-item').forEach(lot => {
+                    const isAuto = lot.querySelector('.auto-dlv-icon, i.auto-dlv-icon, .fa-bolt') !== null;
+                    const shouldShow = !onlyAuto || isAuto;
+                    lot.style.display = shouldShow ? '' : 'none';
+                    if (shouldShow) visibleCount++;
+                });
+                
+                // Hide the category block if all items inside are hidden
+                if (block.id !== 'fp-tools-pinned-lots-container') {
+                    block.style.display = visibleCount > 0 ? '' : 'none';
+                }
+            });
         });
         bar.appendChild(btn);
     });

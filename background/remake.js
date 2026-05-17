@@ -1,4 +1,4 @@
-// background/remake.js — FunPay Tools 3.0
+// background/remake.js — Foxen 3.0
 // ИСПРАВЛЕНО: автовыдача больше не попадает в "сообщение после оплаты".
 // Cardinal answer → в order_msg, secrets остаются товарами для автовыдачи.
 

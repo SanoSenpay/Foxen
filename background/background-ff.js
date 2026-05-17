@@ -1,4 +1,4 @@
-// background/background-ff.js — FunPay Tools 3.0
+// background/background-ff.js — Foxen 3.0
 // Основной скрипт расширения для Firefox. Отвечает за фоновые задачи и координацию.
 
 function parseHtmlInBackground(html, action) {
@@ -508,6 +508,18 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     if (request.action === "getAIImageSettings") {
         fetchAIImageGeneration(request.prompt).then(sendResponse);
+        return true;
+    }
+    
+    if (request.action === 'translateMessage') {
+        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ru&dt=t&q=${encodeURIComponent(request.text)}`)
+            .then(res => res.json())
+            .then(data => {
+                let translated = '';
+                if (data && data[0]) { data[0].forEach(part => translated += part[0]); }
+                sendResponse({ success: true, translated });
+            })
+            .catch(e => sendResponse({ success: false, error: e.message }));
         return true;
     }
 

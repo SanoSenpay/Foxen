@@ -1,4 +1,4 @@
-// content/features/order_enhancements.js — FunPay Tools 2.9
+// content/features/order_enhancements.js — Foxen 2.9
 // Unconfirmed balance in stats • "Request review" button • Sales period filter • Order type labels
 
 // ── 1. Unconfirmed balance display ──────────────────────────────────────────

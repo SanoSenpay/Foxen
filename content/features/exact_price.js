@@ -1,14 +1,12 @@
 // content/features/exact_price.js
 
 function initializeExactPrice() {
-    // Убедимся, что мы на странице редактирования или создания лота
     const header = document.querySelector('h1.page-header');
     if (!header || !(header.textContent.includes('Редактирование предложения') || header.textContent.includes('Добавление предложения'))) {
         return;
     }
 
-    // Проверяем, не была ли кнопка добавлена ранее
-    if (document.querySelector('.set-exact-price')) {
+    if (document.getElementById('fp-buyer-price-input')) {
         return;
     }
 
@@ -17,68 +15,94 @@ function initializeExactPrice() {
         return;
     }
 
-    const exactPriceButton = createElement('div', { class: 'set-exact-price' }, {}, 'Рассчитать, чтобы получить эту сумму');
-    inputPrice.parentNode.insertBefore(exactPriceButton, inputPrice.nextSibling);
+    const originalFormGroup = inputPrice.closest('.form-group');
+    if (!originalFormGroup) return;
 
-    exactPriceButton.addEventListener("click", () => {
-        const desiredAmount = parseFloat(inputPrice.value); // Сумма, которую хотим получить
+    // Изменяем оригинальный лейбл
+    const originalLabel = originalFormGroup.querySelector('.control-label');
+    if (originalLabel) {
+        originalLabel.textContent = 'ЦЕНА ЗА 1 ШТ. (ДЛЯ ПРОДАВЦА)';
+        originalLabel.style.textTransform = 'uppercase';
+        originalLabel.style.fontSize = '11px';
+        originalLabel.style.color = '#737373';
+        originalLabel.style.fontWeight = 'bold';
+    }
+
+    // Создаем блок для цены покупателя
+    const buyerPriceGroup = document.createElement('div');
+    buyerPriceGroup.className = 'form-group';
+    buyerPriceGroup.innerHTML = `
+        <label class="control-label" style="text-transform:uppercase; font-size:11px; color:#737373; font-weight:bold;">ЦЕНА ЗА 1 ШТ. (ДЛЯ ПОКУПАТЕЛЯ)</label>
+        <div class="input-group">
+            <input type="number" step="0.01" class="form-control" id="fp-buyer-price-input" placeholder="Введите цену для покупателя">
+            <span class="input-group-addon">₽</span>
+        </div>
+        <small class="help-block" style="display:none; color:#e05252;" id="fp-buyer-price-error"></small>
+    `;
+
+    // Вставляем сразу после блока оригинальной цены
+    originalFormGroup.parentNode.insertBefore(buyerPriceGroup, originalFormGroup.nextSibling);
+
+    const buyerInput = buyerPriceGroup.querySelector('#fp-buyer-price-input');
+    const errorMsg = buyerPriceGroup.querySelector('#fp-buyer-price-error');
+
+    let _calcTimeout = null;
+
+    buyerInput.addEventListener('input', () => {
+        clearTimeout(_calcTimeout);
+        errorMsg.style.display = 'none';
+
+        const desiredAmount = parseFloat(buyerInput.value);
         if (isNaN(desiredAmount) || desiredAmount <= 0) {
-            showNotification('Введите в поле сумму, которую хотите получить.', true);
             return;
         }
 
-        // --- ЭТАП 1: Получаем актуальный коэффициент комиссии ---
-        
-        // Для расчета нам нужна любая "тестовая" цена. Используем текущее значение в поле.
-        const testPrice = parseFloat(inputPrice.value);
-        if (isNaN(testPrice)) {
-             showNotification('Для расчета нужна любая цена в поле ввода (например, 100).', true);
-             return;
-        }
+        _calcTimeout = setTimeout(() => {
+            const currentPrice = parseFloat(inputPrice.value) || 100;
+            let tempPrice = currentPrice;
 
-        // Находим таблицу с ценами для покупателей
-        const calcTableBody = document.querySelector(".js-calc-table-body");
-        if (!calcTableBody) {
-            showNotification('Не найдена таблица с расчетами FunPay. Измените цену, чтобы она появилась.', true);
-            return;
-        }
+            // Если поле пустое или равно 0, временно ставим 100 для расчетов
+            if (isNaN(parseFloat(inputPrice.value)) || parseFloat(inputPrice.value) <= 0) {
+                tempPrice = 100;
+                inputPrice.value = tempPrice;
+                inputPrice.dispatchEvent(new Event('input', { bubbles: true }));
+            }
 
-        // Берем самую последнюю (обычно СБП с меньшей комиссией) цену для покупателя
-        const lastBuyerPriceRow = calcTableBody.querySelector('tr:last-child td:last-child');
-        if (!lastBuyerPriceRow) {
-            showNotification('Не удалось найти цену для покупателя.', true);
-            return;
-        }
-        
-        const buyerPaysPrice = parseFloat(lastBuyerPriceRow.textContent.replace(/ /g, ''));
-        if (isNaN(buyerPaysPrice)) {
-            showNotification('Не удалось прочитать цену для покупателя.', true);
-            return;
-        }
+            // Ждем обновления таблицы расчетов FunPay (она обновляется асинхронно)
+            setTimeout(() => {
+                const calcTableBody = document.querySelector(".js-calc-table-body");
+                if (!calcTableBody) {
+                    errorMsg.textContent = 'Не найдена таблица расчетов.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
 
-        // --- ЭТАП 2: Применяем правильную формулу ---
+                const lastBuyerPriceRow = calcTableBody.querySelector('tr:last-child td:last-child');
+                if (!lastBuyerPriceRow) {
+                    errorMsg.textContent = 'Не удалось найти цену покупателя.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
 
-        // Формула основана на пропорции.
-        // Если при установленной цене `testPrice` покупатель платит `buyerPaysPrice`,
-        // то какую цену `X` нужно установить, чтобы покупатель заплатил `desiredAmount`?
-        // Пропорция: X / desiredAmount = testPrice / buyerPaysPrice
-        // Отсюда: X = (testPrice / buyerPaysPrice) * desiredAmount
+                const buyerPaysPrice = parseFloat(lastBuyerPriceRow.textContent.replace(/ /g, ''));
+                if (isNaN(buyerPaysPrice)) {
+                    errorMsg.textContent = 'Не удалось прочитать цену.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
 
-        // Коэффициент, который показывает, какая часть от денег покупателя доходит до поля "Цена".
-        const priceRatio = testPrice / buyerPaysPrice;
-        
-        if (isNaN(priceRatio) || priceRatio <= 0 || priceRatio >= 1) {
-            showNotification('Ошибка расчета коэффициента. Попробуйте ввести другую цену.', true);
-            return;
-        }
+                const priceRatio = tempPrice / buyerPaysPrice;
+                const finalPriceToSet = desiredAmount * priceRatio;
 
-        // Рассчитываем итоговую цену, которую нужно установить
-        const finalPriceToSet = desiredAmount * priceRatio;
+                inputPrice.value = finalPriceToSet.toFixed(2);
+                inputPrice.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                // Делаем легкую визуальную подсветку оригинального поля
+                inputPrice.style.transition = 'background-color 0.3s';
+                inputPrice.style.backgroundColor = 'rgba(107, 102, 255, 0.2)';
+                setTimeout(() => { inputPrice.style.backgroundColor = ''; }, 500);
 
-        // --- ЭТАП 3: Обновляем значение и уведомляем ---
-        
-        inputPrice.value = finalPriceToSet.toFixed(2);
-        inputPrice.dispatchEvent(new Event('input', { bubbles: true }));
-        showNotification(`Установлена цена ${finalPriceToSet.toFixed(2)}`, false);
+            }, 250); // Ждем 250мс пока скрипт фанпея обновит таблицу
+        }, 800); // Debounce
     });
-}
+}

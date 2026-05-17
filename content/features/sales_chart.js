@@ -1,4 +1,4 @@
-// content/features/sales_chart.js — FunPay Tools 3.0
+// content/features/sales_chart.js — Foxen 3.0
 // Диаграмма продаж по дням/неделям на странице статистики
 
 function renderSalesChart(containerId) {

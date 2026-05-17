@@ -1,4 +1,4 @@
-// content/features/bulk_lot_editor.js — FunPay Tools 2.9
+// content/features/bulk_lot_editor.js — Foxen 2.9
 // Массовое редактирование: название, описание, сообщение покупателю
 // Активируется кнопкой "Массово изменить" в разделе Лоты
 

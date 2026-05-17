@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "FunPay Tools",
-    "version": "2.7.6",
-    "description": "Глобальное расширение для FunPay ⚡ 100+ инструментов • ИИ-помощник • Автоответчик • Аналитика • Автоматизация • Больше продаж",
+    "name": "Foxen",
+    "version": "3.0.0",
+    "description": "35 инструментов для FunPay в одном расширении — ИИ, автоматизация, аналитика.",
     "permissions": [
         "storage",
         "tabs",
@@ -18,7 +18,7 @@
     ],
     "browser_action": {
         "default_popup": "popup/popup.html",
-        "default_title": "FP Tools"
+        "default_title": "Foxen"
     },
     "icons": {
         "128": "icons/icon128.png"

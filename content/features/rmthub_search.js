@@ -1,4 +1,4 @@
-// content/features/rmthub_search.js — FunPay Tools 3.0
+// content/features/rmthub_search.js — Foxen 3.0
 // Поиск профиля на RMTHub — адаптированная копия формы поиска игр FunPay.
 // Использует те же классы: navbar-form, navbar-left, form-control, dropdown-menu и т.д.
 // Работает только с точными именами пользователей (требование API RMTHub).

@@ -51,7 +51,7 @@ function robustParseObject(text) {
     } catch (_) { return null; }
 }
 
-// content/features/ai_lot_audit.js — FunPay Tools 3.0
+// content/features/ai_lot_audit.js — Foxen 3.0
 // Опросник-аудит: ИИ генерирует вопросы, пользователь отвечает, ИИ дает рекомендации.
 // Типы вопросов: да/нет, выбор из списка, рейтинг, текст, число.
 

@@ -1,4 +1,4 @@
-// content/content_script.js — FunPay Tools 3.0
+// content/content_script.js — Foxen 3.0
 // Основной скрипт для взаимодействия со страницами FunPay.
 
 function initializeDynamicFeatures() {
@@ -198,8 +198,21 @@ function initializeDynamicFeatures() {
             return false;
         }
 
+        // Добавляем эффект Glassmorphism на сам navbar FunPay (как просил пользователь)
+        const navbar = document.querySelector('.navbar') || document.querySelector('.navbar-inverse');
+        if (navbar) {
+            navbar.style.backgroundColor = 'rgba(20, 20, 22, 0.7)';
+            navbar.style.backdropFilter = 'blur(12px)';
+            navbar.style.webkitBackdropFilter = 'blur(12px)';
+            navbar.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+            navbar.style.margin = '0 18px';
+            navbar.style.borderBottomLeftRadius = '4px';
+            navbar.style.borderBottomRightRadius = '4px';
+        }
+
         const toolsMenu = createElement('li');
-        toolsMenu.innerHTML = `<a style="font-weight: bold; cursor: pointer; user-select: none;" id="fpToolsButton">FP Tools<span></span></a>`;
+        toolsMenu.innerHTML = `<a id="fpToolsButton">Foxen<span></span></a>`;
+
         anchor.insertAdjacentElement('afterend', toolsMenu);
 
         const button = toolsMenu.querySelector('#fpToolsButton');

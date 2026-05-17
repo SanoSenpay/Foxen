@@ -1,5 +1,5 @@
-// content/features/settings_io.js — FunPay Tools 2.9
-// Экспорт и импорт всех настроек FunPay Tools в файл .fpconfig
+// content/features/settings_io.js — Foxen 2.9
+// Экспорт и импорт всех настроек Foxen в файл .fpconfig
 
 const FP_CONFIG_VERSION  = 1;
 const FP_CONFIG_MAGIC    = 'FPTCONFIG';
@@ -75,7 +75,7 @@ async function importSettings(file) {
         const obj  = JSON.parse(text);
 
         if (obj._magic !== FP_CONFIG_MAGIC && obj._magic !== FP_USERDATA_MAGIC) {
-            throw new Error('Неверный формат файла. Выберите файл .fpconfig от FunPay Tools.');
+            throw new Error('Неверный формат файла. Выберите файл .fpconfig от Foxen.');
         }
 
         if (!obj.settings || typeof obj.settings !== 'object') {

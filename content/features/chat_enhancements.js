@@ -115,6 +115,105 @@
         });
     }
 
+    // --- 4. Message Translation ---
+    function initMessageTranslation() {
+        if (!document.getElementById('fp-translate-styles')) {
+            const style = document.createElement('style');
+            style.id = 'fp-translate-styles';
+            style.textContent = `
+                .fp-translate-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    cursor: pointer;
+                    opacity: 0.7;
+                    font-size: 11px;
+                    font-weight: 600;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    background: rgba(107, 102, 255, 0.1);
+                    color: #a09ef8;
+                    margin-top: 8px;
+                    transition: all 0.2s;
+                    user-select: none;
+                    text-transform: uppercase;
+                }
+                .fp-translate-btn:hover {
+                    opacity: 1;
+                    background: rgba(107, 102, 255, 0.2);
+                }
+                .fp-translate-btn .material-icons {
+                    font-size: 14px;
+                }
+                .fp-translated-text {
+                    color: #d8dae8;
+                    margin-top: 8px;
+                    font-size: 0.95em;
+                    display: block;
+                    border-left: 3px solid #6B66FF;
+                    background: rgba(107, 102, 255, 0.05);
+                    border-radius: 0 6px 6px 0;
+                    padding: 8px 12px;
+                    font-style: italic;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.querySelectorAll('.chat-msg-item').forEach(attachTranslateBtn);
+    }
+
+    function attachTranslateBtn(msgNode) {
+        if (msgNode.querySelector('.fp-translate-btn') || msgNode.querySelector('.chat-msg-system')) return;
+        const bodyWrap = msgNode.querySelector('.chat-msg-body');
+        if (!bodyWrap) return;
+        
+        const textNode = msgNode.querySelector('.chat-msg-text');
+        if (!textNode || !textNode.textContent.trim()) return;
+
+        if (window.getComputedStyle(bodyWrap).position === 'static') {
+            bodyWrap.style.position = 'relative';
+        }
+
+        const btn = document.createElement('div');
+        btn.className = 'fp-translate-btn';
+        btn.innerHTML = '<span class="material-icons">translate</span> Перевести';
+        btn.title = 'Перевести на русский';
+        
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (msgNode.querySelector('.fp-translated-text')) return;
+
+            btn.innerHTML = '<span class="material-icons">hourglass_empty</span> Переводим...';
+            btn.style.pointerEvents = 'none';
+            
+            const originalText = textNode.textContent.trim();
+            
+            try {
+                const response = await browser.runtime.sendMessage({
+                    action: 'translateMessage',
+                    text: originalText
+                });
+
+                if (response && response.success && response.translated) {
+                    const transEl = document.createElement('div');
+                    transEl.className = 'fp-translated-text';
+                    transEl.textContent = response.translated;
+                    textNode.appendChild(transEl);
+                    btn.remove(); // Hide the button after translating
+                } else {
+                    throw new Error(response?.error || 'Unknown error');
+                }
+            } catch (err) {
+                console.error("FP Tools: Translation error", err);
+                btn.innerHTML = '<span class="material-icons">error</span> Ошибка';
+                btn.style.pointerEvents = 'auto';
+            }
+        });
+        
+        textNode.parentElement.appendChild(btn);
+    }
+
     // --- Init ---
     function init() {
         initCtrlEnterSend();
@@ -128,10 +227,12 @@
             initCharCounter();
         }
 
+        initMessageTranslation();
+
         // Watch for chat form appearing (SPA routing)
         const root = document.getElementById('content') || document.body;
         let _initDone = !!document.querySelector('.chat-form-input');
-        new MutationObserver(() => {
+        new MutationObserver((mutations) => {
             if (!_initDone && document.querySelector('.chat-form-input')) {
                 _initDone = true;
                 initDraftSaving();
@@ -140,6 +241,16 @@
             if (_initDone && !document.querySelector('.chat-form-input')) {
                 _initDone = false;
             }
+
+            // Attach translate buttons to new messages
+            mutations.forEach(m => {
+                m.addedNodes.forEach(n => {
+                    if (n.nodeType === Node.ELEMENT_NODE) {
+                        if (n.classList.contains('chat-msg-item')) attachTranslateBtn(n);
+                        else n.querySelectorAll?.('.chat-msg-item').forEach(attachTranslateBtn);
+                    }
+                });
+            });
         }).observe(root, { childList: true, subtree: true });
     }
 

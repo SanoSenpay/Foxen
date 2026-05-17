@@ -1,4 +1,4 @@
-// content/features/fpt_identifier.js — FunPay Tools 3.0
+// content/features/fpt_identifier.js — Foxen 3.0
 // FIXED: Now works on /users/, /orders/, /chat/ and chat list pages.
 //        Previously silently exited on /users/ (not in path allowlist).
 //        Fixed selector for textarea and chat container across all page types.
@@ -59,21 +59,23 @@ function initializeFPTIdentifier() {
         if (userId && identifiedUsers.has(userId)) {
             const clientType = identifiedUsers.get(userId);
             const DEVELOPER_IDS = ['15508026'];
-
             const isDev = DEVELOPER_IDS.includes(userId);
 
-            const lbl = document.createElement('span');
-            lbl.className = FPT_LABEL_CLASS;
-            
-            if (isDev) {
-                lbl.textContent = '· Разработчик FF-FunPay Tools';
-                lbl.style.color = '#ff9800';
-                lbl.style.textShadow = '0 0 5px rgba(255,152,0,0.5)';
-            } else {
-                lbl.textContent = clientType === 'ff' ? '· FF-FunPay Tools' : '· FunPay Tools';
-            }
+            // Показываем только пользователей Foxen (FF) и разработчика
+            if (isDev || clientType === 'ff') {
+                const lbl = document.createElement('span');
+                lbl.className = FPT_LABEL_CLASS;
 
-            statusEl.appendChild(lbl);
+                if (isDev) {
+                    lbl.textContent = '· Разработчик Foxen';
+                    lbl.style.color = '#ff9800';
+                    lbl.style.textShadow = '0 0 5px rgba(255,152,0,0.5)';
+                } else {
+                    lbl.textContent = '· Foxen';
+                }
+
+                statusEl.appendChild(lbl);
+            }
         }
     }
 
@@ -96,12 +98,10 @@ function initializeFPTIdentifier() {
             if (content.includes(FPT_FF_SIG)) type = 'ff';
             else if (content.includes(FPT_CHROME_SIG)) type = 'chrome';
 
-            if (type) {
-                const existing = identifiedUsers.get(authorId);
-                if (existing !== 'ff' || existing === undefined) {
-                    identifiedUsers.set(authorId, type);
-                    if (authorId === currentChatUserId) updateHeaderStatus();
-                }
+            if (type === 'ff') {
+                // Сохраняем только пользователей Foxen; Chrome-расширение игнорируем
+                identifiedUsers.set(authorId, 'ff');
+                if (authorId === currentChatUserId) updateHeaderStatus();
             }
         }
     }

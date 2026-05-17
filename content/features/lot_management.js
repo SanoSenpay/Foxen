@@ -99,6 +99,7 @@ function initializeLotManagement() {
 
         if (isProfileSalesPage) {
             displayPinnedLotsOnLoad();
+            initDirectPinning();
         }
 
         const selectBtn = $('<button type="button" class="btn btn-default btn-block" id="fp-tools-select-lots-btn">Выбрать</button>');
@@ -858,4 +859,186 @@ async function showReactivationPopup() {
     }
     
     $('#fp-reactivate-popup-overlay').fadeIn(200);
+}
+
+function initDirectPinning() {
+    if (!$('style[data-fp-direct-pin]').length) {
+        $('head').append(`
+            <style data-fp-direct-pin>
+                .tc-item { position: relative; overflow: visible !important; }
+                .fp-direct-pin-btn {
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    left: -35px;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    background: #1e2030;
+                    border: 1px solid #2a2d44;
+                    color: #5a5f7a;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: 16px;
+                    z-index: 10;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    opacity: 0;
+                    pointer-events: none;
+                }
+                .tc-item:hover .fp-direct-pin-btn {
+                    opacity: 1;
+                    left: -14px;
+                    pointer-events: auto;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                }
+                .fp-direct-pin-btn:hover {
+                    background: #6B66FF;
+                    color: #fff;
+                    border-color: #6B66FF;
+                    transform: translateY(-50%) scale(1.1);
+                }
+                .fp-direct-pin-btn.is-pinned {
+                    opacity: 0;
+                    left: -35px;
+                    background: #4caf82;
+                    color: #fff;
+                    border-color: #4caf82;
+                    pointer-events: none;
+                }
+                .tc-item:hover .fp-direct-pin-btn.is-pinned {
+                    opacity: 1;
+                    left: -14px;
+                    pointer-events: auto;
+                    box-shadow: 0 4px 12px rgba(76,175,130,0.4);
+                }
+                .fp-direct-pin-btn.is-pinned:hover {
+                    transform: translateY(-50%) scale(1.1);
+                    background: #3d8c68;
+                    border-color: #3d8c68;
+                }
+            </style>
+        `);
+    }
+
+    const attachDirectPins = async () => {
+        const { fpToolsPinnedLots = [] } = await browser.storage.local.get('fpToolsPinnedLots');
+        const pinnedIds = new Set(fpToolsPinnedLots.map(l => String(l.offerId)));
+
+        $('.offer .tc-item').each(function() {
+            const $lotLink = $(this);
+            const offerLink = $lotLink.attr('href');
+            if (!offerLink) return;
+            const offerIdMatch = offerLink.match(/(?:offer=|id=)(\d+)/);
+            if (!offerIdMatch) return;
+            const offerId = offerIdMatch[1];
+
+            const isPinned = pinnedIds.has(offerId);
+            const isInPinnedContainer = $lotLink.closest('#fp-tools-pinned-lots-container').length > 0;
+
+            // Hide original to prevent duplication visual bug
+            if (!isInPinnedContainer) {
+                if (isPinned) {
+                    $lotLink.hide();
+                    $lotLink.addClass('fp-hidden-because-pinned');
+                } else {
+                    $lotLink.show();
+                    $lotLink.removeClass('fp-hidden-because-pinned');
+                }
+            }
+
+            if ($lotLink.find('.fp-direct-pin-btn').length > 0) {
+                const btn = $lotLink.find('.fp-direct-pin-btn');
+                if (isPinned) btn.addClass('is-pinned');
+                else btn.removeClass('is-pinned');
+                return;
+            }
+
+            const $pinBtn = $('<span class="fp-direct-pin-btn material-icons" title="Закрепить/Открепить лот">push_pin</span>');
+            if (isPinned) $pinBtn.addClass('is-pinned');
+
+            $pinBtn.on('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const wasPinned = $(this).hasClass('is-pinned');
+                let { fpToolsPinnedLots = [] } = await browser.storage.local.get('fpToolsPinnedLots');
+
+                if (wasPinned) {
+                    fpToolsPinnedLots = fpToolsPinnedLots.filter(l => String(l.offerId) !== String(offerId));
+                    $(this).removeClass('is-pinned');
+                    if (!isInPinnedContainer) {
+                        $lotLink.show();
+                        $lotLink.removeClass('fp-hidden-because-pinned');
+                    }
+                } else {
+                    const $offerBlock = $lotLink.closest('.offer');
+                    let gameName = $offerBlock.find('.offer-list-title h3 a').text().trim();
+                    if (!gameName) gameName = $offerBlock.find('.offer-list-title h3').text().replace('✏️', '').trim();
+                    
+                    const categoryLink = $offerBlock.find('.offer-list-title a');
+                    let nodeId = null;
+                    if (categoryLink.length > 0) {
+                        const nodeIdMatch = categoryLink.attr('href').match(/\/(?:lots|chips)\/(\d+)/);
+                        nodeId = nodeIdMatch ? nodeIdMatch[1] : null;
+                    }
+
+                    const descElement = $lotLink.find('.tc-desc');
+                    if (gameName && descElement.length) {
+                        const $cloned = $lotLink.clone();
+                        $cloned.find('.fp-direct-pin-btn').remove();
+                        $cloned.removeClass('fp-hidden-because-pinned');
+                        $cloned.show();
+                        
+                        const cleanLotHtml = $cloned.prop('outerHTML');
+
+                        fpToolsPinnedLots.push({
+                            offerId: offerId,
+                            nodeId: nodeId || '0',
+                            gameName: gameName,
+                            html: cleanLotHtml
+                        });
+                        $(this).addClass('is-pinned');
+                        $lotLink.hide();
+                        $lotLink.addClass('fp-hidden-because-pinned');
+                    }
+                }
+
+                await browser.storage.local.set({ fpToolsPinnedLots });
+                
+                $('#fp-tools-pinned-lots-container').remove();
+                await displayPinnedLotsOnLoad();
+                attachDirectPins();
+            });
+
+            $lotLink.prepend($pinBtn);
+        });
+
+        // Hide empty original categories
+        $('.offer:not(#fp-tools-pinned-lots-container)').each(function() {
+            const allLots = $(this).find('.tc-item');
+            if (allLots.length > 0) {
+                const visibleLots = allLots.not('.fp-hidden-because-pinned');
+                if (visibleLots.length === 0) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            }
+        });
+    };
+
+    attachDirectPins();
+
+    const observer = new MutationObserver((mutations) => {
+        let shouldAttach = false;
+        mutations.forEach(m => {
+            if (m.addedNodes.length) shouldAttach = true;
+        });
+        if (shouldAttach) attachDirectPins();
+    });
+    
+    const profileContainer = document.querySelector('.profile-data-container') || document.body;
+    observer.observe(profileContainer, { childList: true, subtree: true });
 }
