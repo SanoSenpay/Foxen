@@ -68,7 +68,7 @@ function disableBottomBar() {
 }
 
 async function applyHeaderPosition() {
-    const { fpToolsTheme = {} } = await browser.storage.local.get(['fpToolsTheme']);
+    const { fpToolsTheme = {} } = await chrome.storage.local.get(['fpToolsTheme']);
     const position = fpToolsTheme.headerPosition || 'top';
 
     if (position === 'bottom') {
@@ -103,7 +103,17 @@ const DEFAULT_THEME = {
     enableCustomScrollbar: false,
     scrollbarThumbColor: '#555555',
     scrollbarTrackColor: '#222222',
-    scrollbarWidth: 8
+    scrollbarWidth: 8,
+    // Прозрачное меню Foxen
+    menuTransparent: false,
+    menuTintColor: '#2a1033',   // тёмно-пурпурный
+    menuOpacity: 3,             // %
+    menuBlurEnabled: true,
+    menuBlur: 8,                // px
+    // Контур тексту
+    textOutlineEnabled: false,
+    textOutlineColor: '#000000',
+    textOutlineWidth: 1         // px
 };
 
 function hexToRgba(hex, alpha) {
@@ -154,7 +164,7 @@ function getCustomThemeCss(settings) {
         .wrapper-content, .wrapper-footer, body, .wrapper, .content-orders, .bg-light-color #header, .bg-light-color #footer, .wrapper-footer { background: transparent !important; }
         .wrapper-content, .wrapper-footer { background-color: rgba(0,0,0,0.4) !important; }
         body { font-family: '${settings.font}', Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.428571429; color: #TEXT_COLOR# }
-        .profile-cover-img { background-clip: border-box; background: url(https://funpay.com/img/layout/profile-header.jpg) no-repeat center bottom; background-size: 100% auto } .profile-cover { overflow: unset } .media-user-name { color: #TEXT_COLOR# } .media-user-name a { color: #fff } .bg-light-color { background-color: #fff0 } header { background: rgba(0,0,0,0.08) !important } .game-title a { color: #ACCENT_COLOR#; text-decoration: none } .navbar-right.logged .dropdown-menu { border-radius: 8px } .user-link-name { color: #ACCENT_COLOR# } .product-page .page-content { background-color: #0009; border-radius: 10px; margin-top: 12px; margin-bottom: 20px; padding: 20px } .chat-btn-image { background-color: #ff6d1500; border: 0px; color: #fff } .chat-btn-image:hover { background-color: transparent; border: 0px; color: #fff } .chat-btn-image:focus { background-color: transparent; border: 0px; color: #fff } .btn-default:active:hover, .btn-default:active:focus, .btn-default:active.focus, .btn-default.active:hover, .btn-default.active:focus, .btn-default.active.focus { color: #fff; background-color: #ff6d1500; border: 0px } .fa-info-circle:before { filter: brightness(0) invert(1) } .chat-form-input .form-group { transform: translate(-10px); width: 103% } .tc.table-hover .tc-item.transaction-status-waiting { background-color: #b17f2e94 } .tc.table-hover .tc-item.transaction-status-waiting:hover { background-color: #b37f2abf } .tc-finance .tc-header>div, .tc-finance .tc-item>div { border-bottom: #505050 1px solid; border-top: #505050 0px solid } .tc.table-hover .tc-item.info { background-color: #1f508994 } .tc.table-hover .tc-item.info:hover { background-color: #1f5089bf } .tc.table-hover .tc-item:hover { background-color: ${containerBgRgba} } .navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover, .navbar-default .navbar-nav>.active>a:focus { color: #LINK_COLOR#; font-weight: 700; background-color: #0000 } .counter-list .counter-item { background: #14141480; border: 0px solid #feff00; border-radius: 20px; outline: 0 } .content-with-cd-wide { background: ${containerBgRgba}; border-radius: 10px } a.tc-item { color: #TEXT_COLOR#; text-decoration: none } .cd { position: relative; z-index: 100; border-radius: 50%; width: 700px; height: 700px; filter: brightness(.8); border: 0px } a.cd-satellite { transform: translate(-25px) } .offer { background: ${containerBgRgba}; padding: 20px; border-radius: 10px } .tc { background-color: ${containerBgRgba}; border-radius: 10px } .tc-finance { border-top: 0px solid #322f34; border-bottom: #322f34 0px solid; border-left: #322f34 0px solid; border-right: #322f34 0px solid; border-radius: 10px } .modal-content { background-color: ${containerBgRgba}; border: 0px solid #999; border-radius: 10px; -webkit-box-shadow: 0 3px 9px rgba(0, 0, 0, .5); box-shadow: 0 3px 9px #00000080; background-clip: padding-box; outline: 0 } label.control-label { color: #ffba4cc4 } .counter-item { background: #0b0b0b90; color: #TEXT_COLOR# } .counter-item:hover, .counter-item:focus, .counter-item:active, .counter-item:active:hover { background: #0b0b0bad; color: #TEXT_COLOR# } .counter-item.active { background: ${containerBgRgba}; color: #fff } .counter-item.active:hover, .counter-item.active:focus, .counter-item.active:active, .counter-item.active:active:hover { background: #101010; color: #fff } .form-control-box { background: transparent; border: 1px solid #fff; border-radius: 10px } h5, .h5, .form-group>label { color: #fff } .bootstrap-select .dropdown-menu.inner { background-color: #0f0f0f } .lot-field .lot-field-radio-box button { background-color: #161617; color: #fbfbfb } .lot-field .lot-field-radio-box button:hover { color: #fff; background-color: #1b1b1b } .btn-dark { background-color: #222; border-radius: 10px; border-color: #fff } .btn-gray:hover { background-color: #2a5590; color: #fff; border-radius: 10px; border-color: #2a5590 } .chat-promo { border-radius: 10px; border: 0px; background: #00000073; transform: translate(-10px) } .dropdown-menu { background-color: #0f0f0f; border-radius: 8px } .navbar-default { border-color: #e4e4e466 } .chat-form-btn .btn-round { background-color: #cbcbcb1f; color: #fff; border-radius: 100px; border: 0px } .chat-form-btn .btn-round:hover { background-color: #3466a1; color: #fff } .chat-img { border-radius: 8px } .btn-danger { border: 0px; border-radius: 8px } .btn-gray { background-color: #3466a1; border-radius: 8px; color: #fff; border: 0px } .btn-primary { border: 0px solid #fff; border-radius: 8px; background-color: #PRIMARY_COLOR#; color: #fff } .btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary:active:hover, .btn-primary:active:focus, .btn-primary[disabled]:hover, .btn-primary[disabled]:focus, .btn-primary[disabled]:active, .btn-primary[disabled]:active:hover, .btn-primary[disabled]:active:focus { background-color: #1a3d6e; color: #fff } .btn-default { border: 0px solid #fff; border-radius: 8px; background-color: #PRIMARY_COLOR#60; color: #fff } .btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default:active:hover, .btn-default:active:focus, .btn-default[disabled]:hover, .btn-default[disabled]:focus, .btn-default[disabled]:active, .btn-default[disabled]:active:hover, .btn-default[disabled]:active:focus { border: 0px solid #1e4f8700; background-color: #PRIMARY_COLOR#; color: #fff } .bg-light-style .btn-default { background-color: transparent; border: 0px; color: #fff } .block-info { color: #ffffffd9 } .navbar-form .form-control { background-color: transparent } .logo-color, .footer-block-als { filter: brightness(0) invert(1) } .nav-abc ul .active a, .nav-abc ul .active a:hover, .nav-abc ul .active a:focus { text-decoration: none; cursor: default; color: #ACCENT_COLOR# } .nav-abc .nav>li>a:hover, .nav-abc .nav>li>a:focus { text-decoration: none; cursor: default; color: #ACCENT_COLOR# } a:focus { text-decoration: none; cursor: default; color: #fff } .list-inline>li:after { content: " ·"; color: #919191 } .media-user.style-circle .avatar-photo:after { background: #a6a6a6; border: 3px solid ${containerBgRgba} } .counter-list-wide { padding-bottom: 20px; padding-top: 20px } .dropdown-menu>li+li, .dropdown-menu .dropdown-menu>li { border-top: #6a6a6a70 1px solid; border: 0px } .dropdown-menu>li:first-child>a { border-radius: 8px 8px 0 0 } .dropdown-menu>li:last-child>a { border-radius: 0 0 8px 8px } .navbar-nav>li>.dropdown-menu, .dropdown-menu, .nav-tabs .dropdown-menu { border-radius: 8px } .navbar-default .navbar-nav>li>a { color: #TEXT_COLOR# } .navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>li>a:focus { color: #ddd } .ajax-alert { border-radius: 10px } .navbar-default { background-color: transparent } .offer-tc-container { border-top: #ff0000 0px solid } .tc:not(.tc-selling):not(.tc-finance) .tc-item>div { border-top: #505050 1px solid } .review-container { border-top: #505050 1px solid } a:hover { color: #ACCENT_COLOR#; text-decoration: underline; } a.tc-item:hover, a.tc-item:hover div, a.tc-item:hover .tc-desc-text, a.tc-item:hover .tc-server { color: #TEXT_COLOR#; text-decoration: none; } .panel { background-color: #423e3e } .contact-item:hover { background: #4040956b } a { color: #LINK_COLOR#; text-decoration: none } .panel-default>.panel-heading { background-color: #292929; border-color: #2d2d2d61 } .tc.table-hover .tc-item.warning { background-color: #b17f2e94 } .tc.table-hover .tc-item.warning:hover { background-color: #b37f2abf } .tc.table-hover .tc-item { background-color: ${containerBgRgba} } .tc.table-hover a.tc-item:hover { background-color: #1b1b1b } .chat-not-selected .chat-message-container { border-top: 0px solid #fff } .chat-not-selected .chat-message-container { border-bottom: 0px solid #fff } .chat-message-container { border-left: 0px solid #fff; border-right: 0px solid #fff } .dropdown-menu>li>a:hover, .dropdown-menu>li>a:focus { color: #fff; background-color: #292828 } .navbar-nav>li>.dropdown-menu>.active>a { background: #LINK_COLOR#85; color: #fff } .navbar-nav>li>.dropdown-menu>.active>a:hover { background: #LINK_COLOR#b5 } .navbar-default .navbar-nav>.open>a, .navbar-default .navbar-nav>.open>a:hover, .navbar-default .navbar-nav>.open>a:focus { color: #LINK_COLOR# } .btn-default:active, .btn-default.active, .open>.btn-default.dropdown-toggle { color: #4384d0; background-color: #ff6c1130; border-color: red } .contact-item-message { color: #ffffff73 } .contact-item.active { background: #6f6dff90; color: #ffffffd4 } .contact-item.active:hover, .contact-item.active:focus { background: #6f6dffb5 } .contact-item.unread { background: #ff9d00a1 } .contact-item.unread, .contact-item.unread .contact-item-message { color: #ffffffd4 } .chat-form { border: #8924b100 0px solid } .chat-form-input .form-control, .chat-form-input .hiddendiv { padding: 11px 10px 10px; background-color: ${containerBgRgba}; border-radius: 10px } .badge { display: inline-block; min-width: 20px; padding: 3px 5px 5px; font-size: 12px; font-weight: 500; color: #fff; line-height: 12px; vertical-align: middle; white-space: nowrap; text-align: center; background-color: #0b0b0b55; border-radius: 10px } .payment-card { background: #0009; padding: 20px; border-radius: 10px; margin: 12px 0 } .form-control { border: 0px solid #fff; background-color: #060606; color: #TEXT_COLOR#; border-radius: 10px } .panel-default>.panel-heading { color: #ddd } .review-item-answer { display: inline-block; padding: 15px; background: #0f0f0f; border-radius: 10px; position: relative; color: #fff } .setting-item .btn-gray { background-color: #LINK_COLOR#; color: #fff; border-radius: 8px } .setting-item .btn-gray:hover, .setting-item .btn-gray:focus, .setting-item .btn-gray:active { background-color: #244f81; color: #fff } p { color: #ffffffd9 } .btn-success { border-radius: 8px; border: 0px } .drop-area { background-color: #1e1e1e; border-radius: 8px; color: #d3d3d3; border: 1px solid #0f0f0f } .drop-area.hover { background-color: #323232 } .drop-area.error { background: #ff3434c7; border: #f00; color: #TEXT_COLOR# } .btn-info { border-radius: 8px; background-color: #11a8d5; border: 0px; margin-right: 5px } .btn-warning { border-radius: 8px; background-color: #ffa002; border: 0px } .details, .form-narrow { background-color: #0009; padding: 20px; margin-bottom: 20px; border-radius: 10px } .form-narrow .btn-block, .form-narrow .form-control, .form-narrow .input-group { background-color: #0f0f0f; border-radius: 8px } .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus { color: #fff; background-color: #0000 } .lot-fields-multilingual .nav-tabs a { color: #b5b5b5 } table.table-clickable tbody tr a { color: #14e6a4; text-decoration: none } table.table-clickable tbody tr a:hover { color: #fff; text-decoration: underline } .caret { color: #888; } .sort::after { color: #555 !important; } .bootstrap-select .dropdown-toggle .filter-option { background: #65a91a; height: 100%; width: 100%; border: 0px #fff solid; border-radius: 8px; color: #fff } .bootstrap-select .dropdown-toggle .filter-option:hover { background: #65a91a; border-radius: 8px } .bootstrap-select .dropdown-toggle .filter-option:focus { background: #65a91a; border-radius: 8px } .has-feedback .form-control { border-radius: 8px } .withdraw-box .slave { background-color: #303030; border-radius: 8px } .withdraw-box .slave:hover { background-color: #3e3e3e; border-radius: 8px } .input-group .form-control:first-child, .input-group-addon:first-child, .input-group-btn:first-child>.btn, .input-group-btn:first-child>.btn-group>.btn, .input-group-btn:first-child>.dropdown-toggle, .input-group-btn:last-child>.btn:not(:last-child):not(.dropdown-toggle), .input-group-btn:last-child>.btn-group:not(:last-child)>.btn { border-radius: 10px 0 0 10px } .bootstrap-select.input-lg .btn, .input-group-lg>.bootstrap-select.form-control .btn, .input-group-lg>.bootstrap-select.input-group-addon .btn, .input-group-lg>.input-group-btn>.bootstrap-select.btn .btn, .bootstrap-select.input-lg .dropdown-menu>li>a, .input-group-lg>.bootstrap-select.form-control .dropdown-menu>li>a, .input-group-lg>.bootstrap-select.input-group-addon .dropdown-menu>li>a, .input-group-lg>.input-group-btn>.bootstrap-select.btn .dropdown-menu>li>a, .input-group-lg>.input-group-btn>.bootstrap-select.btn .dropdown-menu>li>a:hover, .input-group-lg>.input-group-btn>.bootstrap-select.btn .dropdown-menu>li>a:focus { background: transparent; border-radius: 8px } :not(.input-group)>.bootstrap-select.form-control:not([class*=col-]) { background: transparent; border-radius: 8px } .btn-default.dropdown-toggle { color: #fff; border: 0px; background-color: #PRIMARY_COLOR# } .btn-default.dropdown-toggle:hover, .btn-default.dropdown-toggle:focus, .btn-default.dropdown-toggle:active, .btn-default.dropdown-toggle:active:hover, .open>.btn-default.dropdown-toggle, .open>.btn-default.dropdown-toggle:hover, .open>.btn-default.dropdown-toggle:focus, .open>.btn-default.dropdown-toggle:active { color: #fff; border: 0px; background-color: #1a3d6e } .form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control { background-color: #484343 } .payment-title { color: #fff; font-weight: old } .bootstrap-select .dropdown-menu>li>a { color: #b0b0b0 } .bootstrap-select .dropdown-menu>.active>a, .bootstrap-select .dropdown-menu>.active>a:hover, .bootstrap-select .dropdown-menu>.active>a:focus { background-color: #1b1b1b; color: #82dd1e } .chat-header { border: #bd59be00 0px solid } .form-inline .form-control { background-color: #0f0f0f; border-radius: 8px } .chat-contacts, .chat-detail { background: #0009; border: #fff 0px solid } .chat-contacts { border-radius: 10px 0 0 10px } .chat-detail { border-radius: 0 10px 10px 0 } .chat { background: #0009; border-radius: 10px } .contact-item { border-bottom: #fff 0px } .chat-full-header { border-bottom: #fff 0px solid } .chat-full .chat { border-bottom: 0px solid #fff; background-color: #0009; border-radius: 0 } .chat { border-top: 0px solid #fff } .alert-info { background-color: #709fdc3b; border-color: #709fdc; color: #fff; border-radius: 8px } .fa-exclamation-circle:before { filter: brightness(0) invert(1) } .chat-message-list-date .inside { background-color: #0f0f0f; color: #fff; border-radius: 8px } .custom-scroll::-webkit-scrollbar, .chat-message-list::-webkit-scrollbar, .chat-empty::-webkit-scrollbar, .chat-form-input .form-control::-webkit-scrollbar, .chat-form-input .hiddendiv::-webkit-scrollbar { background: #e600ff00; width: 5px; height: 10px } .custom-scroll::-webkit-scrollbar-thumb, .chat-message-list::-webkit-scrollbar-thumb, .chat-empty::-webkit-scrollbar-thumb, .chat-form-input .form-control::-webkit-scrollbar-thumb, .chat-form-input .hiddendiv::-webkit-scrollbar-thumb { background: #1f1f2090 } .chat { border-bottom: 0px solid #90f; background: #0009; border-radius: 10px } .chat-form-input .form-control, .chat-form-input .hiddendiv { transform: translate(-10px) } .form-inline .form-control { background-color: #171718; border-radius: 10px } .theme-select { color: #d3cfc9; background-color: #181a1b; background-image: none; border-color: #383c3f; box-shadow: #00000012 0 1px 1px inset }
+        .profile-cover-img { background-clip: border-box; background: url(https://funpay.com/img/layout/profile-header.jpg) no-repeat center bottom; background-size: 100% auto } .profile-cover { overflow: unset } .media-user-name { color: #TEXT_COLOR# } .media-user-name a { color: #fff } .bg-light-color { background-color: #fff0 } header { background: rgba(0,0,0,0.08) !important } .game-title a { color: #ACCENT_COLOR#; text-decoration: none } .navbar-right.logged .dropdown-menu { border-radius: 8px } .user-link-name { color: #ACCENT_COLOR# } .product-page .page-content { background-color: #0009; border-radius: 10px; margin-top: 12px; margin-bottom: 20px; padding: 20px } .chat-btn-image { background-color: #ff6d1500; border: 0px; color: #fff } .chat-btn-image:hover { background-color: transparent; border: 0px; color: #fff } .chat-btn-image:focus { background-color: transparent; border: 0px; color: #fff } .btn-default:active:hover, .btn-default:active:focus, .btn-default:active.focus, .btn-default.active:hover, .btn-default.active:focus, .btn-default.active.focus { color: #fff; background-color: #ff6d1500; border: 0px } .fa-info-circle:before { filter: brightness(0) invert(1) } .chat-form-input .form-group { transform: translate(-10px); width: 103% } .tc.table-hover .tc-item.transaction-status-waiting { background-color: #b17f2e94 } .tc.table-hover .tc-item.transaction-status-waiting:hover { background-color: #b37f2abf } .tc-finance .tc-header>div, .tc-finance .tc-item>div { border-bottom: #505050 1px solid; border-top: #505050 0px solid } .tc.table-hover .tc-item.info { background-color: #1f508994 } .tc.table-hover .tc-item.info:hover { background-color: #1f5089bf } .tc.table-hover .tc-item:hover { background-color: ${containerBgRgba} } .navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover, .navbar-default .navbar-nav>.active>a:focus { color: #LINK_COLOR#; font-weight: 700; background-color: #0000 } .counter-list .counter-item { background: #14141480; border: 0px solid #feff00; border-radius: 20px; outline: 0 } .content-with-cd-wide { background: ${containerBgRgba}; border-radius: 10px } a.tc-item { color: #TEXT_COLOR#; text-decoration: none } .cd { position: relative; z-index: 100; border-radius: 50%; width: 700px; height: 700px; filter: brightness(.8); border: 0px } a.cd-satellite { transform: translate(-25px) } .offer { background: ${containerBgRgba}; padding: 20px; border-radius: 10px } .tc { background-color: ${containerBgRgba}; border-radius: 10px } .tc-finance { border-top: 0px solid #322f34; border-bottom: #322f34 0px solid; border-left: #322f34 0px solid; border-right: #322f34 0px solid; border-radius: 10px } .modal-content { background-color: ${containerBgRgba}; border: 0px solid #999; border-radius: 10px; -webkit-box-shadow: 0 3px 9px rgba(0, 0, 0, .5); box-shadow: 0 3px 9px #00000080; background-clip: padding-box; outline: 0 } label.control-label { color: #ffba4cc4 } .counter-item { background: #0b0b0b90; color: #TEXT_COLOR# } .counter-item:hover, .counter-item:focus, .counter-item:active, .counter-item:active:hover { background: #0b0b0bad; color: #TEXT_COLOR# } .counter-item.active { background: ${containerBgRgba}; color: #fff } .counter-item.active:hover, .counter-item.active:focus, .counter-item.active:active, .counter-item.active:active:hover { background: #101010; color: #fff } .form-control-box { background: transparent; border: 1px solid #fff; border-radius: 10px } h5, .h5, .form-group>label { color: #fff } .bootstrap-select .dropdown-menu.inner { background-color: #0f0f0f } .lot-field .lot-field-radio-box button { background-color: #161617; color: #fbfbfb } .lot-field .lot-field-radio-box button:hover { color: #fff; background-color: #1b1b1b } .btn-dark { background-color: #222; border-radius: 10px; border-color: #fff } .btn-gray:hover { background-color: #2a5590; color: #fff; border-radius: 10px; border-color: #2a5590 } .chat-promo { border-radius: 10px; border: 0px; background: #00000073; transform: translate(-10px) } .dropdown-menu { background-color: #0f0f0f; border-radius: 8px } .navbar-default { border-color: #e4e4e466 } .chat-form-btn .btn-round { background-color: #cbcbcb1f; color: #fff; border-radius: 100px; border: 0px } .chat-form-btn .btn-round:hover { background-color: #3466a1; color: #fff } .chat-img { border-radius: 8px } .btn-danger { border: 0px; border-radius: 8px } .btn-gray { background-color: #3466a1; border-radius: 8px; color: #fff; border: 0px } .btn-primary { border: 0px solid #fff; border-radius: 8px; background-color: #PRIMARY_COLOR#; color: #fff } .btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary:active:hover, .btn-primary:active:focus, .btn-primary[disabled]:hover, .btn-primary[disabled]:focus, .btn-primary[disabled]:active, .btn-primary[disabled]:active:hover, .btn-primary[disabled]:active:focus { background-color: #1a3d6e; color: #fff } .btn-default { border: 0px solid #fff; border-radius: 8px; background-color: #PRIMARY_COLOR#60; color: #fff } .btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default:active:hover, .btn-default:active:focus, .btn-default[disabled]:hover, .btn-default[disabled]:focus, .btn-default[disabled]:active, .btn-default[disabled]:active:hover, .btn-default[disabled]:active:focus { border: 0px solid #1e4f8700; background-color: #PRIMARY_COLOR#; color: #fff } .bg-light-style .btn-default { background-color: transparent; border: 0px; color: #fff } .block-info { color: #ffffffd9 } .navbar-form .form-control { background-color: transparent } .logo-color, .footer-block-als { filter: brightness(0) invert(1) } .nav-abc ul .active a, .nav-abc ul .active a:hover, .nav-abc ul .active a:focus { text-decoration: none; cursor: default; color: #ACCENT_COLOR# } .nav-abc .nav>li>a:hover, .nav-abc .nav>li>a:focus { text-decoration: none; cursor: default; color: #ACCENT_COLOR# } a:focus { text-decoration: none; cursor: default; color: #fff } .list-inline>li:after { content: " ·"; color: #919191 } .media-user.style-circle .avatar-photo:after { background: #a6a6a6; border: 3px solid ${containerBgRgba} } .counter-list-wide { padding-bottom: 20px; padding-top: 20px } .dropdown-menu>li+li, .dropdown-menu .dropdown-menu>li { border-top: #6a6a6a70 1px solid; border: 0px } .dropdown-menu>li:first-child>a { border-radius: 8px 8px 0 0 } .dropdown-menu>li:last-child>a { border-radius: 0 0 8px 8px } .navbar-nav>li>.dropdown-menu, .dropdown-menu, .nav-tabs .dropdown-menu { border-radius: 8px } .navbar-default .navbar-nav>li>a { color: #TEXT_COLOR# } .navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>li>a:focus { color: #ddd } .ajax-alert { border-radius: 10px } .navbar-default { background-color: transparent } .offer-tc-container { border-top: #ff0000 0px solid } .tc:not(.tc-selling):not(.tc-finance) .tc-item>div { border-top: #505050 1px solid } .review-container { border-top: #505050 1px solid } a:hover { color: #ACCENT_COLOR#; text-decoration: underline; } a.tc-item:hover, a.tc-item:hover div, a.tc-item:hover .tc-desc-text, a.tc-item:hover .tc-server { color: #TEXT_COLOR#; text-decoration: none; } .panel { background-color: #423e3e } .contact-item:hover { background: #4040956b } a { color: #LINK_COLOR#; text-decoration: none } .panel-default>.panel-heading { background-color: #292929; border-color: #2d2d2d61 } .tc.table-hover .tc-item.warning { background-color: #b17f2e94 } .tc.table-hover .tc-item.warning:hover { background-color: #b37f2abf } .tc.table-hover .tc-item { background-color: ${containerBgRgba} } .tc.table-hover a.tc-item:hover { background-color: #1b1b1b } .chat-not-selected .chat-message-container { border-top: 0px solid #fff } .chat-not-selected .chat-message-container { border-bottom: 0px solid #fff } .chat-message-container { border-left: 0px solid #fff; border-right: 0px solid #fff } .dropdown-menu>li>a:hover, .dropdown-menu>li>a:focus { color: #fff; background-color: #292828 } .navbar-nav>li>.dropdown-menu>.active>a { background: #LINK_COLOR#85; color: #fff } .navbar-nav>li>.dropdown-menu>.active>a:hover { background: #LINK_COLOR#b5 } .navbar-default .navbar-nav>.open>a, .navbar-default .navbar-nav>.open>a:hover, .navbar-default .navbar-nav>.open>a:focus { color: #LINK_COLOR# } .btn-default:active, .btn-default.active, .open>.btn-default.dropdown-toggle { color: #4384d0; background-color: #ff6c1130; border-color: red } .contact-item-message { color: #ffffff73 } .contact-item.active { background: #6f6dff90; color: #ffffffd4 } .contact-item.active:hover, .contact-item.active:focus { background: #6f6dffb5 } .contact-item.unread { background: #ff9d00a1 } .contact-item.unread, .contact-item.unread .contact-item-message { color: #ffffffd4 } .chat-form { border: #8924b100 0px solid } .chat-form-input .form-control, .chat-form-input .hiddendiv { padding: 11px 10px 10px; background-color: ${containerBgRgba}; border-radius: 10px } .badge { display: inline-block; min-width: 20px; padding: 3px 5px 5px; font-size: 12px; font-weight: 500; color: #fff; line-height: 12px; vertical-align: middle; white-space: nowrap; text-align: center; background-color: #0b0b0b55; border-radius: 10px } .payment-card { background: #0009; padding: 20px; border-radius: 10px; margin: 12px 0 } .form-control { border: 0px solid #fff; background-color: #060606; color: #TEXT_COLOR#; border-radius: 10px } .panel-default>.panel-heading { color: #ddd } .review-item-answer { display: inline-block; padding: 15px; background: #0f0f0f; border-radius: 10px; position: relative; color: #fff } .setting-item .btn-gray { background-color: #LINK_COLOR#; color: #fff; border-radius: 8px } .setting-item .btn-gray:hover, .setting-item .btn-gray:focus, .setting-item .btn-gray:active { background-color: #244f81; color: #fff } p { color: #ffffffd9 } .btn-success { border-radius: 8px; border: 0px } .drop-area { background-color: #1e1e1e; border-radius: 8px; color: #d3d3d3; border: 1px solid #0f0f0f } .drop-area.hover { background-color: #323232 } .drop-area.error { background: #ff3434c7; border: #f00; color: #TEXT_COLOR# } .btn-info { border-radius: 8px; background-color: #11a8d5; border: 0px; margin-right: 5px } .btn-warning { border-radius: 8px; background-color: #ffa002; border: 0px } .details, .form-narrow { background-color: #0009; padding: 20px; margin-bottom: 20px; border-radius: 10px } .form-narrow .btn-block, .form-narrow .form-control, .form-narrow .input-group { background-color: #0f0f0f; border-radius: 8px } .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus { color: #fff; background-color: #0000 } .lot-fields-multilingual .nav-tabs a { color: #b5b5b5 } table.table-clickable tbody tr a { color: #14e6a4; text-decoration: none } table.table-clickable tbody tr a:hover { color: #fff; text-decoration: underline } .caret { color: #888; } .sort::after { color: #555 !important; } .bootstrap-select .dropdown-toggle .filter-option { background: #65a91a; height: 100%; width: 100%; border: 0px #fff solid; border-radius: 8px; color: #fff } .bootstrap-select .dropdown-toggle .filter-option:hover { background: #65a91a; border-radius: 8px } .bootstrap-select .dropdown-toggle .filter-option:focus { background: #65a91a; border-radius: 8px } .has-feedback .form-control { border-radius: 8px } .withdraw-box .slave { background-color: #303030; border-radius: 8px } .withdraw-box .slave:hover { background-color: #3e3e3e; border-radius: 8px } .input-group .form-control:first-child, .input-group-addon:first-child, .input-group-btn:first-child>.btn, .input-group-btn:first-child>.btn-group>.btn, .input-group-btn:first-child>.dropdown-toggle, .input-group-btn:last-child>.btn:not(:last-child):not(.dropdown-toggle), .input-group-btn:last-child>.btn-group:not(:last-child)>.btn { border-radius: 10px 0 0 10px } .bootstrap-select.input-lg .btn, .input-group-lg>.bootstrap-select.form-control .btn, .input-group-lg>.bootstrap-select.input-group-addon .btn, .input-group-lg>.input-group-btn>.bootstrap-select.btn .btn, .bootstrap-select.input-lg .dropdown-menu>li>a, .input-group-lg>.bootstrap-select.form-control .dropdown-menu>li>a, .input-group-lg>.bootstrap-select.input-group-addon .dropdown-menu>li>a, .input-group-lg>.input-group-btn>.bootstrap-select.btn .dropdown-menu>li>a, .input-group-lg>.input-group-btn>.bootstrap-select.btn .dropdown-menu>li>a:hover, .input-group-lg>.input-group-btn>.bootstrap-select.btn .dropdown-menu>li>a:focus { background: transparent; border-radius: 8px } :not(.input-group)>.bootstrap-select.form-control:not([class*=col-]) { background: transparent; border-radius: 8px } .btn-default.dropdown-toggle { color: #fff; border: 0px; background-color: #PRIMARY_COLOR# } .btn-default.dropdown-toggle:hover, .btn-default.dropdown-toggle:focus, .btn-default.dropdown-toggle:active, .btn-default.dropdown-toggle:active:hover, .open>.btn-default.dropdown-toggle, .open>.btn-default.dropdown-toggle:hover, .open>.btn-default.dropdown-toggle:focus, .open>.btn-default.dropdown-toggle:active { color: #fff; border: 0px; background-color: #1a3d6e } .form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control { background-color: #484343 } .payment-title { color: #fff; font-weight: old } .bootstrap-select .dropdown-menu>li>a { color: #b0b0b0 } .bootstrap-select .dropdown-menu>.active>a, .bootstrap-select .dropdown-menu>.active>a:hover, .bootstrap-select .dropdown-menu>.active>a:focus { background-color: #1b1b1b; color: #82dd1e } .chat-header { border: #bd59be00 0px solid } .form-inline .form-control { background-color: #0f0f0f; border-radius: 8px } .chat-contacts, .chat-detail { background: #0009; border: #fff 0px solid } .chat-contacts { border-radius: 10px 0 0 10px } .chat-detail { border-radius: 0 10px 10px 0 } .chat { background: #0009; border-radius: 10px } .contact-item { border-bottom: #fff 0px } .chat-full-header { border-bottom: #fff 0px solid } .chat-full .chat { border-bottom: 0px solid #fff; background-color: #0009; border-radius: 0 } .chat { border-top: 0px solid #fff } .alert-info { background-color: #709fdc3b; border-color: #709fdc; color: #fff !important; border-radius: 8px } .alert-info, .alert-info .chat-msg-text, .alert-info .chat-msg-text * { color: #fff !important; } .alert-info a, .alert-info .chat-msg-text a { color: #LINK_COLOR# !important; } .fa-exclamation-circle:before { filter: brightness(0) invert(1) } .chat-message-list-date .inside { background-color: #0f0f0f; color: #fff; border-radius: 8px } .custom-scroll::-webkit-scrollbar, .chat-message-list::-webkit-scrollbar, .chat-empty::-webkit-scrollbar, .chat-form-input .form-control::-webkit-scrollbar, .chat-form-input .hiddendiv::-webkit-scrollbar { background: #e600ff00; width: 5px; height: 10px } .custom-scroll::-webkit-scrollbar-thumb, .chat-message-list::-webkit-scrollbar-thumb, .chat-empty::-webkit-scrollbar-thumb, .chat-form-input .form-control::-webkit-scrollbar-thumb, .chat-form-input .hiddendiv::-webkit-scrollbar-thumb { background: #1f1f2090 } .chat { border-bottom: 0px solid #90f; background: #0009; border-radius: 10px } .chat-form-input .form-control, .chat-form-input .hiddendiv { transform: translate(-10px) } .form-inline .form-control { background-color: #171718; border-radius: 10px } .theme-select { color: #d3cfc9; background-color: #181a1b; background-image: none; border-color: #383c3f; box-shadow: #00000012 0 1px 1px inset }
     `;
 
     let themedCss = baseCss
@@ -236,12 +246,17 @@ function getCustomThemeCss(settings) {
 }
 
 async function applyCustomTheme() {
-    const { enableCustomTheme = true, fpToolsTheme = {} } = await browser.storage.local.get(['enableCustomTheme', 'fpToolsTheme']);
+    const { enableCustomTheme = true, fpToolsTheme = {} } = await chrome.storage.local.get(['enableCustomTheme', 'fpToolsTheme']);
     let styleEl = document.getElementById('fp-tools-custom-theme');
     let overrideStyleEl = document.getElementById(THEME_OVERRIDE_STYLE_ID);
     const flashFixStyle = document.getElementById('fp-tools-flash-fix');
 
+    // Контур тексту работает независимо от кастомной темы.
+    applyFptTextOutline({ ...DEFAULT_THEME, ...fpToolsTheme });
+
     if (!enableCustomTheme) {
+        document.documentElement.classList.remove('fpt-custom-theme-on');
+        document.documentElement.classList.add('fpt-custom-theme-off');
         if (styleEl) styleEl.remove();
         manageFontImports({font: 'Helvetica Neue'});
         if (!overrideStyleEl) {
@@ -254,12 +269,23 @@ async function applyCustomTheme() {
             .stat-card-label, .detail-label { color: #555 !important; }
         `;
         if (flashFixStyle) flashFixStyle.remove();
+        // Палитра --fpt-* зависит от фактического фона страницы. После выключения
+        // темы фон становится светлым НЕ мгновенно, поэтому пересчитываем переменные
+        // на следующих кадрах - иначе панели (статистика и пр.) останутся тёмными
+        // на белой странице («чёрное окно статистики»).
+        if (typeof fptApplyThemeVars === 'function') {
+            requestAnimationFrame(() => { try { fptApplyThemeVars(); } catch (_) {} });
+            setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 120);
+            setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 400);
+        }
         return;
     }
     
     if (overrideStyleEl) {
         overrideStyleEl.remove();
     }
+    document.documentElement.classList.add('fpt-custom-theme-on');
+    document.documentElement.classList.remove('fpt-custom-theme-off');
 
     if (!styleEl) {
         styleEl = document.createElement('style');
@@ -273,6 +299,12 @@ async function applyCustomTheme() {
     let themeCss = getCustomThemeCss(settings);
     themeCss += ` body { visibility: visible !important; } `; 
     styleEl.textContent = themeCss;
+    // фон становится тёмным не мгновенно - пересчитываем палитру на след. кадрах
+    if (typeof fptApplyThemeVars === 'function') {
+        requestAnimationFrame(() => { try { fptApplyThemeVars(); } catch (_) {} });
+        setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 120);
+        setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 400);
+    }
 }
 
 function updateCirclePreview() {
@@ -292,7 +324,7 @@ function updateCirclePreview() {
 }
 
 async function updateThemePreview() {
-    const { fpToolsTheme = {} } = await browser.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
     const settings = { ...DEFAULT_THEME, ...fpToolsTheme };
 
     const elements = {
@@ -422,7 +454,7 @@ function toggleThemeControls(disabled) {
 }
 
 async function randomizeTheme() {
-    const { fpToolsTheme: currentTheme = {} } = await browser.storage.local.get(['fpToolsTheme']);
+    const { fpToolsTheme: currentTheme = {} } = await chrome.storage.local.get(['fpToolsTheme']);
     const randomHex = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
     const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -459,19 +491,19 @@ async function randomizeTheme() {
     }
 
     try {
-        await browser.storage.local.set({ fpToolsTheme: randomTheme });
+        await chrome.storage.local.set({ fpToolsTheme: randomTheme });
         await applyCustomTheme();
         await applyHeaderPosition();
         await updateThemePreview();
         showNotification('Тема рандомизирована! ✨');
     } catch (error) {
-        console.error('FP Tools: Error randomizing theme:', error);
+        console.error('Foxen: Error randomizing theme:', error);
         showNotification('Ошибка при рандомизации темы.', true);
     }
 }
 
 async function exportTheme() {
-    const { fpToolsTheme = {} } = await browser.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
     const settingsToExport = { ...DEFAULT_THEME, ...fpToolsTheme };
 
     const themeName = prompt("Введите название темы:", "Моя тема");
@@ -503,7 +535,7 @@ function importTheme(event) {
         try {
             const importedTheme = JSON.parse(e.target.result);
             if (importedTheme && importedTheme.bgColor1 && importedTheme.font) {
-                await browser.storage.local.set({ fpToolsTheme: importedTheme });
+                await chrome.storage.local.set({ fpToolsTheme: importedTheme });
                 await applyCustomTheme();
                 await applyHeaderPosition();
                 await updateThemePreview();
@@ -520,7 +552,7 @@ function importTheme(event) {
 }
 
 async function generatePaletteFromImage() {
-    const { fpToolsTheme = {} } = await browser.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
     if (!fpToolsTheme.bgImage) {
         showNotification('Сначала загрузите фоновое изображение.', true);
         return;
@@ -581,7 +613,7 @@ async function generatePaletteFromImage() {
                 
                 const finalTheme = { ...fpToolsTheme, ...newPalette };
 
-                await browser.storage.local.set({ fpToolsTheme: finalTheme });
+                await chrome.storage.local.set({ fpToolsTheme: finalTheme });
                 await applyCustomTheme();
                 await updateThemePreview();
                 showNotification('Палитра успешно сгенерирована!');
@@ -642,7 +674,7 @@ function setupThemeCustomizationHandlers() {
     }
 
     const liveUpdate = async (event) => {
-        const { fpToolsTheme = {} } = await browser.storage.local.get('fpToolsTheme');
+        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
         const newSettings = { ...DEFAULT_THEME, ...fpToolsTheme };
         const el = event.target;
 
@@ -665,7 +697,7 @@ function setupThemeCustomizationHandlers() {
             case 'scrollbarWidth': newSettings.scrollbarWidth = el.value; break;
         }
 
-        await browser.storage.local.set({ fpToolsTheme: newSettings });
+        await chrome.storage.local.set({ fpToolsTheme: newSettings });
         applyCustomTheme();
     };
 
@@ -688,12 +720,12 @@ function setupThemeCustomizationHandlers() {
     ];
     changeControls.forEach(id => {
         document.getElementById(id)?.addEventListener('change', async (event) => {
-            const { fpToolsTheme = {} } = await browser.storage.local.get('fpToolsTheme');
+            const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
             const newSettings = { ...DEFAULT_THEME, ...fpToolsTheme };
             let applyAll = true;
 
             if (id === 'enableCustomThemeCheckbox') {
-                await browser.storage.local.set({ enableCustomTheme: event.target.checked });
+                await chrome.storage.local.set({ enableCustomTheme: event.target.checked });
                 toggleThemeControls(!event.target.checked);
             } else if (id === 'bgImageInput') {
                  const file = event.target.files[0];
@@ -701,7 +733,7 @@ function setupThemeCustomizationHandlers() {
                  const reader = new FileReader();
                  reader.onload = async (readEvent) => {
                      newSettings.bgImage = readEvent.target.result;
-                     await browser.storage.local.set({ fpToolsTheme: newSettings });
+                     await chrome.storage.local.set({ fpToolsTheme: newSettings });
                      applyCustomTheme();
                      updateThemePreview();
                  };
@@ -726,7 +758,7 @@ function setupThemeCustomizationHandlers() {
                      document.getElementById('customScrollbarControls').style.display = event.target.checked ? 'block' : 'none';
                      newSettings.enableCustomScrollbar = event.target.checked;
                 }
-                await browser.storage.local.set({ fpToolsTheme: newSettings });
+                await chrome.storage.local.set({ fpToolsTheme: newSettings });
             }
 
             if(applyAll) {
@@ -738,7 +770,7 @@ function setupThemeCustomizationHandlers() {
     });
 
     document.getElementById('enableRedesignedHomepage')?.addEventListener('change', async (event) => {
-        await browser.storage.local.set({ enableRedesignedHomepage: event.target.checked });
+        await chrome.storage.local.set({ enableRedesignedHomepage: event.target.checked });
         showNotification('Настройка сохранена. Страница будет перезагружена.', false);
         setTimeout(() => window.location.reload(), 1500);
     });
@@ -756,10 +788,10 @@ function setupThemeCustomizationHandlers() {
     document.getElementById('uploadBgImageBtn')?.addEventListener('click', () => document.getElementById('bgImageInput').click());
 
     document.getElementById('removeBgImageBtn')?.addEventListener('click', async () => {
-         const { fpToolsTheme = {} } = await browser.storage.local.get('fpToolsTheme');
+         const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
          if (!fpToolsTheme.bgImage) return; 
          delete fpToolsTheme.bgImage;
-         await browser.storage.local.set({ fpToolsTheme: fpToolsTheme });
+         await chrome.storage.local.set({ fpToolsTheme: fpToolsTheme });
          applyCustomTheme();
          updateThemePreview();
          showNotification('Фоновое изображение удалено.');
@@ -767,8 +799,8 @@ function setupThemeCustomizationHandlers() {
 
     document.getElementById('resetThemeBtn')?.addEventListener('click', async () => {
         if (!confirm('Вы уверены, что хотите сбросить все настройки темы и оформления?')) return;
-        await browser.storage.local.remove('fpToolsTheme');
-        await browser.storage.local.set({ enableRedesignedHomepage: true });
+        await chrome.storage.local.remove('fpToolsTheme');
+        await chrome.storage.local.set({ enableRedesignedHomepage: true });
         applyCustomTheme();
         applyHeaderPosition();
         updateThemePreview();
@@ -788,4 +820,245 @@ function setupThemeCustomizationHandlers() {
     });
     document.getElementById('importThemeInput')?.addEventListener('change', importTheme);
     document.getElementById('generatePaletteBtn')?.addEventListener('click', generatePaletteFromImage);
+
+    setupFptMenuTransparency();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Прозрачное меню Foxen
+// ════════════════════════════════════════════════════════════════════════════
+
+// Применяет настройки прозрачности к окну .fp-tools-popup.
+// Может принять явные значения (из контролов) - иначе читает из storage.
+async function applyFptMenuTransparency(override) {
+    const popup = document.querySelector('.fp-tools-popup');
+    if (!popup) return;
+
+    let s;
+    if (override) {
+        s = override;
+    } else {
+        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+        s = { ...DEFAULT_THEME, ...fpToolsTheme };
+    }
+
+    if (s.menuTransparent) {
+        const alpha = Math.max(0, Math.min(100, parseFloat(s.menuOpacity))) / 100;
+        const tintC = s.menuTintColor || DEFAULT_THEME.menuTintColor;
+        popup.style.setProperty('--fpt-menu-bg', hexToRgba(tintC, alpha));
+        // кнопки боковой панели - на 2% плотнее самого меню (как просил пользователь)
+        popup.style.setProperty('--fpt-menu-navbtn', hexToRgba(tintC, Math.min(1, alpha + 0.02)));
+        // активный пункт - заметнее, на 8% плотнее
+        popup.style.setProperty('--fpt-menu-navactive', hexToRgba(tintC, Math.min(1, alpha + 0.08)));
+        popup.classList.add('fpt-menu-transparent');
+
+        // ЧИТАЕМОСТЬ: при 3% прозрачности на СВЕТЛОМ фоне (белая/выключенная тема)
+        // светлый текст меню сливается. Определяем яркость фона за меню и:
+        //   - на светлом фоне → тёмный текст меню + светлый скрим;
+        //   - на тёмном фоне → светлый текст + тёмный скрим.
+        // Скрим (var --fpt-menu-scrim) - тонкая контрастная подложка поверх блюра,
+        // чтобы текст читался при любой теме, не делая меню непрозрачным.
+        let lightBg = false;
+        try {
+            if (typeof fptResolveBg === 'function' && typeof fptLuma === 'function') {
+                lightBg = fptLuma(fptResolveBg()) >= 0.5;
+            }
+        } catch (_) {}
+        popup.classList.toggle('fpt-menu-on-light', lightBg);
+        popup.classList.toggle('fpt-menu-on-dark', !lightBg);
+        // скрим: на светлом - белесый, на тёмном - чёрный; даёт контраст тексту
+        popup.style.setProperty('--fpt-menu-scrim', lightBg ? 'rgba(245,245,250,0.80)' : 'rgba(15,16,22,0.45)');
+
+        if (s.menuBlurEnabled) {
+            popup.style.setProperty('--fpt-menu-blur', `${parseInt(s.menuBlur, 10) || 0}px`);
+            popup.classList.add('fpt-menu-blur');
+        } else {
+            popup.classList.remove('fpt-menu-blur');
+        }
+    } else {
+        popup.classList.remove('fpt-menu-transparent', 'fpt-menu-blur', 'fpt-menu-on-light', 'fpt-menu-on-dark');
+        popup.style.removeProperty('--fpt-menu-bg');
+        popup.style.removeProperty('--fpt-menu-navbtn');
+        popup.style.removeProperty('--fpt-menu-navactive');
+        popup.style.removeProperty('--fpt-menu-scrim');
+        popup.style.removeProperty('--fpt-menu-blur');
+    }
+}
+
+// Загружает значения в контролы и навешивает обработчики.
+// Из UI настраивается только ЦВЕТ; прозрачность и размытие фиксированы (дефолты).
+async function setupFptMenuTransparency() {
+    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const s = { ...DEFAULT_THEME, ...fpToolsTheme };
+
+    const enabled    = document.getElementById('fptMenuTransparentEnabled');
+    const controls   = document.getElementById('fptMenuTransparentControls');
+    const tint       = document.getElementById('fptMenuTintColor');
+    if (!enabled) return;
+
+    enabled.checked = !!s.menuTransparent;
+    if (controls) controls.style.display = s.menuTransparent ? 'block' : 'none';
+    if (tint) tint.value = s.menuTintColor || DEFAULT_THEME.menuTintColor;
+    // «Контур тексту» имеет смысл только при прозрачном меню - иначе скрываем весь блок.
+    const outlineGroup0 = document.getElementById('fptTextOutlineGroup');
+    if (outlineGroup0) outlineGroup0.style.display = s.menuTransparent ? '' : 'none';
+
+    applyFptMenuTransparency(s);
+
+    const save = async (patch) => {
+        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+        const next = { ...DEFAULT_THEME, ...fpToolsTheme, ...patch };
+        await chrome.storage.local.set({ fpToolsTheme: next });
+    };
+
+    enabled.addEventListener('change', (e) => {
+        if (controls) controls.style.display = e.target.checked ? 'block' : 'none';
+        const outlineGroup = document.getElementById('fptTextOutlineGroup');
+        if (outlineGroup) outlineGroup.style.display = e.target.checked ? '' : 'none';
+        applyFptMenuTransparency({ ...DEFAULT_THEME, ...s,
+            menuTransparent: e.target.checked,
+            menuTintColor: (tint && tint.value) || DEFAULT_THEME.menuTintColor });
+        save({ menuTransparent: e.target.checked });
+        // контур зависит от прозрачного меню - пересчитываем с актуальным состоянием
+        const oEnabled = document.getElementById('fptTextOutlineEnabled');
+        const oColor = document.getElementById('fptTextOutlineColor');
+        const oWidth = document.getElementById('fptTextOutlineWidth');
+        applyFptTextOutline({ ...DEFAULT_THEME, ...s,
+            menuTransparent: e.target.checked,
+            textOutlineEnabled: !!(oEnabled && oEnabled.checked),
+            textOutlineColor: (oColor && oColor.value) || '#000000',
+            textOutlineWidth: oWidth ? parseFloat(oWidth.value) : 1 });
+    });
+    tint?.addEventListener('input', () => {
+        applyFptMenuTransparency({ ...DEFAULT_THEME, ...s,
+            menuTransparent: enabled.checked, menuTintColor: tint.value });
+    });
+    tint?.addEventListener('change', () => save({ menuTintColor: tint.value }));
+
+    setupFptTextOutline();
+}
+
+// Пере-синхронизирует контролы из storage (вызывается при КАЖДОМ открытии меню),
+// чтобы галочки/цвета всегда отражали сохранённое состояние, даже если что-то
+// перетёрло DOM ранее.
+async function syncFptMenuControls() {
+    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const s = { ...DEFAULT_THEME, ...fpToolsTheme };
+
+    const enabled  = document.getElementById('fptMenuTransparentEnabled');
+    const controls = document.getElementById('fptMenuTransparentControls');
+    const tint     = document.getElementById('fptMenuTintColor');
+    if (enabled) enabled.checked = !!s.menuTransparent;
+    if (controls) controls.style.display = s.menuTransparent ? 'block' : 'none';
+    if (tint) tint.value = s.menuTintColor || DEFAULT_THEME.menuTintColor;
+    const outlineGroupSync = document.getElementById('fptTextOutlineGroup');
+    if (outlineGroupSync) outlineGroupSync.style.display = s.menuTransparent ? '' : 'none';
+
+    const oEn  = document.getElementById('fptTextOutlineEnabled');
+    const oCtl = document.getElementById('fptTextOutlineControls');
+    const oCol = document.getElementById('fptTextOutlineColor');
+    const oW   = document.getElementById('fptTextOutlineWidth');
+    const oWV  = document.getElementById('fptTextOutlineWidthValue');
+    if (oEn) oEn.checked = !!s.textOutlineEnabled;
+    if (oCtl) oCtl.style.display = s.textOutlineEnabled ? 'block' : 'none';
+    if (oCol) oCol.value = s.textOutlineColor || '#000000';
+    if (oW) oW.value = s.textOutlineWidth;
+    if (oWV) oWV.textContent = `${s.textOutlineWidth}px`;
+
+    applyFptMenuTransparency(s);
+}
+
+// ── Контур тексту ───────────────────────────────────────────────────────────
+// Обводит все буквы на странице контуром заданного цвета/толщины (text-shadow в
+// 4 стороны - надёжнее, чем -webkit-text-stroke, и не «съедает» сам глиф).
+async function applyFptTextOutline(override) {
+    let s = override;
+    if (!s) {
+        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+        s = { ...DEFAULT_THEME, ...fpToolsTheme };
+    }
+    const STYLE_ID = 'fpt-text-outline-style';
+    let styleEl = document.getElementById(STYLE_ID);
+
+    // menuTransparent в override может быть устаревшим (снимок на момент инициализации).
+    // Берём актуальное состояние из живого чекбокса, если он есть.
+    const liveTranspEl = document.getElementById('fptMenuTransparentEnabled');
+    const menuTransparent = liveTranspEl ? liveTranspEl.checked : !!s.menuTransparent;
+
+    // Контур работает ТОЛЬКО в меню Foxen и ТОЛЬКО когда включено прозрачное меню.
+    if (!s.textOutlineEnabled || !menuTransparent) {
+        if (styleEl) styleEl.remove();
+        return;
+    }
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = STYLE_ID;
+        document.head.appendChild(styleEl);
+    }
+    const w = Math.max(0, parseFloat(s.textOutlineWidth) || 0);
+    const c = s.textOutlineColor || '#000000';
+    if (w <= 0) { if (styleEl) styleEl.textContent = ''; return; }
+    // Надёжный контур через text-shadow в 8 направлений - рендерится всегда,
+    // в отличие от -webkit-text-stroke (который местами не виден). Шаг = ширина.
+    const o = w.toFixed(2);
+    const shadow = [
+        `${o}px 0 0 ${c}`, `-${o}px 0 0 ${c}`, `0 ${o}px 0 ${c}`, `0 -${o}px 0 ${c}`,
+        `${o}px ${o}px 0 ${c}`, `-${o}px -${o}px 0 ${c}`, `${o}px -${o}px 0 ${c}`, `-${o}px ${o}px 0 ${c}`
+    ].join(', ');
+    styleEl.textContent = `
+        .fp-tools-popup h1, .fp-tools-popup h2, .fp-tools-popup h3, .fp-tools-popup h4,
+        .fp-tools-popup h5, .fp-tools-popup p, .fp-tools-popup span:not(.material-symbols-rounded):not(.material-icons):not(.nav-icon),
+        .fp-tools-popup label, .fp-tools-popup a, .fp-tools-popup li, .fp-tools-popup small,
+        .fp-tools-popup .range-label, .fp-tools-popup b, .fp-tools-popup strong, .fp-tools-popup code {
+            text-shadow: ${shadow} !important;
+        }
+        /* у инпутов/иконок контур не нужен */
+        .fp-tools-popup input, .fp-tools-popup textarea, .fp-tools-popup select,
+        .fp-tools-popup .material-symbols-rounded, .fp-tools-popup .material-icons,
+        .fp-tools-popup .nav-icon {
+            text-shadow: none !important;
+        }
+    `;
+}
+
+async function setupFptTextOutline() {
+    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const s = { ...DEFAULT_THEME, ...fpToolsTheme };
+
+    const enabled  = document.getElementById('fptTextOutlineEnabled');
+    const controls = document.getElementById('fptTextOutlineControls');
+    const color    = document.getElementById('fptTextOutlineColor');
+    const width    = document.getElementById('fptTextOutlineWidth');
+    const widthVal = document.getElementById('fptTextOutlineWidthValue');
+    if (!enabled) return;
+
+    enabled.checked = !!s.textOutlineEnabled;
+    if (controls) controls.style.display = s.textOutlineEnabled ? 'block' : 'none';
+    if (color) color.value = s.textOutlineColor || '#000000';
+    if (width) width.value = s.textOutlineWidth;
+    if (widthVal) widthVal.textContent = `${s.textOutlineWidth}px`;
+
+    applyFptTextOutline(s);
+
+    const read = () => ({
+        textOutlineEnabled: !!enabled.checked,
+        textOutlineColor: (color && color.value) || '#000000',
+        textOutlineWidth: width ? parseFloat(width.value) : 1
+    });
+    const save = async () => {
+        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+        await chrome.storage.local.set({ fpToolsTheme: { ...DEFAULT_THEME, ...fpToolsTheme, ...read() } });
+    };
+
+    enabled.addEventListener('change', (e) => {
+        if (controls) controls.style.display = e.target.checked ? 'block' : 'none';
+        applyFptTextOutline({ ...DEFAULT_THEME, ...s, ...read() }); save();
+    });
+    color?.addEventListener('input', () => applyFptTextOutline({ ...DEFAULT_THEME, ...s, ...read() }));
+    color?.addEventListener('change', save);
+    width?.addEventListener('input', (e) => {
+        if (widthVal) widthVal.textContent = `${e.target.value}px`;
+        applyFptTextOutline({ ...DEFAULT_THEME, ...s, ...read() });
+    });
+    width?.addEventListener('change', save);
 }

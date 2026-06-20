@@ -1,16 +1,16 @@
 document.addEventListener('DOMContentLoaded', async function () {
 
-    // ─── Версия ───────────────────────────────────────────────────
-    const manifest = browser.runtime.getManifest();
+    // ─── Version ────────────────────────────────────────────────────
+    const manifest = chrome.runtime.getManifest();
     const version = manifest.version;
     const versionEl = document.getElementById('version-display');
     const footerVerEl = document.getElementById('footer-version');
     if (versionEl)   versionEl.textContent   = `v${version}`;
     if (footerVerEl) footerVerEl.textContent  = version;
 
-    // ─── Статус: проверка открытой вкладки FunPay + авторизации ───
+    // ─── Status dot: check if FunPay tab is open + user is logged in ─
     const statusDot = document.getElementById('status-dot');
-    browser.tabs.query({ url: 'https://funpay.com/*' }, (tabs) => {
+    chrome.tabs.query({ url: 'https://funpay.com/*' }, (tabs) => {
         if (tabs.length > 0) {
             statusDot.classList.add('online');
             statusDot.title = 'FunPay открыт';
@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     });
 
-    // ─── Краткая статистика ───────────────────────────────────────
-    browser.storage.local.get(['fpToolsAutoReplies', 'autoBumpEnabled'], (data) => {
+    // ─── Quick stats ─────────────────────────────────────────────────
+    chrome.storage.local.get(['fpToolsAutoReplies', 'autoBumpEnabled'], (data) => {
         const autoReplies = data.fpToolsAutoReplies || {};
         const anyAR = autoReplies.greetingEnabled
             || autoReplies.keywordsEnabled
@@ -44,28 +44,35 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     });
 
-    // ─── Кнопка перехода на FunPay ────────────────────────────────
+    // ─── CTA button ──────────────────────────────────────────────────
     document.getElementById('goToFunPayBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        browser.tabs.query({ url: 'https://funpay.com/*' }, (tabs) => {
+        chrome.tabs.query({ url: 'https://funpay.com/*' }, (tabs) => {
             if (tabs.length > 0) {
-                browser.tabs.update(tabs[0].id, { active: true });
-                browser.windows.update(tabs[0].windowId, { focused: true });
+                chrome.tabs.update(tabs[0].id, { active: true });
+                chrome.windows.update(tabs[0].windowId, { focused: true });
             } else {
-                browser.tabs.create({ url: 'https://funpay.com/' });
+                chrome.tabs.create({ url: 'https://funpay.com/' });
             }
             window.close();
         });
     });
 
-    // ─── Ссылка на GitHub ─────────────────────────────────────────
-    document.getElementById('forkBtn')?.addEventListener('click', (e) => {
+    // ─── Telegram ────────────────────────────────────────────────────
+    document.getElementById('telegramBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        browser.tabs.create({ url: 'https://github.com/SanoSenpay' });
+        chrome.tabs.create({ url: 'https://t.me/FPTools' });
         window.close();
     });
 
-    // ─── Панель списка изменений ──────────────────────────────────
+    // ─── Review ──────────────────────────────────────────────────────
+    document.getElementById('reviewBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        chrome.tabs.create({ url: 'https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb/reviews' });
+        window.close();
+    });
+
+    // ─── Changelog toggle ────────────────────────────────────────────
     const changelogPanel = document.getElementById('changelog-panel');
     document.getElementById('changelogBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -79,11 +86,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (changelogPanel) changelogPanel.style.display = 'none';
     });
 
-    // Автоматический показ списка изменений при обновлении версии
-    browser.storage.local.get('fpToolsLastSeenVersion', ({ fpToolsLastSeenVersion }) => {
+    // Auto-show changelog once for new version
+    chrome.storage.local.get('fpToolsLastSeenVersion', ({ fpToolsLastSeenVersion }) => {
         if (fpToolsLastSeenVersion !== version) {
             if (changelogPanel) changelogPanel.style.display = 'block';
-            browser.storage.local.set({ fpToolsLastSeenVersion: version });
+            chrome.storage.local.set({ fpToolsLastSeenVersion: version });
         }
     });
 });

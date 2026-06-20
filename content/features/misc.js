@@ -20,11 +20,28 @@ function initializeCalculatorLogic() {
         waitingForSecondOperand: false,
     };
 
+    // 3.0 FIX: при огромных числах дисплей раньше скроллился/обрезался - теперь
+    // шрифт автоматически уменьшается по ширине (строка одна, высота фиксирована).
+    const groupSep = /\B(?=(\d{3})+(?!\d))/g;
+    let lastShown = null;
+    function fitFont() {
+        const box = display;
+        let size = 64;
+        box.style.fontSize = size + 'px';
+        // уменьшаем, пока строка не влезет по ширине; обычно 0-3 итерации
+        let guard = 0;
+        while (box.scrollWidth > box.clientWidth && size > 14 && guard < 40) {
+            size -= (size > 30 ? 4 : 2);
+            box.style.fontSize = size + 'px';
+            guard++;
+        }
+    }
+
     function updateDisplay() {
-        const firstOperandFormatted = state.firstOperand !== null 
-            ? String(state.firstOperand).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') 
+        const firstOperandFormatted = state.firstOperand !== null
+            ? String(state.firstOperand).replace(groupSep, ' ')
             : '';
-        const displayValueFormatted = state.displayValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        const displayValueFormatted = state.displayValue.replace(groupSep, ' ');
 
         let textToShow;
         if (state.operator && !state.waitingForSecondOperand) {
@@ -34,7 +51,10 @@ function initializeCalculatorLogic() {
         } else {
             textToShow = displayValueFormatted;
         }
+        if (textToShow === lastShown) return; // ничего не изменилось - не трогаем DOM
+        lastShown = textToShow;
         display.textContent = textToShow;
+        fitFont();
     }
 
     function resetCalculator() {
@@ -71,7 +91,7 @@ function initializeCalculatorLogic() {
 
         if (state.operator && !state.waitingForSecondOperand) {
             const result = calculate(state.firstOperand, inputValue, state.operator);
-            state.displayValue = `${parseFloat(result.toFixed(7))}`;
+            state.displayValue = fmtResult(result);
             state.firstOperand = result;
         } else {
             state.firstOperand = inputValue;
@@ -87,6 +107,17 @@ function initializeCalculatorLogic() {
         if (op === 'multiply') return first * second;
         if (op === 'divide') return first / second;
         return second;
+    }
+
+    // 3.0: безопасно превращает результат в строку. Очень большие/маленькие числа
+    // (которые раньше ломали дисплей) показываем в компактном виде, без мусорных нулей.
+    function fmtResult(num) {
+        if (!isFinite(num)) return 'Ошибка';
+        const abs = Math.abs(num);
+        if (abs !== 0 && (abs >= 1e15 || abs < 1e-7)) {
+            return num.toExponential(6).replace(/\.?0+e/, 'e');
+        }
+        return `${parseFloat(num.toFixed(7))}`;
     }
 
     keys.addEventListener('click', (event) => {
@@ -119,7 +150,7 @@ function initializeCalculatorLogic() {
         if (target.dataset.action === 'calculate') {
             if (state.operator && !state.waitingForSecondOperand) {
                 const result = calculate(state.firstOperand, parseFloat(state.displayValue), state.operator);
-                state.displayValue = `${parseFloat(result.toFixed(7))}`;
+                state.displayValue = fmtResult(result);
                 state.firstOperand = null;
                 state.operator = null;
                 state.waitingForSecondOperand = true;
@@ -142,6 +173,75 @@ function initializeCalculatorLogic() {
 
     resetCalculator();
     calculator.dataset.initialized = 'true';
+
+    initializeCalcSubtabs();
+}
+
+// 3.0: подвкладки калькулятора (Обычный / Временной) + «временной» режим.
+// Подаётся как калькулятор: никаких упоминаний ИИ в интерфейсе.
+function initializeCalcSubtabs() {
+    const page = document.querySelector('.fp-tools-page-content[data-page="calculator"]');
+    if (!page || page.dataset.subtabsInit) return;
+
+    const tabs = page.querySelectorAll('.calc-subtab');
+    const panes = page.querySelectorAll('.calc-pane');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const mode = tab.dataset.calcMode;
+            tabs.forEach(t => t.classList.toggle('is-active', t === tab));
+            panes.forEach(p => { p.hidden = p.dataset.calcPane !== mode; });
+        });
+    });
+
+    const input = page.querySelector('#calcTimeInput');
+    const btn = page.querySelector('#calcTimeBtn');
+    const resultBox = page.querySelector('#calcTimeResult');
+    if (btn && input && resultBox) {
+        const run = async () => {
+            const text = input.value.trim();
+            if (!text) { input.focus(); return; }
+            btn.disabled = true;
+            resultBox.hidden = false;
+            resultBox.classList.remove('is-error');
+            resultBox.innerHTML = '<div class="calc-time-head"><span class="calc-time-loader"></span> Считаю</div>';
+            try {
+                const res = await chrome.runtime.sendMessage({
+                    action: 'getAIProcessedText',
+                    text,
+                    context: '',
+                    myUsername: '',
+                    type: 'time_calc'
+                });
+                if (res && res.success) {
+                    resultBox.classList.remove('is-error');
+                    resultBox.innerHTML =
+                        '<div class="calc-time-head"><span class="material-symbols-rounded">schedule</span> Результат</div>' +
+                        '<div class="calc-time-body"></div>';
+                    resultBox.querySelector('.calc-time-body').textContent = res.data;
+                } else {
+                    resultBox.classList.add('is-error');
+                    resultBox.innerHTML =
+                        '<div class="calc-time-head"><span class="material-symbols-rounded">error</span> Ошибка</div>' +
+                        '<div class="calc-time-body"></div>';
+                    resultBox.querySelector('.calc-time-body').textContent =
+                        (res && res.error) || 'Не удалось посчитать. Попробуйте ещё раз.';
+                }
+            } catch (e) {
+                resultBox.classList.add('is-error');
+                resultBox.innerHTML =
+                    '<div class="calc-time-head"><span class="material-symbols-rounded">error</span> Ошибка</div>' +
+                    '<div class="calc-time-body">Не удалось посчитать. Попробуйте ещё раз.</div>';
+            } finally {
+                btn.disabled = false;
+            }
+        };
+        btn.addEventListener('click', run);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); run(); }
+        });
+    }
+
+    page.dataset.subtabsInit = 'true';
 }
 
 
@@ -156,7 +256,7 @@ function initializeToolsPopup() {
             popup.classList.remove('active');
         });
     }
-    const saveAllPopupSettings = async () => {
+    const saveAllPopupSettings = async (silent = false) => {
         try {
             const selectedSound = document.querySelector('input[name="notificationSound"]:checked');
             
@@ -168,25 +268,47 @@ function initializeToolsPopup() {
                 '2': document.getElementById('fpt-review-2').value,
                 '1': document.getElementById('fpt-review-1').value
             };
-            
+
+            // helper: read attached images from a textarea (stored on dataset by the chip UI)
+            const readImgs = (id) => {
+                const el = document.getElementById(id);
+                if (!el || !el.dataset.fptImages) return [];
+                try { return JSON.parse(el.dataset.fptImages) || []; } catch (_) { return []; }
+            };
+            // helper: read the per-field send order (text→image vs image→text)
+            const readOrder = (id) => {
+                const el = document.getElementById(id);
+                return (el && el.dataset.fptSendOrder === 'image_first') ? 'image_first' : 'text_first';
+            };
+            const reviewTemplateImages = {
+                '5': readImgs('fpt-review-5'), '4': readImgs('fpt-review-4'),
+                '3': readImgs('fpt-review-3'), '2': readImgs('fpt-review-2'), '1': readImgs('fpt-review-1')
+            };
+
             const settingsToSave = {
                 // Общие настройки
                 showSalesStats: document.getElementById('showSalesStatsCheckbox').checked,
+                showFinanceStats: document.getElementById('showFinanceStatsCheckbox')?.checked !== false,
                 hideBalance: document.getElementById('hideBalanceCheckbox').checked,
                 viewSellersPromo: document.getElementById('viewSellersPromoCheckbox').checked,
                 notificationSound: selectedSound ? selectedSound.value : 'default',
+                notificationVolume: (function(){ const v = document.getElementById('notificationVolume'); return v ? (parseInt(v.value,10)/100) : 1; })(),
 
                 // Авто-поднятие
                 autoBumpEnabled: document.getElementById('autoBumpEnabled').checked,
                 autoBumpCooldown: parseInt(document.getElementById('autoBumpCooldown').value, 10) || 245,
                 fpToolsSelectiveBumpEnabled: document.getElementById('selectiveBumpEnabled').checked,
-                fpToolsBumpOnlyAutoDelivery: document.getElementById('bumpOnlyAutoDelivery').checked, // --- НОВАЯ СТРОКА ---
-                
+                fpToolsBumpOnlyAutoDelivery: document.getElementById('bumpOnlyAutoDelivery').checked,
+                fpToolsSmartBumpEnabled: (document.getElementById('fpToolsSmartBumpEnabled') ? document.getElementById('fpToolsSmartBumpEnabled').checked : false),
+
                 // Авто-ответы (добавленный блок)
                 autoReviewEnabled: document.getElementById('autoReviewEnabled').checked,
                 reviewTemplates: reviewTemplates,
+                reviewTemplateImages: reviewTemplateImages,
                 greetingEnabled: document.getElementById('greetingEnabled').checked,
                 greetingText: document.getElementById('greetingText').value,
+                greetingImages: readImgs('greetingText'),
+                greetingSendOrder: readOrder('greetingText'),
                 keywordsEnabled: document.getElementById('keywordsEnabled').checked,
                 // 'keywords' сохраняются отдельно при добавлении/удалении и здесь не нужны
 
@@ -194,29 +316,32 @@ function initializeToolsPopup() {
                 fpToolsIdentifierEnabled: document.getElementById('fptIdentifierEnabled')?.checked !== false,
 
                 // 2.9: New toggles
-                fpToolsShowPaymentType:  document.getElementById('fpToolsShowPaymentType')?.checked !== false,
                 fpToolsBuyerHistory:     document.getElementById('fpToolsBuyerHistory')?.checked !== false,
                 fpToolsShowUnconfirmed:  document.getElementById('fpToolsShowUnconfirmed')?.checked !== false
             };
 
             // 3.0: Extended autoresponder settings
-            const existingAR = (await browser.storage.local.get('fpToolsAutoReplies')).fpToolsAutoReplies || {};
+            const existingAR = (await chrome.storage.local.get('fpToolsAutoReplies')).fpToolsAutoReplies || {};
             const arExtras = {
                 ...existingAR,
                 newOrderReplyEnabled:    document.getElementById('newOrderReplyEnabled')?.checked ?? false,
                 newOrderReplyText:       document.getElementById('newOrderReplyText')?.value || '',
+                newOrderReplyImages:     readImgs('newOrderReplyText'),
+                newOrderReplySendOrder:  readOrder('newOrderReplyText'),
                 orderConfirmReplyEnabled: document.getElementById('orderConfirmReplyEnabled')?.checked ?? false,
                 orderConfirmReplyText:   document.getElementById('orderConfirmReplyText')?.value || '',
+                orderConfirmReplyImages: readImgs('orderConfirmReplyText'),
+                orderConfirmReplySendOrder: readOrder('orderConfirmReplyText'),
                 typingDelay:             document.getElementById('typingDelay')?.checked ?? false,
                 onlyNewChats:            document.getElementById('onlyNewChats')?.checked ?? false,
                 ignoreSystemMessages:    document.getElementById('ignoreSystemMessages')?.checked ?? false,
                 greetingCooldownDays:    parseFloat(document.getElementById('greetingCooldownDays')?.value || '0'),
             };
-            browser.storage.local.set({ fpToolsAutoReplies: arExtras });
+            chrome.storage.local.set({ fpToolsAutoReplies: arExtras });
 
             // 3.0: Auto-restore/disable, review request template
             const reviewTpl = document.getElementById('reviewRequestTemplate')?.value || '';
-            browser.storage.local.set({
+            chrome.storage.local.set({
                 fpToolsAutoRestoreEnabled: document.getElementById('fpAutoRestoreEnabled')?.checked ?? false,
                 fpToolsAutoDisableEnabled: document.getElementById('fpAutoDisableEnabled')?.checked ?? false,
                 fpToolsReviewRequestTemplate: reviewTpl
@@ -225,9 +350,9 @@ function initializeToolsPopup() {
             // Save review request template separately (it's in auto_review section)
             const rrTemplate = document.getElementById('fp-review-request-template')?.value?.trim();
             if (rrTemplate !== undefined) {
-                const { fpToolsAutoReplies: curAR = {} } = await browser.storage.local.get('fpToolsAutoReplies');
+                const { fpToolsAutoReplies: curAR = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
                 curAR.reviewRequestTemplate = rrTemplate;
-                await browser.storage.local.set({ fpToolsAutoReplies: curAR });
+                await chrome.storage.local.set({ fpToolsAutoReplies: curAR });
             }
 
             settingsToSave.fpToolsDiscord = {
@@ -237,14 +362,14 @@ function initializeToolsPopup() {
                 pingHere: document.getElementById('discordPingHere').checked
             };
             
-            await browser.storage.local.set(settingsToSave);
+            await chrome.storage.local.set(settingsToSave);
 
             applyNotificationSound();
 
             if (settingsToSave.autoBumpEnabled) {
-                browser.runtime.sendMessage({ action: 'startAutoBump', cooldown: settingsToSave.autoBumpCooldown });
+                chrome.runtime.sendMessage({ action: 'startAutoBump', cooldown: settingsToSave.autoBumpCooldown });
             } else {
-                browser.runtime.sendMessage({ action: 'stopAutoBump' });
+                chrome.runtime.sendMessage({ action: 'stopAutoBump' });
             }
             
             // Перезапускаем мониторинг отзывов, если настройка изменилась
@@ -252,137 +377,40 @@ function initializeToolsPopup() {
                 initializeAutoReview();
             }
 
-            popup.classList.remove('active');
-            showNotification('Настройки сохранены!');
+            // 3.0: silent autosave must NOT close the menu or spam notifications.
+            if (!silent) {
+                popup.classList.remove('active');
+                showNotification('Настройки сохранены!');
+            }
         } catch (error) {
-            console.error('FP Tools: Ошибка при сохранении настроек:', error);
-            showNotification('Ошибка при сохранении настроек.', true);
+            console.error('Foxen: Ошибка при сохранении настроек:', error);
+            if (!silent) showNotification('Ошибка при сохранении настроек.', true);
         }
     };
 
     const saveBtn = document.getElementById('saveSettings');
     if (saveBtn) {
-        saveBtn.addEventListener('click', saveAllPopupSettings);
+        saveBtn.addEventListener('click', () => saveAllPopupSettings(false));
     }
 
-    // ── Custom notification sound (file) UI + sound previews ─────────
-    const customSoundBlock = document.getElementById('notificationCustomSoundBlock');
-    const testSoundBtn = document.getElementById('testNotificationSoundBtn');
-    const clearSoundBtn = document.getElementById('clearNotificationSoundUrlBtn');
-    const uploadSoundBtn = document.getElementById('uploadNotificationSoundBtn');
-    const soundFileInput = document.getElementById('notificationSoundFileInput');
-    const soundRadios = Array.from(document.querySelectorAll('input[name="notificationSound"]'));
-
-    const toggleCustomSoundBlock = () => {
-        const selected = document.querySelector('input[name="notificationSound"]:checked')?.value || 'default';
-        if (customSoundBlock) customSoundBlock.style.display = selected === 'custom' ? 'block' : 'none';
-    };
-
-    soundRadios.forEach(r => r.addEventListener('change', toggleCustomSoundBlock));
-    toggleCustomSoundBlock();
-
-    const soundMap = { vk: 'vk.mp3', tg: 'tg.mp3', iphone: 'iphone.mp3', discord: 'discord.mp3', whatsapp: 'whatsapp.mp3' };
-
-    async function playPreviewForSelection(value) {
-        try {
-            if (!value || value === 'default') {
-                const a = new Audio('https://funpay.com/audio/chat_loud.mp3');
-                a.volume = 1;
-                await a.play();
-                return;
+    // 3.0: GLOBAL AUTOSAVE. The save footer is removed; every change in the popup now persists
+    // automatically (debounced). We listen at the popup root via delegation so dynamically
+    // added controls are covered too.
+    const popupRoot = document.querySelector('.fp-tools-popup');
+    if (popupRoot && !popupRoot.dataset.fptAutosave) {
+        popupRoot.dataset.fptAutosave = '1';
+        let autosaveTimer = null;
+        const queueAutosave = () => {
+            if (!fptExtAlive || fptExtAlive()) {
+                if (autosaveTimer) clearTimeout(autosaveTimer);
+                autosaveTimer = setTimeout(() => { saveAllPopupSettings(true); }, 500);
             }
-            if (value === 'custom') {
-                const { notificationSoundDataUrl } = await browser.storage.local.get('notificationSoundDataUrl');
-                const dataUrl = String(notificationSoundDataUrl || '').trim();
-                if (!dataUrl.startsWith('data:audio/')) {
-                    showNotification('Сначала загрузите файл звука.', true);
-                    return;
-                }
-                const a = new Audio(dataUrl);
-                a.volume = 1;
-                await a.play();
-                return;
-            }
-            const file = soundMap[value];
-            if (!file) return;
-            const a = new Audio(browser.runtime.getURL(`sounds/${file}`));
-            a.volume = 1;
-            await a.play();
-        } catch (e) {
-            showNotification('Не удалось воспроизвести звук.', true);
-        }
+        };
+        // 'change' covers checkboxes/radios/selects/color inputs; 'input' covers text/textarea/range.
+        popupRoot.addEventListener('change', queueAutosave, true);
+        popupRoot.addEventListener('input', queueAutosave, true);
+        popupRoot.addEventListener('fpt-attachment-changed', queueAutosave, true);
     }
-
-    testSoundBtn?.addEventListener('click', async () => {
-        const selected = document.querySelector('input[name="notificationSound"]:checked')?.value || 'default';
-        await playPreviewForSelection(selected);
-    });
-
-    clearSoundBtn?.addEventListener('click', async () => {
-        await browser.storage.local.set({ notificationSoundDataUrl: '' });
-        showNotification('Загруженный звук очищен ✓');
-    });
-
-    uploadSoundBtn?.addEventListener('click', () => soundFileInput?.click());
-
-    soundFileInput?.addEventListener('change', async (e) => {
-        const file = e.target.files?.[0];
-        soundFileInput.value = '';
-        if (!file) return;
-
-        const allowed = ['audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/x-wav', 'audio/mp3'];
-        const maxBytes = 500 * 1024; // 500 KB
-        if (file.size > maxBytes) {
-            showNotification('Файл слишком большой (макс. 500 КБ).', true);
-            return;
-        }
-        if (file.type && !allowed.includes(file.type)) {
-            showNotification('Неподдерживаемый формат. Используйте mp3/ogg/wav.', true);
-            return;
-        }
-
-        try {
-            const dataUrl = await new Promise((resolve, reject) => {
-                const r = new FileReader();
-                r.onload = () => resolve(String(r.result || ''));
-                r.onerror = () => reject(new Error('read failed'));
-                r.readAsDataURL(file);
-            });
-
-            if (!String(dataUrl).startsWith('data:audio/')) {
-                showNotification('Не удалось распознать аудио-файл.', true);
-                return;
-            }
-
-            await browser.storage.local.set({
-                notificationSound: 'custom',
-                notificationSoundDataUrl: dataUrl
-            });
-
-            // Also reflect radio state in UI
-            const customRadio = document.querySelector('input[name="notificationSound"][value="custom"]');
-            if (customRadio) customRadio.checked = true;
-            toggleCustomSoundBlock();
-
-            // Apply immediately
-            if (typeof applyNotificationSound === 'function') {
-                await applyNotificationSound();
-            }
-
-            showNotification('Звук загружен ✓');
-        } catch (err) {
-            showNotification('Не удалось загрузить звук.', true);
-        }
-    });
-
-    // Preview built-in sounds on click/change, and apply immediately
-    soundRadios.forEach(r => r.addEventListener('change', async (e) => {
-        const val = e.target?.value;
-        // Apply immediately so FunPay notification uses this sound right away
-        await browser.storage.local.set({ notificationSound: val });
-        if (typeof applyNotificationSound === 'function') await applyNotificationSound();
-        await playPreviewForSelection(val);
-    }));
     
     const bgInfoToggle = document.getElementById('bgImageInfoToggle');
     if (bgInfoToggle) {
@@ -402,8 +430,8 @@ function initializeToolsPopup() {
     if (resetThemeBtn) {
         resetThemeBtn.addEventListener('click', async () => {
             if (confirm('Вы уверены, что хотите сбросить все настройки темы и оформления?')) {
-                await browser.storage.local.remove('fpToolsTheme');
-                await browser.storage.local.set({ enableRedesignedHomepage: true });
+                await chrome.storage.local.remove('fpToolsTheme');
+                await chrome.storage.local.set({ enableRedesignedHomepage: true });
                 applyCustomTheme();
                 applyHeaderPosition();
                 await updateThemePreview();
@@ -417,7 +445,7 @@ function initializeToolsPopup() {
     if (resetCursorFxBtn) {
         resetCursorFxBtn.addEventListener('click', async () => {
              if (confirm('Вы уверены, что хотите сбросить настройки эффектов курсора?')) {
-                await browser.storage.local.remove('fpToolsCursorFx');
+                await chrome.storage.local.remove('fpToolsCursorFx');
                 await loadSavedSettings();
                 showNotification('Настройки эффектов курсора сброшены.');
             }
@@ -433,10 +461,10 @@ function initializeToolsPopup() {
         listContainer.innerHTML = '<div class="fp-import-loader"></div>';
 
         try {
-            const response = await browser.runtime.sendMessage({ action: 'getUserCategories' });
+            const response = await chrome.runtime.sendMessage({ action: 'getUserCategories' });
             if (!response.success) throw new Error(response.error);
             const categories = response.data;
-            const { fpToolsSelectedBumpCategories = [] } = await browser.storage.local.get('fpToolsSelectedBumpCategories');
+            const { fpToolsSelectedBumpCategories = [] } = await chrome.storage.local.get('fpToolsSelectedBumpCategories');
             
             if (categories && categories.length > 0) {
                 listContainer.innerHTML = categories.map(cat => `
@@ -479,7 +507,7 @@ function initializeToolsPopup() {
     document.getElementById('autobump-category-save').addEventListener('click', async () => {
         const selectedIds = Array.from(document.querySelectorAll('#autobump-category-list input:checked'))
                                 .map(cb => cb.dataset.id);
-        await browser.storage.local.set({ fpToolsSelectedBumpCategories: selectedIds });
+        await chrome.storage.local.set({ fpToolsSelectedBumpCategories: selectedIds });
         modalOverlay.style.display = 'none';
         showNotification('Список категорий для поднятия сохранен!', false);
     });
@@ -498,7 +526,7 @@ function initializeToolsPopup() {
     if (typeof initializeNotes === 'function') initializeNotes();
 
     popup.dataset.initialized = 'true';
-    console.log('FP Tools Popup Initialized.');
+    console.log('Foxen Popup Initialized.');
 }
 
 function logToAutoBumpConsole(message) {
@@ -550,12 +578,12 @@ async function initializeQuickGamesMenu() {
     const inputField = gameDropdownItem.querySelector('#quickGameUrlInput');
 
     const getSavedGames = async () => {
-        const data = await browser.storage.local.get('fpToolsQuickGames');
+        const data = await chrome.storage.local.get('fpToolsQuickGames');
         return data.fpToolsQuickGames || [];
     };
 
     const saveGames = async (games) => {
-        await browser.storage.local.set({ fpToolsQuickGames: games });
+        await chrome.storage.local.set({ fpToolsQuickGames: games });
     };
 
     const renderList = (games) => {
@@ -665,7 +693,7 @@ function initializeMarkAllAsRead() {
             class: 'fp-tooltip-host',
             'data-fp-tooltip': 'Прочитать все'
         });
-        readAllBtn.innerHTML = '<span class="material-icons">mark_chat_read</span>';
+        readAllBtn.innerHTML = '<span class="material-icons">done_all</span>';
         
         const filterMarkedBtn = createElement('label', {
             id: 'fp-tools-filter-marked-btn',
@@ -730,7 +758,7 @@ function initializeMarkAllAsRead() {
                     await fetch(chatUrl);
                     processedCount++;
                 } catch (error) {
-                    console.error(`FP Tools: Ошибка при "посещении" чата ${nodeId} для прочтения`, error);
+                    console.error(`Foxen: Ошибка при "посещении" чата ${nodeId} для прочтения`, error);
                     // We don't re-add the nodeId to the list to avoid getting stuck on a failing one.
                 }
 
@@ -754,16 +782,19 @@ function initializeMarkAllAsRead() {
         };
 
         filterCheckbox.addEventListener('change', async () => {
-            await browser.storage.local.set({ fpToolsIsMarkedFilterActive: filterCheckbox.checked });
+            if (!fptExtAlive()) return;
+            await fptSafe(() => chrome.storage.local.set({ fpToolsIsMarkedFilterActive: filterCheckbox.checked }));
             applyMarkedFilter();
         });
 
-        browser.storage.local.get('fpToolsIsMarkedFilterActive').then(data => {
-            if (data.fpToolsIsMarkedFilterActive) {
-                filterCheckbox.checked = true;
-                applyMarkedFilter();
-            }
-        });
+        if (fptExtAlive()) {
+            fptSafe(() => chrome.storage.local.get('fpToolsIsMarkedFilterActive'), {}).then(data => {
+                if (data && data.fpToolsIsMarkedFilterActive) {
+                    filterCheckbox.checked = true;
+                    applyMarkedFilter();
+                }
+            });
+        }
         
         const contactList = document.querySelector('.contact-list');
         if (contactList) {
@@ -772,6 +803,10 @@ function initializeMarkAllAsRead() {
             });
             filterObserver.observe(contactList, { childList: true, subtree: true });
         }
+
+        // 3.0: stop the outer observer once our controls exist - it observed the whole body
+        // subtree forever, which was a constant performance drain on the chat page.
+        obs.disconnect();
     });
 
     observer.observe(document.body, { childList: true, subtree: true });

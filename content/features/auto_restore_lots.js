@@ -1,6 +1,6 @@
 async function checkAndRestoreLots() {
     const { fpToolsAutoRestoreEnabled, fpToolsAutoDisableEnabled } =
-        await browser.storage.local.get(['fpToolsAutoRestoreEnabled', 'fpToolsAutoDisableEnabled']);
+        await chrome.storage.local.get(['fpToolsAutoRestoreEnabled', 'fpToolsAutoDisableEnabled']);
 
     if (!fpToolsAutoRestoreEnabled && !fpToolsAutoDisableEnabled) return;
 
@@ -17,7 +17,7 @@ async function checkAndRestoreLots() {
 
         
         const lots = await new Promise((resolve) => {
-            browser.runtime.sendMessage({ action: 'getUserLotsList', userId }, (res) => {
+            chrome.runtime.sendMessage({ action: 'getUserLotsList', userId }, (res) => {
                 resolve(res || []);
             });
         });
@@ -25,7 +25,7 @@ async function checkAndRestoreLots() {
         if (!lots.length) return;
 
         
-        const { fpToolsAutoDeliveryLots = {} } = await browser.storage.local.get('fpToolsAutoDeliveryLots');
+        const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
 
         for (const lot of lots) {
             const deliveryConfig = fpToolsAutoDeliveryLots[String(lot.id)];
@@ -46,7 +46,7 @@ async function checkAndRestoreLots() {
                     deliveryConfig.autoDisableEnabled !== false) {
                     await toggleLotActive(lot.id, lot.nodeId, false, d['csrf-token']);
                     showNotification(`Лот "${lot.title}" деактивирован: товары закончились`, false);
-                    console.log(`FP Tools AutoDisable: деактивирован лот ${lot.id}`);
+                    console.log(`Foxen AutoDisable: деактивирован лот ${lot.id}`);
                 }
 
                 
@@ -54,25 +54,25 @@ async function checkAndRestoreLots() {
                     deliveryConfig.autoRestoreEnabled !== false) {
                     await toggleLotActive(lot.id, lot.nodeId, true, d['csrf-token']);
                     showNotification(`Лот "${lot.title}" восстановлен: товары пополнены`, false);
-                    console.log(`FP Tools AutoRestore: восстановлен лот ${lot.id}`);
+                    console.log(`Foxen AutoRestore: восстановлен лот ${lot.id}`);
                 }
             } else if (fpToolsAutoRestoreEnabled && !isActive) {
                 
                 await toggleLotActive(lot.id, lot.nodeId, true, d['csrf-token']);
-                console.log(`FP Tools AutoRestore: глобальное восстановление лота ${lot.id}`);
+                console.log(`Foxen AutoRestore: глобальное восстановление лота ${lot.id}`);
             }
         }
     } catch (e) {
-        console.error('FP Tools AutoRestore: ошибка', e.message);
+        console.error('Foxen AutoRestore: ошибка', e.message);
     }
 }
 
 async function toggleLotActive(offerId, nodeId, active, csrfToken) {
-    const goldenKeyRes = await browser.runtime.sendMessage({ action: 'getGoldenKey' });
+    const goldenKeyRes = await chrome.runtime.sendMessage({ action: 'getGoldenKey' });
     if (!goldenKeyRes?.success) throw new Error('Нет golden_key');
 
     
-    const editRes = await browser.runtime.sendMessage({ action: 'getLotForExport', nodeId, offerId: String(offerId) });
+    const editRes = await chrome.runtime.sendMessage({ action: 'getLotForExport', nodeId, offerId: String(offerId) });
     if (!editRes?.success) throw new Error('Не удалось загрузить данные лота');
 
     const formData = new URLSearchParams(editRes.data);
@@ -98,7 +98,7 @@ async function toggleLotActive(offerId, nodeId, active, csrfToken) {
     }
 }
 
-browser.runtime.onMessage.addListener((request) => {
+chrome.runtime.onMessage.addListener((request) => {
     if (request.action === 'fpToolsCheckRestoreLots') {
         setTimeout(checkAndRestoreLots, 5000); 
     }

@@ -4,7 +4,7 @@ async function sendToDiscordWebhook(node) {
     const messageText = node.querySelector('.contact-item-message').textContent.trim();
     const avatarUrl = node.querySelector('.avatar-photo').style.backgroundImage.slice(5, -2);
 
-    const { discordWebhookUrl } = await browser.storage.local.get('discordWebhookUrl');
+    const { discordWebhookUrl } = await chrome.storage.local.get('discordWebhookUrl');
     if (!discordWebhookUrl) return;
 
     const payload = { username: userName, avatar_url: avatarUrl, embeds: [{ description: messageText, color: 0x00FF00 }] };
@@ -15,17 +15,17 @@ async function sendToDiscordWebhook(node) {
 }
 
 async function logNewMessagesToDiscord() {
-    const { logToDiscord } = await browser.storage.local.get('logToDiscord');
+    const { logToDiscord } = await chrome.storage.local.get('logToDiscord');
     if (logToDiscord !== true) return;
     const unreadMessages = document.querySelectorAll('.contact-item.unread');
     unreadMessages.forEach(async (message) => {
         const messageId = message.getAttribute('data-id');
         if (messageId) {
             const storageKey = `discordSent_${messageId}`;
-            const sentStatus = await browser.storage.local.get(storageKey);
+            const sentStatus = await chrome.storage.local.get(storageKey);
             if (!sentStatus[storageKey]) {
                 sendToDiscordWebhook(message);
-                await browser.storage.local.set({ [storageKey]: true });
+                await chrome.storage.local.set({ [storageKey]: true });
             }
         }
     });

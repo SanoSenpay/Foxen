@@ -10,6 +10,7 @@ class CursorFX {
         this.isEnabled = false;
         this.customCursor = null;
         this.customCursorConfig = {};
+        this._customCursorActive = false;
         this.cursorHideStyleTag = null;
         this.maxParticles = 120; // 2.8: reduced for GPU perf (review #5)
         this._lastMouseTime = 0;
@@ -48,12 +49,21 @@ class CursorFX {
         window.addEventListener('mousemove', e => {
             this.mouse.x = e.clientX;
             this.mouse.y = e.clientY;
-            this.customCursor.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
-            // 2.8 FIX: throttle particle creation to ~60fps (16ms) to reduce GPU load
-            const now = performance.now();
-            if (now - this._lastMouseTime >= 16) {
-                this._lastMouseTime = now;
-                this.createParticle();
+
+            // PERF: only touch the custom-cursor element when it's actually enabled.
+            // Previously this wrote a transform on EVERY mousemove even with the feature
+            // off (display:none), causing constant layout/style work and visible lag.
+            if (this._customCursorActive) {
+                this.customCursor.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
+            }
+
+            // Only spawn cursor-fx particles when that effect is enabled.
+            if (this.isEnabled) {
+                const now = performance.now();
+                if (now - this._lastMouseTime >= 16) {
+                    this._lastMouseTime = now;
+                    this.createParticle();
+                }
             }
         });
     }
@@ -67,6 +77,7 @@ class CursorFX {
         this.customCursorConfig = { ...this.customCursorConfig, ...newConfig };
         
         if (this.customCursorConfig.enabled && this.customCursorConfig.image) {
+            this._customCursorActive = true;
             this.customCursor.style.display = 'block';
             
             if (this.customCursorConfig.hideSystem) {
@@ -79,7 +90,10 @@ class CursorFX {
             this.customCursor.style.width = `${this.customCursorConfig.size}px`;
             this.customCursor.style.height = `${this.customCursorConfig.size}px`;
             this.customCursor.style.opacity = this.customCursorConfig.opacity / 100;
+            // place it under the current pointer immediately so it doesn't jump from 0,0
+            this.customCursor.style.transform = `translate(calc(${this.mouse.x}px - 50%), calc(${this.mouse.y}px - 50%))`;
         } else {
+            this._customCursorActive = false;
             this.customCursor.style.display = 'none';
             this.cursorHideStyleTag.textContent = '';
         }
@@ -223,9 +237,9 @@ function setupCursorFxHandlers() {
     };
     const handler = async (e) => {
         inputs[e.target.id](e);
-        const currentSettings = (await browser.storage.local.get('fpToolsCursorFx')).fpToolsCursorFx || {};
+        const currentSettings = (await chrome.storage.local.get('fpToolsCursorFx')).fpToolsCursorFx || {};
         const newSettings = { ...currentSettings, ...settingsToUpdate };
-        await browser.storage.local.set({ fpToolsCursorFx: newSettings });
+        await chrome.storage.local.set({ fpToolsCursorFx: newSettings });
         cursorFx.updateConfig(newSettings);
     };
 
@@ -244,9 +258,9 @@ function setupCursorFxHandlers() {
         const enabled = e.target.checked;
         customCursorControls.style.display = enabled ? 'block' : 'none';
         
-        const settings = (await browser.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
         const newSettings = { ...settings, enabled };
-        await browser.storage.local.set({ fpToolsCustomCursor: newSettings });
+        await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
@@ -265,9 +279,9 @@ function setupCursorFxHandlers() {
             preview.style.backgroundImage = `url(${imageDataUrl})`;
             preview.textContent = '';
 
-            const settings = (await browser.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+            const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
             const newSettings = { ...settings, image: imageDataUrl };
-            await browser.storage.local.set({ fpToolsCustomCursor: newSettings });
+            await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
         };
         reader.readAsDataURL(file);
@@ -278,22 +292,22 @@ function setupCursorFxHandlers() {
         preview.style.backgroundImage = 'none';
         preview.textContent = 'Нет';
 
-        const settings = (await browser.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
         const newSettings = { ...settings, image: null };
-        await browser.storage.local.set({ fpToolsCustomCursor: newSettings });
+        await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
     document.getElementById('hideSystemCursor').addEventListener('change', async (e) => {
-        const settings = (await browser.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
         const newSettings = { ...settings, hideSystem: e.target.checked };
-        await browser.storage.local.set({ fpToolsCustomCursor: newSettings });
+        await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
     ['customCursorSize', 'customCursorOpacity'].forEach(id => {
         document.getElementById(id).addEventListener('input', async (e) => {
-            const settings = (await browser.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+            const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
             let newSettings;
 
             if (id === 'customCursorSize') {
@@ -304,7 +318,7 @@ function setupCursorFxHandlers() {
                 newSettings = { ...settings, opacity: parseInt(e.target.value, 10) };
             }
             
-            await browser.storage.local.set({ fpToolsCustomCursor: newSettings });
+            await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
         });
     });

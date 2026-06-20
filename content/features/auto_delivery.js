@@ -39,7 +39,7 @@ async function initializeAutoDeliveryManager() {
     // --- 3. Привязываем обработчик к переключателю ---
     toggle.addEventListener('change', async (e) => {
         const isLegacy = e.target.checked;
-        await browser.storage.local.set({ fpToolsLegacyADModeEnabled: isLegacy });
+        await chrome.storage.local.set({ fpToolsLegacyADModeEnabled: isLegacy });
 
         if (isLegacy) {
             openBtn.style.display = 'none';
@@ -56,7 +56,7 @@ async function initializeAutoDeliveryManager() {
     });
     
     // --- 4. Проверяем сохраненный режим и настраиваем UI ---
-    const { fpToolsLegacyADModeEnabled } = await browser.storage.local.get('fpToolsLegacyADModeEnabled');
+    const { fpToolsLegacyADModeEnabled } = await chrome.storage.local.get('fpToolsLegacyADModeEnabled');
 
     if (fpToolsLegacyADModeEnabled) {
         // РЕЖИМ СТАНДАРТНОЙ АВТОВЫДАЧИ

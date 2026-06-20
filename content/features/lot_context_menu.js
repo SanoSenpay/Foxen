@@ -4,37 +4,38 @@
     const MENU_ID  = 'fp-lot-ctx-menu';
     const CHAT_ID  = 'fp-lot-ctx-chat';
     let pinnedLots    = [];
-    let _ctxInverted  = false; // Если true: Shift+ПКМ — это меню, обычный ПКМ — стандартное браузерное
+    let _ctxInverted  = false; // When true: Shift+RMB = this menu, plain RMB = browser
 
-    browser.storage.local.get(['fpToolsPinnedLots', 'fpToolsCtxInverted'], d => {
+    chrome.storage.local.get(['fpToolsPinnedLots', 'fpToolsCtxInverted'], d => {
         pinnedLots   = d.fpToolsPinnedLots   || [];
         _ctxInverted = d.fpToolsCtxInverted  || false;
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', waitForLotsAndRender);
         else waitForLotsAndRender();
     });
 
-    function savePinned() { browser.storage.local.set({ fpToolsPinnedLots: pinnedLots }); }
+    function savePinned() { chrome.storage.local.set({ fpToolsPinnedLots: pinnedLots }); }
 
     function parseLot(el) {
-        const a = el.closest('a.tc-item') || (el.tagName === 'A' ? el : null);
+        const a = el.closest('a.tc-item') ||
+                  el.closest('a[href*="lots/offer?id="]') ||
+                  el.closest('a[href*="offerEdit"]') ||
+                  (el.tagName === 'A' ? el : null);
         if (!a) return null;
         const href       = a.getAttribute('href') || '';
-        const offerMatch = href.match(/[?&]id=(\d+)/);
-        const offerId    = offerMatch?.[1] || null;
+        // offerId: либо ?id=NNN (публичная страница), либо offer=NNN (offerEdit/своя)
+        const offerMatch = href.match(/[?&]id=(\d+)/) || href.match(/[?&]offer=(\d+)/);
+        const offerId    = offerMatch?.[1] || a.getAttribute('data-offer') || null;
         const titleEl    = a.querySelector('.tc-desc-text, .tc-desc');
-        const title      = titleEl?.textContent.trim() || 'Лот';
+        const title      = (titleEl?.textContent.trim() || a.textContent.trim() || 'Лот').slice(0, 200);
         const selLink    = a.querySelector('.media-user-name a, .media-user-name span[data-href]');
         const selHref    = selLink?.getAttribute('href') || selLink?.getAttribute('data-href') || '';
         const selIdMatch = selHref.match(/\/users\/(\d+)/);
         const sellerId   = selIdMatch?.[1] || null;
         const selName    = selLink?.textContent.trim() || null;
-        // Build public lot URL; href can be absolute or relative
         const hrefClean = href.startsWith('http') ? href : `https://funpay.com${href}`;
-        // For 'offerEdit' links (own lots), extract offer id and make public URL
-        const editIdMatch = href.match(/offer=(\d+)/);
         const lotUrl = offerId
             ? `https://funpay.com/lots/offer?id=${offerId}`
-            : (editIdMatch ? `https://funpay.com/lots/offer?id=${editIdMatch[1]}` : hrefClean);
+            : hrefClean;
         return { offerId, title, sellerId, sellerName: selName, lotUrl };
     }
 
@@ -50,8 +51,10 @@
         menu.id = MENU_ID;
         menu.style.cssText = `position:fixed;left:${x}px;top:${y}px;background:#13141a;border:1px solid #22253a;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:100000;min-width:210px;padding:4px 0;font-family:Inter,'Segoe UI',sans-serif;font-size:13px;color:#d8dae8;`;
 
+        const hasNote = lot.__hasNote;
         const items = [
             { icon: isPinned ? '📌' : '📍', label: isPinned ? 'Открепить из таблицы' : 'Закрепить в таблице', action: 'pin', enabled: !!lot.offerId },
+            { icon: '📝', label: hasNote ? 'Заметка (изменить)' : 'Добавить заметку', action: 'note', enabled: !!lot.offerId },
             { icon: '✉️', label: lot.sellerName ? `Написать ${lot.sellerName}` : 'Написать', action: 'msg', enabled: !!lot.sellerId },
             { icon: '🔗', label: 'Скопировать ссылку', action: 'copy', enabled: true },
             { sep: true },
@@ -109,9 +112,13 @@
             });
         }
         if (action === 'msg') showInlineChat(lot);
+        if (action === 'note') {
+            if (window.FPTNotes) window.FPTNotes.openEditor(lot.offerId, lot.title);
+            else showNotification('Модуль заметок не загрузился', true);
+        }
         if (action === 'toggle_ctx') {
             _ctxInverted = !_ctxInverted;
-            browser.storage.local.set({ fpToolsCtxInverted: _ctxInverted });
+            chrome.storage.local.set({ fpToolsCtxInverted: _ctxInverted });
             const msg = _ctxInverted
                 ? 'Переключено: Shift+ПКМ = это меню'
                 : 'Переключено: ПКМ = это меню';
@@ -134,7 +141,7 @@
                 <div style="font-size:11px;color:#4a4f68;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Лот: ${lot.title}</div>
                 <textarea id="fp-ctx-chat-text" placeholder="Сообщение... (Ctrl+Enter отправить)" style="width:100%;height:80px;background:#0e0f16;border:1px solid #22253a;border-radius:6px;color:#d8dae8;font-size:13px;padding:8px;resize:none;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
                 <div style="display:flex;gap:8px;margin-top:8px;">
-                    <button id="fp-ctx-chat-send" style="flex:1;background:#6B66FF;color:#fff;border:none;border-radius:6px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;">Отправить</button>
+                    <button id="fp-ctx-chat-send" style="flex:1;background:#C026D3;color:#fff;border:none;border-radius:6px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;">Отправить</button>
                     <a href="https://funpay.com/chat/?node=" id="fp-ctx-open-chat-link" target="_blank" style="display:flex;align-items:center;padding:0 10px;background:#1e2030;border:1px solid #2a2d44;border-radius:6px;color:#9099b8;text-decoration:none;font-size:12px;white-space:nowrap;">Открыть чат</a>
                 </div>
                 <div id="fp-ctx-chat-status" style="font-size:11px;color:#5a5f7a;margin-top:6px;min-height:16px;"></div>
@@ -154,7 +161,7 @@
         const status = document.getElementById('fp-ctx-chat-status');
 
         sendBt.addEventListener('mouseenter', () => sendBt.style.background = '#5d58f0');
-        sendBt.addEventListener('mouseleave', () => sendBt.style.background = '#6B66FF');
+        sendBt.addEventListener('mouseleave', () => sendBt.style.background = '#C026D3');
         ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendBt.click(); } });
         ta.focus();
 
@@ -172,7 +179,7 @@
                 const csrf = appObj['csrf-token'];
                 const myId = String(appObj.userId || appObj.id || '');
                 if (!myId) throw new Error('Не удалось определить ваш ID');
-                const keyRes = await browser.runtime.sendMessage({ action: 'getGoldenKey' });
+                const keyRes = await chrome.runtime.sendMessage({ action: 'getGoldenKey' });
                 if (!keyRes?.success) throw new Error('Нет golden_key');
 
                 // FunPay chat node format: "users-MYID-THEIRID"
@@ -206,9 +213,9 @@
     }
 
     
-    // ИСПРАВЛЕНИЕ: Каждый закрепленный лот появляется вверху таблицы СВОЕЙ категории.
-    // Если лот был закреплен из категории "Minecraft", он появится вверху таблицы Minecraft.
-    // Это позволяет сохранять структуру страницы FunPay.
+    // FIX: Each pinned lot appears at the TOP of its own category's .tc table,
+    // not in a global container. If lot1 was pinned from category "Minecraft",
+    // it appears pinned inside the Minecraft .tc table on the page.
     function renderPinnedInTable() {
         // Remove all previously inserted pinned rows
         document.querySelectorAll('a.tc-item.fp-pinned-row').forEach(el => el.remove());
@@ -222,13 +229,13 @@
             // then get its parent .tc table. If not found on this page, skip.
             let targetTable = null;
 
-            // Ищем ЛЮБУЮ строку .tc-item с этим ID (это может быть сам лот)
+            // Look for ANY .tc-item row with this offer id (it might be the lot itself)
             const existingRow = document.querySelector(`a.tc-item[href*="id=${lot.offerId}"]`);
             if (existingRow) {
                 targetTable = existingRow.closest('.tc, .showcase-table, .tc-b-main');
             }
 
-            // Резервный вариант: если есть nodeId (категория), ищем блок .offer для него
+            // Fallback: if we stored the nodeId (category), find the .offer block for it
             if (!targetTable && lot.nodeId) {
                 const catLink = document.querySelector(`a[href*="/lots/${lot.nodeId}/"], a[href*="/chips/${lot.nodeId}/"]`);
                 if (catLink) {
@@ -246,7 +253,7 @@
             row.className = 'tc-item fp-pinned-row';
             row.href = lot.lotUrl;
             row.setAttribute('data-pinned-id', lot.offerId);
-            row.style.cssText = 'display:flex;align-items:center;padding:8px 12px;background:rgba(107,102,255,0.06);border-left:2px solid #6B66FF;';
+            row.style.cssText = 'display:flex;align-items:center;padding:8px 12px;background:rgba(192,38,211,0.06);border-left:2px solid #C026D3;';
 
             // Clone original row's structure if we can find it
             const origRow = document.querySelector(`a.tc-item[href*="id=${lot.offerId}"]`);
@@ -255,7 +262,7 @@
                 const clone = origRow.cloneNode(true);
                 clone.classList.add('fp-pinned-row');
                 clone.setAttribute('data-pinned-id', lot.offerId);
-                clone.style.cssText = 'border-left:2px solid #6B66FF;background:rgba(107,102,255,0.05);';
+                clone.style.cssText = 'border-left:2px solid #C026D3;background:rgba(192,38,211,0.05);';
                 // Remove any existing pinned clone to avoid duplication
                 targetTable.querySelector(`[data-pinned-id="${lot.offerId}"]`)?.remove();
                 // Add unpin button to cloned price cell
@@ -272,16 +279,16 @@
                     });
                     priceEl.appendChild(unpinBtn);
                 }
-                // Вставляем в начало таблицы (после заголовка, если он есть)
+                // Insert at top of table (after header row if present)
                 const firstItem = targetTable.querySelector('a.tc-item:not(.fp-pinned-row), .tc-item:not(.fp-pinned-row)');
                 if (firstItem) targetTable.insertBefore(clone, firstItem);
                 else targetTable.appendChild(clone);
                 return;
             }
 
-            // Резервный вариант: упрощенная строка
+            // Fallback: minimal row
             row.innerHTML = `
-                <div class="tc-desc" style="flex:1;"><div class="tc-desc-text" style="color:#a09ef8;">📌 ${lot.title}</div></div>
+                <div class="tc-desc" style="flex:1;"><div class="tc-desc-text" style="color:#E9A8FF;">📌 ${lot.title}</div></div>
                 <div class="tc-price"><button data-unpin="${lot.offerId}" style="background:none;border:none;color:#3a3d52;cursor:pointer;font-size:14px;padding:0 4px;" title="Открепить">✕</button></div>`;
             row.querySelector('button').addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
@@ -300,26 +307,35 @@
         //              false → plain RMB = this menu, Shift+RMB = browser (default)
         const wantsMenu = _ctxInverted ? e.shiftKey : !e.shiftKey;
         if (!wantsMenu) { removeMenu(); return; }
-        const lotEl = e.target.closest('a.tc-item, .tc-item');
+        const lotEl = e.target.closest('a.tc-item, .tc-item') ||
+                      e.target.closest('.chat-panel[data-type="c-p-u"] a[href*="lots/offer?id="]') ||
+                      e.target.closest('a[href*="lots/offer?id="]');
         if (!lotEl) { removeMenu(); return; }
         e.preventDefault(); e.stopPropagation();
         const lot = parseLot(lotEl);
         if (!lot) return;
-        showMenu(e.clientX, e.clientY, lot);
+        const x = e.clientX, y = e.clientY;
+        // Узнаём, есть ли заметка у этого лота (для подписи пункта меню), затем показываем.
+        if (lot.offerId && window.FPTNotes) {
+            window.FPTNotes.get(lot.offerId).then(n => { lot.__hasNote = !!n; showMenu(x, y, lot); })
+                .catch(() => showMenu(x, y, lot));
+        } else {
+            showMenu(x, y, lot);
+        }
     }, true);
 
     document.addEventListener('click', (e) => { if (!e.target.closest(`#${MENU_ID}`)) removeMenu(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { removeMenu(); removeChatPanel(); } });
 
-    // ИСПРАВЛЕНИЕ: Не вызываем renderPinnedInTable() сразу — строки лотов (.tc-item)
-    // еще не добавлены в DOM при загрузке скрипта (FunPay отрисовывает их позже).
-    // Ждем появления хотя бы одного .tc-item, затем отрисовываем и продолжаем следить.
+    // FIX: Don't call renderPinnedInTable() immediately - the lot rows (.tc-item)
+    // aren't in the DOM yet at script execution time (FunPay renders them later).
+    // Wait until at least one .tc-item appears, then render, then keep watching.
     function waitForLotsAndRender() {
         if (document.querySelector('a.tc-item')) {
             renderPinnedInTable();
             return;
         }
-        // Следим за появлением первого .tc-item
+        // Watch for first .tc-item to appear
         const obs = new MutationObserver(() => {
             if (document.querySelector('a.tc-item')) {
                 obs.disconnect();
@@ -330,7 +346,7 @@
             childList: true,
             subtree: true
         });
-        // Также ставим тайм-аут на всякий случай
+        // Also set a fallback timeout just in case
         setTimeout(() => { obs.disconnect(); renderPinnedInTable(); }, 5000);
     }
 

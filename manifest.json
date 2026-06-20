@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "3.0.0",
-    "description": "35 инструментов для FunPay в одном расширении — ИИ, автоматизация, аналитика.",
+    "version": "3.1.0-beta",
+    "description": "+35 инструментов для FunPay в одном расширении — ИИ, автоматизация, аналитика.",
     "permissions": [
         "storage",
         "tabs",
@@ -10,31 +10,38 @@
         "alarms",
         "notifications",
         "https://fptools-ai-server.vercel.app/*",
+        "https://fptools.onrender.com/*",
         "https://funpay.com/*",
+        "https://*.funpay.com/*",
+        "https://sfunpay.com/*",
+        "https://*.sfunpay.com/*",
+        "https://funpay.tools/*",
         "https://cdn.jsdelivr.net/*",
+        "https://raw.githubusercontent.com/*",
+        "https://*.workers.dev/*",
         "https://fonts.googleapis.com/*",
         "https://fonts.gstatic.com/*",
-        "https://support.funpay.com/*"
+        "https://support.funpay.com/*",
+        "https://api.telegram.org/*",
+        "https://translate.googleapis.com/*"
     ],
-    "browser_action": {
-        "default_popup": "popup/popup.html",
-        "default_title": "Foxen"
-    },
     "icons": {
         "128": "icons/icon128.png"
     },
     "background": {
-        "scripts": [
-            "background/browser-polyfill.js",
-            "background/parsers.js",
-            "background/ai-ff.js",
-            "background/autobump-ff.js",
-            "background/autoresponder-ff.js",
-            "background/background-ff.js"
-        ],
-        "persistent": false
+        "page": "background/background.html"
     },
     "content_scripts": [
+        {
+            "matches": [
+                "https://support.funpay.com/*"
+            ],
+            "js": [
+                "content/features/support_theme.js"
+            ],
+            "run_at": "document_start",
+            "all_frames": false
+        },
         {
             "matches": [
                 "https://funpay.com/*"
@@ -51,7 +58,12 @@
             ],
             "js": [
                 "content/scripts/jquery.js",
+                "content/sales_db.js",
+                "content/purchases_db.js",
+                "content/finance_db.js",
                 "content/utils.js",
+                "content/features/feature_registry.js",
+                "content/features/feature_disabler.js",
                 "content/features/cursor_fx.js",
                 "content/ui/settings_loader.js",
                 "content/features/font_tools.js",
@@ -70,6 +82,7 @@
                 "content/features/user_notes.js",
                 "content/features/image_generator.js",
                 "content/features/custom_sound.js",
+                "content/features/custom_sound_editor.js",
                 "content/features/misc.js",
                 "content/features/ui_enhancements.js",
                 "content/features/review_sorter.js",
@@ -82,7 +95,8 @@
                 "content/features/lot_io.js",
                 "content/features/auto_review.js",
                 "content/features/fpt_identifier.js",
-                "content/ui/popup_templates.js",
+                "content/features/needs_tab.js",
+                "content/features/slash_telegram_ui.js",
                 "content/ui/main_popup.js",
                 "content/ui/header_button_styler.js",
                 "content/features/lot_context_menu.js",
@@ -91,27 +105,41 @@
                 "content/features/bulk_lot_editor.js",
                 "content/features/buyer_history.js",
                 "content/features/chat_enhancements.js",
+                "content/features/chat_image_attach.js",
+                "content/features/chat_image_album.js",
+                "content/features/chat_search.js",
                 "content/features/order_enhancements.js",
-                "content/features/order_timer.js",
                 "content/features/blacklist.js",
+                "content/features/epic_nicknames.js",
                 "content/features/auto_delivery_ui.js",
                 "content/features/rmthub_search.js",
                 "content/features/support.js",
+                "content/features/chat_lot_note.js",
+                "content/features/discord.js",
+                "content/features/finance.js",
+                "content/features/lot_notes.js",
+                "content/features/lot_note_buttons.js",
+                "content/features/lot_offer_actions.js",
+                "content/features/multi_clone.js",
+                "content/features/order_timer.js",
+                "content/features/purchases.js",
+                "content/features/stats_drilldown.js",
+                "content/features/theme_gallery.js",
                 "content/content_script.js",
                 "content/features/auto_restore_lots.js",
                 "content/features/order_page_enhancements.js",
                 "content/features/sales_chart.js",
-                "content/features/demo_chat.js"
+                "content/features/sales_modes.js",
+                "content/features/slash_commands.js",
+                "content/features/category_peek_panel.js",
+                "content/features/chat_reply.js"
             ],
             "css": [
-
                 "css/content_styles.css",
-                "css/popup_styles.css",
                 "css/image_generator.css",
                 "css/ai_creator.css",
                 "css/live_styler.css",
-                "css/demo_chat.css"
-
+                "css/fpt_icons_theme.css"
             ],
             "run_at": "document_idle"
         }
@@ -120,8 +148,14 @@
         "sounds/*.mp3",
         "background/remake.html",
         "background/remake.js",
-        "icons/magic.png"
+        "icons/magic.png",
+        "icons/icon128.png",
+        "fonts/*.woff2"
     ],
+    "browser_action": {
+        "default_popup": "popup/popup.html",
+        "default_title": "FP Tools"
+    },
     "browser_specific_settings": {
         "gecko": {
             "id": "funpay-tools-firefox@sanosenpay",

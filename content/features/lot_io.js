@@ -61,12 +61,12 @@ function initializeLotIO() {
     if (convertBtn) {
         convertBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.open(browser.runtime.getURL('background/remake.html'));
+            window.open(chrome.runtime.getURL('background/remake.html'));
         });
     }
 
     // Слушатель прогресса импорта от background.js
-    browser.runtime.onMessage.addListener((request) => {
+    chrome.runtime.onMessage.addListener((request) => {
         if (request.action === 'lotImportProgressUpdate') {
             updateImportProgressUI(request.data);
         }
@@ -84,7 +84,7 @@ async function showExportModal() {
     listContainer.innerHTML = '<div class="fp-import-loader"></div>';
 
     try {
-        const response = await browser.runtime.sendMessage({ action: 'getUserCategories' });
+        const response = await chrome.runtime.sendMessage({ action: 'getUserCategories' });
         if (!response.success) throw new Error(response.error);
 
         const categories = response.data;
@@ -148,7 +148,7 @@ async function startExportProcess(allCategories, selectedCategoryIds) {
             updateExportProgressBar(processedCount, totalLots, lot.title);
 
             try {
-                const response = await browser.runtime.sendMessage({
+                const response = await chrome.runtime.sendMessage({
                     action: 'getLotForExport',
                     offerId: lot.id,
                     nodeId: lot.nodeId
@@ -201,7 +201,7 @@ function handleFileImport(event) {
                 throw new Error("Файл пуст или имеет неверный формат.");
             }
             if (confirm(`Вы уверены, что хотите импортировать ${lots.length} лотов? Это действие создаст новые предложения на вашем аккаунте.`)) {
-                await browser.runtime.sendMessage({ action: 'startLotImport', lots: lots, fileName: file.name });
+                await chrome.runtime.sendMessage({ action: 'startLotImport', lots: lots, fileName: file.name });
             }
         } catch (error) {
             showNotification(`Ошибка чтения файла: ${error.message}`, true);
@@ -291,12 +291,12 @@ function updateImportProgressUI(processData) {
         cancelBtn.textContent = 'Отменить';
         cancelBtn.onclick = () => {
             if (confirm('Вы уверены, что хотите отменить импорт? Уже созданные лоты останутся.')) {
-                browser.runtime.sendMessage({ action: 'cancelLotImport' });
+                chrome.runtime.sendMessage({ action: 'cancelLotImport' });
                 modal.style.display = 'none';
             }
         };
         continueBtn.onclick = () => {
-            browser.runtime.sendMessage({ action: 'resumeLotImport' });
+            chrome.runtime.sendMessage({ action: 'resumeLotImport' });
             continueBtn.style.display = 'none';
         };
     }
@@ -305,7 +305,7 @@ function updateImportProgressUI(processData) {
     listContainer.querySelectorAll('.skip-lot-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const index = parseInt(btn.dataset.index, 10);
-            browser.runtime.sendMessage({ action: 'skipLotImportItem', index });
+            chrome.runtime.sendMessage({ action: 'skipLotImportItem', index });
         });
     });
 
@@ -313,7 +313,7 @@ function updateImportProgressUI(processData) {
     if (postponeBtn) {
         postponeBtn.onclick = () => {
             if (confirm('Если процесс импорта завис на 5-й попытке, возможно, FunPay выдал лимит на создание лотов. Отложить импорт на 24 часа?')) {
-                browser.runtime.sendMessage({ action: 'postponeLotImport' }).then(() => {
+                chrome.runtime.sendMessage({ action: 'postponeLotImport' }).then(() => {
                     modal.style.display = 'none';
                     showNotification('Импорт отложен. Вы можете возобновить его на этой же вкладке.', false);
                     renderPendingImports(); // Обновляем список отложенных
@@ -328,7 +328,7 @@ async function renderPendingImports() {
     if (!container) return;
 
     try {
-        const { [IMPORT_PROCESS_KEY]: process } = await browser.storage.local.get(IMPORT_PROCESS_KEY);
+        const { [IMPORT_PROCESS_KEY]: process } = await chrome.storage.local.get(IMPORT_PROCESS_KEY);
 
         if (process && process.state === 'postponed') {
             container.innerHTML = `
@@ -345,13 +345,13 @@ async function renderPendingImports() {
         }
         
         container.querySelector('.resume-import-btn')?.addEventListener('click', () => {
-            browser.runtime.sendMessage({ action: 'resumeLotImport' });
+            chrome.runtime.sendMessage({ action: 'resumeLotImport' });
             container.innerHTML = '<p class="template-info">Возобновление...</p>';
         });
         
         container.querySelector('.delete-import-btn')?.addEventListener('click', () => {
             if(confirm('Удалить этот отложенный импорт?')) {
-                browser.runtime.sendMessage({ action: 'cancelLotImport' });
+                chrome.runtime.sendMessage({ action: 'cancelLotImport' });
                 renderPendingImports();
             }
         });

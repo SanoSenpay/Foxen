@@ -1,5 +1,5 @@
 // content/features/quick_lot_search.js
-// Быстрый поиск / фильтрация лотов на странице предложений — без перезагрузки страницы
+// Quick search / filter over lots on the offers page - no page reload needed
 
 (function () {
     'use strict';
@@ -9,7 +9,7 @@
     function buildSearchBar(container) {
         if (container.querySelector('#fp-lot-search-bar')) return;
 
-        // Используем класс form-control самого FunPay, чтобы поиск вписался в дизайн сайта
+        // Use FunPay's own form-control class so it blends with the site theme
         const bar = document.createElement('div');
         bar.id = 'fp-lot-search-bar';
         bar.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:10px;position:relative;';
@@ -23,7 +23,7 @@
         `;
         container.prepend(bar);
 
-        // Если есть заголовок "Предложения" с кнопками Выбрать/Включить — перемещаем поиск после него
+        // Если есть заголовок "Предложения" с кнопками Выбрать/Включить - перемещаем поиск после него
         const offersHeader = Array.from(container.querySelectorAll('h5.mb10.text-bold'))
             .find(h => h.textContent.trim() === 'Предложения' || h.textContent.trim() === 'Отзывы');
         if (offersHeader) offersHeader.insertAdjacentElement('afterend', bar);
@@ -36,7 +36,7 @@
             let visible = 0;
             const total = document.querySelectorAll('a.tc-item').length;
 
-            // Фильтруем отдельные строки лотов
+            // Filter individual lot rows
             document.querySelectorAll('a.tc-item').forEach(item => {
                 const text = (item.querySelector('.tc-desc-text')?.textContent || '').toLowerCase();
                 const show = !q || text.includes(q);
@@ -44,8 +44,8 @@
                 if (show) visible++;
             });
 
-            // Скрываем целые блоки .offer, если ВСЕ лоты внутри них скрыты,
-            // но оставляем заголовок блока видимым, если есть совпадения
+            // Hide entire .offer blocks if ALL their lots are hidden
+            // but keep the block header visible if any lots match
             document.querySelectorAll('.offer').forEach(offerBlock => {
                 if (!offerBlock.id) { // don't touch pinned containers
                     const lots = offerBlock.querySelectorAll('a.tc-item');
@@ -58,7 +58,7 @@
             countEl.textContent = q ? `${visible} из ${total}` : '';
         });
 
-        // Очистка при нажатии Escape
+        // Clear on Escape
         _searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 _searchInput.value = '';

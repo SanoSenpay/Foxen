@@ -13,7 +13,7 @@
 
 <a href="https://addons.mozilla.org/ru/firefox/addon/foxen/"><img src="https://img.shields.io/badge/Firefox-Установить-a855f7?style=for-the-badge&logo=firefox-browser&logoColor=white&labelColor=0d0117"/></a>
 &nbsp;
-<img src="https://img.shields.io/badge/Version-3.0.0-7c3aed?style=for-the-badge&labelColor=0d0117"/>
+<img src="https://img.shields.io/badge/Version-3.1.0-7c3aed?style=for-the-badge&labelColor=0d0117"/>
 &nbsp;
 <img src="https://img.shields.io/badge/Open%20Source-MIT-6d28d9?style=for-the-badge&labelColor=0d0117"/>
 

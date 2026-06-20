@@ -9,8 +9,8 @@ let _ticketPendingPayload = null;
 
 function _msg(action, extra = {}) {
     return new Promise((resolve, reject) => {
-        browser.runtime.sendMessage({ action, ...extra }, r => {
-            if (browser.runtime.lastError) return reject(new Error(browser.runtime.lastError.message));
+        chrome.runtime.sendMessage({ action, ...extra }, r => {
+            if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
             if (r?.success === false) return reject(new Error(r.error || 'Ошибка'));
             resolve(r);
         });
@@ -18,10 +18,10 @@ function _msg(action, extra = {}) {
 }
 
 function _getUsername() {
-    // Основной способ: DOM-элемент, который всегда есть при авторизации
+    // Primary: DOM element always present when logged in
     const nameEl = document.querySelector('.user-link-name');
     if (nameEl?.textContent.trim()) return nameEl.textContent.trim();
-    // Резервный вариант: данные из appData
+    // Fallback: appData
     try {
         const d = JSON.parse(document.body.dataset.appData || '{}');
         return (Array.isArray(d) ? d[0] : d)?.userName || '';
@@ -30,11 +30,159 @@ function _getUsername() {
 
 // ── tickets list ──────────────────────────────────────────────────────────────
 
+// Кэш всех заявок (грузим один раз, фильтруем локально - как в мобильном SupportScreen).
+let _allTickets = [];
+
+// Применяет поиск + фильтр статуса + сортировку к кэшу и рендерит.
+// Повторяет логику applyFilters() из Kotlin: статусы all/active/solved,
+// сортировки newest_first/oldest_first/last_answered.
+function _applyTicketFilters() {
+    const list  = document.getElementById('fp-tickets-list');
+    const empty = document.getElementById('fp-tickets-empty');
+    const countEl = document.getElementById('fp-tickets-count');
+    if (!list) return;
+
+    const query  = (document.getElementById('fp-tickets-search')?.value || '').trim().toLowerCase();
+    const status = document.getElementById('fp-tickets-status-filter')?.value || 'all';
+    const sort   = document.getElementById('fp-tickets-sort')?.value || 'newest_first';
+
+    let result = _allTickets.slice();
+
+    // поиск по заголовку и id
+    if (query) {
+        result = result.filter(t =>
+            (t.title || '').toLowerCase().includes(query) ||
+            String(t.id || '').toLowerCase().includes(query)
+        );
+    }
+
+    // фильтр статуса. Сопоставляем по ОСНОВЕ слова, чтобы любые формы
+    // («Открыт», «Открыта», «В ожидании», «Решена», «Решено», «Закрыт», «Закрыта»)
+    // корректно попадали в active/solved независимо от склонения и источника
+    // (CSS-класс badge или его текст).
+    const isActiveStatus = (s) => {
+        const t = (s || '').toLowerCase();
+        return t.startsWith('откр') || t.includes('ожид');
+    };
+    const isSolvedStatus = (s) => {
+        const t = (s || '').toLowerCase();
+        return t.startsWith('закр') || t.startsWith('реш');
+    };
+    if (status === 'active') {
+        result = result.filter(t => isActiveStatus(t.status));
+    } else if (status === 'solved') {
+        result = result.filter(t => isSolvedStatus(t.status));
+    }
+
+    // сортировка
+    const keyOf = t => (t.sortKey != null ? t.sortKey : parseInt(t.id) || 0);
+    if (sort === 'newest_first') {
+        result.sort((a, b) => keyOf(b) - keyOf(a));
+    } else if (sort === 'oldest_first') {
+        result.sort((a, b) => keyOf(a) - keyOf(b));
+    } // last_answered - порядок как пришёл с сервера (по последнему ответу)
+
+    if (countEl) countEl.textContent = `Показано: ${result.length} из ${_allTickets.length}`;
+
+    list.innerHTML = '';
+    if (!result.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    const statusStyle = {
+        'Открыт':      { bg: 'rgba(224,82,82,.15)',  color: '#e05252' },
+        'В ожидании':  { bg: 'rgba(240,160,64,.15)', color: '#f0a040' },
+        'Решена':      { bg: 'rgba(76,175,130,.15)', color: '#4caf82' },
+        'Закрыт':      { bg: 'rgba(58,61,82,.3)',    color: '#5a5f7a' },
+    };
+    // подбор стиля по основе слова (статус с сайта может быть «Открыта»/«Закрыта» и т.п.)
+    const styleFor = (s) => {
+        const t = (s || '').toLowerCase();
+        if (t.startsWith('откр')) return statusStyle['Открыт'];
+        if (t.includes('ожид'))   return statusStyle['В ожидании'];
+        if (t.startsWith('реш'))  return statusStyle['Решена'];
+        if (t.startsWith('закр')) return statusStyle['Закрыт'];
+        return { bg: 'rgba(58,61,82,.3)', color: '#5a5f7a' };
+    };
+    // «закрываемые» = активные (открыт/в ожидании)
+    const isCloseable = (s) => {
+        const t = (s || '').toLowerCase();
+        return t.startsWith('откр') || t.includes('ожид');
+    };
+
+    result.forEach(t => {
+        const ss = styleFor(t.status);
+        const card = document.createElement('div');
+        card.className = 'fp-tkt-card';
+        card.style.position = 'relative';
+
+        const topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:8px;';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.style.cssText = 'font-size:12px;font-weight:500;flex:1;line-height:1.4;color:#c8cadc;';
+        titleSpan.textContent = t.title || 'Заявка #' + t.id;
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'fp-tkt-status';
+        statusSpan.style.cssText = `background:${ss.bg};color:${ss.color};`;
+        statusSpan.textContent = t.status;
+
+        topRow.appendChild(titleSpan);
+        topRow.appendChild(statusSpan);
+
+        const meta = document.createElement('div');
+        meta.style.cssText = 'font-size:11px;color:#3a3d52;margin-top:5px;display:flex;align-items:center;justify-content:space-between;';
+
+        const metaText = document.createElement('span');
+        metaText.textContent = `#${t.id}${t.lastUpdate ? ' · ' + t.lastUpdate : ''}`;
+        meta.appendChild(metaText);
+
+        if (isCloseable(t.status)) {
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Закрыть';
+            closeBtn.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid rgba(224,82,82,.5);background:rgba(224,82,82,.1);color:#e05252;cursor:pointer;flex-shrink:0;';
+            closeBtn.addEventListener('click', async e => {
+                e.stopPropagation();
+                closeBtn.disabled = true;
+                closeBtn.textContent = '...';
+                try {
+                    const r = await _msg('supportCloseTicket', { ticketId: t.id });
+                    if (r?.success) { _loadTickets(); }
+                    else { closeBtn.textContent = 'Ошибка'; closeBtn.disabled = false; }
+                } catch(_) { closeBtn.textContent = 'Ошибка'; closeBtn.disabled = false; }
+            });
+            meta.appendChild(closeBtn);
+        }
+
+        card.appendChild(topRow);
+        card.appendChild(meta);
+        card.addEventListener('click', () => _openTicket(t.id));
+        list.appendChild(card);
+    });
+}
+
+// Привязка фильтров (один раз). Изменение любого фильтра только перерисовывает
+// из кэша, без перезапроса к серверу.
+let _ticketFiltersBound = false;
+function _bindTicketFilters() {
+    if (_ticketFiltersBound) return;
+    const search = document.getElementById('fp-tickets-search');
+    const statusF = document.getElementById('fp-tickets-status-filter');
+    const sortF = document.getElementById('fp-tickets-sort');
+    if (!search && !statusF && !sortF) return;
+    _ticketFiltersBound = true;
+    search?.addEventListener('input', _applyTicketFilters);
+    statusF?.addEventListener('change', _applyTicketFilters);
+    sortF?.addEventListener('change', _applyTicketFilters);
+}
+
 async function _loadTickets() {
     const list    = document.getElementById('fp-tickets-list');
     const loading = document.getElementById('fp-tickets-loading');
     const empty   = document.getElementById('fp-tickets-empty');
     if (!list) return;
+
+    _bindTicketFilters();
 
     list.innerHTML = '';
     empty.style.display = 'none';
@@ -44,71 +192,17 @@ async function _loadTickets() {
         const { tickets } = await _msg('supportGetTickets');
         loading.style.display = 'none';
 
-        if (!tickets.length) { empty.style.display = 'block'; return; }
+        // Грузим ВСЕ заявки в кэш, дальше фильтруем/сортируем локально.
+        _allTickets = Array.isArray(tickets) ? tickets : [];
 
-        // Сортировка: сначала новые (по числовому ID)
-        tickets.sort((a, b) => (b.sortKey || parseInt(b.id)) - (a.sortKey || parseInt(a.id)));
+        if (!_allTickets.length) {
+            const countEl = document.getElementById('fp-tickets-count');
+            if (countEl) countEl.textContent = '';
+            empty.style.display = 'block';
+            return;
+        }
 
-        const statusStyle = {
-            'Открыт':      { bg: 'rgba(224,82,82,.15)',  color: '#e05252' },
-            'В ожидании':  { bg: 'rgba(240,160,64,.15)', color: '#f0a040' },
-            'Решена':      { bg: 'rgba(76,175,130,.15)', color: '#4caf82' },
-            'Закрыт':      { bg: 'rgba(58,61,82,.3)',    color: '#5a5f7a' },
-        };
-        const closeable = new Set(['Открыт', 'В ожидании']);
-
-        tickets.forEach(t => {
-            const ss = statusStyle[t.status] || { bg: 'rgba(58,61,82,.3)', color: '#5a5f7a' };
-            const card = document.createElement('div');
-            card.className = 'fp-tkt-card';
-            card.style.position = 'relative';
-
-            const topRow = document.createElement('div');
-            topRow.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:8px;';
-
-            const titleSpan = document.createElement('span');
-            titleSpan.style.cssText = 'font-size:12px;font-weight:500;flex:1;line-height:1.4;color:#c8cadc;';
-            titleSpan.textContent = t.title || 'Заявка #' + t.id;
-
-            const statusSpan = document.createElement('span');
-            statusSpan.className = 'fp-tkt-status';
-            statusSpan.style.cssText = `background:${ss.bg};color:${ss.color};`;
-            statusSpan.textContent = t.status;
-
-            topRow.appendChild(titleSpan);
-            topRow.appendChild(statusSpan);
-
-            const meta = document.createElement('div');
-            meta.style.cssText = 'font-size:11px;color:#3a3d52;margin-top:5px;display:flex;align-items:center;justify-content:space-between;';
-
-            const metaText = document.createElement('span');
-            metaText.textContent = `#${t.id}${t.lastUpdate ? ' · ' + t.lastUpdate : ''}`;
-
-            meta.appendChild(metaText);
-
-            // Кнопка закрытия — только для активных
-            if (closeable.has(t.status)) {
-                const closeBtn = document.createElement('button');
-                closeBtn.textContent = 'Закрыть';
-                closeBtn.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid rgba(224,82,82,.5);background:rgba(224,82,82,.1);color:#e05252;cursor:pointer;flex-shrink:0;';
-                closeBtn.addEventListener('click', async e => {
-                    e.stopPropagation();
-                    closeBtn.disabled = true;
-                    closeBtn.textContent = '...';
-                    try {
-                        const r = await _msg('supportCloseTicket', { ticketId: t.id });
-                        if (r?.success) { _loadTickets(); }
-                        else { closeBtn.textContent = 'Ошибка'; closeBtn.disabled = false; }
-                    } catch(_) { closeBtn.textContent = 'Ошибка'; closeBtn.disabled = false; }
-                });
-                meta.appendChild(closeBtn);
-            }
-
-            card.appendChild(topRow);
-            card.appendChild(meta);
-            card.addEventListener('click', () => _openTicket(t.id));
-            list.appendChild(card);
-        });
+        _applyTicketFilters();
     } catch (e) {
         loading.style.display = 'none';
         list.innerHTML = `<div style="color:#e05252;font-size:12px;padding:8px;">${e.message}</div>`;
@@ -120,7 +214,7 @@ async function _loadTickets() {
 function _openNewTicketPanel() {
     const panel = document.getElementById('fp-new-ticket-panel');
     if (!panel) return;
-    // Перемещаем панель в fp-tools-body, чтобы она перекрывала весь контент попапа
+    // Move panel to fp-tools-body so it covers the full popup content, not just the page div
     const body = document.querySelector('.fp-tools-body');
     if (body && panel.parentElement !== body) body.appendChild(panel);
     panel.style.display = 'flex';
@@ -176,7 +270,7 @@ function _renderCategorySelect(fieldsDiv, submitBtn) {
     fieldsDiv.appendChild(wrap);
 
     sel.addEventListener('change', async () => {
-        // Удаляем старые поля
+        // Remove old fields
         fieldsDiv.querySelectorAll('.fp-tkt-field').forEach(r => r.remove());
         if (submitBtn) submitBtn.style.display = 'none';
         if (!sel.value) return;
@@ -253,7 +347,7 @@ function _renderFields(fields, container) {
         let input;
 
         if (f.type === 'select' || f.type === 'radio') {
-            // Точно как в Android: Column с border, каждый option — Row с RadioButton + Text
+            // Точно как в Android: Column с border, каждый option - Row с RadioButton + Text
             const col = document.createElement('div');
             col.style.cssText = 'display:flex;flex-direction:column;border:1px solid rgba(106,112,144,0.3);border-radius:4px;overflow:hidden;';
             col.dataset.fieldId = f.id;
@@ -428,10 +522,10 @@ function _renderBubble(c, myUsername) {
     const wrap = document.createElement('div');
     wrap.style.cssText = `display:flex;flex-direction:${isMe ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;`;
 
-    // Аватар (только для собеседника)
+    // Avatar (only for others)
     if (!isMe) {
         const av = document.createElement('div');
-        av.style.cssText = `width:28px;height:28px;border-radius:50%;flex-shrink:0;background:#1a1c2e;font-size:11px;font-weight:600;color:#6B66FF;display:flex;align-items:center;justify-content:center;`;
+        av.style.cssText = `width:28px;height:28px;border-radius:50%;flex-shrink:0;background:#1a1c2e;font-size:11px;font-weight:600;color:#C026D3;display:flex;align-items:center;justify-content:center;`;
         if (c.avatarUrl) {
             av.style.backgroundImage = `url('${c.avatarUrl}')`;
             av.style.backgroundSize = 'cover';
@@ -446,7 +540,7 @@ function _renderBubble(c, myUsername) {
     const col = document.createElement('div');
     col.style.cssText = `display:flex;flex-direction:column;gap:3px;max-width:78%;align-items:${isMe ? 'flex-end' : 'flex-start'};`;
 
-    // Имя и время (только для других или для своего первого сообщения)
+    // Name + time (only for others, or own first)
     const meta = document.createElement('div');
     meta.style.cssText = `font-size:10px;color:#3a3d52;padding:0 4px;`;
     meta.textContent = (!isMe ? c.author + '  ' : '') + (c.timestamp || '');
@@ -460,17 +554,17 @@ function _renderBubble(c, myUsername) {
         bubble.style.cssText = `background:#12131f;border:1px solid #1a1c2e;border-radius:16px 16px 16px 4px;padding:8px 12px;font-size:13px;color:#d8dae8;line-height:1.55;word-break:break-word;`;
     }
 
-    // Обработка текста: картинки инлайном, ссылки кликабельны
+    // Parse text: images inline, links clickable
     const rawHtml = c.text || '';
     const tmp = document.createElement('div');
     tmp.innerHTML = rawHtml;
 
-    // Превращаем изображения в теги img с возможностью открытия по клику
+    // Make images real img tags with click-to-open
     tmp.querySelectorAll('img').forEach(img => {
         img.className = 'fp-msg-img';
         img.addEventListener('click', () => window.open(img.src, '_blank'));
     });
-    // Открываем ссылки в новой вкладке
+    // Make links open in new tab
     tmp.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.style.color = isMe ? 'rgba(255,255,255,0.85)' : '#7b77ff'; });
 
     bubble.appendChild(tmp);
@@ -534,7 +628,7 @@ async function _sendTicketReply() {
     btn.disabled = true; btn.textContent = '...';
     try {
         await _msg('supportAddComment', { ticketId: _currentTicketId, message: text, token: _currentReplyToken });
-        // Добавляем сообщение визуально без перезагрузки
+        // Append message visually - no reload
         const msgs = document.getElementById('fp-tdm');
         const username = _getUsername();
         const now = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -581,10 +675,10 @@ function initTicketsTab() {
     document.getElementById('fp-ticket-reply-btn')?.addEventListener('click', _sendTicketReply);
     const replyInput = document.getElementById('fp-tri');
 
-    // Эффекты наведения через JS (inline-обработчики могут ломать шаблоны)
+    // Hover effects via JS - inline onmouseover breaks HTML in template literals
     const replyBtn = document.getElementById('fp-ticket-reply-btn');
     replyBtn?.addEventListener('mouseenter', () => replyBtn.style.background = '#5752e8');
-    replyBtn?.addEventListener('mouseleave', () => replyBtn.style.background = '#6B66FF');
+    replyBtn?.addEventListener('mouseleave', () => replyBtn.style.background = '#C026D3');
     const attachLbl = document.getElementById('fp-attach-lbl');
     attachLbl?.addEventListener('mouseenter', () => attachLbl.style.color = '#9099b8');
     attachLbl?.addEventListener('mouseleave', () => attachLbl.style.color = '#4a4f6a');

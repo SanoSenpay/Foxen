@@ -18,8 +18,8 @@ function initAutoDeliveryUI() {
             if (!userId) throw new Error('Нет userId');
 
             const lots = await new Promise((resolve, reject) => {
-                browser.runtime.sendMessage({ action: 'getUserLotsList', userId }, res => {
-                    if (browser.runtime.lastError) reject(new Error(browser.runtime.lastError.message));
+                chrome.runtime.sendMessage({ action: 'getUserLotsList', userId }, res => {
+                    if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
                     else resolve(res || []);
                 });
             });
@@ -29,7 +29,7 @@ function initAutoDeliveryUI() {
                 return;
             }
 
-            const { fpToolsAutoDeliveryLots = {} } = await browser.storage.local.get('fpToolsAutoDeliveryLots');
+            const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
             renderDeliveryLots(lots, fpToolsAutoDeliveryLots, listEl);
 
         } catch (e) {
@@ -72,7 +72,7 @@ function renderDeliveryLots(lots, config, container) {
                             ${lotConfig.productCount !== undefined ? `📦 ${lotConfig.productCount} шт.` : ''}
                         </span>
                         <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#5a5f7a;cursor:pointer;">
-                            <input type="checkbox" class="fp-ad-enabled" data-lot-id="${lot.id}" ${lotConfig.enabled ? 'checked' : ''} style="accent-color:#6B66FF;">
+                            <input type="checkbox" class="fp-ad-enabled" data-lot-id="${lot.id}" ${lotConfig.enabled ? 'checked' : ''} style="accent-color:#C026D3;">
                             Авто-выдача
                         </label>
                     </div>
@@ -146,7 +146,7 @@ function renderDeliveryLots(lots, config, container) {
 }
 
 async function autoSaveDeliveryLot(lotId, container) {
-    const { fpToolsAutoDeliveryLots = {} } = await browser.storage.local.get('fpToolsAutoDeliveryLots');
+    const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
 
     const enabledEl = container.querySelector(`.fp-ad-enabled[data-lot-id="${lotId}"]`);
     const modeEl    = container.querySelector(`input[name="fp-ad-mode-${lotId}"]:checked`);
@@ -164,13 +164,13 @@ async function autoSaveDeliveryLot(lotId, container) {
         updatedAt:         Date.now()
     };
 
-    await browser.storage.local.set({ fpToolsAutoDeliveryLots });
+    await chrome.storage.local.set({ fpToolsAutoDeliveryLots });
 }
 
 async function initStockCounterDisplay() {
     if (!window.location.pathname.match(/\/users\/\d+\/?/)) return;
 
-    const { fpToolsAutoDeliveryLots = {} } = await browser.storage.local.get('fpToolsAutoDeliveryLots');
+    const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
     if (!Object.keys(fpToolsAutoDeliveryLots).length) return;
 
     document.querySelectorAll('a.tc-item:not(.fp-stock-init)').forEach(row => {

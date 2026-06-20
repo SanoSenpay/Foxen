@@ -12,18 +12,18 @@ function setupChatObserver() {
 
 function getChatContext() {
     const myUsernameEl = document.querySelector('.user-link-name');
-    const myUsername = myUsernameEl ? myUsernameEl.textContent.trim() : "Я";
+    const myUsername = myUsernameEl ? myUsernameEl.textContent.trim() : "Me";
 
     const chatContainer = document.querySelector('.chat.chat-float');
-    if (!chatContainer) return { context: "[Активный чат не найден]", myUsername };
+    if (!chatContainer) return { context: "[No active chat found]", myUsername };
 
     const messageNodes = chatContainer.querySelectorAll('.chat-msg-item');
-    if (messageNodes.length === 0) return { context: "[Чат пуст]", myUsername };
+    if (messageNodes.length === 0) return { context: "[Chat is empty]", myUsername };
 
     let contextLines = [];
     messageNodes.forEach(node => {
         const authorLink = node.querySelector('.chat-msg-author-link');
-        let authorName = 'Система';
+        let authorName = 'System';
         if (authorLink) {
             authorName = authorLink.textContent.trim();
         } else {
@@ -62,7 +62,7 @@ async function getAIProcessedText(text, type = "rewrite") {
         chatInput.disabled = true;
     }
     try {
-        const response = await browser.runtime.sendMessage({ 
+        const response = await chrome.runtime.sendMessage({ 
             action: "getAIProcessedText", 
             text: text, 
             context: context, 
@@ -81,20 +81,20 @@ async function getAIProcessedText(text, type = "rewrite") {
             }
             return response.data;
         } else {
-            console.error('Ошибка ИИ:', response ? response.error : 'Нет ответа');
-            showNotification(`Ошибка обработки ИИ: ${response ? response.error : 'Нет ответа'}`, true);
+            console.error('AI processing failed:', response ? response.error : 'No response');
+            showNotification(`Ошибка обработки AI: ${response ? response.error : 'Нет ответа от AI'}`, true);
             if (type === "rewrite") { lastAIProcessedText = null; isAISuggestionActive = false; }
-            return type === "generate" ? `[Ошибка ИИ: ${text}]` : text;
+            return type === "generate" ? `[Ошибка AI: ${text}]` : text;
         }
     } catch (error) {
         if (chatInput && shouldManageLoadingState) {
             chatInput.classList.remove('ai-loading-textarea');
             chatInput.disabled = false;
         }
-        console.error('Ошибка при отправке/обработке сообщения ИИ:', error);
-        showNotification(`Ошибка связи с ИИ модулем: ${error.message}`, true);
+        console.error('Error sending/processing AI message:', error);
+        showNotification(`Ошибка связи с AI модулем: ${error.message}`, true);
         if (type === "rewrite") { lastAIProcessedText = null; isAISuggestionActive = false; }
-        return type === "generate" ? `[Ошибка ИИ: ${text}]` : text;
+        return type === "generate" ? `[Ошибка AI: ${text}]` : text;
     }
 }
 
@@ -130,7 +130,7 @@ function setupAIChatFeature() {
     if (chatTextarea && chatFormAttachDiv && !document.getElementById('aiModeToggleBtn')) {
         const aiButton = createElement('button', { type: 'button', id: 'aiModeToggleBtn' }, {}, '');
         const _magicImg = document.createElement('img');
-        _magicImg.src = browser.runtime.getURL('icons/magic.png');
+        _magicImg.src = chrome.runtime.getURL('icons/magic.png');
         _magicImg.className = 'ai-magic-icon';
         _magicImg.alt = 'AI';
         aiButton.appendChild(_magicImg);
@@ -142,7 +142,7 @@ function setupAIChatFeature() {
 
         aiButton.addEventListener('click', async () => {
             aiModeActive = !aiModeActive;
-            await browser.storage.local.set({ aiModeActive: aiModeActive });
+            await chrome.storage.local.set({ aiModeActive: aiModeActive });
             aiButton.classList.toggle('active', aiModeActive);
             aiButton.title = aiModeActive ? 'AI Режим АКТИВЕН (Enter для генерации/отправки)' : 'AI Режим (Enter для генерации/отправки)';
             if (aiModeActive) {
@@ -172,10 +172,12 @@ function setupAIChatFeature() {
                     lastAIProcessedText = null; isAISuggestionActive = false;
                 } else if (currentText) {
                     const processedText = await getAIProcessedText(currentText, "rewrite");
+                    window.__fptProgrammaticInput = true;
                     chatTextarea.value = processedText;
                     chatTextarea.dispatchEvent(new Event('input', { bubbles: true }));
                     chatTextarea.focus();
                     chatTextarea.selectionStart = chatTextarea.selectionEnd = chatTextarea.value.length;
+                    window.__fptProgrammaticInput = false;
                 }
             }
         });

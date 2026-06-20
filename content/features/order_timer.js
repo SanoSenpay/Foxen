@@ -1,17 +1,17 @@
 // content/features/order_timer.js
-// Отображает таймер обратного отсчета на странице заказов до момента автоматического подтверждения
-// и выделяет заказы, срок которых подходит к концу.
+// Shows a countdown timer on orders page for how long the buyer has to confirm
+// and highlights orders that are about to expire.
 
 (function () {
     'use strict';
 
-    const FP_CONFIRM_HOURS = 72; // FunPay дает 72 часа на подтверждение после выполнения заказа
+    const FP_CONFIRM_HOURS = 72; // FunPay gives 72h to confirm after completion
 
     function parseDateFromRow(row) {
         const dateEl = row.querySelector('.tc-date-time');
         if (!dateEl) return null;
         const text = dateEl.textContent.trim();
-        // Уже распарсено в offscreen — здесь парсим из отображаемого текста
+        // Already parsed in offscreen - here we parse from display text
         const now = new Date();
         // "сегодня, HH:MM"
         let m = text.match(/сегодня,\s*(\d{1,2}):(\d{2})/i);
@@ -50,7 +50,7 @@
     }
 
     function attachTimers() {
-        // Только на страницах с заказами в статусе «оплачен» (info) — ожидающих подтверждения
+        // Only on pages with orders in "paid" (info) status = awaiting confirmation
         document.querySelectorAll('a.tc-item.info').forEach(row => {
             if (row.querySelector('.fp-order-timer')) return;
 
@@ -73,7 +73,7 @@
             update();
             const iv = setInterval(update, 60000);
 
-            // Очистка интервала при удалении строки
+            // Clean up when row removed
             new MutationObserver((_, obs) => {
                 if (!document.body.contains(row)) { clearInterval(iv); obs.disconnect(); }
             }).observe(document.body, { childList: true, subtree: true });

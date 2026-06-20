@@ -1,7 +1,4 @@
-// content/features/rmthub_search.js — Foxen 3.0
-// Поиск профиля на RMTHub — адаптированная копия формы поиска игр FunPay.
-// Использует те же классы: navbar-form, navbar-left, form-control, dropdown-menu и т.д.
-// Работает только с точными именами пользователей (требование API RMTHub).
+
 
 (function initRMTHubSearch() {
     'use strict';
@@ -14,8 +11,8 @@
     let debTimer = null;
     let busy     = false;
 
-    // ── Дополнительные стили только для выпадающего списка ───────────────────────────────
-    // Сама форма переиспользует стандартные CSS-классы FunPay
+    // ── Extra styles only for the card dropdown ───────────────────────────────
+    // The form itself reuses FunPay's own CSS classes (form-control, dropdown-menu, etc.)
     function injectStyles() {
         if (document.getElementById('fp-rmthub-css')) return;
         const s = document.createElement('style');
@@ -25,7 +22,7 @@
         #fp-rmthub-spin{
             position:absolute;right:30px;top:50%;transform:translateY(-50%);
             display:none;width:12px;height:12px;
-            border:2px solid rgba(160,158,248,.2);border-top-color:#a09ef8;
+            border:2px solid rgba(160,158,248,.2);border-top-color:#E9A8FF;
             border-radius:50%;animation:rmths .7s linear infinite;pointer-events:none;z-index:10;
         }
         .fp-rmthub-wrap{position:relative;display:inline-block;}
@@ -41,24 +38,24 @@
         /* Card styles inside the dropdown */
         .fp-rmthub-drop .rmth-card{padding:12px 14px;}
         .fp-rmthub-drop .rmth-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-        .fp-rmthub-drop .rmth-ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(107,102,255,.4);flex-shrink:0;background:#1e2035;}
+        .fp-rmthub-drop .rmth-ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(192,38,211,.4);flex-shrink:0;background:#1e2035;}
         .fp-rmthub-drop .rmth-uinfo{flex:1;min-width:0;}
         .fp-rmthub-drop .rmth-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .fp-rmthub-drop .rmth-uid{font-size:11px;opacity:.45;margin-top:1px;}
         .fp-rmthub-drop .rmth-banned{display:inline-block;background:rgba(255,60,60,.15);color:#ff5c5c;border:1px solid rgba(255,60,60,.3);border-radius:3px;font-size:9px;font-weight:700;padding:0 4px;margin-left:4px;vertical-align:middle;}
         .fp-rmthub-drop .rmth-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
         .fp-rmthub-drop .rmth-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:6px 8px;text-align:center;}
-        .fp-rmthub-drop .rmth-sval{font-size:14px;font-weight:700;color:#a09ef8;line-height:1;margin-bottom:2px;}
+        .fp-rmthub-drop .rmth-sval{font-size:14px;font-weight:700;color:#E9A8FF;line-height:1;margin-bottom:2px;}
         .fp-rmthub-drop .rmth-slbl{font-size:9px;opacity:.4;text-transform:uppercase;letter-spacing:.4px;}
         .fp-rmthub-drop .rmth-glbl{font-size:9px;opacity:.35;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
         .fp-rmthub-drop .rmth-grow{display:flex;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px;}
         .fp-rmthub-drop .rmth-grow:last-child{border-bottom:none;}
         .fp-rmthub-drop .rmth-gname{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
         .fp-rmthub-drop .rmth-gpct{font-size:10px;opacity:.35;margin:0 6px;flex-shrink:0;}
-        .fp-rmthub-drop .rmth-grev{font-size:11px;font-weight:600;color:#a09ef8;flex-shrink:0;}
+        .fp-rmthub-drop .rmth-grev{font-size:11px;font-weight:600;color:#E9A8FF;flex-shrink:0;}
         .fp-rmthub-drop .rmth-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(0,0,0,.18);border-top:1px solid rgba(255,255,255,.06);}
         .fp-rmthub-drop .rmth-links{display:flex;gap:8px;}
-        .fp-rmthub-drop .rmth-links a{font-size:11px;font-weight:600;color:#a09ef8;text-decoration:none;opacity:.8;}
+        .fp-rmthub-drop .rmth-links a{font-size:11px;font-weight:600;color:#E9A8FF;text-decoration:none;opacity:.8;}
         .fp-rmthub-drop .rmth-links a:hover{opacity:1;text-decoration:underline;}
         .fp-rmthub-drop .rmth-credit{font-size:9px;opacity:.25;}
         .fp-rmthub-drop .rmth-state{padding:16px 14px;text-align:center;opacity:.5;font-size:12px;}
@@ -66,9 +63,9 @@
         document.head.appendChild(s);
     }
 
-    // ── Сборка — использует ту же структуру HTML, что и поиск игр FunPay ─────────
+    // ── Build - uses EXACT same HTML structure as FunPay's game search ─────────
     function buildForm() {
-        // Внешняя форма — идентичные классы как у .promo-games-filter
+        // Outer form - identical classes to .promo-games-filter
         const form  = document.createElement('form');
         form.id     = WRAP_ID;
         form.action = 'javascript:void(0)';
@@ -78,7 +75,7 @@
         const group = document.createElement('div');
         group.className = 'form-group fp-rmthub-wrap';
 
-        // Поле ввода — идентичные классы как у поля поиска игр FunPay
+        // Input - identical classes to FunPay's game search input
         const input = document.createElement('input');
         input.id           = INPUT_ID;
         input.type         = 'text';
@@ -93,7 +90,7 @@
         const spin = document.createElement('div');
         spin.id = 'fp-rmthub-spin';
 
-        // Выпадающий список — идентичный класс как у автодополнения FunPay
+        // Dropdown - identical class to FunPay's autocomplete dropdown
         const drop = document.createElement('div');
         drop.id        = DROP_ID;
         drop.className = 'fp-rmthub-drop dropdown-menu hidden';
@@ -155,7 +152,7 @@
 
         try {
             const result = await new Promise((resolve) => {
-                browser.runtime.sendMessage({ action: 'rmthubFetch', username }, resolve);
+                chrome.runtime.sendMessage({ action: 'rmthubFetch', username }, resolve);
             });
 
             if (!result || !result.ok) {
@@ -180,7 +177,7 @@
         const u  = data.user  || {};
         const st = data.stats || {};
         const uid    = String(u.id || '');
-        const uname  = u.username || '—';
+        const uname  = u.username || '-';
         const banned = u.banned;
         const total  = st.totalAmount       || 0;
         const reviews = st.totalReviews     || 0;
@@ -250,10 +247,10 @@
         return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
     }
 
-    // ── Установка — вставка после формы поиска игр с несколькими вариантами поиска места ─────
+    // ── Mount - insert after the game search form, with multiple fallbacks ─────
     function mount() {
         if (document.getElementById(WRAP_ID)) return;
-        // Пробуем несколько точек привязки (FunPay иногда меняет верстку)
+        // Try multiple possible anchor points (FunPay occasionally changes their markup)
         const anchor =
             document.querySelector('form.navbar-form.promo-games-filter') ||
             document.querySelector('form.navbar-form.navbar-left') ||

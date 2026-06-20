@@ -144,7 +144,7 @@
             const editHtml = await editResp.text();
 
             const formData = await new Promise(r =>
-                browser.runtime.sendMessage({ target: 'offscreen', action: 'parseLotEditPage', html: editHtml }, d => r(d))
+                chrome.runtime.sendMessage({ target: 'offscreen', action: 'parseLotEditPage', html: editHtml }, d => r(d))
             );
             if (!formData) throw new Error('Не удалось разобрать форму лота');
 

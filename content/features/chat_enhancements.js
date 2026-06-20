@@ -30,7 +30,7 @@
     let _drafts = {};
 
     async function loadDrafts() {
-        const d = await browser.storage.local.get(DRAFT_KEY);
+        const d = await chrome.storage.local.get(DRAFT_KEY);
         _drafts = d[DRAFT_KEY] || {};
     }
 
@@ -42,7 +42,7 @@
         if (keys.length > 200) {
             keys.slice(0, keys.length - 200).forEach(k => delete _drafts[k]);
         }
-        await browser.storage.local.set({ [DRAFT_KEY]: _drafts });
+        await chrome.storage.local.set({ [DRAFT_KEY]: _drafts });
     }
 
     function getChatIdFromUrl() {
@@ -50,40 +50,97 @@
         return m ? m[1] : null;
     }
 
+    // Tracks which chat the listener is currently bound to. On SPA chat switches the
+    // node= changes but the same <textarea> stays in the DOM, so we must re-read the
+    // chatId instead of capturing it once.
+    let _draftBoundInput = null;
+    let _draftTimer = null;
+
     function initDraftSaving() {
         loadDrafts().then(() => {
-            const chatId = getChatIdFromUrl();
-            if (!chatId) return;
-
             const input = document.querySelector('.chat-form-input .form-control');
             if (!input) return;
 
-            // Restore draft
-            if (_drafts[chatId] && !input.value) {
-                input.value = _drafts[chatId];
+            const currentChatId = getChatIdFromUrl();
+
+            // Restore draft for the chat we're actually looking at right now.
+            // Only restore into a genuinely empty field, and never overwrite text the
+            // user already has. We mark the restore as programmatic so it isn't re-saved.
+            if (currentChatId && _drafts[currentChatId] && !input.value) {
+                window.__fptProgrammaticInput = true;
+                input.value = _drafts[currentChatId];
                 input.dispatchEvent(new Event('input', { bubbles: true }));
+                window.__fptProgrammaticInput = false;
             }
 
-            // Save on input
-            let _draftTimer = null;
-            input.addEventListener('input', () => {
-                clearTimeout(_draftTimer);
-                _draftTimer = setTimeout(() => {
-                    const text = input.value.trim();
-                    if (text) saveDraft(chatId, text);
-                    else {
-                        delete _drafts[chatId];
-                        browser.storage.local.set({ [DRAFT_KEY]: _drafts });
-                    }
-                }, 800);
-            });
+            // Attach the input listener only once per textarea element.
+            if (_draftBoundInput !== input) {
+                _draftBoundInput = input;
 
-            // Clear draft on send
-            const form = input.closest('form');
-            form?.addEventListener('submit', () => {
-                delete _drafts[chatId];
-                browser.storage.local.set({ [DRAFT_KEY]: _drafts });
-            });
+                input.addEventListener('input', () => {
+                    // Ignore input events that WE triggered (templates, autoresponder,
+                    // AI rewrite, draft restore). Those must never be persisted as drafts,
+                    // which was causing drafts to appear "out of nowhere".
+                    if (window.__fptProgrammaticInput) return;
+
+                    // Always resolve the chatId live - the bound textarea is reused across
+                    // chats in FunPay's SPA, so a captured id would be stale.
+                    const chatId = getChatIdFromUrl();
+                    if (!chatId) return;
+
+                    clearTimeout(_draftTimer);
+                    _draftTimer = setTimeout(() => {
+                        const text = input.value.trim();
+                        if (text) saveDraft(chatId, text);
+                        else {
+                            delete _drafts[chatId];
+                            chrome.storage.local.set({ [DRAFT_KEY]: _drafts });
+                        }
+                    }, 800);
+                });
+
+                // Clear the draft for the chat that is active at submit time.
+                const form = input.closest('form');
+                form?.addEventListener('submit', () => {
+                    const chatId = getChatIdFromUrl();
+                    if (!chatId) return;
+                    delete _drafts[chatId];
+                    chrome.storage.local.set({ [DRAFT_KEY]: _drafts });
+                });
+
+                // FIX 2.8.2 (№4): FunPay отправляет сообщения через AJAX (runner),
+                // настоящего submit формы НЕ происходит → черновик не очищался и
+                // последнее отправленное сообщение «спавнилось» обратно в поле.
+                // Дополнительно ловим момент отправки: клик по кнопке отправки и
+                // нажатие Enter. После него поле очищается самим FunPay - как только
+                // оно стало пустым, удаляем черновик этого чата.
+                const clearDraftForActiveChat = () => {
+                    const chatId = getChatIdFromUrl();
+                    if (!chatId) return;
+                    clearTimeout(_draftTimer);   // отменяем отложенное сохранение
+                    delete _drafts[chatId];
+                    chrome.storage.local.set({ [DRAFT_KEY]: _drafts });
+                };
+
+                // ждём, пока FunPay очистит поле после отправки, затем чистим черновик
+                const scheduleClearAfterSend = () => {
+                    const chatId = getChatIdFromUrl();
+                    if (!chatId) return;
+                    let tries = 0;
+                    const iv = setInterval(() => {
+                        tries++;
+                        if (input.value.trim() === '') { clearTimeout(_draftTimer); delete _drafts[chatId]; chrome.storage.local.set({ [DRAFT_KEY]: _drafts }); clearInterval(iv); }
+                        else if (tries > 20) clearInterval(iv); // ~2с максимум
+                    }, 100);
+                };
+
+                const sendBtn = form?.querySelector('button[type="submit"], .chat-form-btn, .btn-chat-send');
+                sendBtn?.addEventListener('click', scheduleClearAfterSend, true);
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) scheduleClearAfterSend();
+                });
+            }
         });
     }
 
@@ -115,106 +172,28 @@
         });
     }
 
-    // --- 4. Message Translation ---
-    function initMessageTranslation() {
-        if (!document.getElementById('fp-translate-styles')) {
-            const style = document.createElement('style');
-            style.id = 'fp-translate-styles';
-            style.textContent = `
-                .fp-translate-btn {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 4px;
-                    cursor: pointer;
-                    opacity: 0.7;
-                    font-size: 11px;
-                    font-weight: 600;
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    background: rgba(107, 102, 255, 0.1);
-                    color: #a09ef8;
-                    margin-top: 8px;
-                    transition: all 0.2s;
-                    user-select: none;
-                    text-transform: uppercase;
-                }
-                .fp-translate-btn:hover {
-                    opacity: 1;
-                    background: rgba(107, 102, 255, 0.2);
-                }
-                .fp-translate-btn .material-icons {
-                    font-size: 14px;
-                }
-                .fp-translated-text {
-                    color: #d8dae8;
-                    margin-top: 8px;
-                    font-size: 0.95em;
-                    display: block;
-                    border-left: 3px solid #6B66FF;
-                    background: rgba(107, 102, 255, 0.05);
-                    border-radius: 0 6px 6px 0;
-                    padding: 8px 12px;
-                    font-style: italic;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        document.querySelectorAll('.chat-msg-item').forEach(attachTranslateBtn);
-    }
-
-    function attachTranslateBtn(msgNode) {
-        if (msgNode.querySelector('.fp-translate-btn') || msgNode.querySelector('.chat-msg-system')) return;
-        const bodyWrap = msgNode.querySelector('.chat-msg-body');
-        if (!bodyWrap) return;
-        
-        const textNode = msgNode.querySelector('.chat-msg-text');
-        if (!textNode || !textNode.textContent.trim()) return;
-
-        if (window.getComputedStyle(bodyWrap).position === 'static') {
-            bodyWrap.style.position = 'relative';
-        }
-
-        const btn = document.createElement('div');
-        btn.className = 'fp-translate-btn';
-        btn.innerHTML = '<span class="material-icons">translate</span> Перевести';
-        btn.title = 'Перевести на русский';
-        
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (msgNode.querySelector('.fp-translated-text')) return;
-
-            btn.innerHTML = '<span class="material-icons">hourglass_empty</span> Переводим...';
-            btn.style.pointerEvents = 'none';
-            
-            const originalText = textNode.textContent.trim();
-            
-            try {
-                const response = await browser.runtime.sendMessage({
-                    action: 'translateMessage',
-                    text: originalText
-                });
-
-                if (response && response.success && response.translated) {
-                    const transEl = document.createElement('div');
-                    transEl.className = 'fp-translated-text';
-                    transEl.textContent = response.translated;
-                    textNode.appendChild(transEl);
-                    btn.remove(); // Hide the button after translating
-                } else {
-                    throw new Error(response?.error || 'Unknown error');
-                }
-            } catch (err) {
-                console.error("FP Tools: Translation error", err);
-                btn.innerHTML = '<span class="material-icons">error</span> Ошибка';
-                btn.style.pointerEvents = 'auto';
-            }
-        });
-        
-        textNode.parentElement.appendChild(btn);
-    }
-
     // --- Init ---
+    // FIX 2.8.2 (№11): при открытии чата прокручиваем ленту сообщений к низу
+    // (к самым свежим), чтобы не приходилось скроллить вручную. Ждём появления
+    // сообщений и докручиваем несколько раз - FunPay подгружает их асинхронно.
+    function scrollChatToBottom() {
+        const list = document.querySelector('.chat-message-list, .chat-detail .chat-message-list, .chat-full .chat-message-list');
+        if (!list) return;
+        let tries = 0;
+        let lastH = -1;
+        const iv = setInterval(() => {
+            tries++;
+            const list2 = document.querySelector('.chat-message-list, .chat-detail .chat-message-list, .chat-full .chat-message-list');
+            if (!list2) { clearInterval(iv); return; }
+            // докручиваем, пока высота растёт (подгружаются сообщения)
+            if (list2.scrollHeight !== lastH) {
+                lastH = list2.scrollHeight;
+                list2.scrollTop = list2.scrollHeight;
+            }
+            if (tries > 12) clearInterval(iv); // ~1.8с
+        }, 150);
+    }
+
     function init() {
         initCtrlEnterSend();
 
@@ -225,32 +204,30 @@
         if (document.querySelector('.chat-form-input')) {
             initDraftSaving();
             initCharCounter();
+            scrollChatToBottom();
         }
-
-        initMessageTranslation();
 
         // Watch for chat form appearing (SPA routing)
         const root = document.getElementById('content') || document.body;
         let _initDone = !!document.querySelector('.chat-form-input');
-        new MutationObserver((mutations) => {
+        let _lastUrl = window.location.href;
+        new MutationObserver(() => {
             if (!_initDone && document.querySelector('.chat-form-input')) {
                 _initDone = true;
                 initDraftSaving();
                 initCharCounter();
+                scrollChatToBottom();
             }
             if (_initDone && !document.querySelector('.chat-form-input')) {
                 _initDone = false;
             }
-
-            // Attach translate buttons to new messages
-            mutations.forEach(m => {
-                m.addedNodes.forEach(n => {
-                    if (n.nodeType === Node.ELEMENT_NODE) {
-                        if (n.classList.contains('chat-msg-item')) attachTranslateBtn(n);
-                        else n.querySelectorAll?.('.chat-msg-item').forEach(attachTranslateBtn);
-                    }
-                });
-            });
+            // SPA navigation between chats keeps the form mounted but changes node=.
+            // Re-run draft init so the correct chat's draft is restored and the live
+            // chatId is used for saving.
+            if (window.location.href !== _lastUrl) {
+                _lastUrl = window.location.href;
+                if (document.querySelector('.chat-form-input')) { initDraftSaving(); scrollChatToBottom(); }
+            }
         }).observe(root, { childList: true, subtree: true });
     }
 

@@ -1,11 +1,9 @@
-// content/features/order_enhancements.js — Foxen 2.9
+// content/features/order_enhancements.js - Foxen 2.9
 // Unconfirmed balance in stats • "Request review" button • Sales period filter • Order type labels
 
 // ── 1. Unconfirmed balance display ──────────────────────────────────────────
 async function initUnconfirmedBalance() {
-    const { fpToolsShowUnconfirmed, fpToolsSalesData } = await browser.storage.local.get([
-        'fpToolsShowUnconfirmed', 'fpToolsSalesData'
-    ]);
+    const { fpToolsShowUnconfirmed } = await chrome.storage.local.get(['fpToolsShowUnconfirmed']);
     if (fpToolsShowUnconfirmed === false) return;
 
     // Find the sales statistics block added by misc.js
@@ -13,7 +11,7 @@ async function initUnconfirmedBalance() {
     if (!statsBlock) return;
 
     // Calculate from stored data
-    const orders = Object.values(fpToolsSalesData || {});
+    const orders = await FPTSalesDB.getAllAsArray();
     const pending = orders.filter(o => o.orderStatus === 'paid');
     if (!pending.length) return;
 
@@ -49,7 +47,7 @@ function initSalesFilter() {
     if (!window.location.pathname.includes('/orders/trade')) return;
     if (document.getElementById('fp-sales-filter')) return;
 
-    // Wait for the FP Tools stats block to appear
+    // Wait for the Foxen stats block to appear
     const statsBlock = document.getElementById('fp-tools-sales-block') ||
                        document.querySelector('.fp-tools-sales, [id*="sales"]');
     if (!statsBlock) return;
@@ -70,13 +68,13 @@ function initSalesFilter() {
     periods.forEach(p => {
         const btn = document.createElement('button');
         btn.className = 'btn btn-default';
-        btn.style.cssText = `padding:4px 10px;font-size:11px;font-weight:600;${p.default ? 'background:#252847;color:#a09ef8;border-color:#363a5a;' : ''}`;
+        btn.style.cssText = `padding:4px 10px;font-size:11px;font-weight:600;${p.default ? 'background:#2A1830;color:#E9A8FF;border-color:#363a5a;' : ''}`;
         btn.textContent = p.label;
         btn.addEventListener('click', () => {
             bar.querySelectorAll('button').forEach(b => {
                 b.style.background = ''; b.style.color = ''; b.style.borderColor = '';
             });
-            btn.style.background = '#252847'; btn.style.color = '#a09ef8'; btn.style.borderColor = '#363a5a';
+            btn.style.background = '#2A1830'; btn.style.color = '#E9A8FF'; btn.style.borderColor = '#363a5a';
             applySalesPeriodFilter(p.days);
         });
         bar.appendChild(btn);
@@ -87,11 +85,10 @@ function initSalesFilter() {
 }
 
 async function applySalesPeriodFilter(days) {
-    const { fpToolsSalesData } = await browser.storage.local.get('fpToolsSalesData');
-    if (!fpToolsSalesData) return;
+    const all = await FPTSalesDB.getAllAsArray();
+    if (!all.length) return;
 
     const cutoff = days >= 99999 ? 0 : Date.now() - days * 86400000;
-    const all    = Object.values(fpToolsSalesData);
     const filt   = all.filter(o => o.orderDate >= cutoff);
 
     const total    = filt.reduce((s, o) => s + (o.price || 0), 0);
@@ -132,7 +129,7 @@ function initReviewRequestButtons() {
             const btn = document.createElement('button');
             btn.style.cssText = `
                 background:none;border:1px solid #22253a;border-radius:4px;
-                color:#6B66FF;cursor:pointer;padding:2px 8px;font-size:11px;
+                color:#C026D3;cursor:pointer;padding:2px 8px;font-size:11px;
                 margin-left:6px;font-family:Inter,sans-serif;transition:background .15s;
                 white-space:nowrap;flex-shrink:0;
             `;
@@ -155,7 +152,7 @@ function initReviewRequestButtons() {
                     return;
                 }
 
-                const { fpToolsAutoReplies = {} } = await browser.storage.local.get('fpToolsAutoReplies');
+                const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
                 const template = fpToolsAutoReplies.reviewRequestTemplate ||
                     `Привет! Буду рад, если оставите отзыв на наш заказ #${orderId} 🙏 Это займёт 10 секунд и очень поможет!`;
 
@@ -211,7 +208,6 @@ function initReviewRequestButtons() {
     obs.observe(document.getElementById('content') || document.body, { childList: true, subtree: true });
 }
 
-// ── 4. Payment type labels — handled by content_script.js initializePaymentTypeBadges ──
 
 // ── Init all ─────────────────────────────────────────────────────────────────
 function initOrderEnhancements() {

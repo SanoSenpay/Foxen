@@ -10,7 +10,7 @@ function initializeNotes() {
     if (!notesArea || notesArea.dataset.initialized) return;
 
     // Загружаем существующие заметки при открытии
-    browser.storage.local.get('fpToolsUserNotes', ({ fpToolsUserNotes }) => {
+    chrome.storage.local.get('fpToolsUserNotes', ({ fpToolsUserNotes }) => {
         if (fpToolsUserNotes) {
             notesArea.value = fpToolsUserNotes;
         }
@@ -20,9 +20,9 @@ function initializeNotes() {
     notesArea.addEventListener('input', () => {
         clearTimeout(notesDebounceTimer);
         notesDebounceTimer = setTimeout(() => {
-            browser.storage.local.set({ fpToolsUserNotes: notesArea.value })
-                .then(() => console.log("FP Tools: Notes saved."))
-                .catch(err => console.error("FP Tools: Error saving notes:", err));
+            chrome.storage.local.set({ fpToolsUserNotes: notesArea.value })
+                .then(() => console.log("Foxen: Notes saved."))
+                .catch(err => console.error("Foxen: Error saving notes:", err));
         }, 500); // Сохраняем через 500 мс после прекращения ввода
     });
 

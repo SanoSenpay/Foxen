@@ -1,24 +1,20 @@
-// content/features/fpt_identifier.js — Foxen 3.0
-// FIXED: Now works on /users/, /orders/, /chat/ and chat list pages.
-//        Previously silently exited on /users/ (not in path allowlist).
-//        Fixed selector for textarea and chat container across all page types.
+
 
 function initializeFPTIdentifier() {
     'use strict';
 
     const path = window.location.pathname;
 
-    // FIX: Added /users/ — previously this returned early on profile pages
+    // FIX: Added /users/ - previously this returned early on profile pages
     // which have an inline chat form (sends messages to seller).
     const ALLOWED = ['/chat/', '/lots/offer', '/orders/', '/users/'];
     if (!ALLOWED.some(p => path.startsWith(p))) return;
 
-    const FPT_CHROME_SIG = '\u200B\u200D\u200C'; // Original Chrome
-    const FPT_FF_SIG = '\u200B\u200D\u200C\u200C'; // Firefox Port (added extra \u200C)
+    const FPT_SIGNATURE   = '\u200B\u200D\u200C';
     const FPT_LABEL_CLASS = 'fpt-status-label';
-    const identifiedUsers = new Map();
+    const identifiedUsers = new Set();
     let currentChatUserId = null;
-    let lastSeenAuthorId = null;
+    let lastSeenAuthorId  = null;
 
     // ── Styles ──────────────────────────────────────────────────────────────
     function addIdentifierStyles() {
@@ -27,7 +23,7 @@ function initializeFPTIdentifier() {
         s.id = 'fpt-identifier-styles';
         s.textContent = `
             .${FPT_LABEL_CLASS} {
-                color: #6B66FF;
+                color: #C026D3;
                 font-size: 11px;
                 font-weight: 600;
                 margin-left: 6px;
@@ -48,34 +44,18 @@ function initializeFPTIdentifier() {
     function updateHeaderStatus() {
         const header = document.querySelector('.chat-header');
         if (!header) return;
-        const statusEl = header.querySelector('.media-user-status');
-        const userLink = header.querySelector('.media-user-name a');
+        const statusEl  = header.querySelector('.media-user-status');
+        const userLink  = header.querySelector('.media-user-name a');
         if (!statusEl || !userLink) return;
 
         statusEl.querySelector(`.${FPT_LABEL_CLASS}`)?.remove();
         const userId = getUserIdFromUrl(userLink.href);
         currentChatUserId = userId;
-
         if (userId && identifiedUsers.has(userId)) {
-            const clientType = identifiedUsers.get(userId);
-            const DEVELOPER_IDS = ['15508026'];
-            const isDev = DEVELOPER_IDS.includes(userId);
-
-            // Показываем только пользователей Foxen (FF) и разработчика
-            if (isDev || clientType === 'ff') {
-                const lbl = document.createElement('span');
-                lbl.className = FPT_LABEL_CLASS;
-
-                if (isDev) {
-                    lbl.textContent = '· Разработчик Foxen';
-                    lbl.style.color = '#ff9800';
-                    lbl.style.textShadow = '0 0 5px rgba(255,152,0,0.5)';
-                } else {
-                    lbl.textContent = '· Foxen';
-                }
-
-                statusEl.appendChild(lbl);
-            }
+            const lbl = document.createElement('span');
+            lbl.className = FPT_LABEL_CLASS;
+            lbl.textContent = '· Foxen';
+            statusEl.appendChild(lbl);
         }
     }
 
@@ -90,17 +70,9 @@ function initializeFPTIdentifier() {
         }
         if (!authorId) return;
         const txt = node.querySelector('.chat-msg-text');
-        if (txt) {
-            const content = txt.textContent;
-            let type = null;
-            
-            // Сначала проверяем более длинную FF-сигнатуру
-            if (content.includes(FPT_FF_SIG)) type = 'ff';
-            else if (content.includes(FPT_CHROME_SIG)) type = 'chrome';
-
-            if (type === 'ff') {
-                // Сохраняем только пользователей Foxen; Chrome-расширение игнорируем
-                identifiedUsers.set(authorId, 'ff');
+        if (txt?.textContent.includes(FPT_SIGNATURE)) {
+            if (!identifiedUsers.has(authorId)) {
+                identifiedUsers.add(authorId);
                 if (authorId === currentChatUserId) updateHeaderStatus();
             }
         }
@@ -114,6 +86,17 @@ function initializeFPTIdentifier() {
         if (/[A-Za-z]:\\/i.test(text) || /^\/[a-z]/i.test(text)) return false;
         // Already contains zero-width chars (own or foreign signature)
         if (/[\u200B\u200C\u200D\uFEFF]/.test(text)) return false;
+
+        // Skip if the message STARTS with any of these symbols (commands / special syntax).
+        // Checked on the trimmed text so leading spaces don't bypass it.
+        const trimmed = text.trimStart();
+        const blockedFirstChars = ['/', '.', '!', '+', '№', '\\', '"', ':', '(', ')', '?', '#'];
+        if (blockedFirstChars.includes(trimmed.charAt(0))) return false;
+
+        // Skip if the message has more than 24 English (Latin) letters total.
+        const latinCount = (text.match(/[A-Za-z]/g) || []).length;
+        if (latinCount > 24) return false;
+
         return true;
     }
 
@@ -123,7 +106,7 @@ function initializeFPTIdentifier() {
     // FIX: waitForElement('.chat-form form') was broken because form was found
     // but querySelector('button[type="submit"]') on it failed on some pages.
     async function setupFormInjection() {
-        // Wait for the textarea directly — works on ALL page types
+        // Wait for the textarea directly - works on ALL page types
         const textarea = await waitForElement('textarea[name="content"]', 8000);
         if (!textarea) return;
 
@@ -137,9 +120,9 @@ function initializeFPTIdentifier() {
         const injectSig = () => {
             const val = textarea.value;
             if (!shouldInject(val)) return;
-            if (!val.endsWith(FPT_FF_SIG)) {
+            if (!val.endsWith(FPT_SIGNATURE)) {
                 if (!val.endsWith(' ')) textarea.value += ' ';
-                textarea.value += FPT_FF_SIG;
+                textarea.value += FPT_SIGNATURE;
             }
         };
 
@@ -170,7 +153,7 @@ function initializeFPTIdentifier() {
         const observer = new MutationObserver(() => {
             // Detect chat switch (clicking a different contact in the list)
             const headerLink = document.querySelector('.chat-header .media-user-name a');
-            const newUserId = headerLink ? getUserIdFromUrl(headerLink.href) : null;
+            const newUserId  = headerLink ? getUserIdFromUrl(headerLink.href) : null;
             if (newUserId !== currentChatUserId) {
                 lastSeenAuthorId = null;
                 container.querySelectorAll('.chat-msg-item').forEach(processMessage);
@@ -205,11 +188,11 @@ function initializeFPTIdentifier() {
 
     // ── Boot ────────────────────────────────────────────────────────────────
     async function boot() {
-        const { fpToolsIdentifierEnabled } = await browser.storage.local.get('fpToolsIdentifierEnabled');
+        const { fpToolsIdentifierEnabled } = await chrome.storage.local.get('fpToolsIdentifierEnabled');
         if (fpToolsIdentifierEnabled === false) return;
 
         addIdentifierStyles();
-        // Run both in parallel — they each wait independently
+        // Run both in parallel - they each wait independently
         await Promise.all([setupFormInjection(), setupMessageObserver()]);
     }
 

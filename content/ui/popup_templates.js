@@ -50,7 +50,8 @@ function getModalOverlaysHTML() {
 function getMainPopupHTML() {
     return `
         <div class="fp-tools-header">
-            <h2>Foxen</h2>
+            <h2 class="fp-header-title">Foxen</h2>
+            <button class="fp-theme-btn" id="fpThemeToggleBtn" aria-label="Переключить тему" title="Тёмная / Светлая тема"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
             <button class="close-btn" aria-label="Закрыть"></button>
         </div>
         <div class="fp-tools-body">
@@ -143,7 +144,7 @@ function getMainPopupHTML() {
 
                     <div class="support-promo" style="background: rgba(107, 102, 255, 0.1); border-color: rgba(107, 102, 255, 0.3); margin-top: 15px;">
                         <span class="nav-icon" style="color: #6B66FF;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></span>
-                        <span>Данное расширение было создано на основе расширения <a href="https://funpay.tools" target="_blank" style="color:inherit;text-decoration:underline;font-weight:bold;">FunPay Tools</a></span>
+                        <span>Данное расширение было создано на основе расширения <a href="https://funpay.tools" target="_blank" style="color:inherit;text-decoration:underline;font-weight:bold;">Foxen</a></span>
                     </div>
                 </div>
                 <div class="fp-tools-page-content" data-page="accounts">
@@ -328,25 +329,7 @@ function getMainPopupHTML() {
                 <div class="fp-tools-page-content" data-page="theme">
                     <h3>Кастомизация темы</h3>
                     <div class="checkbox-label-inline" style="margin-bottom:15px;"><input type="checkbox" id="enableCustomThemeCheckbox"><label for="enableCustomThemeCheckbox" style="margin-bottom:0;"><span>Включить кастомную тему</span></label></div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                        <span style="font-size:12px;color:#5a5f7a;flex:1;">Готовые обои:</span>
-                        <button id="fp-apply-dark-preset" class="btn btn-default" style="padding:3px 10px;font-size:12px;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span> Чёрная</button>
-                    </div>
-                    <div id="fp-wallpaper-carousel" style="position:relative;width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#0e0f16;contain:layout style paint;">
-                        <div id="fp-wp-img-slot" style="position:absolute;inset:0;"></div>
-                        <button id="fp-wp-prev" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);border:none;color:#fff;font-size:18px;width:28px;height:28px;border-radius:50%;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;line-height:1;">&#8249;</button>
-                        <button id="fp-wp-next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);border:none;color:#fff;font-size:18px;width:28px;height:28px;border-radius:50%;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;line-height:1;">&#8250;</button>
-                        <div id="fp-wp-label" style="position:absolute;bottom:0;left:0;right:0;padding:4px 8px;background:rgba(0,0,0,.6);font-size:11px;color:#ccc;display:flex;align-items:center;justify-content:space-between;">
-                            <span id="fp-wp-name"></span>
-                            <span id="fp-wp-counter" style="color:#5a5f7a;font-size:10px;"></span>
-                        </div>
-                        <div id="fp-wp-loader" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
-                            <span id="fp-wp-emoji" style="font-size:24px;"></span>
-                            <div style="width:60px;height:3px;background:#1e2030;border-radius:2px;overflow:hidden;"><div id="fp-wp-bar" style="height:100%;width:0%;background:#6B66FF;transition:width .15s linear;border-radius:2px;"></div></div>
-                            <span id="fp-wp-pct" style="font-size:10px;color:#4a4f68;">0%</span>
-                        </div>
-                        <button id="fp-wp-apply-cur" style="position:absolute;top:6px;right:6px;background:rgba(107,102,255,.85);border:none;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:12px;cursor:pointer;z-index:2;display:none;">Применить</button>
-                    </div>
+                    <div id="foxen-theme-gallery-mount" style="margin-bottom: 12px;"></div>
                     <div class="template-container">
                         <label>Фоновое изображение:</label>
                         <div id="bg-image-preview" style="width:100%; height:60px; background-color:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:10px; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color: #888; font-size:12px;">Нет изображения</div>
@@ -644,12 +627,28 @@ function getMainPopupHTML() {
                     </div>
                 </div>
 
-                <div class="fp-tools-page-content" data-page="support">
-                    <h3>О расширении</h3>
-                    <div class="support-container">
-                        <p>Это Firefox-порт расширения <strong>FunPay Tools</strong>, адаптированный для Zen Browser и других Firefox-based браузеров, выпущенный под названием <strong>Foxen</strong>.</p></p>
-                        <a href="https://github.com/SanoSenpay" target="_blank" class="btn" style="margin-bottom:12px;"><span class="material-icons" style="font-size: 20px; margin-right: 8px;">code</span>GitHub: SanoSenpay (Firefox форк)</a>
-                        <a href="https://github.com/XaviersDev/FunPay-Tools" target="_blank" class="btn btn-default"><span class="material-icons" style="font-size: 20px; margin-right: 8px;">open_in_new</span>Оригинал: XaviersDev/FunPay-Tools</a>
+                <div class="fp-tools-page-content" data-page="support" style="padding:0;">
+                    <div style="padding:20px;background:linear-gradient(180deg, rgba(30,34,53,0.8) 0%, rgba(20,22,35,0.4) 100%);border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <h3 style="margin:0 0 12px;font-size:18px;display:flex;align-items:center;gap:8px;">
+                            О расширении Foxen <span class="material-symbols-rounded" style="color:#f4c84a;">star</span>
+                        </h3>
+                        <p style="font-size:13px;line-height:1.5;margin:0 0 16px;color:#b4b8cc;">Это <strong>самый важный</strong> вклад, который вы можете сделать. Хорошие оценки и звёзды на GitHub — лучшее топливо для новых обновлений и мотивация для разработчика. Пожалуйста, уделите всего минуту!</p>
+                        <div style="display:flex;flex-direction:column;gap:10px;">
+                            <a href="https://addons.mozilla.org/ru/firefox/addon/foxen/" target="_blank" class="btn" style="background:#ff7139;color:#fff;border:none;justify-content:center;padding:10px;font-weight:600;"><span class="material-icons" style="font-size:20px;margin-right:8px;">rate_review</span>Оставить отзыв в Mozilla Add-ons</a>
+                            <a href="https://github.com/SanoSenpay/Foxen" target="_blank" class="btn btn-default" style="justify-content:center;padding:10px;font-weight:600;"><span class="material-icons" style="font-size:20px;margin-right:8px;color:#f4c84a;">star_rate</span>Поставить звезду на GitHub</a>
+                        </div>
+                    </div>
+                    
+                    <div style="padding:20px;">
+                        <h4 style="margin:0 0 10px;font-size:14px;color:#8a8e9f;display:flex;align-items:center;gap:6px;">
+                            <span class="material-icons" style="font-size:16px;">handshake</span> Благодарность оригиналу
+                        </h4>
+                        <p style="font-size:12px;line-height:1.5;margin:0 0 14px;color:#7a7e8f;">Foxen является форком невероятного расширения <strong>FunPay Tools</strong> (создано <strong>XaviersDev</strong>, лицензия MIT). В знак благодарности, пожалуйста, оставьте хороший отзыв оригинальному расширению в Chrome Web Store!</p>
+                        <div style="display:flex;flex-direction:column;gap:8px;">
+                            <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb/reviews" target="_blank" class="btn btn-default" style="font-size:12px;padding:8px 12px;justify-content:flex-start;"><span class="material-icons" style="font-size:16px;margin-right:8px;color:#4caf50;">thumb_up</span>Отзыв для FunPay Tools в Chrome Store</a>
+                            <a href="https://github.com/XaviersDev/FunPay-Tools" target="_blank" class="btn btn-default" style="font-size:12px;padding:8px 12px;justify-content:flex-start;"><span class="material-icons" style="font-size:16px;margin-right:8px;">code</span>Оригинальный репозиторий GitHub</a>
+                            <a href="https://funpay.tools" target="_blank" class="btn btn-default" style="font-size:12px;padding:8px 12px;justify-content:flex-start;"><span class="material-icons" style="font-size:16px;margin-right:8px;">language</span>Официальный сайт funpay.tools</a>
+                        </div>
                     </div>
                 </div>
             </main>

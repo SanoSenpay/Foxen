@@ -15,7 +15,7 @@ async function getCurrencyList() {
         currencyRatesCache.list = data;
         return data;
     } catch (error) {
-        console.error('FP Tools: Failed to fetch currency list:', error);
+        console.error('Foxen: Failed to fetch currency list:', error);
         return null;
     }
 }
@@ -33,7 +33,7 @@ async function getRates(baseCurrency) {
         currencyRatesCache[baseCurrency] = data[baseCurrency];
         return data[baseCurrency];
     } catch (error) {
-        console.error(`FP Tools: Failed to fetch rates for ${baseCurrency}:`, error);
+        console.error(`Foxen: Failed to fetch rates for ${baseCurrency}:`, error);
         return null;
     }
 }
