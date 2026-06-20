@@ -43,7 +43,7 @@ export function randomTag() {
 }
 
 async function anyAutomationEnabled() {
-    const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+    const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
     return !!(
         fpToolsAutoReplies.greetingEnabled ||
         fpToolsAutoReplies.keywordsEnabled ||
@@ -126,9 +126,9 @@ export function stopEngine() {
 }
 
 async function ensureHeartbeat() {
-    const existing = await chrome.alarms.get(ENGINE_HEARTBEAT_ALARM);
+    const existing = await (typeof browser !== 'undefined' ? browser : chrome).alarms.get(ENGINE_HEARTBEAT_ALARM);
     if (!existing) {
-        await chrome.alarms.create(ENGINE_HEARTBEAT_ALARM, { periodInMinutes: 1 });
+        await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(ENGINE_HEARTBEAT_ALARM, { periodInMinutes: 1 });
     }
 }
 
@@ -154,7 +154,7 @@ export async function onHeartbeat() {
         }
     } else {
         running = false;
-        await chrome.alarms.clear(ENGINE_HEARTBEAT_ALARM);
+        await (typeof browser !== 'undefined' ? browser : chrome).alarms.clear(ENGINE_HEARTBEAT_ALARM);
     }
 }
 

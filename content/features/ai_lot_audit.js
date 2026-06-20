@@ -448,7 +448,7 @@ function initializeAILotAudit() {
     const AUDIT_COOLDOWN_MS  = 30 * 24 * 60 * 60 * 1000; // 30 days
 
     async function auditCheckCooldown() {
-        const d = await chrome.storage.local.get(AUDIT_COOLDOWN_KEY);
+        const d = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(AUDIT_COOLDOWN_KEY);
         const last = d[AUDIT_COOLDOWN_KEY] || 0;
         const elapsed = Date.now() - last;
         return { allowed: elapsed >= AUDIT_COOLDOWN_MS, remainMs: AUDIT_COOLDOWN_MS - elapsed };
@@ -480,7 +480,7 @@ function initializeAILotAudit() {
     startBtn.addEventListener('click', async () => {
         const { allowed } = await auditCheckCooldown();
         if (!allowed) { showNotification('Аудит доступен раз в месяц.', true); return; }
-        await chrome.storage.local.set({ [AUDIT_COOLDOWN_KEY]: Date.now() });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [AUDIT_COOLDOWN_KEY]: Date.now() });
         auditApplyCooldownUI();
         auditSetState('loading');
         _answers = {};

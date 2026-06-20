@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "3.1.0-beta",
+    "version": "3.1.0",
     "description": "+35 инструментов для FunPay в одном расширении — ИИ, автоматизация, аналитика.",
     "permissions": [
         "storage",

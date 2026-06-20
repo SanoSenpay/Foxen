@@ -17,7 +17,7 @@ function initializeBlacklist() {
     if (!addBtn) return;
 
     async function render() {
-        const { fpToolsBlacklist = [] } = await chrome.storage.local.get('fpToolsBlacklist');
+        const { fpToolsBlacklist = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
         if (!listEl) return;
 
         if (!fpToolsBlacklist.length) {
@@ -46,22 +46,22 @@ function initializeBlacklist() {
 
         listEl.querySelectorAll('.fp-bl-delivery, .fp-bl-response, .fp-bl-notif').forEach(cb => {
             cb.addEventListener('change', async () => {
-                const { fpToolsBlacklist: bl = [] } = await chrome.storage.local.get('fpToolsBlacklist');
+                const { fpToolsBlacklist: bl = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
                 const idx = parseInt(cb.dataset.idx, 10);
                 if (!bl[idx]) return;
                 if (cb.classList.contains('fp-bl-delivery'))  bl[idx].blockDelivery     = cb.checked;
                 if (cb.classList.contains('fp-bl-response'))  bl[idx].blockResponse     = cb.checked;
                 if (cb.classList.contains('fp-bl-notif'))     bl[idx].blockNotification = cb.checked;
-                await chrome.storage.local.set({ fpToolsBlacklist: bl });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsBlacklist: bl });
             });
         });
 
         listEl.querySelectorAll('.fp-bl-remove').forEach(btn => {
             btn.addEventListener('click', async () => {
-                const { fpToolsBlacklist: bl = [] } = await chrome.storage.local.get('fpToolsBlacklist');
+                const { fpToolsBlacklist: bl = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
                 const idx = parseInt(btn.dataset.idx, 10);
                 bl.splice(idx, 1);
-                await chrome.storage.local.set({ fpToolsBlacklist: bl });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsBlacklist: bl });
                 await render();
                 showNotification('Удалено из чёрного списка');
             });
@@ -74,7 +74,7 @@ function initializeBlacklist() {
         
         if (!username) { showNotification('Введите никнейм', true); return; }
 
-        const { fpToolsBlacklist = [] } = await chrome.storage.local.get('fpToolsBlacklist');
+        const { fpToolsBlacklist = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
 
         if (fpToolsBlacklist.some(e => e.username.toLowerCase() === username.toLowerCase())) {
             showNotification('Уже в списке', true);
@@ -90,7 +90,7 @@ function initializeBlacklist() {
             addedAt: Date.now()
         });
 
-        await chrome.storage.local.set({ fpToolsBlacklist });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsBlacklist });
         if (usernameInput) usernameInput.value = '';
         if (noteInput) noteInput.value = '';
         await render();
@@ -115,27 +115,27 @@ function initializeBlacklist() {
 
 async function addToBlacklistFromChat(username) {
     if (!username) return;
-    const { fpToolsBlacklist = [] } = await chrome.storage.local.get('fpToolsBlacklist');
+    const { fpToolsBlacklist = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
     if (fpToolsBlacklist.some(e => e.username.toLowerCase() === username.toLowerCase())) {
         showNotification(`${username} уже в чёрном списке`, true);
         return;
     }
     fpToolsBlacklist.push({ username, note: 'Добавлен из чата', blockDelivery: true, blockResponse: true, blockNotification: false, addedAt: Date.now() });
-    await chrome.storage.local.set({ fpToolsBlacklist });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsBlacklist });
     showNotification(`${username} добавлен в чёрный список`);
     document.dispatchEvent(new Event('fpToolsBlacklistUpdated'));
 }
 async function isInBlacklist(username) {
     if (!username) return false;
-    const { fpToolsBlacklist = [] } = await chrome.storage.local.get('fpToolsBlacklist');
+    const { fpToolsBlacklist = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
     return fpToolsBlacklist.some(e => e.username.toLowerCase() === username.toLowerCase());
 }
 
 async function removeFromBlacklistByName(username) {
     if (!username) return;
-    const { fpToolsBlacklist = [] } = await chrome.storage.local.get('fpToolsBlacklist');
+    const { fpToolsBlacklist = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
     const next = fpToolsBlacklist.filter(e => e.username.toLowerCase() !== username.toLowerCase());
-    await chrome.storage.local.set({ fpToolsBlacklist: next });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsBlacklist: next });
     showNotification(`${username} удалён из чёрного списка`);
     document.dispatchEvent(new Event('fpToolsBlacklistUpdated'));
 }

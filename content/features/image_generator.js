@@ -224,7 +224,7 @@ class ImageGenerator {
             btn.disabled = true;
 
             try {
-                const response = await chrome.runtime.sendMessage({ action: "getAIImageSettings", prompt: prompt });
+                const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: "getAIImageSettings", prompt: prompt });
                 if (response && response.success) {
                     this.applyTheme(response.data);
                     showNotification('Изображение сгенерировано ИИ!');

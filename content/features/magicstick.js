@@ -248,13 +248,13 @@ class MagicStickStyler {
     }
 
     async saveStylesToStorage() {
-        await chrome.storage.local.set({ fpToolsLiveStyles: this.savedStyles });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsLiveStyles: this.savedStyles });
         this.injectPersistentStyles();
         showNotification('Стили сохранены!', false);
     }
     
     async loadStyles() {
-        const data = await chrome.storage.local.get('fpToolsLiveStyles');
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsLiveStyles');
         this.savedStyles = data.fpToolsLiveStyles || {};
     }
     
@@ -637,7 +637,7 @@ function initializeMagicStickStyler() {
 // сохранённые стили СРАЗУ при загрузке страницы - независимо от меню и без UI.
 async function injectMagicStickStylesEarly() {
     try {
-        const data = await chrome.storage.local.get('fpToolsLiveStyles');
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsLiveStyles');
         const savedStyles = data.fpToolsLiveStyles || {};
         if (!savedStyles || !Object.keys(savedStyles).length) return;
 

@@ -148,7 +148,7 @@
 
         const gain = ctx.createGain();
         // громкость из настроек
-        const { notificationVolume } = await chrome.storage.local.get('notificationVolume');
+        const { notificationVolume } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('notificationVolume');
         gain.gain.value = (typeof notificationVolume === 'number') ? Math.max(0, Math.min(1, notificationVolume)) : 1;
 
         src.connect(gain).connect(ctx.destination);
@@ -258,7 +258,7 @@
         try {
             const dataUrl = sliceToWav();
             const clip = Math.min(clipSeconds, decodedBuffer.duration);
-            await chrome.storage.local.set({
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
                 [STORE_DATA]: dataUrl,
                 [STORE_META]: { length: clip },
                 notificationSound: 'custom'
@@ -287,7 +287,7 @@
         block.style.display = isCustom ? 'block' : 'none';
 
         // показать «сохранено», если уже есть сохранённый клип
-        const { [STORE_META]: meta, [STORE_DATA]: data } = await chrome.storage.local.get([STORE_META, STORE_DATA]);
+        const { [STORE_META]: meta, [STORE_DATA]: data } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([STORE_META, STORE_DATA]);
         const savedEl = $('fptCustomSoundSaved');
         const lenEl = $('fptCustomSoundSavedLen');
         const nameEl = $('fptCustomSoundFileName');

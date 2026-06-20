@@ -101,7 +101,7 @@ async function openCloneWizard(offerId) {
     body.innerHTML = '<div class="fp-cw-loader"></div><p class="fp-cw-muted" style="text-align:center;">Читаю лот с сервера (RU + EN + цена)…</p>';
 
     try {
-        const resp = await chrome.runtime.sendMessage({ action: 'cloneGetSource', offerId });
+        const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId });
         if (!resp || !resp.success) throw new Error(resp?.error || 'Не удалось получить данные лота.');
 
         __fpCloneState = {
@@ -241,7 +241,7 @@ function renderCloneReview() {
             description: document.getElementById('fp-cw-desc-ru').value,
             timestamp: Date.now()
         };
-        await chrome.storage.local.set({ [COPIED_LOT_STORAGE_KEY]: data });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [COPIED_LOT_STORAGE_KEY]: data });
         showNotification('Тексты сохранены. Откройте форму создания лота - появится кнопка вставки.', false);
         closeCloneWizard();
     });
@@ -261,7 +261,7 @@ function renderCloneReview() {
             translateBtn.textContent = 'Перевожу...';
             translateBtn.disabled = true;
             try {
-                const result = await chrome.runtime.sendMessage({
+                const result = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
                     action: 'translateLotText',
                     data: { title: ruTitle, description: ruDesc, buyerMessage: '' }
                 });
@@ -312,7 +312,7 @@ async function executeCloneCreate() {
     if (wantImages && st.source.images && st.source.images.length) {
         statusEl.innerHTML = `<span class="fp-cw-spin"></span> Переношу картинки (${st.source.images.length})…`;
         try {
-            const imgResp = await chrome.runtime.sendMessage({ action: 'cloneUploadImages', urls: st.source.images });
+            const imgResp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneUploadImages', urls: st.source.images });
             if (imgResp && imgResp.success) {
                 imageIds = imgResp.ids || [];
                 if (imgResp.errors && imgResp.errors.length) {
@@ -352,7 +352,7 @@ async function executeCloneCreate() {
     statusEl.innerHTML = '<span class="fp-cw-spin"></span> Создаю лот на сервере…';
 
     try {
-        const resp = await chrome.runtime.sendMessage({ action: 'cloneCreateLot', fields, location: 'trade' });
+        const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneCreateLot', fields, location: 'trade' });
         if (!resp || !resp.success) throw new Error(resp?.error || 'Ошибка создания.');
 
         if (resp.newId) st.createdIds.push(resp.newId);
@@ -368,7 +368,7 @@ async function executeCloneCreate() {
             actions.prepend(undo);
             undo.addEventListener('click', async () => {
                 undo.disabled = true;
-                const del = await chrome.runtime.sendMessage({ action: 'cloneDeleteLot', offerId: resp.newId });
+                const del = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneDeleteLot', offerId: resp.newId });
                 if (del && del.success) {
                     showNotification('Созданный лот удалён.', false);
                     undo.remove();
@@ -396,11 +396,11 @@ async function checkForCopiedLotData() {
         return;
     }
 
-    const result = await chrome.storage.local.get(COPIED_LOT_STORAGE_KEY);
+    const result = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(COPIED_LOT_STORAGE_KEY);
     const copiedData = result[COPIED_LOT_STORAGE_KEY];
 
     if (!copiedData || (Date.now() - copiedData.timestamp > 10 * 60 * 1000)) {
-        await chrome.storage.local.remove(COPIED_LOT_STORAGE_KEY);
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(COPIED_LOT_STORAGE_KEY);
         return;
     }
 
@@ -584,7 +584,7 @@ function setupImportWizardLogic(overlay) {
         try {
             const appData = JSON.parse(document.body.dataset.appData || '{}');
             const userId = (Array.isArray(appData) ? appData[0] : appData).userId;
-            const lots = await chrome.runtime.sendMessage({ action: 'getUserLotsList', userId: userId });
+            const lots = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getUserLotsList', userId: userId });
             
             myLotsCache = lots || [];
             renderMyLots();
@@ -623,7 +623,7 @@ function setupImportWizardLogic(overlay) {
         
         listEl.innerHTML = '<div class="fp-cw-loader"></div>';
         try {
-            const lots = await chrome.runtime.sendMessage({ action: 'getLotList', url: globalCategoryUrl });
+            const lots = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getLotList', url: globalCategoryUrl });
             renderGlobalItems(lots, 'lot');
         } catch (err) { listEl.innerHTML = `<div class="fp-cw-err">Ошибка: ${err.message}</div>`; }
     });
@@ -649,7 +649,7 @@ function setupImportWizardLogic(overlay) {
                 searchDebounceTimer = setTimeout(async () => {
                     listEl.innerHTML = '<div class="fp-cw-loader"></div>';
                     try {
-                        const games = await chrome.runtime.sendMessage({ action: 'searchGames', query: query });
+                        const games = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'searchGames', query: query });
                         renderGlobalItems(games, 'game');
                     } catch (e) {
                         listEl.innerHTML = `<div class="fp-cw-err" style="padding:15px; text-align:center;">Ошибка: ${e.message}</div>`;
@@ -674,7 +674,7 @@ function setupImportWizardLogic(overlay) {
                     searchInput.dispatchEvent(new Event('input'));
                     return;
                 }
-                const categories = await chrome.runtime.sendMessage({ action: 'getCategoryList', url: globalGameUrl });
+                const categories = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getCategoryList', url: globalGameUrl });
                 renderGlobalItems(categories, 'category');
             } else if (globalStep === 'category') {
                 globalStep = 'game';
@@ -706,7 +706,7 @@ function setupImportWizardLogic(overlay) {
                 backBtn.style.display = 'block';
                 listEl.innerHTML = '<div class="fp-cw-loader"></div>';
                 try {
-                    const categories = await chrome.runtime.sendMessage({ action: 'getCategoryList', url: globalGameUrl });
+                    const categories = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getCategoryList', url: globalGameUrl });
                     renderGlobalItems(categories, 'category');
                 } catch (err) { listEl.innerHTML = `<div class="fp-cw-err">Ошибка: ${err.message}</div>`; }
             } else if (globalStep === 'category') {
@@ -714,7 +714,7 @@ function setupImportWizardLogic(overlay) {
                 globalStep = 'lot';
                 listEl.innerHTML = '<div class="fp-cw-loader"></div>';
                 try {
-                    const lots = await chrome.runtime.sendMessage({ action: 'getLotList', url: globalCategoryUrl });
+                    const lots = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getLotList', url: globalCategoryUrl });
                     renderGlobalItems(lots, 'lot');
                 } catch (err) { listEl.innerHTML = `<div class="fp-cw-err">Ошибка: ${err.message}</div>`; }
             } else if (globalStep === 'lot') {
@@ -807,7 +807,7 @@ async function loadLotPreviewForImport(offerId, previewEl, isOwn = true) {
         if (isOwn) {
             // FIX 2.9.1: СВОИ лоты читаем через getOwnLotFull (форма offerEdit владельца) -
             // там есть сообщение покупателю, товары автовыдачи и цена, и не меняется локаль.
-            const resp = await chrome.runtime.sendMessage({ action: 'getOwnLotFull', offerId });
+            const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getOwnLotFull', offerId });
             if (!resp || !resp.success) {
                 // мягкий фолбэк: если форму разобрать не удалось (нестандартный лот) -
                 // не пугаем красной ошибкой, а поясняем по-человечески.
@@ -825,7 +825,7 @@ async function loadLotPreviewForImport(offerId, previewEl, isOwn = true) {
             // FIX 2.9.2: ЧУЖИЕ лоты - как было в 2.8: через cloneGetSource (публичная
             // страница лота). offerEdit для чужого лота недоступен, поэтому getOwnLotFull
             // тут НЕЛЬЗЯ. У чужих лотов нет payment_msg/secrets - это нормально.
-            const resp = await chrome.runtime.sendMessage({ action: 'cloneGetSource', offerId });
+            const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId });
             if (!resp || !resp.success) throw new Error(resp?.error || 'Не удалось получить данные лота.');
             source = resp.source;
         }

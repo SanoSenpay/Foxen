@@ -29,7 +29,7 @@ function initAutoDeliveryUI() {
                 return;
             }
 
-            const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
+            const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
             renderDeliveryLots(lots, fpToolsAutoDeliveryLots, listEl);
 
         } catch (e) {
@@ -146,7 +146,7 @@ function renderDeliveryLots(lots, config, container) {
 }
 
 async function autoSaveDeliveryLot(lotId, container) {
-    const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
+    const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
 
     const enabledEl = container.querySelector(`.fp-ad-enabled[data-lot-id="${lotId}"]`);
     const modeEl    = container.querySelector(`input[name="fp-ad-mode-${lotId}"]:checked`);
@@ -164,13 +164,13 @@ async function autoSaveDeliveryLot(lotId, container) {
         updatedAt:         Date.now()
     };
 
-    await chrome.storage.local.set({ fpToolsAutoDeliveryLots });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoDeliveryLots });
 }
 
 async function initStockCounterDisplay() {
     if (!window.location.pathname.match(/\/users\/\d+\/?/)) return;
 
-    const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
+    const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
     if (!Object.keys(fpToolsAutoDeliveryLots).length) return;
 
     document.querySelectorAll('a.tc-item:not(.fp-stock-init)').forEach(row => {

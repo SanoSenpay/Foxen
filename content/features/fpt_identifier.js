@@ -188,7 +188,7 @@ function initializeFPTIdentifier() {
 
     // ── Boot ────────────────────────────────────────────────────────────────
     async function boot() {
-        const { fpToolsIdentifierEnabled } = await chrome.storage.local.get('fpToolsIdentifierEnabled');
+        const { fpToolsIdentifierEnabled } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsIdentifierEnabled');
         if (fpToolsIdentifierEnabled === false) return;
 
         addIdentifierStyles();

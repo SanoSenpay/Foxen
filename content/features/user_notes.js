@@ -51,13 +51,13 @@ function fptApplyThemeSurface(el) {
 }
 
 async function saveUserStatuses() {
-    await chrome.storage.local.set({ fpToolsUserStatuses: userStatuses });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsUserStatuses: userStatuses });
 }
 async function savePinnedChats() {
-    await chrome.storage.local.set({ fpToolsPinnedChats: pinnedChats });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPinnedChats: pinnedChats });
 }
 async function saveLabels() {
-    await chrome.storage.local.set({ fpToolsCustomLabels });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomLabels });
 }
 
 /* ------------------------------------------------------------------ */
@@ -507,7 +507,7 @@ function renderHeaderMenu(chatMenu) {
 /* ------------------------------------------------------------------ */
 
 async function initializeUserNotes() {
-    const data = await chrome.storage.local.get([
+    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
         'fpToolsUserStatuses', 'fpToolsPinnedChats', 'fpToolsCustomLabels'
     ]);
     userStatuses = data.fpToolsUserStatuses || {};

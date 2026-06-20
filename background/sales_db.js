@@ -130,7 +130,7 @@
             if (flag) return 0;
             if (already > 0) { await setMeta('migratedFromLocal', true); return 0; }
 
-            const data = await chrome.storage.local.get([
+            const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
                 'fpToolsSalesData', 'fpToolsFirstOrderId', 'fpToolsLastOrderId', 'fpToolsSalesLastUpdate'
             ]);
             const old = data.fpToolsSalesData;
@@ -147,7 +147,7 @@
             // Освобождаем квоту: убираем гигантский объект из storage.local.
             // Оставляем lastUpdate как маленькое значение для обратной совместимости UI.
             try {
-                await chrome.storage.local.remove(['fpToolsSalesData', 'fpToolsFirstOrderId', 'fpToolsLastOrderId']);
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['fpToolsSalesData', 'fpToolsFirstOrderId', 'fpToolsLastOrderId']);
             } catch (_) {}
 
             console.log(`Foxen: перенесено ${orders.length} заказов из storage.local в IndexedDB. Квота освобождена.`);

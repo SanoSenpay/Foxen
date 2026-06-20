@@ -38,7 +38,7 @@
 
     async function loadCfg() {
         try {
-            const r = await chrome.storage.local.get(STORE_KEY);
+            const r = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(STORE_KEY);
             cfg = Object.assign({}, DEFAULTS, r[STORE_KEY] || {});
             if (!Array.isArray(cfg.commands)) cfg.commands = [];
         } catch (_) {

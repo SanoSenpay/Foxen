@@ -10,7 +10,7 @@
     // (гласс при включённой теме / нейтрально под страницу при выключенной) и не было
     // вспышки «белое→серое» при перезагрузке.
     try {
-        const tData = await chrome.storage.local.get('enableCustomTheme');
+        const tData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('enableCustomTheme');
         const on = tData.enableCustomTheme !== false; // по умолчанию включена
         document.documentElement.classList.toggle('fpt-custom-theme-on', on);
         document.documentElement.classList.toggle('fpt-custom-theme-off', !on);
@@ -26,7 +26,7 @@
     // exist yet), so we mask via CSS immediately, then ui_enhancements.js rewrites the
     // text and removes the mask once the DOM is ready. This runs regardless of theme.
     try {
-        const balData = await chrome.storage.local.get('hideBalance');
+        const balData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('hideBalance');
         if (balData.hideBalance === true) {
             const balStyle = document.createElement('style');
             balStyle.id = 'fp-tools-balance-prehide';
@@ -47,7 +47,7 @@
     // map here. Hiding via CSS at document_start means disabled buttons/blocks never
     // flash into view before the content scripts get a chance to run.
     try {
-        const dfData = await chrome.storage.local.get('fpToolsDisabledFeatures');
+        const dfData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
         const disabled = Array.isArray(dfData.fpToolsDisabledFeatures) ? dfData.fpToolsDisabledFeatures : [];
         if (disabled.length) {
             const SELECTOR_MAP = {
@@ -225,7 +225,7 @@
 
 
     try {
-        const data = await chrome.storage.local.get(['enableCustomTheme', 'fpToolsTheme']);
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'fpToolsTheme']);
         if (data.enableCustomTheme === false) return;
         
         const settings = { ...DEFAULT_THEME, ...(data.fpToolsTheme || {}) };

@@ -61,14 +61,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     // ─── Telegram ────────────────────────────────────────────────────
     document.getElementById('telegramBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        chrome.tabs.create({ url: 'https://t.me/FPTools' });
+        chrome.tabs.create({ url: 'https://t.me/FoxenFF' });
         window.close();
     });
 
     // ─── Review ──────────────────────────────────────────────────────
     document.getElementById('reviewBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        chrome.tabs.create({ url: 'https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb/reviews' });
+        chrome.tabs.create({ url: 'https://addons.mozilla.org/ru/firefox/addon/foxen/' });
         window.close();
     });
 

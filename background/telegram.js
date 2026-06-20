@@ -42,13 +42,13 @@ const TG_DEFAULTS = {
 };
 
 async function tgGet() {
-    const r = await chrome.storage.local.get(TG_STORE);
+    const r = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(TG_STORE);
     return Object.assign({}, TG_DEFAULTS, r[TG_STORE] || {});
 }
 async function tgSet(patch) {
     const cur = await tgGet();
     const next = Object.assign({}, cur, patch);
-    await chrome.storage.local.set({ [TG_STORE]: next });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [TG_STORE]: next });
     return next;
 }
 
@@ -191,10 +191,10 @@ async function telegramNotifyNewMessages(chats) {
     const cfg = await tgGet();
     if (!cfg.enabled || !cfg.notifyMessages || !cfg.token || !cfg.chatId) return;
 
-    const { [TG_PROCESSED]: processedArr } = await chrome.storage.local.get(TG_PROCESSED);
+    const { [TG_PROCESSED]: processedArr } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(TG_PROCESSED);
     const processed = new Set(processedArr || []);
     const seededKey = 'fpToolsTelegramSeeded';
-    const { [seededKey]: seeded } = await chrome.storage.local.get(seededKey);
+    const { [seededKey]: seeded } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(seededKey);
     const firstRun = !seeded;
 
     let changed = false;
@@ -225,7 +225,7 @@ async function telegramNotifyNewMessages(chats) {
     if (changed || firstRun) {
         let arr = Array.from(processed);
         if (arr.length > 300) arr = arr.slice(-300);
-        await chrome.storage.local.set({ [TG_PROCESSED]: arr, [seededKey]: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [TG_PROCESSED]: arr, [seededKey]: true });
     }
 }
 
@@ -240,8 +240,8 @@ async function telegramNotifyNewOrders(orders) {
 
     const key = 'fpToolsTelegramProcessedOrders';
     const seededKey = 'fpToolsTelegramOrdersSeeded';
-    const { [key]: processedArr } = await chrome.storage.local.get(key);
-    const { [seededKey]: seeded } = await chrome.storage.local.get(seededKey);
+    const { [key]: processedArr } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(key);
+    const { [seededKey]: seeded } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(seededKey);
     const processed = new Set(processedArr || []);
     const firstRun = !seeded;
 
@@ -265,7 +265,7 @@ async function telegramNotifyNewOrders(orders) {
         let arr = Array.from(processed);
         if (arr.length > 300) arr = arr.slice(-300);
         // seeded=true ставим только когда реально видели заказы (list.length>0 гарантирован выше).
-        await chrome.storage.local.set({ [key]: arr, [seededKey]: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [key]: arr, [seededKey]: true });
     }
 }
 
@@ -334,7 +334,7 @@ async function telegramSyncAlarm() {
     // период опроса: пользовательский (1..60 сек). chrome.alarms минимум ~30 сек на
     // периодических, поэтому для частого опроса используем самоперезапуск через setTimeout
     // в самом цикле; alarm оставляем как страховку (живучесть SW).
-    const alarm = await chrome.alarms.get(TELEGRAM_ALARM);
+    const alarm = await (typeof browser !== 'undefined' ? browser : chrome).alarms.get(TELEGRAM_ALARM);
     if (need && !alarm) {
         chrome.alarms.create(TELEGRAM_ALARM, { delayInMinutes: 0.1, periodInMinutes: 0.5 });
         scheduleFastPoll();

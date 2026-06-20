@@ -3,7 +3,7 @@
 
 // ── 1. Unconfirmed balance display ──────────────────────────────────────────
 async function initUnconfirmedBalance() {
-    const { fpToolsShowUnconfirmed } = await chrome.storage.local.get(['fpToolsShowUnconfirmed']);
+    const { fpToolsShowUnconfirmed } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsShowUnconfirmed']);
     if (fpToolsShowUnconfirmed === false) return;
 
     // Find the sales statistics block added by misc.js
@@ -152,7 +152,7 @@ function initReviewRequestButtons() {
                     return;
                 }
 
-                const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+                const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
                 const template = fpToolsAutoReplies.reviewRequestTemplate ||
                     `Привет! Буду рад, если оставите отзыв на наш заказ #${orderId} 🙏 Это займёт 10 секунд и очень поможет!`;
 

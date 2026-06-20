@@ -47,7 +47,7 @@ async function fptRenderNeedsList(filterText) {
     const list = document.getElementById('fptNeedsList');
     if (!list) return;
     const reg = fptNeedsRegistry();
-    const { fpToolsDisabledFeatures = [] } = await chrome.storage.local.get('fpToolsDisabledFeatures');
+    const { fpToolsDisabledFeatures = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
     const disabled = new Set(Array.isArray(fpToolsDisabledFeatures) ? fpToolsDisabledFeatures : []);
 
     const q = (filterText || '').trim().toLowerCase();
@@ -111,7 +111,7 @@ async function fptApplyNeedsSelection() {
     // view (by search) keep their state, then update from visible checkboxes.
     let prev = [];
     try {
-        const data = await chrome.storage.local.get('fpToolsDisabledFeatures');
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
         prev = Array.isArray(data.fpToolsDisabledFeatures) ? data.fpToolsDisabledFeatures : [];
     } catch (_) { prev = []; }
     // keep only valid, non-locked, currently-known ids → prunes stale garbage
@@ -126,7 +126,7 @@ async function fptApplyNeedsSelection() {
     const disabled = Array.from(disabledSet);
 
     try {
-        await chrome.storage.local.set({ fpToolsDisabledFeatures: disabled });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDisabledFeatures: disabled });
         // refresh live CSS hiding immediately
         if (typeof window !== 'undefined' && typeof window.fptApplyDisabledFeatures === 'function') {
             await window.fptApplyDisabledFeatures(disabled);
@@ -178,7 +178,7 @@ async function fptNeedsAskAI() {
 
     let matches = [];
     try {
-        const resp = await chrome.runtime.sendMessage({
+        const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
             action: 'getAIProcessedText',
             text: text,
             context: compact,

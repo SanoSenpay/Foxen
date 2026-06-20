@@ -179,7 +179,7 @@
                 const csrf = appObj['csrf-token'];
                 const myId = String(appObj.userId || appObj.id || '');
                 if (!myId) throw new Error('Не удалось определить ваш ID');
-                const keyRes = await chrome.runtime.sendMessage({ action: 'getGoldenKey' });
+                const keyRes = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getGoldenKey' });
                 if (!keyRes?.success) throw new Error('Нет golden_key');
 
                 // FunPay chat node format: "users-MYID-THEIRID"

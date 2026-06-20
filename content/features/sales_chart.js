@@ -7,7 +7,7 @@ function renderSalesChart(containerId) {
 
     (async () => {
         const fpToolsSalesData = await (window.fptOrdersDB || FPTSalesDB).getAllAsArray();
-        const { fpToolsSalesChartPeriod } = await chrome.storage.local.get('fpToolsSalesChartPeriod');
+        const { fpToolsSalesChartPeriod } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsSalesChartPeriod');
         if (!fpToolsSalesData.length) {
             container.innerHTML = '<p style="color:var(--fpt-text-muted);font-size:12px;text-align:center;padding:20px;">Нет данных о продажах</p>';
             return;

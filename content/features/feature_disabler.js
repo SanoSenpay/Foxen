@@ -39,7 +39,7 @@ function fptApplyDisabledCss(disabledIds) {
 async function fptApplyDisabledFeatures(disabledIds) {
     let ids = disabledIds;
     if (!Array.isArray(ids)) {
-        const data = await chrome.storage.local.get('fpToolsDisabledFeatures');
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
         ids = Array.isArray(data.fpToolsDisabledFeatures) ? data.fpToolsDisabledFeatures : [];
     }
     fptApplyDisabledCss(ids);

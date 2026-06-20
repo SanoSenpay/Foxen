@@ -301,7 +301,7 @@
                 throw new Error('неверный формат темы');
             }
 
-            await chrome.storage.local.set({ fpToolsTheme: theme });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: theme });
             // Применяем теми же функциями, что использует ручной импорт.
             if (typeof applyCustomTheme === 'function') await applyCustomTheme();
             if (typeof applyHeaderPosition === 'function') await applyHeaderPosition();

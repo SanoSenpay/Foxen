@@ -1102,10 +1102,10 @@ async function _fpLoadThemeCatalog() {
 }
 
 async function _getWpCache() {
-    try { const r = await chrome.storage.local.get(FP_WP_CACHE_KEY); return r[FP_WP_CACHE_KEY] || {}; } catch { return {}; }
+    try { const r = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(FP_WP_CACHE_KEY); return r[FP_WP_CACHE_KEY] || {}; } catch { return {}; }
 }
 async function _markWpCached(url) {
-    try { const c = await _getWpCache(); c[url] = { ts: Date.now() }; await chrome.storage.local.set({ [FP_WP_CACHE_KEY]: c }); } catch {}
+    try { const c = await _getWpCache(); c[url] = { ts: Date.now() }; await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [FP_WP_CACHE_KEY]: c }); } catch {}
 }
 
 let _wpIndex = 0;
@@ -1277,7 +1277,7 @@ async function applyThemeFromCatalog(theme) {
 
         // Тот же контракт, что и при ручном импорте .fptheme.
         const newTheme = { ...data, enableCustomTheme: true };
-        await chrome.storage.local.set({ fpToolsTheme: newTheme, enableCustomTheme: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newTheme, enableCustomTheme: true });
 
         if (typeof applyCustomTheme === 'function') await applyCustomTheme();
         if (typeof applyHeaderPosition === 'function') await applyHeaderPosition();
@@ -1296,9 +1296,9 @@ async function applyThemeFromCatalog(theme) {
 }
 
 async function applyWallpaperPreset(preset, cardEl) {
-    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
     const newTheme = { ...fpToolsTheme, bgImage: preset.url, enableCustomTheme: true, ...preset.palette };
-    await chrome.storage.local.set({ fpToolsTheme: newTheme, enableCustomTheme: true });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newTheme, enableCustomTheme: true });
 
     const previewDiv = document.getElementById('bg-image-preview');
     if (previewDiv) { previewDiv.style.backgroundImage = `url(${preset.url})`; previewDiv.textContent = ''; }
@@ -1320,9 +1320,9 @@ async function applyBlackThemePreset() {
     const base64 = canvas.toDataURL('image/png');
 
     const darkPalette = { bgColor1: '#0a0a0a', bgColor2: '#222222', containerBgColor: '#111111', textColor: '#cccccc', linkColor: '#888888' };
-    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
     const newTheme = { ...fpToolsTheme, bgImage: base64, enableCustomTheme: true, ...darkPalette };
-    await chrome.storage.local.set({ fpToolsTheme: newTheme, enableCustomTheme: true });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newTheme, enableCustomTheme: true });
 
     const previewDiv = document.getElementById('bg-image-preview');
     if (previewDiv) { previewDiv.style.backgroundImage = `url(${base64})`; previewDiv.style.backgroundColor = '#1a1a1a'; previewDiv.textContent = ''; }
@@ -1471,7 +1471,7 @@ function compactNav(toolsPopup) {
 
 
 async function loadLastActivePage() {
-    const { fpToolsLastPage } = await chrome.storage.local.get('fpToolsLastPage');
+    const { fpToolsLastPage } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsLastPage');
     if (fpToolsLastPage) {
         const itemToActivate = document.querySelector(`.fp-tools-nav li[data-page="${fpToolsLastPage}"]`);
         if (itemToActivate) {
@@ -1523,7 +1523,7 @@ function makePopupInteractive(popupEl) {
         if (isDragging) {
             isDragging = false;
             document.body.style.userSelect = '';
-            await chrome.storage.local.set({ 
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ 
                 fpToolsPopupPosition: { top: popupEl.style.top, left: popupEl.style.left },
                 fpToolsPopupDragged: true 
             });

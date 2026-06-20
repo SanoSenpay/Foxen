@@ -30,7 +30,7 @@
     let _drafts = {};
 
     async function loadDrafts() {
-        const d = await chrome.storage.local.get(DRAFT_KEY);
+        const d = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(DRAFT_KEY);
         _drafts = d[DRAFT_KEY] || {};
     }
 
@@ -42,7 +42,7 @@
         if (keys.length > 200) {
             keys.slice(0, keys.length - 200).forEach(k => delete _drafts[k]);
         }
-        await chrome.storage.local.set({ [DRAFT_KEY]: _drafts });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [DRAFT_KEY]: _drafts });
     }
 
     function getChatIdFromUrl() {

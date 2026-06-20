@@ -10,13 +10,13 @@ const FPT_SLASH_DEFAULTS = { enabled: true, expandKey: 'both', autocomplete: tru
 let _fptSlashCfg = null;
 
 async function fptSlashLoad() {
-    const r = await chrome.storage.local.get(FPT_SLASH_KEY);
+    const r = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(FPT_SLASH_KEY);
     _fptSlashCfg = Object.assign({}, FPT_SLASH_DEFAULTS, r[FPT_SLASH_KEY] || {});
     if (!Array.isArray(_fptSlashCfg.commands)) _fptSlashCfg.commands = [];
     return _fptSlashCfg;
 }
 async function fptSlashSave() {
-    await chrome.storage.local.set({ [FPT_SLASH_KEY]: _fptSlashCfg });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [FPT_SLASH_KEY]: _fptSlashCfg });
 }
 
 function fptSlashRenderList() {
@@ -141,12 +141,12 @@ const FPT_TG_DEFAULTS = {
 let _fptTgCfg = null;
 
 async function fptTgLoad() {
-    const r = await chrome.storage.local.get(FPT_TG_KEY);
+    const r = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(FPT_TG_KEY);
     _fptTgCfg = Object.assign({}, FPT_TG_DEFAULTS, r[FPT_TG_KEY] || {});
     return _fptTgCfg;
 }
 async function fptTgSave() {
-    await chrome.storage.local.set({ [FPT_TG_KEY]: _fptTgCfg });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [FPT_TG_KEY]: _fptTgCfg });
 }
 
 function fptTgSetStatus(text, kind) {
@@ -214,7 +214,7 @@ async function initializeTelegramUI() {
         connectBtn.disabled = true;
         fptTgSetStatus('Проверяю токен…');
         try {
-            const res = await chrome.runtime.sendMessage({ action: 'telegramValidate', token });
+            const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'telegramValidate', token });
             if (!res || !res.ok) {
                 fptTgSetStatus('Ошибка: ' + (res && res.error ? res.error : 'неверный токен'), 'err');
                 connectBtn.disabled = false;
@@ -252,7 +252,7 @@ async function initializeTelegramUI() {
         testBtn.disabled = true;
         fptTgSetStatus('Отправляю тестовое сообщение…');
         try {
-            const res = await chrome.runtime.sendMessage({ action: 'telegramTest' });
+            const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'telegramTest' });
             if (res && res.ok) fptTgSetStatus('Тестовое сообщение отправлено в Telegram ✅', 'ok');
             else fptTgSetStatus('Не удалось отправить: ' + (res && res.error ? res.error : 'ошибка'), 'err');
         } catch (e) {

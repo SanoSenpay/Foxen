@@ -117,7 +117,7 @@ async function handleAIGeneration() {
 
         const gameCategory = document.querySelector('.back-link .inside')?.textContent.trim() || 'неизвестная категория';
 
-        const aiResult = await chrome.runtime.sendMessage({
+        const aiResult = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
             action: 'generateAILot',
             data: {
                 promptTitle,
@@ -142,7 +142,7 @@ async function handleAIGeneration() {
 
         if (doTranslate) {
             showNotification('Генерация завершена. Начинаю перевод...', false);
-            const translationResult = await chrome.runtime.sendMessage({
+            const translationResult = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
                 action: 'translateLotText',
                 data: { title: ruTitle, description: ruDesc, buyerMessage: ruBuyerMsg }
             });
@@ -217,7 +217,7 @@ function addTranslateButton() {
                 return;
             }
 
-            const result = await chrome.runtime.sendMessage({ action: 'translateLotText', data: data });
+            const result = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'translateLotText', data: data });
 
             if (result && result.success) {
                 const setVal = (sel, v) => { const el = document.querySelector(sel); if (el) el.value = v || ''; };

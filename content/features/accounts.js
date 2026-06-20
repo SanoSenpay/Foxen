@@ -1,5 +1,5 @@
 async function saveAccountsList() {
-    await chrome.storage.local.set({ fpToolsAccounts: fpToolsAccounts });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAccounts: fpToolsAccounts });
     renderAccountsList();
 }
 
@@ -7,7 +7,7 @@ const _fptAccSnapCache = {}; // key -> { ts, snapshot }
 
 async function fptFetchAccountSnapshot(key) {
     try {
-        const res = await chrome.runtime.sendMessage({ action: 'getAccountSnapshot', key });
+        const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getAccountSnapshot', key });
         if (res && res.ok) {
             _fptAccSnapCache[key] = { ts: Date.now(), snapshot: res.snapshot || {} };
             return res.snapshot || {};
@@ -71,7 +71,7 @@ async function renderAccountsList() {
             switchBtn.disabled = true;
             showNotification(`Переключаюсь на аккаунт ${account.name}...`, false);
             try {
-                const res = await chrome.runtime.sendMessage({ action: 'setGoldenKey', key: account.key });
+                const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'setGoldenKey', key: account.key });
                 if (!res || !res.success) {
                     switchBtn.disabled = false;
                     showNotification(`Не удалось войти: ${res && res.error ? res.error : 'неизвестная ошибка'}`, true);
@@ -133,7 +133,7 @@ async function maybeAutoRefreshAccounts() {
                 changed = true;
             }
         }
-        if (changed) await chrome.storage.local.set({ fpToolsAccounts });
+        if (changed) await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAccounts });
         if (changed) renderAccountsList();
     } finally {
         _fptAccAutoRefreshing = false;
@@ -153,7 +153,7 @@ async function fptRefreshAllAccounts() {
             account._snapTs = Date.now();
         }
     }
-    await chrome.storage.local.set({ fpToolsAccounts });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAccounts });
     renderAccountsList();
     showNotification('Данные аккаунтов обновлены.');
 }
@@ -178,7 +178,7 @@ function setupAccountManagementHandlers() {
         }
         
         try {
-            const response = await chrome.runtime.sendMessage({ action: 'getGoldenKey' });
+            const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getGoldenKey' });
             if (response && response.success) {
                 fpToolsAccounts.push({ name: currentUsername, key: response.key });
                 await saveAccountsList();

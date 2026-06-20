@@ -9,7 +9,7 @@ const soundMap = {
 };
 
 async function applyNotificationSound() {
-    const { notificationSound, notificationVolume, fpToolsCustomSoundData } = await chrome.storage.local.get(['notificationSound', 'notificationVolume', 'fpToolsCustomSoundData']);
+    const { notificationSound, notificationVolume, fpToolsCustomSoundData } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['notificationSound', 'notificationVolume', 'fpToolsCustomSoundData']);
     const selectedSound = notificationSound || 'default';
     const vol = (typeof notificationVolume === 'number') ? Math.max(0, Math.min(1, notificationVolume)) : 1;
 
@@ -99,7 +99,7 @@ async function previewNotificationSound(soundValue, volume) {
         let url;
         if (!soundValue || soundValue === 'default') url = 'https://funpay.com/audio/chat_loud.mp3';
         else if (soundValue === 'custom') {
-            const { fpToolsCustomSoundData } = await chrome.storage.local.get('fpToolsCustomSoundData');
+            const { fpToolsCustomSoundData } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomSoundData');
             if (!fpToolsCustomSoundData) { if (typeof showNotification === 'function') showNotification('Своя мелодия ещё не сохранена.', true); return; }
             url = fpToolsCustomSoundData;
         }

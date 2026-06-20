@@ -37,7 +37,7 @@ function waitForProfileContainer(timeout = 8000) {
 }
 
 async function displayPinnedLotsOnLoad() {
-    const { fpToolsPinnedLots = [] } = await chrome.storage.local.get('fpToolsPinnedLots');
+    const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
     if (fpToolsPinnedLots.length === 0) return;
 
     // Don't re-insert if already there
@@ -265,7 +265,7 @@ async function updatePinButtonsState() {
         return;
     }
 
-    const { fpToolsPinnedLots = [] } = await chrome.storage.local.get('fpToolsPinnedLots');
+    const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
     const pinnedIds = new Set(fpToolsPinnedLots.map(l => l.offerId));
 
     let arePinnedCount = 0;
@@ -299,7 +299,7 @@ async function updatePinButtonsState() {
 // Копирование ОДНОГО чужого лота к себе (тот же конвейер, что и одиночное
 // клонирование): cloneGetSource (читает лот + подбирает поля категории) → cloneCreateLot.
 async function fptCloneOneForeign(offerId) {
-    const src = await chrome.runtime.sendMessage({ action: 'cloneGetSource', offerId });
+    const src = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId });
     if (!src || !src.success) throw new Error(src?.error || 'не удалось прочитать лот');
     if (src.source?.isChips) throw new Error('лот из раздела валюты — пропущен');
     if (!src.fields) throw new Error(src.formError || 'не удалось подобрать поля категории');
@@ -328,7 +328,7 @@ async function fptCloneOneForeign(offerId) {
     fields['secrets'] = fields['secrets'] || '';
     fields['fields[images]'] = fields['fields[images]'] || '';
 
-    const res = await chrome.runtime.sendMessage({ action: 'cloneCreateLot', fields, location: 'trade' });
+    const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneCreateLot', fields, location: 'trade' });
     if (!res || !res.success) throw new Error(res?.error || 'ошибка создания');
     return res.newId;
 }
@@ -488,7 +488,7 @@ function setupActionProcessing() {
         if (selectedCheckboxes.length === 0) return;
     
         toggleActions(true);
-        let { fpToolsPinnedLots = [] } = await chrome.storage.local.get('fpToolsPinnedLots');
+        let { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
         const pinnedOfferIds = new Set(fpToolsPinnedLots.map(l => l.offerId));
         let changesMade = 0;
     
@@ -536,7 +536,7 @@ function setupActionProcessing() {
         }
     
         if (changesMade > 0) {
-            await chrome.storage.local.set({ fpToolsPinnedLots });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPinnedLots });
             
             // Remove old container and rebuild
             $('#fp-tools-pinned-lots-container').remove();
@@ -600,7 +600,7 @@ function setupActionProcessing() {
                     const nodeIdMatch = categoryLink.attr('href').match(/\/(?:lots|chips)\/(\d+)/);
                     nodeId = nodeIdMatch ? nodeIdMatch[1] : null;
                 } else if ($offerBlock.attr('id') === 'fp-tools-pinned-lots-container') {
-                    const { fpToolsPinnedLots = [] } = await chrome.storage.local.get('fpToolsPinnedLots');
+                    const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
                     const pinnedLot = fpToolsPinnedLots.find(l => l.offerId === offerId);
                     nodeId = pinnedLot ? pinnedLot.nodeId : null;
                 }
@@ -665,18 +665,18 @@ function setupActionProcessing() {
                         $clone.hide().insertAfter($lotLink).fadeIn(300);
                     } else if (actionType === 'deactivate') {
                         $lotLink.css('opacity', '0.5').addClass('warning');
-                        const { fpToolsDeactivatedLots = [] } = await chrome.storage.local.get('fpToolsDeactivatedLots');
+                        const { fpToolsDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDeactivatedLots');
                         if (!fpToolsDeactivatedLots.some(lot => lot.offerId === offerId)) {
                             fpToolsDeactivatedLots.push({ offerId, nodeId, name: lotName, deactivatedAt: Date.now() });
-                            await chrome.storage.local.set({ fpToolsDeactivatedLots });
+                            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDeactivatedLots });
                         }
                     } else if (actionType === 'activate') {
                         // включили лот - обновляем строку и убираем его из списка отключённых
                         $lotLink.css('opacity', '1').removeClass('warning');
-                        const { fpToolsDeactivatedLots = [] } = await chrome.storage.local.get('fpToolsDeactivatedLots');
+                        const { fpToolsDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDeactivatedLots');
                         const filtered = fpToolsDeactivatedLots.filter(lot => String(lot.offerId) !== String(offerId));
                         if (filtered.length !== fpToolsDeactivatedLots.length) {
-                            await chrome.storage.local.set({ fpToolsDeactivatedLots: filtered });
+                            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDeactivatedLots: filtered });
                         }
                     }
                     if (actionType !== 'delete') $(checkbox).prop('checked', false).trigger('change');
@@ -747,7 +747,7 @@ function setupActionProcessing() {
                     const nodeIdMatch = categoryLink.attr('href').match(/\/(?:lots|chips)\/(\d+)/);
                     nodeId = nodeIdMatch ? nodeIdMatch[1] : null;
                 } else if ($offerBlock.attr('id') === 'fp-tools-pinned-lots-container') {
-                    const { fpToolsPinnedLots = [] } = await chrome.storage.local.get('fpToolsPinnedLots');
+                    const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
                     const pinnedLot = fpToolsPinnedLots.find(l => l.offerId === offerId);
                     nodeId = pinnedLot ? pinnedLot.nodeId : null;
                 }
@@ -885,9 +885,9 @@ async function reactivateLot(offerId, nodeId, button) {
         const result = await response.json();
 
         if (result && (result.error === 0 || result.error === false)) {
-            const { fpToolsDeactivatedLots = [] } = await chrome.storage.local.get('fpToolsDeactivatedLots');
+            const { fpToolsDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDeactivatedLots');
             const updatedList = fpToolsDeactivatedLots.filter(lot => String(lot.offerId) !== String(offerId));
-            await chrome.storage.local.set({ fpToolsDeactivatedLots: updatedList });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDeactivatedLots: updatedList });
 
             // если этот лот виден на странице - обновляем его строку (снимаем неактивный вид)
             document.querySelectorAll(`a.tc-item[data-offer="${offerId}"], .tc-item[data-offer="${offerId}"]`).forEach(el => {
@@ -1066,7 +1066,7 @@ function computeNewPrice(current, mode, value, round, min, max) {
 }
 
 async function showReactivationPopup() {
-    let { fpToolsDeactivatedLots = [] } = await chrome.storage.local.get('fpToolsDeactivatedLots');
+    let { fpToolsDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDeactivatedLots');
 
     // FIX 2.8.8 (№6): синхронизация со статусом на странице. Если лот, который мы
     // когда-то отключали через расширение, сейчас ВИДЕН на странице и АКТИВЕН
@@ -1080,7 +1080,7 @@ async function showReactivationPopup() {
     const cleaned = fpToolsDeactivatedLots.filter(l => !(l && activeOnPage.has(String(l.offerId))));
     if (cleaned.length !== fpToolsDeactivatedLots.length) {
         fpToolsDeactivatedLots = cleaned;
-        await chrome.storage.local.set({ fpToolsDeactivatedLots: cleaned });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDeactivatedLots: cleaned });
     }
 
     const list = $('.fp-reactivate-list');

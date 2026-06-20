@@ -62,7 +62,7 @@ async function getAIProcessedText(text, type = "rewrite") {
         chatInput.disabled = true;
     }
     try {
-        const response = await chrome.runtime.sendMessage({ 
+        const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ 
             action: "getAIProcessedText", 
             text: text, 
             context: context, 
@@ -142,7 +142,7 @@ function setupAIChatFeature() {
 
         aiButton.addEventListener('click', async () => {
             aiModeActive = !aiModeActive;
-            await chrome.storage.local.set({ aiModeActive: aiModeActive });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ aiModeActive: aiModeActive });
             aiButton.classList.toggle('active', aiModeActive);
             aiButton.title = aiModeActive ? 'AI Режим АКТИВЕН (Enter для генерации/отправки)' : 'AI Режим (Enter для генерации/отправки)';
             if (aiModeActive) {

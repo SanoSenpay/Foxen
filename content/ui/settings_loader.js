@@ -279,7 +279,7 @@ async function setupTemplateSettingsHandlers() {
 
 
 async function loadSavedSettings() {
-    const settings = await chrome.storage.local.get([
+    const settings = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
         'fpToolsTemplateSettings', 'enableCustomTheme', 'fpToolsTheme', 'aiModeActive',
         'autoBumpEnabled', 'autoBumpCooldown', 'fpToolsSmartBumpEnabled', 'fpToolsCursorFx', 'fpToolsCustomCursor',
         'fpToolsPopupPosition', 'fpToolsPopupSize', 'enableRedesignedHomepage', 'fpToolsPopupDragged',

@@ -214,7 +214,7 @@
 
     async function apply() {
         let data = {};
-        try { data = await chrome.storage.local.get(['enableCustomTheme', 'fpToolsTheme']); }
+        try { data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'fpToolsTheme']); }
         catch { return; }
 
         const styleEl = ensureStyle();

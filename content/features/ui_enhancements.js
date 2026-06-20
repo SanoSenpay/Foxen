@@ -317,7 +317,7 @@ async function displaySalesStats() {
         let collecting = false;
         try {
             const _ck = _fptCfg().collectingKey;
-            const st = await chrome.storage.local.get(_ck);
+            const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(_ck);
             collecting = !!st[_ck];
         } catch (_) {}
         if (collecting) {
@@ -477,7 +477,7 @@ async function _maybeShowInaccuracyBanner(allOrders) {
     });
     banner.querySelector('#fpt-stats-banner-rebuild').addEventListener('click', async () => {
         banner.querySelector('#fpt-stats-banner-rebuild').textContent = 'Сбор...';
-        try { await chrome.runtime.sendMessage({ action: 'resetSalesStorage' }); } catch (_) {}
+        try { await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'resetSalesStorage' }); } catch (_) {}
         try { chrome.runtime.sendMessage({ action: 'updateSales' }); } catch (_) {}
     });
 }
@@ -543,8 +543,8 @@ function _showStatsAccuracyPopup(lastUpd, ordersCount, updateBtn) {
             updateBtn.disabled = true;
             updateBtn.textContent = "Обновление...";
             showStatsLoading({ sub: 'Пересобираем историю заказов с FunPay…' });
-            await chrome.runtime.sendMessage({ action: _fptCfg().resetAction });
-            await chrome.runtime.sendMessage({ action: _fptCfg().updateAction });
+            await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fptCfg().resetAction });
+            await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fptCfg().updateAction });
         }
     });
 }
@@ -577,7 +577,7 @@ function initializeSalesStatistics() {
         // Сначала сбрасываем базу (быстро), затем запускаем сбор.
         // Сбор НЕ ожидаем здесь — он занимает минуты. UI разблокируется
         // автоматически через chrome.storage.onChanged когда collectingKey → false.
-        try { await chrome.runtime.sendMessage({ action: _fptCfg().resetAction }); } catch (_) {}
+        try { await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fptCfg().resetAction }); } catch (_) {}
         try { chrome.runtime.sendMessage({ action: _fptCfg().updateAction }); } catch (_) {}
     });
 
@@ -588,7 +588,7 @@ function initializeSalesStatistics() {
         let ordersCount = 0;
         try {
             const _luk = _fptCfg().lastUpdateKey;
-            const fpToolsSalesLastUpdate = (await chrome.storage.local.get(_luk))[_luk];
+            const fpToolsSalesLastUpdate = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(_luk))[_luk];
             ordersCount = await (window.fptOrdersDB || FPTSalesDB).count();
             if (fpToolsSalesLastUpdate) lastUpd = new Date(fpToolsSalesLastUpdate).toLocaleString();
         } catch (_) {}
@@ -636,7 +636,7 @@ function initializeSalesStatistics() {
             (async () => {
                 try {
                     const _ck2 = _fptCfg().collectingKey;
-                    const collecting = (await chrome.storage.local.get(_ck2))[_ck2];
+                    const collecting = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(_ck2))[_ck2];
                     if (collecting && document.getElementById('fpTools-stats-loading')) {
                         const c = await (window.fptOrdersDB || FPTSalesDB).count();
                         updateStatsLoadingCount(c);

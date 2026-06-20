@@ -7,7 +7,7 @@ async function logToConsole(message) {
     const logMessage = `[${timestamp}] ${message}`;
     console.log(`[Foxen AutoBump] ${logMessage}`);
     try {
-        const tabs = await chrome.tabs.query({ url: "*://funpay.com/*" });
+        const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "*://funpay.com/*" });
         if (tabs.length > 0) {
             tabs.forEach(tab => {
                 chrome.tabs.sendMessage(tab.id, {
@@ -34,19 +34,19 @@ async function parseHtmlViaOffscreen(html, action, extra = {}) {
 // --- КОНЕЦ НОВОГО БЛОКА ---
 
 async function getAuthDetails() {
-    const goldenKeyCookie = await chrome.cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
+    const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
     if (!goldenKeyCookie) throw new Error('Не удалось найти cookie "golden_key". Вы вошли в свой аккаунт FunPay?');
     // FIX: include PHPSESSID - FunPay requires it alongside golden_key for runner requests
-    const phpSessIdCookie = await chrome.cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
+    const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
     const phpsessidPart = phpSessIdCookie?.value ? `; PHPSESSID=${phpSessIdCookie.value}` : '';
     const cookies = `golden_key=${goldenKeyCookie.value}${phpsessidPart};`;
 
     // 1) Пытаемся получить userId/csrf из открытой вкладки FunPay (быстрый путь).
-    const tabs = await chrome.tabs.query({ url: "https://funpay.com/*" });
+    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
     for (const tab of tabs) {
         try {
             if (tab.discarded) continue;
-            const response = await chrome.tabs.sendMessage(tab.id, { action: "getAppData" });
+            const response = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: "getAppData" });
             if (response && response.success) {
                 const parsedData = response.data;
                 let appData;
@@ -140,7 +140,7 @@ async function raiseCategory(categoryData, auth) {
 export async function runBumpCycle() {
     const summary = { raised: 0, errors: 0, skipped: 0 };
     try {
-        const { fpToolsSelectiveBumpEnabled, fpToolsSelectedBumpCategories, fpToolsBumpOnlyAutoDelivery } = await chrome.storage.local.get(['fpToolsSelectiveBumpEnabled', 'fpToolsSelectedBumpCategories', 'fpToolsBumpOnlyAutoDelivery']);
+        const { fpToolsSelectiveBumpEnabled, fpToolsSelectedBumpCategories, fpToolsBumpOnlyAutoDelivery } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsSelectiveBumpEnabled', 'fpToolsSelectedBumpCategories', 'fpToolsBumpOnlyAutoDelivery']);
 
         const auth = await getAuthDetails();
         const userUrl = `https://funpay.com/users/${auth.userId}/`;
@@ -218,10 +218,10 @@ export async function runBumpCycle() {
 }
 
 export async function startAutoBump(cooldownMinutes) {
-    await chrome.alarms.create(BUMP_ALARM_NAME, { delayInMinutes: 1, periodInMinutes: parseInt(cooldownMinutes, 10) });
+    await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(BUMP_ALARM_NAME, { delayInMinutes: 1, periodInMinutes: parseInt(cooldownMinutes, 10) });
     await runBumpCycle();
 }
 
 export async function stopAutoBump() {
-    await chrome.alarms.clear(BUMP_ALARM_NAME);
+    await (typeof browser !== 'undefined' ? browser : chrome).alarms.clear(BUMP_ALARM_NAME);
 }

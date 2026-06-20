@@ -1,6 +1,6 @@
 async function checkAndRestoreLots() {
     const { fpToolsAutoRestoreEnabled, fpToolsAutoDisableEnabled } =
-        await chrome.storage.local.get(['fpToolsAutoRestoreEnabled', 'fpToolsAutoDisableEnabled']);
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsAutoRestoreEnabled', 'fpToolsAutoDisableEnabled']);
 
     if (!fpToolsAutoRestoreEnabled && !fpToolsAutoDisableEnabled) return;
 
@@ -25,7 +25,7 @@ async function checkAndRestoreLots() {
         if (!lots.length) return;
 
         
-        const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
+        const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
 
         for (const lot of lots) {
             const deliveryConfig = fpToolsAutoDeliveryLots[String(lot.id)];
@@ -68,11 +68,11 @@ async function checkAndRestoreLots() {
 }
 
 async function toggleLotActive(offerId, nodeId, active, csrfToken) {
-    const goldenKeyRes = await chrome.runtime.sendMessage({ action: 'getGoldenKey' });
+    const goldenKeyRes = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getGoldenKey' });
     if (!goldenKeyRes?.success) throw new Error('Нет golden_key');
 
     
-    const editRes = await chrome.runtime.sendMessage({ action: 'getLotForExport', nodeId, offerId: String(offerId) });
+    const editRes = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getLotForExport', nodeId, offerId: String(offerId) });
     if (!editRes?.success) throw new Error('Не удалось загрузить данные лота');
 
     const formData = new URLSearchParams(editRes.data);

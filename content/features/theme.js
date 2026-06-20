@@ -68,7 +68,7 @@ function disableBottomBar() {
 }
 
 async function applyHeaderPosition() {
-    const { fpToolsTheme = {} } = await chrome.storage.local.get(['fpToolsTheme']);
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsTheme']);
     const position = fpToolsTheme.headerPosition || 'top';
 
     if (position === 'bottom') {
@@ -246,7 +246,7 @@ function getCustomThemeCss(settings) {
 }
 
 async function applyCustomTheme() {
-    const { enableCustomTheme = true, fpToolsTheme = {} } = await chrome.storage.local.get(['enableCustomTheme', 'fpToolsTheme']);
+    const { enableCustomTheme = true, fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'fpToolsTheme']);
     let styleEl = document.getElementById('fp-tools-custom-theme');
     let overrideStyleEl = document.getElementById(THEME_OVERRIDE_STYLE_ID);
     const flashFixStyle = document.getElementById('fp-tools-flash-fix');
@@ -324,7 +324,7 @@ function updateCirclePreview() {
 }
 
 async function updateThemePreview() {
-    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
     const settings = { ...DEFAULT_THEME, ...fpToolsTheme };
 
     const elements = {
@@ -454,7 +454,7 @@ function toggleThemeControls(disabled) {
 }
 
 async function randomizeTheme() {
-    const { fpToolsTheme: currentTheme = {} } = await chrome.storage.local.get(['fpToolsTheme']);
+    const { fpToolsTheme: currentTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsTheme']);
     const randomHex = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
     const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -491,7 +491,7 @@ async function randomizeTheme() {
     }
 
     try {
-        await chrome.storage.local.set({ fpToolsTheme: randomTheme });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: randomTheme });
         await applyCustomTheme();
         await applyHeaderPosition();
         await updateThemePreview();
@@ -503,7 +503,7 @@ async function randomizeTheme() {
 }
 
 async function exportTheme() {
-    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
     const settingsToExport = { ...DEFAULT_THEME, ...fpToolsTheme };
 
     const themeName = prompt("Введите название темы:", "Моя тема");
@@ -535,7 +535,7 @@ function importTheme(event) {
         try {
             const importedTheme = JSON.parse(e.target.result);
             if (importedTheme && importedTheme.bgColor1 && importedTheme.font) {
-                await chrome.storage.local.set({ fpToolsTheme: importedTheme });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: importedTheme });
                 await applyCustomTheme();
                 await applyHeaderPosition();
                 await updateThemePreview();
@@ -552,7 +552,7 @@ function importTheme(event) {
 }
 
 async function generatePaletteFromImage() {
-    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
     if (!fpToolsTheme.bgImage) {
         showNotification('Сначала загрузите фоновое изображение.', true);
         return;
@@ -613,7 +613,7 @@ async function generatePaletteFromImage() {
                 
                 const finalTheme = { ...fpToolsTheme, ...newPalette };
 
-                await chrome.storage.local.set({ fpToolsTheme: finalTheme });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: finalTheme });
                 await applyCustomTheme();
                 await updateThemePreview();
                 showNotification('Палитра успешно сгенерирована!');
@@ -674,7 +674,7 @@ function setupThemeCustomizationHandlers() {
     }
 
     const liveUpdate = async (event) => {
-        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
         const newSettings = { ...DEFAULT_THEME, ...fpToolsTheme };
         const el = event.target;
 
@@ -697,7 +697,7 @@ function setupThemeCustomizationHandlers() {
             case 'scrollbarWidth': newSettings.scrollbarWidth = el.value; break;
         }
 
-        await chrome.storage.local.set({ fpToolsTheme: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newSettings });
         applyCustomTheme();
     };
 
@@ -720,12 +720,12 @@ function setupThemeCustomizationHandlers() {
     ];
     changeControls.forEach(id => {
         document.getElementById(id)?.addEventListener('change', async (event) => {
-            const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+            const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
             const newSettings = { ...DEFAULT_THEME, ...fpToolsTheme };
             let applyAll = true;
 
             if (id === 'enableCustomThemeCheckbox') {
-                await chrome.storage.local.set({ enableCustomTheme: event.target.checked });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ enableCustomTheme: event.target.checked });
                 toggleThemeControls(!event.target.checked);
             } else if (id === 'bgImageInput') {
                  const file = event.target.files[0];
@@ -733,7 +733,7 @@ function setupThemeCustomizationHandlers() {
                  const reader = new FileReader();
                  reader.onload = async (readEvent) => {
                      newSettings.bgImage = readEvent.target.result;
-                     await chrome.storage.local.set({ fpToolsTheme: newSettings });
+                     await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newSettings });
                      applyCustomTheme();
                      updateThemePreview();
                  };
@@ -758,7 +758,7 @@ function setupThemeCustomizationHandlers() {
                      document.getElementById('customScrollbarControls').style.display = event.target.checked ? 'block' : 'none';
                      newSettings.enableCustomScrollbar = event.target.checked;
                 }
-                await chrome.storage.local.set({ fpToolsTheme: newSettings });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newSettings });
             }
 
             if(applyAll) {
@@ -770,7 +770,7 @@ function setupThemeCustomizationHandlers() {
     });
 
     document.getElementById('enableRedesignedHomepage')?.addEventListener('change', async (event) => {
-        await chrome.storage.local.set({ enableRedesignedHomepage: event.target.checked });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ enableRedesignedHomepage: event.target.checked });
         showNotification('Настройка сохранена. Страница будет перезагружена.', false);
         setTimeout(() => window.location.reload(), 1500);
     });
@@ -788,10 +788,10 @@ function setupThemeCustomizationHandlers() {
     document.getElementById('uploadBgImageBtn')?.addEventListener('click', () => document.getElementById('bgImageInput').click());
 
     document.getElementById('removeBgImageBtn')?.addEventListener('click', async () => {
-         const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+         const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
          if (!fpToolsTheme.bgImage) return; 
          delete fpToolsTheme.bgImage;
-         await chrome.storage.local.set({ fpToolsTheme: fpToolsTheme });
+         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: fpToolsTheme });
          applyCustomTheme();
          updateThemePreview();
          showNotification('Фоновое изображение удалено.');
@@ -799,8 +799,8 @@ function setupThemeCustomizationHandlers() {
 
     document.getElementById('resetThemeBtn')?.addEventListener('click', async () => {
         if (!confirm('Вы уверены, что хотите сбросить все настройки темы и оформления?')) return;
-        await chrome.storage.local.remove('fpToolsTheme');
-        await chrome.storage.local.set({ enableRedesignedHomepage: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('fpToolsTheme');
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ enableRedesignedHomepage: true });
         applyCustomTheme();
         applyHeaderPosition();
         updateThemePreview();
@@ -838,7 +838,7 @@ async function applyFptMenuTransparency(override) {
     if (override) {
         s = override;
     } else {
-        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
         s = { ...DEFAULT_THEME, ...fpToolsTheme };
     }
 
@@ -888,7 +888,7 @@ async function applyFptMenuTransparency(override) {
 // Загружает значения в контролы и навешивает обработчики.
 // Из UI настраивается только ЦВЕТ; прозрачность и размытие фиксированы (дефолты).
 async function setupFptMenuTransparency() {
-    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
     const s = { ...DEFAULT_THEME, ...fpToolsTheme };
 
     const enabled    = document.getElementById('fptMenuTransparentEnabled');
@@ -906,9 +906,9 @@ async function setupFptMenuTransparency() {
     applyFptMenuTransparency(s);
 
     const save = async (patch) => {
-        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
         const next = { ...DEFAULT_THEME, ...fpToolsTheme, ...patch };
-        await chrome.storage.local.set({ fpToolsTheme: next });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: next });
     };
 
     enabled.addEventListener('change', (e) => {
@@ -942,7 +942,7 @@ async function setupFptMenuTransparency() {
 // чтобы галочки/цвета всегда отражали сохранённое состояние, даже если что-то
 // перетёрло DOM ранее.
 async function syncFptMenuControls() {
-    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
     const s = { ...DEFAULT_THEME, ...fpToolsTheme };
 
     const enabled  = document.getElementById('fptMenuTransparentEnabled');
@@ -974,7 +974,7 @@ async function syncFptMenuControls() {
 async function applyFptTextOutline(override) {
     let s = override;
     if (!s) {
-        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
         s = { ...DEFAULT_THEME, ...fpToolsTheme };
     }
     const STYLE_ID = 'fpt-text-outline-style';
@@ -1022,7 +1022,7 @@ async function applyFptTextOutline(override) {
 }
 
 async function setupFptTextOutline() {
-    const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
+    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
     const s = { ...DEFAULT_THEME, ...fpToolsTheme };
 
     const enabled  = document.getElementById('fptTextOutlineEnabled');
@@ -1046,8 +1046,8 @@ async function setupFptTextOutline() {
         textOutlineWidth: width ? parseFloat(width.value) : 1
     });
     const save = async () => {
-        const { fpToolsTheme = {} } = await chrome.storage.local.get('fpToolsTheme');
-        await chrome.storage.local.set({ fpToolsTheme: { ...DEFAULT_THEME, ...fpToolsTheme, ...read() } });
+        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: { ...DEFAULT_THEME, ...fpToolsTheme, ...read() } });
     };
 
     enabled.addEventListener('change', (e) => {

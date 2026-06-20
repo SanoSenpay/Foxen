@@ -234,7 +234,7 @@ async function handleHomepageRedesign() {
     const {
         enableRedesignedHomepage = true,
         enableCustomTheme = true
-    } = await chrome.storage.local.get(['enableRedesignedHomepage', 'enableCustomTheme']);
+    } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableRedesignedHomepage', 'enableCustomTheme']);
     const path = window.location.pathname;
     const isHomepage = path === '/' || path === '/en' || path === '/en/';
     // 3.0: улучшенная главная завязана на цвета кастомной темы. Если кастомная тема

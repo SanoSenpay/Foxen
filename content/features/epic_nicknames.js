@@ -40,7 +40,7 @@
                 const changed = JSON.stringify(fresh) !== JSON.stringify(donatersMap);
 
                 donatersMap = fresh;
-                await chrome.storage.local.set({
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
                     [CACHE_KEY]: donatersMap,
                     [CACHE_TIME_KEY]: Date.now()
                 });
@@ -59,7 +59,7 @@
 
     // stale-while-revalidate: мгновенно отдаём кэш, в фоне всегда обновляем.
     async function fetchDonaters() {
-        const cache = await chrome.storage.local.get([CACHE_KEY, CACHE_TIME_KEY]);
+        const cache = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([CACHE_KEY, CACHE_TIME_KEY]);
         const now = Date.now();
         const fresh = cache[CACHE_KEY] && cache[CACHE_TIME_KEY] &&
                       (now - cache[CACHE_TIME_KEY] < CACHE_DURATION);

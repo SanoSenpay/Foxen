@@ -87,7 +87,7 @@ async function runSalesUpdateCycle() {
     _salesCycleRunning = true;
     console.log("Foxen: Запуск полного цикла сбора статистики продаж...");
     try {
-        await chrome.storage.local.set({ fpToolsSalesCollecting: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSalesCollecting: true });
         // Однократно переносим старые данные из storage.local в IndexedDB
         // (и освобождаем квоту). Безопасно вызывать каждый раз — отработает один раз.
         await FPTSalesDB.migrateFromLocalStorage();
@@ -129,7 +129,7 @@ async function runSalesUpdateCycle() {
             const now = Date.now();
             await FPTSalesDB.setMeta('lastUpdate', now);
             // Маленькое зеркало для UI, который читает дату из storage.local — это байты, не мегабайты.
-            await chrome.storage.local.set({ fpToolsSalesLastUpdate: now });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSalesLastUpdate: now });
         };
 
         // --- Догрузка НОВЫХ заказов сверху (инкрементально) ---
@@ -226,11 +226,11 @@ async function runSalesUpdateCycle() {
 
     } catch (e) {
         console.error(`Foxen: Ошибка в цикле сбора статистики: ${e.message}`);
-        await chrome.storage.local.set({ fpToolsSalesError: e.message });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSalesError: e.message });
     } finally {
         _salesCycleRunning = false;
         console.log("Foxen: Сбор статистики продаж завершен.");
-        await chrome.storage.local.set({
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
             fpToolsSalesLastUpdate: Date.now(),
             fpToolsSalesCollecting: false
         });
@@ -242,7 +242,7 @@ async function runFinanceUpdateCycle() {
     _financeCycleRunning = true;
     console.log("Foxen: Запуск сбора статистики финансов...");
     try {
-        await chrome.storage.local.set({ fpToolsFinanceCollecting: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsFinanceCollecting: true });
         const auth = await getAuthDetailsForBackground();
         if (!auth.golden_key) throw new Error("Не удалось получить golden_key для сбора финансов.");
         const userId = auth.userId;
@@ -302,7 +302,7 @@ async function runFinanceUpdateCycle() {
 
             if (fresh.length > 0) {
                 await FPTFinanceDB.putOrders(fresh);
-                await chrome.storage.local.set({ fpToolsFinanceCount: seenIds.size });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsFinanceCount: seenIds.size });
                 const dts = txns.map(t => t.date).filter(Boolean);
                 if (dts.length) {
                     const newest = new Date(Math.max(...dts)).toISOString().slice(0, 10);
@@ -334,13 +334,13 @@ async function runFinanceUpdateCycle() {
 
         const now = Date.now();
         await FPTFinanceDB.setMeta('lastUpdate', now);
-        await chrome.storage.local.set({ fpToolsFinanceLastUpdate: now });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsFinanceLastUpdate: now });
         console.log(`Foxen: Финансы собраны, операций: ${total}.`);
     } catch (e) {
         console.error(`Foxen: Ошибка в цикле сбора финансов: ${e.message}`);
     } finally {
         _financeCycleRunning = false;
-        await chrome.storage.local.set({
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
             fpToolsFinanceLastUpdate: Date.now(),
             fpToolsFinanceCollecting: false
         });
@@ -352,7 +352,7 @@ async function runPurchasesUpdateCycle() {
     _purchasesCycleRunning = true;
     console.log("Foxen: Запуск полного цикла сбора статистики покупок...");
     try {
-        await chrome.storage.local.set({ fpToolsPurchasesCollecting: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPurchasesCollecting: true });
         // Однократно переносим старые данные из storage.local в IndexedDB
         // (и освобождаем квоту). Безопасно вызывать каждый раз — отработает один раз.
         await FPTPurchasesDB.migrateFromLocalStorage();
@@ -394,7 +394,7 @@ async function runPurchasesUpdateCycle() {
             const now = Date.now();
             await FPTPurchasesDB.setMeta('lastUpdate', now);
             // Маленькое зеркало для UI, который читает дату из storage.local — это байты, не мегабайты.
-            await chrome.storage.local.set({ fpToolsPurchasesLastUpdate: now });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPurchasesLastUpdate: now });
         };
 
         // --- Догрузка НОВЫХ покупок сверху (инкрементально) ---
@@ -494,7 +494,7 @@ async function runPurchasesUpdateCycle() {
     } finally {
         _purchasesCycleRunning = false;
         console.log("Foxen: Сбор статистики покупок завершен.");
-        await chrome.storage.local.set({
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
             fpToolsPurchasesLastUpdate: Date.now(),
             fpToolsPurchasesCollecting: false
         });
@@ -553,21 +553,21 @@ async function sendChatImageInBackground(chatId, dataUrl, chatName) {
 }
 
 async function getAuthDetailsForBackground() {
-    const goldenKeyCookie = await chrome.cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
+    const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
     if (!goldenKeyCookie || !goldenKeyCookie.value) {
         console.error("Foxen: golden_key не найден. Пользователь не авторизован.");
         return {};
     }
     const golden_key = goldenKeyCookie.value;
     // FIX: PHPSESSID is required by FunPay runner alongside golden_key
-    const phpSessIdCookie = await chrome.cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
+    const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
     const phpsessid = phpSessIdCookie?.value || '';
 
-    const tabs = await chrome.tabs.query({ url: "https://funpay.com/*" });
+    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
     for (const tab of tabs) {
         try {
             if (tab.discarded) continue;
-            const response = await chrome.tabs.sendMessage(tab.id, { action: "getAppData" });
+            const response = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: "getAppData" });
             if (response && response.success) {
                 const appData = Array.isArray(response.data) ? response.data[0] : response.data;
                 if (appData && appData['csrf-token'] && appData.userId) {
@@ -778,7 +778,7 @@ telegramInit({
 // Полный цикл Telegram: приём команд (getUpdates) + уведомления (сообщения/заказы).
 let _tgChatTag = null;
 async function runTelegramCheckCycle() {
-    const { fpToolsTelegram } = await chrome.storage.local.get('fpToolsTelegram');
+    const { fpToolsTelegram } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTelegram');
     const cfg = fpToolsTelegram || {};
     if (!cfg.enabled || !cfg.token) return;
 
@@ -788,7 +788,7 @@ async function runTelegramCheckCycle() {
     // 2) уведомления о новых сообщениях (если Discord-цикл не активен, тянем сами)
     if (cfg.notifyMessages) {
         try {
-            const { fpToolsDiscord } = await chrome.storage.local.get('fpToolsDiscord');
+            const { fpToolsDiscord } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDiscord');
             const discordActive = fpToolsDiscord && fpToolsDiscord.enabled && fpToolsDiscord.webhookUrl;
             // Если Discord активен - он уже кормит Telegram внутри runDiscordCheckCycle.
             if (!discordActive) {
@@ -932,7 +932,7 @@ async function sendDiscordNotification(chat, settings) {
 }
 
 async function runDiscordCheckCycle() {
-    const { fpToolsDiscord, fpToolsProcessedDiscordIds } = await chrome.storage.local.get(['fpToolsDiscord', 'fpToolsProcessedDiscordIds']);
+    const { fpToolsDiscord, fpToolsProcessedDiscordIds } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsDiscord', 'fpToolsProcessedDiscordIds']);
 
     if (!fpToolsDiscord || !fpToolsDiscord.enabled || !fpToolsDiscord.webhookUrl) {
         chrome.alarms.clear(DISCORD_LOG_ALARM_NAME);
@@ -976,7 +976,7 @@ async function runDiscordCheckCycle() {
         // 3.0: Also capture buyer_viewing data for chat header display
         const buyerViewingObjects = data.objects.filter(o => o.type === "buyer_viewing");
         if (buyerViewingObjects.length > 0) {
-            const tabs = await chrome.tabs.query({ url: "https://funpay.com/*" });
+            const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
             buyerViewingObjects.forEach(bv => {
                 tabs.forEach(tab => {
                     chrome.tabs.sendMessage(tab.id, {
@@ -1003,7 +1003,7 @@ async function runDiscordCheckCycle() {
         //      and DON'T notify (otherwise enabling Discord blasts every existing unread chat).
         //  (2) Only notify when the chat's last message is genuinely new inbound
         //      (nodeMsg > userMsg), not merely flagged unread.
-        const { fpToolsDiscordSeeded } = await chrome.storage.local.get('fpToolsDiscordSeeded');
+        const { fpToolsDiscordSeeded } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDiscordSeeded');
         const isFirstDiscordRun = !fpToolsDiscordSeeded;
 
         let newMessagesToSend = false;
@@ -1026,7 +1026,7 @@ async function runDiscordCheckCycle() {
             if (idsToStore.length > 200) {
                 idsToStore = idsToStore.slice(-200);
             }
-            await chrome.storage.local.set({ fpToolsProcessedDiscordIds: idsToStore, fpToolsDiscordSeeded: true });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsProcessedDiscordIds: idsToStore, fpToolsDiscordSeeded: true });
         }
 
     } catch (e) {
@@ -1038,7 +1038,7 @@ async function runDiscordCheckCycle() {
 // --- ИЗМЕНЕННЫЙ БЛОК: ЭКСПОРТ И ИМПОРТ ЛОТОВ ---
 
 async function sendImportProgressUpdate(progressData) {
-    const tabs = await chrome.tabs.query({ url: "*://funpay.com/*" });
+    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "*://funpay.com/*" });
     tabs.forEach(tab => {
         chrome.tabs.sendMessage(tab.id, {
             action: 'lotImportProgressUpdate',
@@ -1048,12 +1048,12 @@ async function sendImportProgressUpdate(progressData) {
 }
 
 async function processNextLotImport() {
-    const { [IMPORT_PROCESS_KEY]: process } = await chrome.storage.local.get(IMPORT_PROCESS_KEY);
+    const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
     
     // Если процесса нет, или он отложен, или закончен - выходим.
     if (!process || process.state === 'postponed' || process.currentIndex >= process.lots.length) {
         if (process && process.currentIndex >= process.lots.length) {
-            await chrome.storage.local.remove(IMPORT_PROCESS_KEY);
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(IMPORT_PROCESS_KEY);
             sendImportProgressUpdate({ finished: true, lots: process.lots || [] });
         }
         return;
@@ -1064,7 +1064,7 @@ async function processNextLotImport() {
     // Если лот уже успешно создан или пропущен, переходим к следующему
     if (currentLot.status === 'success' || currentLot.status === 'skipped') {
         process.currentIndex++;
-        await chrome.storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
         processNextLotImport(); // Сразу переходим к следующему
         return;
     }
@@ -1073,7 +1073,7 @@ async function processNextLotImport() {
     if (currentLot.retries >= RETRY_LIMIT) {
         currentLot.status = 'error';
         currentLot.error = `Превышен лимит попыток (${RETRY_LIMIT}). Процесс остановлен.`;
-        await chrome.storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
         sendImportProgressUpdate(process);
         return;
     }
@@ -1104,7 +1104,7 @@ async function processNextLotImport() {
         if (result && (result.error === 0 || result.error === false)) {
             currentLot.status = 'success';
             process.currentIndex++;
-            await chrome.storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
             sendImportProgressUpdate(process);
             setTimeout(processNextLotImport, 500); // Небольшая задержка перед следующим
         } else {
@@ -1115,7 +1115,7 @@ async function processNextLotImport() {
         currentLot.retries++;
         currentLot.status = 'pending';
         currentLot.error = error.message;
-        await chrome.storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
         sendImportProgressUpdate(process);
         
         // Если это была не последняя попытка, делаем таймаут
@@ -1144,7 +1144,7 @@ function fptSnapshotForKey(key) {
     const run = async () => {
         // 1) Запоминаем текущую golden_key, чтобы вернуть её после запроса.
         let original = null;
-        try { original = await chrome.cookies.get({ url: 'https://funpay.com', name: 'golden_key' }); } catch (_) {}
+        try { original = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' }); } catch (_) {}
 
         // Если ключ совпадает с активным - просто грузим главную как есть.
         if (original && original.value === key) {
@@ -1182,7 +1182,7 @@ function fptSnapshotForKey(key) {
             // 4) ВСЕГДА возвращаем исходную golden_key (или удаляем, если её не было).
             try {
                 if (original && original.value) await setKey(original.value);
-                else await chrome.cookies.remove({ url: 'https://funpay.com', name: 'golden_key' });
+                else await (typeof browser !== 'undefined' ? browser : chrome).cookies.remove({ url: 'https://funpay.com', name: 'golden_key' });
             } catch (_) {}
         }
     };
@@ -1854,7 +1854,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 lots: request.lots.map(lot => ({ ...lot, status: 'pending', retries: 0, error: null })),
                 currentIndex: 0
             };
-            await chrome.storage.local.set({ [IMPORT_PROCESS_KEY]: importProcess });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: importProcess });
             sendResponse({ success: true });
             processNextLotImport();
         })();
@@ -1863,7 +1863,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === 'resumeLotImport') {
         (async () => {
-             const { [IMPORT_PROCESS_KEY]: process } = await chrome.storage.local.get(IMPORT_PROCESS_KEY);
+             const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
              if (process) {
                 process.state = 'running'; // Меняем статус на "в процессе"
                 // Сбрасываем счетчик попыток для всех лотов с ошибками
@@ -1873,7 +1873,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         lot.status = 'pending';
                     }
                 });
-                await chrome.storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
                 sendResponse({ success: true });
                 processNextLotImport(); // Запускаем процесс
              } else {
@@ -1890,10 +1890,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === 'postponeLotImport') {
         (async () => {
-            const { [IMPORT_PROCESS_KEY]: process } = await chrome.storage.local.get(IMPORT_PROCESS_KEY);
+            const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
             if (process) {
                 process.state = 'postponed';
-                await chrome.storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
                 sendResponse({ success: true });
             } else {
                 sendResponse({ success: false, error: 'Процесс для откладывания не найден.' });
@@ -1904,12 +1904,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === 'skipLotImportItem') {
         (async () => {
-            const { [IMPORT_PROCESS_KEY]: process } = await chrome.storage.local.get(IMPORT_PROCESS_KEY);
+            const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
             if (process && process.lots[request.index]) {
                 const lot = process.lots[request.index];
                 lot.status = 'skipped';
                 lot.error = 'Пропущено пользователем';
-                await chrome.storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
                 sendImportProgressUpdate(process);
                 
                 // Если пропущенный лот был текущим, немедленно запускаем следующий
@@ -2048,9 +2048,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === 'deleteCookiesAndReload') {
         (async () => {
-            const allCookies = await chrome.cookies.getAll({ url: "https://funpay.com" });
+            const allCookies = await (typeof browser !== 'undefined' ? browser : chrome).cookies.getAll({ url: "https://funpay.com" });
             for (const cookie of allCookies) {
-                await chrome.cookies.remove({ url: "https://funpay.com", name: cookie.name, storeId: cookie.storeId });
+                await (typeof browser !== 'undefined' ? browser : chrome).cookies.remove({ url: "https://funpay.com", name: cookie.name, storeId: cookie.storeId });
             }
             chrome.tabs.reload(sender.tab.id);
         })();
@@ -2091,7 +2091,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 await FPTSalesDB.clearAll();
                 await FPTSalesDB.setMeta('migratedFromLocal', true); // не тянуть старьё обратно
-                await chrome.storage.local.remove([
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove([
                     'fpToolsSalesData', 'fpToolsFirstOrderId', 'fpToolsLastOrderId', 'fpToolsSalesLastUpdate'
                 ]);
                 sendResponse({ success: true });
@@ -2133,7 +2133,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 await FPTPurchasesDB.clearAll();
-                await chrome.storage.local.remove(['fpToolsPurchasesLastUpdate']);
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['fpToolsPurchasesLastUpdate']);
                 sendResponse({ success: true });
             } catch (e) {
                 sendResponse({ success: false, error: e.message });
@@ -2173,7 +2173,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 await FPTFinanceDB.clearAll();
-                await chrome.storage.local.remove(['fpToolsFinanceLastUpdate', 'fpToolsFinanceCount']);
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['fpToolsFinanceLastUpdate', 'fpToolsFinanceCount']);
                 sendResponse({ success: true });
             } catch (e) {
                 sendResponse({ success: false, error: e.message });
@@ -2239,8 +2239,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         request.action === 'supportAddComment' || request.action === 'supportCloseTicket') {
         (async () => {
             try {
-                const gkCookie = await chrome.cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
-                const phpCookie = await chrome.cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
+                const gkCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
+                const phpCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
                 if (!gkCookie) { sendResponse({ success: false, error: 'Не авторизован на FunPay' }); return; }
                 const baseCookie = `golden_key=${gkCookie.value}${phpCookie ? '; PHPSESSID=' + phpCookie.value : ''}`;
                 const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
@@ -2459,7 +2459,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
     if (alarm.name === 'fpToolsAutoRestore') {
         // Notify all FunPay tabs to check and restore/disable lots
-        const tabs = await chrome.tabs.query({ url: "https://funpay.com/*" });
+        const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
         tabs.forEach(tab => {
             chrome.tabs.sendMessage(tab.id, { action: 'fpToolsCheckRestoreLots' }).catch(() => {});
         });

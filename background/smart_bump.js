@@ -39,16 +39,16 @@ async function parseHtmlViaOffscreen(html, action, extra = {}) {
 }
 
 async function getAuth() {
-    const gk = await chrome.cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
+    const gk = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
     if (!gk?.value) return null;
-    const ps = await chrome.cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
+    const ps = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
     const cookies = ps?.value ? `golden_key=${gk.value}; PHPSESSID=${ps.value}` : `golden_key=${gk.value}`;
 
-    const tabs = await chrome.tabs.query({ url: 'https://funpay.com/*' });
+    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: 'https://funpay.com/*' });
     for (const tab of tabs) {
         if (tab.discarded) continue;
         try {
-            const r = await chrome.tabs.sendMessage(tab.id, { action: 'getAppData' });
+            const r = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: 'getAppData' });
             if (r?.success) {
                 const d = Array.isArray(r.data) ? r.data[0] : r.data;
                 if (d?.['csrf-token'] && d.userId) return { cookies, csrfToken: d['csrf-token'], userId: d.userId };
@@ -121,11 +121,11 @@ async function raiseCategory(categoryUrl, auth) {
 }
 
 async function getState() {
-    const { [STATE_KEY]: st = {} } = await chrome.storage.local.get(STATE_KEY);
+    const { [STATE_KEY]: st = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(STATE_KEY);
     return st;
 }
 async function setState(st) {
-    await chrome.storage.local.set({ [STATE_KEY]: st });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [STATE_KEY]: st });
 }
 
 function logToTabs(message) {
@@ -140,10 +140,10 @@ function logToTabs(message) {
 // and arms the alarm for the soonest upcoming due time.
 export async function runSmartBumpCycle() {
     // FALLBACK: Arm a fallback alarm so if the service worker dies during the loop, it still recovers.
-    await chrome.alarms.create(SMART_BUMP_ALARM + '_fallback', { delayInMinutes: 10 });
+    await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(SMART_BUMP_ALARM + '_fallback', { delayInMinutes: 10 });
 
     const { fpToolsSelectiveBumpEnabled, fpToolsSelectedBumpCategories, fpToolsBumpOnlyAutoDelivery } =
-        await chrome.storage.local.get(['fpToolsSelectiveBumpEnabled', 'fpToolsSelectedBumpCategories', 'fpToolsBumpOnlyAutoDelivery']);
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsSelectiveBumpEnabled', 'fpToolsSelectedBumpCategories', 'fpToolsBumpOnlyAutoDelivery']);
 
     const auth = await getAuth();
     if (!auth) { logToTabs('Умное поднятие: нет авторизации (golden_key/csrf).'); return; }
@@ -193,28 +193,28 @@ export async function runSmartBumpCycle() {
     await setState(state);
     
     if (anyRaised) {
-        await chrome.storage.local.set({ fpToolsLastSmartBumpTime: Date.now() });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsLastSmartBumpTime: Date.now() });
     }
 
     // Arm the alarm to fire when the soonest category becomes due (min 1 min - MV3 floor).
     if (soonest !== Infinity) {
         const delayMin = Math.max(1, Math.ceil((soonest - Date.now()) / 60000));
-        await chrome.alarms.create(SMART_BUMP_ALARM, { delayInMinutes: delayMin });
+        await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(SMART_BUMP_ALARM, { delayInMinutes: delayMin });
         logToTabs(`Умное поднятие: следующая проверка через ~${delayMin} мин.`);
     } else {
-        await chrome.alarms.create(SMART_BUMP_ALARM, { delayInMinutes: 5 });
+        await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(SMART_BUMP_ALARM, { delayInMinutes: 5 });
     }
     
     // Clear the fallback since we succeeded
-    await chrome.alarms.clear(SMART_BUMP_ALARM + '_fallback');
+    await (typeof browser !== 'undefined' ? browser : chrome).alarms.clear(SMART_BUMP_ALARM + '_fallback');
 }
 
 export async function startSmartBump() {
-    await chrome.alarms.create(SMART_BUMP_ALARM, { delayInMinutes: 0.1 });
+    await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(SMART_BUMP_ALARM, { delayInMinutes: 0.1 });
     await runSmartBumpCycle();
 }
 
 export async function stopSmartBump() {
-    await chrome.alarms.clear(SMART_BUMP_ALARM);
-    await chrome.storage.local.remove(STATE_KEY);
+    await (typeof browser !== 'undefined' ? browser : chrome).alarms.clear(SMART_BUMP_ALARM);
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(STATE_KEY);
 }

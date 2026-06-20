@@ -84,7 +84,7 @@ async function showExportModal() {
     listContainer.innerHTML = '<div class="fp-import-loader"></div>';
 
     try {
-        const response = await chrome.runtime.sendMessage({ action: 'getUserCategories' });
+        const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getUserCategories' });
         if (!response.success) throw new Error(response.error);
 
         const categories = response.data;
@@ -148,7 +148,7 @@ async function startExportProcess(allCategories, selectedCategoryIds) {
             updateExportProgressBar(processedCount, totalLots, lot.title);
 
             try {
-                const response = await chrome.runtime.sendMessage({
+                const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
                     action: 'getLotForExport',
                     offerId: lot.id,
                     nodeId: lot.nodeId
@@ -201,7 +201,7 @@ function handleFileImport(event) {
                 throw new Error("Файл пуст или имеет неверный формат.");
             }
             if (confirm(`Вы уверены, что хотите импортировать ${lots.length} лотов? Это действие создаст новые предложения на вашем аккаунте.`)) {
-                await chrome.runtime.sendMessage({ action: 'startLotImport', lots: lots, fileName: file.name });
+                await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'startLotImport', lots: lots, fileName: file.name });
             }
         } catch (error) {
             showNotification(`Ошибка чтения файла: ${error.message}`, true);
@@ -328,7 +328,7 @@ async function renderPendingImports() {
     if (!container) return;
 
     try {
-        const { [IMPORT_PROCESS_KEY]: process } = await chrome.storage.local.get(IMPORT_PROCESS_KEY);
+        const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
 
         if (process && process.state === 'postponed') {
             container.innerHTML = `

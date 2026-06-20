@@ -6,11 +6,11 @@ const FPT_IMG_STORE_KEY = 'fpToolsImageStore';
 async function fptStoreImage(dataUrl) {
     const id = Math.random().toString(36).slice(2, 8);
     try {
-        const { [FPT_IMG_STORE_KEY]: store = {} } = await chrome.storage.local.get(FPT_IMG_STORE_KEY);
+        const { [FPT_IMG_STORE_KEY]: store = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(FPT_IMG_STORE_KEY);
         store[id] = dataUrl;
         const keys = Object.keys(store);
         if (keys.length > 200) delete store[keys[0]];
-        await chrome.storage.local.set({ [FPT_IMG_STORE_KEY]: store });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [FPT_IMG_STORE_KEY]: store });
     } catch (_) {}
     return id;
 }

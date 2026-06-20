@@ -203,7 +203,7 @@ function openPricePopup(offerId, currentPrice, anchor, nodeId) {
         saveBtn.textContent = '...'; saveBtn.disabled = true;
         popup.querySelector('#fp-pe-status').textContent = 'Сохраняем...';
         try {
-            const res = await chrome.runtime.sendMessage({ action: 'saveSingleLot', nodeId, data: { offer_id: offerId, price: String(price) } });
+            const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'saveSingleLot', nodeId, data: { offer_id: offerId, price: String(price) } });
             if (res?.success) {
                 popup.querySelector('#fp-pe-status').style.color = '#4caf82';
                 popup.querySelector('#fp-pe-status').textContent = '✓ Сохранено';

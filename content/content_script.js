@@ -44,7 +44,7 @@
 
             chrome.runtime.sendMessage({ action: 'markAnnouncementsAsRead' });
             
-            const { fpToolsAnnouncements } = await chrome.storage.local.get('fpToolsAnnouncements');
+            const { fpToolsAnnouncements } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAnnouncements');
             displayAnnouncements(fpToolsAnnouncements);
         });
 
@@ -201,7 +201,7 @@
 
             const reviewText = document.querySelector('.review-item-text')?.textContent.trim() || 'положительный отзыв';
     
-            const response = await chrome.runtime.sendMessage({
+            const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
                 action: "getAIProcessedText",
                 text: lotName,
                 context: reviewText,
@@ -403,7 +403,7 @@
         // Expose so the header-button click handler (defined earlier) can build on demand.
         window.__fpEnsurePopup = ensureFpToolsPopup;
 
-        const settings = await chrome.storage.local.get([
+        const settings = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
             'enableRedesignedHomepage', 
             'showSalesStats', 
             'hideBalance', 
@@ -515,7 +515,7 @@
                 if (!balanceEl || document.getElementById('fp-unconfirmed-badge')) return;
 
                 try {
-                    const res = await chrome.runtime.sendMessage({ action: 'getUnconfirmedBalance' });
+                    const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getUnconfirmedBalance' });
                     if (!res?.success || !res.data?.total) return;
 
                     const { total, count } = res.data;
@@ -619,24 +619,24 @@
     function initializeResetButtons() {
         const arBtn = document.getElementById('fp-reset-autoresponder-btn');
         arBtn?.addEventListener('click', async () => {
-            await chrome.storage.local.remove(['fpToolsAutoResponderTag']);
-            const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['fpToolsAutoResponderTag']);
+            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
             fpToolsAutoReplies.processedMessageIds = [];
-            await chrome.storage.local.set({ fpToolsAutoReplies });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
             _resetBtnFeedback(arBtn, 'Сброшено');
         });
 
         const pinBtn = document.getElementById('fp-reset-pinned-btn');
         pinBtn?.addEventListener('click', async () => {
-            await chrome.storage.local.remove('fpToolsPinnedLots');
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('fpToolsPinnedLots');
             _resetBtnFeedback(pinBtn, 'Очищено');
         });
 
         const greetBtn = document.getElementById('fp-reset-greeted-btn');
         greetBtn?.addEventListener('click', async () => {
-            const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
             fpToolsAutoReplies.greetedUsers = [];
-            await chrome.storage.local.set({ fpToolsAutoReplies });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
             _resetBtnFeedback(greetBtn, 'Сброшено');
         });
 
@@ -648,7 +648,7 @@
             try { localStorage.removeItem(`fpApril_${year - 1}_done`); } catch(e) {}
             try { sessionStorage.removeItem('fpAprilReloads'); } catch(e) {}
             try { sessionStorage.removeItem('fpAprilActive'); } catch(e) {}
-            await chrome.storage.local.remove([
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove([
                 `fpApril_${year}_done`,
                 `fpApril_${year - 1}_done`,
                 `fpApril_${year + 1}_done`,

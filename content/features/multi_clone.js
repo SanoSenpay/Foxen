@@ -116,7 +116,7 @@
 
     async function cloneOne(offerId) {
         // 1) читаем источник + решённые поля
-        const src = await chrome.runtime.sendMessage({ action: 'cloneGetSource', offerId });
+        const src = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId });
         if (!src || !src.success) throw new Error(src?.error || 'не удалось прочитать лот');
         if (src.source?.isChips) throw new Error('лот из раздела валюты — пропущен');
         if (!src.fields) throw new Error(src.formError || 'не удалось подобрать поля категории');
@@ -136,7 +136,7 @@
         fields['secrets'] = fields['secrets'] || '';
         fields['fields[images]'] = fields['fields[images]'] || '';
 
-        const res = await chrome.runtime.sendMessage({ action: 'cloneCreateLot', fields, location: 'trade' });
+        const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneCreateLot', fields, location: 'trade' });
         if (!res || !res.success) throw new Error(res?.error || 'ошибка создания');
         return res.newId;
     }

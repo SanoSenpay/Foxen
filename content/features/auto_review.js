@@ -7,7 +7,7 @@ async function initializeAutoReviewUI() {
     const page = document.querySelector('.fp-tools-page-content[data-page="auto_review"]');
     if (!page || page.dataset.initialized) return;
 
-    const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+    const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
     
     const settings = {
         autoReviewEnabled: fpToolsAutoReplies.autoReviewEnabled || false,
@@ -69,7 +69,7 @@ async function initializeAutoReviewUI() {
     const saveOnChange = async () => {
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(async () => {
-            const storedData = await chrome.storage.local.get('fpToolsAutoReplies');
+            const storedData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
             const currentSettings = storedData.fpToolsAutoReplies || {};
             
             const getChecked = id => document.getElementById(id)?.checked ?? false;
@@ -105,7 +105,7 @@ async function initializeAutoReviewUI() {
                 orderConfirmReplyEnabled: getChecked('orderConfirmReplyEnabled'),
                 orderConfirmReplyText:    getVal('orderConfirmReplyText'),
             };
-            await chrome.storage.local.set({ fpToolsAutoReplies: newSettings });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies: newSettings });
             console.log("Foxen: Auto-reply settings saved.");
         }, 500);
     };
@@ -163,7 +163,7 @@ async function initializeAutoReviewUI() {
             return;
         }
 
-        const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+        const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
         const keywords = fpToolsAutoReplies.keywords || [];
         const rule = { keyword, response, matchMode };
         if (images.length) rule.images = images;
@@ -177,7 +177,7 @@ async function initializeAutoReviewUI() {
         }
         fpToolsAutoReplies.keywords = keywords;
 
-        await chrome.storage.local.set({ fpToolsAutoReplies });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
         renderKeywordsList(keywords);
         resetKeywordForm();
     });
@@ -189,12 +189,12 @@ async function initializeAutoReviewUI() {
             return;
         }
         
-        const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+        const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
         const bonuses = fpToolsAutoReplies.randomBonuses || [];
         bonuses.push(bonusText);
         fpToolsAutoReplies.randomBonuses = bonuses;
 
-        await chrome.storage.local.set({ fpToolsAutoReplies });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
         renderBonusesList(bonuses);
         document.getElementById('newBonusText').value = '';
     });
@@ -202,12 +202,12 @@ async function initializeAutoReviewUI() {
     document.getElementById('bonus-list-container').addEventListener('click', async (e) => {
         if (e.target.classList.contains('delete-bonus-btn')) {
             const index = parseInt(e.target.dataset.index, 10);
-            const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
             const bonuses = fpToolsAutoReplies.randomBonuses || [];
             bonuses.splice(index, 1);
             fpToolsAutoReplies.randomBonuses = bonuses;
             
-            await chrome.storage.local.set({ fpToolsAutoReplies });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
             renderBonusesList(bonuses);
         }
     });
@@ -216,7 +216,7 @@ async function initializeAutoReviewUI() {
         const editBtn = e.target.closest('.fpt-edit-keyword-btn');
         if (editBtn) {
             const index = parseInt(editBtn.dataset.index, 10);
-            const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
             const keywords = fpToolsAutoReplies.keywords || [];
             const rule = keywords[index];
             if (!rule) return;
@@ -253,12 +253,12 @@ async function initializeAutoReviewUI() {
         const delBtn = e.target.closest('.delete-keyword-btn');
         if (delBtn) {
             const index = parseInt(delBtn.dataset.index, 10);
-            const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
             const keywords = fpToolsAutoReplies.keywords || [];
             keywords.splice(index, 1);
             fpToolsAutoReplies.keywords = keywords;
             
-            await chrome.storage.local.set({ fpToolsAutoReplies });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
             renderKeywordsList(keywords);
             // if we were editing the deleted (or a shifted) rule, reset the form
             if (editingKeywordIndex === index) resetKeywordForm();

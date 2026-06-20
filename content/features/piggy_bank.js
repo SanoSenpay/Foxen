@@ -16,7 +16,7 @@ function getCurrentBalance() {
 }
 
 async function loadPiggyBanks() {
-    const data = await chrome.storage.local.get('fpToolsPiggyBanks');
+    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPiggyBanks');
     piggyBanks = data.fpToolsPiggyBanks || [];
     currentBalance = getCurrentBalance();
     // Обновляем текущую сумму для всех копилок, так как она общая
@@ -28,7 +28,7 @@ async function loadPiggyBanks() {
 async function savePiggyBanks() {
     // Сохраняем только структуру, а не текущий баланс
     const banksToSave = piggyBanks.map(({ id, name, goalAmount, isMain }) => ({ id, name, goalAmount, isMain }));
-    await chrome.storage.local.set({ fpToolsPiggyBanks: banksToSave });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPiggyBanks: banksToSave });
     
     // Перезагружаем и рендерим все заново, чтобы обеспечить консистентность
     await loadPiggyBanks();

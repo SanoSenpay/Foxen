@@ -580,7 +580,7 @@
 
     async function isEnabled() {
         try {
-            const { fpToolsDisabledFeatures = [] } = await chrome.storage.local.get('fpToolsDisabledFeatures');
+            const { fpToolsDisabledFeatures = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
             return !Array.isArray(fpToolsDisabledFeatures) || !fpToolsDisabledFeatures.includes('chat_reply');
         } catch (_) { return true; }
     }

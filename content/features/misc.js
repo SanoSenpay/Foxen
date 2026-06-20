@@ -205,7 +205,7 @@ function initializeCalcSubtabs() {
             resultBox.classList.remove('is-error');
             resultBox.innerHTML = '<div class="calc-time-head"><span class="calc-time-loader"></span> Считаю</div>';
             try {
-                const res = await chrome.runtime.sendMessage({
+                const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
                     action: 'getAIProcessedText',
                     text,
                     context: '',
@@ -321,7 +321,7 @@ function initializeToolsPopup() {
             };
 
             // 3.0: Extended autoresponder settings
-            const existingAR = (await chrome.storage.local.get('fpToolsAutoReplies')).fpToolsAutoReplies || {};
+            const existingAR = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies')).fpToolsAutoReplies || {};
             const arExtras = {
                 ...existingAR,
                 newOrderReplyEnabled:    document.getElementById('newOrderReplyEnabled')?.checked ?? false,
@@ -350,9 +350,9 @@ function initializeToolsPopup() {
             // Save review request template separately (it's in auto_review section)
             const rrTemplate = document.getElementById('fp-review-request-template')?.value?.trim();
             if (rrTemplate !== undefined) {
-                const { fpToolsAutoReplies: curAR = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+                const { fpToolsAutoReplies: curAR = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
                 curAR.reviewRequestTemplate = rrTemplate;
-                await chrome.storage.local.set({ fpToolsAutoReplies: curAR });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies: curAR });
             }
 
             settingsToSave.fpToolsDiscord = {
@@ -362,7 +362,7 @@ function initializeToolsPopup() {
                 pingHere: document.getElementById('discordPingHere').checked
             };
             
-            await chrome.storage.local.set(settingsToSave);
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set(settingsToSave);
 
             applyNotificationSound();
 
@@ -430,8 +430,8 @@ function initializeToolsPopup() {
     if (resetThemeBtn) {
         resetThemeBtn.addEventListener('click', async () => {
             if (confirm('Вы уверены, что хотите сбросить все настройки темы и оформления?')) {
-                await chrome.storage.local.remove('fpToolsTheme');
-                await chrome.storage.local.set({ enableRedesignedHomepage: true });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('fpToolsTheme');
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ enableRedesignedHomepage: true });
                 applyCustomTheme();
                 applyHeaderPosition();
                 await updateThemePreview();
@@ -445,7 +445,7 @@ function initializeToolsPopup() {
     if (resetCursorFxBtn) {
         resetCursorFxBtn.addEventListener('click', async () => {
              if (confirm('Вы уверены, что хотите сбросить настройки эффектов курсора?')) {
-                await chrome.storage.local.remove('fpToolsCursorFx');
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('fpToolsCursorFx');
                 await loadSavedSettings();
                 showNotification('Настройки эффектов курсора сброшены.');
             }
@@ -461,10 +461,10 @@ function initializeToolsPopup() {
         listContainer.innerHTML = '<div class="fp-import-loader"></div>';
 
         try {
-            const response = await chrome.runtime.sendMessage({ action: 'getUserCategories' });
+            const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getUserCategories' });
             if (!response.success) throw new Error(response.error);
             const categories = response.data;
-            const { fpToolsSelectedBumpCategories = [] } = await chrome.storage.local.get('fpToolsSelectedBumpCategories');
+            const { fpToolsSelectedBumpCategories = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsSelectedBumpCategories');
             
             if (categories && categories.length > 0) {
                 listContainer.innerHTML = categories.map(cat => `
@@ -507,7 +507,7 @@ function initializeToolsPopup() {
     document.getElementById('autobump-category-save').addEventListener('click', async () => {
         const selectedIds = Array.from(document.querySelectorAll('#autobump-category-list input:checked'))
                                 .map(cb => cb.dataset.id);
-        await chrome.storage.local.set({ fpToolsSelectedBumpCategories: selectedIds });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSelectedBumpCategories: selectedIds });
         modalOverlay.style.display = 'none';
         showNotification('Список категорий для поднятия сохранен!', false);
     });
@@ -578,12 +578,12 @@ async function initializeQuickGamesMenu() {
     const inputField = gameDropdownItem.querySelector('#quickGameUrlInput');
 
     const getSavedGames = async () => {
-        const data = await chrome.storage.local.get('fpToolsQuickGames');
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsQuickGames');
         return data.fpToolsQuickGames || [];
     };
 
     const saveGames = async (games) => {
-        await chrome.storage.local.set({ fpToolsQuickGames: games });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsQuickGames: games });
     };
 
     const renderList = (games) => {

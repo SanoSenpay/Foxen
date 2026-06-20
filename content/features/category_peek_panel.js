@@ -23,7 +23,7 @@
 
     async function isFeatureEnabled() {
         try {
-            const { fpToolsDisabledFeatures = [] } = await chrome.storage.local.get('fpToolsDisabledFeatures');
+            const { fpToolsDisabledFeatures = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
             return !Array.isArray(fpToolsDisabledFeatures) || !fpToolsDisabledFeatures.includes(FEATURE_ID);
         } catch (_) { return true; }
     }

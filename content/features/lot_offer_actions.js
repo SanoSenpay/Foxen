@@ -68,7 +68,7 @@
             const prev = del.innerHTML;
             del.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             try {
-                const res = await chrome.runtime.sendMessage({ action: 'cloneDeleteLot', offerId });
+                const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneDeleteLot', offerId });
                 if (res && res.success) {
                     showNotification?.('Лот удалён.', false);
                     // уводим со страницы удалённого лота — на свой профиль

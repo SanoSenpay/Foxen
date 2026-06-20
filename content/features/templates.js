@@ -34,7 +34,7 @@ const DEFAULT_STANDARD_TEMPLATES = {
 };
 
 async function loadTemplateSettings() {
-    const data = await chrome.storage.local.get(['fpToolsTemplateSettings']);
+    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsTemplateSettings']);
     const saved = data.fpToolsTemplateSettings || {};
     
     templateSettings.enabled = saved.enabled !== false;
@@ -56,7 +56,7 @@ async function loadTemplateSettings() {
 
 async function saveTemplateSettings() {
     if (!chrome.runtime?.id) return;
-    await chrome.storage.local.set({ fpToolsTemplateSettings: templateSettings });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTemplateSettings: templateSettings });
 }
 
 function getWelcomeMessage() {
@@ -160,13 +160,13 @@ async function applyTemplateToInput(chatInput, templateContent, images, sendOrde
 
         const sendText = async () => {
             if (processedText && processedText.trim()) {
-                await chrome.runtime.sendMessage({ action: 'fptSendChatText', chatId, text: processedText.trim() });
+                await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fptSendChatText', chatId, text: processedText.trim() });
                 await new Promise(r => setTimeout(r, 300));
             }
         };
         const sendImages = async () => {
             for (const dataUrl of imgs) {
-                const resp = await chrome.runtime.sendMessage({ action: 'fptSendImage', chatId, dataUrl, chatName });
+                const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fptSendImage', chatId, dataUrl, chatName });
                 if (!resp || !resp.ok) showNotification('Не удалось отправить изображение: ' + (resp && resp.error || 'ошибка'), true);
                 await new Promise(r => setTimeout(r, 300));
             }
@@ -259,7 +259,7 @@ async function useTemplate(templateConfig) {
         return;
     }
     
-    const data = await chrome.storage.local.get('fpToolsTemplateSettings');
+    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTemplateSettings');
     const sendTemplatesImmediately = data.fpToolsTemplateSettings?.sendTemplatesImmediately !== false;
 
     const chatInput = document.querySelector('.chat-form-input .form-control');

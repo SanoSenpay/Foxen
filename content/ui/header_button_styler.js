@@ -48,11 +48,11 @@ function hslToHex(h, s, l) {
 // --- Core Logic ---
 
 async function saveButtonStyles(settings) {
-    await chrome.storage.local.set({ [STORAGE_KEY]: settings });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [STORAGE_KEY]: settings });
 }
 
 async function loadAndApplyButtonStyles() {
-    const data = await chrome.storage.local.get(STORAGE_KEY);
+    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(STORAGE_KEY);
     const defaults = { color: '#C026D3', size: 14, opacity: 100 };
     const settings = { ...defaults, ...(data[STORAGE_KEY] || {}) };
     applyButtonStyles(settings);

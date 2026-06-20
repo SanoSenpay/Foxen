@@ -471,7 +471,7 @@
             // живой счётчик
             const tick = setInterval(async () => {
                 try {
-                    const st = await chrome.storage.local.get(['fpToolsFinanceCount', 'fpToolsFinanceCollecting']);
+                    const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsFinanceCount', 'fpToolsFinanceCollecting']);
                     const el = document.getElementById('fpt-fin-count');
                     if (el && st.fpToolsFinanceCount) el.textContent = `Загружено: ${st.fpToolsFinanceCount}`;
                     if (st.fpToolsFinanceCollecting === false) clearInterval(tick);

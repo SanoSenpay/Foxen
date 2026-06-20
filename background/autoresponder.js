@@ -77,20 +77,20 @@ function getMessageType(text) {
 }
 
 async function getAuth() {
-    const goldenKeyCookie = await chrome.cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
+    const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
     if (!goldenKeyCookie?.value) return {};
     const golden_key = goldenKeyCookie.value;
 
     
     
-    const phpSessIdCookie = await chrome.cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
+    const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
     const phpsessid = phpSessIdCookie?.value || '';
 
-    const tabs = await chrome.tabs.query({ url: 'https://funpay.com/*' });
+    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: 'https://funpay.com/*' });
     for (const tab of tabs) {
         if (tab.discarded) continue;
         try {
-            const r = await chrome.tabs.sendMessage(tab.id, { action: 'getAppData' });
+            const r = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: 'getAppData' });
             if (r?.success) {
                 const d = Array.isArray(r.data) ? r.data[0] : r.data;
                 if (d?.['csrf-token'] && d.userId)
@@ -267,13 +267,13 @@ function applyVariables(template, vars = {}) {
 }
 
 async function atomicUpdate(updater) {
-    const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+    const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
     updater(fpToolsAutoReplies);
-    await chrome.storage.local.set({ fpToolsAutoReplies });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
 }
 
 async function isBlacklisted(username, feature) {
-    const { fpToolsBlacklist = [] } = await chrome.storage.local.get('fpToolsBlacklist');
+    const { fpToolsBlacklist = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
     const entry = fpToolsBlacklist.find(e => e.username.toLowerCase() === username?.toLowerCase());
     if (!entry) return false;
     if (feature === 'delivery'     && entry.blockDelivery)     return true;
@@ -547,7 +547,7 @@ async function handleAutoDelivery(msg, auth, settings) {
         const chatId = msg.chatId || buyerChatId;
 
         
-        const { fpToolsAutoDeliveryLots = {} } = await chrome.storage.local.get('fpToolsAutoDeliveryLots');
+        const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
         const deliveryConfig = lotId ? fpToolsAutoDeliveryLots[String(lotId)] : null;
 
         let deliveryText = '';
@@ -592,7 +592,7 @@ async function handleAutoDelivery(msg, auth, settings) {
 }
 
 async function notifyDearVendors(msg) {
-    const tabs = await chrome.tabs.query({ url: 'https://funpay.com/*' });
+    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: 'https://funpay.com/*' });
     tabs.forEach(tab => {
         chrome.tabs.sendMessage(tab.id, {
             action: 'fpToolsDearVendors',
@@ -616,7 +616,7 @@ export async function runAutoResponderCycle() {
 }
 
 async function _runAutoResponderCycleInner() {
-    const { fpToolsAutoReplies = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+    const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
 
     const anyEnabled =
         fpToolsAutoReplies.greetingEnabled      ||
@@ -667,7 +667,7 @@ async function _runAutoResponderCycleInner() {
         if (!chatObj || !chatObj.data?.html) return;
 
         const chats = await parseViaOffscreen(chatObj.data.html, 'parseChatList');
-        const { fpToolsAutoReplies: fresh = {} } = await chrome.storage.local.get('fpToolsAutoReplies');
+        const { fpToolsAutoReplies: fresh = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
 
         const lastSeen = fresh.lastSeenMsgIds || {};
         const isFirstRun = !fresh.autoResponderSeeded;
@@ -768,9 +768,9 @@ async function _runAutoResponderCycleInner() {
 }
 
 export async function resetAutoResponderState() {
-    await chrome.storage.local.remove(RUNNER_TAG_KEY);
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(RUNNER_TAG_KEY);
     // also clear per-chat tracking so re-enabling re-seeds cleanly
-    await chrome.storage.local.get('fpToolsAutoReplies').then(({ fpToolsAutoReplies = {} }) => {
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies').then(({ fpToolsAutoReplies = {} }) => {
         delete fpToolsAutoReplies.lastSeenMsgIds;
         delete fpToolsAutoReplies.lastHandledText;
         delete fpToolsAutoReplies.autoResponderSeeded;

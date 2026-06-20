@@ -58,7 +58,7 @@ const EXCLUDE_KEYS = new Set([
 async function exportSettings() {
     try {
         // Берём ВСЁ хранилище и фильтруем исключения.
-        const all = await chrome.storage.local.get(null);
+        const all = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(null);
         const data = {};
         for (const [k, v] of Object.entries(all)) {
             if (EXCLUDE_KEYS.has(k)) continue;
@@ -113,7 +113,7 @@ async function importSettings(file) {
             safe[k] = v;
         }
 
-        await chrome.storage.local.set(safe);
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set(safe);
 
         const cnt = Object.keys(safe).length;
         const fromVer = obj._extVer ? ` из v${obj._extVer}` : '';

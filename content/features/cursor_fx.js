@@ -237,9 +237,9 @@ function setupCursorFxHandlers() {
     };
     const handler = async (e) => {
         inputs[e.target.id](e);
-        const currentSettings = (await chrome.storage.local.get('fpToolsCursorFx')).fpToolsCursorFx || {};
+        const currentSettings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCursorFx')).fpToolsCursorFx || {};
         const newSettings = { ...currentSettings, ...settingsToUpdate };
-        await chrome.storage.local.set({ fpToolsCursorFx: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCursorFx: newSettings });
         cursorFx.updateConfig(newSettings);
     };
 
@@ -258,9 +258,9 @@ function setupCursorFxHandlers() {
         const enabled = e.target.checked;
         customCursorControls.style.display = enabled ? 'block' : 'none';
         
-        const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
         const newSettings = { ...settings, enabled };
-        await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
@@ -279,9 +279,9 @@ function setupCursorFxHandlers() {
             preview.style.backgroundImage = `url(${imageDataUrl})`;
             preview.textContent = '';
 
-            const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
             const newSettings = { ...settings, image: imageDataUrl };
-            await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
         };
         reader.readAsDataURL(file);
@@ -292,22 +292,22 @@ function setupCursorFxHandlers() {
         preview.style.backgroundImage = 'none';
         preview.textContent = 'Нет';
 
-        const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
         const newSettings = { ...settings, image: null };
-        await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
     document.getElementById('hideSystemCursor').addEventListener('change', async (e) => {
-        const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
         const newSettings = { ...settings, hideSystem: e.target.checked };
-        await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
     ['customCursorSize', 'customCursorOpacity'].forEach(id => {
         document.getElementById(id).addEventListener('input', async (e) => {
-            const settings = (await chrome.storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
             let newSettings;
 
             if (id === 'customCursorSize') {
@@ -318,7 +318,7 @@ function setupCursorFxHandlers() {
                 newSettings = { ...settings, opacity: parseInt(e.target.value, 10) };
             }
             
-            await chrome.storage.local.set({ fpToolsCustomCursor: newSettings });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
         });
     });
