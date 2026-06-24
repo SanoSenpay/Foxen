@@ -29,6 +29,15 @@ const FPT_FEATURE_REGISTRY = [
         selector: '#fp-rmthub-form',
         preview: { kind: 'html', html: '<div class="fpt-pv-rmthub"><span>Продавец</span> <span class="fpt-pv-rmthub-ico">👤</span></div>' }
     },
+    // ───────────── Профиль пользователя ─────────────
+    {
+        id: 'rmthub_profile_banner',
+        label: 'Баннер RMT Hub в профиле',
+        desc: 'Красивая кнопка под аватаркой в чужих профилях, открывающая развернутую статистику по продавцу (выручка, отзывы, топ игр).',
+        group: 'Профиль продавца',
+        selector: '.fpt-rmth-banner',
+        preview: { kind: 'html', html: '<div class="fpt-pv-rmthub" style="justify-content:center; width:100%;"><span>📊 Статистика RMT Hub</span></div>' }
+    },
 
     // ───────────── Чат: поле ввода ─────────────
     {

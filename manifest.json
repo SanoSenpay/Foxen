@@ -113,6 +113,7 @@
                 "content/features/epic_nicknames.js",
                 "content/features/auto_delivery_ui.js",
                 "content/features/rmthub_search.js",
+                "content/features/rmthub_profile_banner.js",
                 "content/features/support.js",
                 "content/features/chat_lot_note.js",
                 "content/features/discord.js",
