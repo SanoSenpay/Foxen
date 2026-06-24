@@ -133,8 +133,9 @@
         s.id = 'fpt-slash-styles';
         s.textContent = `
         .fpt-slash-dropdown{position:absolute;z-index:100000;min-width:240px;max-width:380px;max-height:260px;overflow-y:auto;
-            background:var(--fpt-bg,#fff);border:1px solid var(--fpt-border,rgba(0,0,0,0.12));border-radius:10px;
-            box-shadow:0 8px 22px var(--fpt-shadow,rgba(0,0,0,0.18));
+            background:var(--fpt-bg-alpha, rgba(15, 15, 20, 0.75)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border:1px solid var(--fpt-border,rgba(255,255,255,0.1));border-radius:10px;
+            box-shadow:0 8px 32px var(--fpt-shadow,rgba(0,0,0,0.4));
             padding:6px;font-family:Inter,'Segoe UI',sans-serif;}
         .fpt-slash-item{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:7px;cursor:pointer;}
         .fpt-slash-item .fpt-slash-trig{font-size:13px;font-weight:700;color:var(--fpt-accent,#C026D3);}
