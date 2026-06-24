@@ -2,6 +2,17 @@
 
 (function() {
     'use strict';
+
+    // --- ПИНГ ДЛЯ АВТОПОДНЯТИЯ (Решение проблемы засыпания) ---
+    // Каждые 30 секунд отправляем пинг в фоновый скрипт.
+    // Если фоновый скрипт спал (проблема MV3 / Firefox), это его разбудит.
+    // Фоновый скрипт сам решит, пришло ли время для запуска цикла.
+    setInterval(() => {
+        try {
+            const extApi = typeof browser !== 'undefined' ? browser : chrome;
+            extApi.runtime.sendMessage({ action: 'fptAutobumpPing' }).catch(() => {});
+        } catch (_) {}
+    }, 30000);
     
     // --- НОВЫЙ БЛОК: ФУНКЦИОНАЛ ОБЪЯВЛЕНИЙ ---
     function initializeAnnouncementsFeature() {

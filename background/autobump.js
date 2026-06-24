@@ -137,7 +137,11 @@ async function raiseCategory(categoryData, auth) {
 }
 
 // --- ИЗМЕНЕННАЯ ФУНКЦИЯ ---
+let _isBumpCycleRunning = false;
+
 export async function runBumpCycle() {
+    if (_isBumpCycleRunning) return { raised: 0, errors: 0, skipped: 0 };
+    _isBumpCycleRunning = true;
     const summary = { raised: 0, errors: 0, skipped: 0 };
     try {
         const { fpToolsSelectiveBumpEnabled, fpToolsSelectedBumpCategories, fpToolsBumpOnlyAutoDelivery } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsSelectiveBumpEnabled', 'fpToolsSelectedBumpCategories', 'fpToolsBumpOnlyAutoDelivery']);
@@ -214,14 +218,51 @@ export async function runBumpCycle() {
         await logToConsole(`Не поднято: [Системная ошибка]. Причина: ${error.message}`);
         summary.errors++;
         throw error;
+    } finally {
+        _isBumpCycleRunning = false;
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsLastAutoBumpTime: Date.now() });
     }
 }
 
 export async function startAutoBump(cooldownMinutes) {
-    await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(BUMP_ALARM_NAME, { delayInMinutes: 1, periodInMinutes: parseInt(cooldownMinutes, 10) });
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    await extApi.storage.local.set({ 
+        fpToolsBumpInterval: parseInt(cooldownMinutes, 10),
+        fpToolsAutoBumpRunning: true,
+        fpToolsLastAutoBumpTime: 0 // Сбрасываем время для немедленного запуска
+    });
+    // Сохраняем будильник как запасной вариант (fallback)
+    await extApi.alarms.create(BUMP_ALARM_NAME, { delayInMinutes: 1, periodInMinutes: parseInt(cooldownMinutes, 10) });
     await runBumpCycle();
 }
 
 export async function stopAutoBump() {
-    await (typeof browser !== 'undefined' ? browser : chrome).alarms.clear(BUMP_ALARM_NAME);
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    await extApi.storage.local.set({ fpToolsAutoBumpRunning: false });
+    await extApi.alarms.clear(BUMP_ALARM_NAME);
+}
+
+// Прослушивание пингов со страницы для стабильного интервала (как в AutoRaise.js)
+(typeof browser !== 'undefined' ? browser : chrome).runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'fptAutobumpPing') {
+        handleAutobumpPing();
+    }
+});
+
+async function handleAutobumpPing() {
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    const { fpToolsAutoBumpRunning, fpToolsBumpInterval, fpToolsLastAutoBumpTime } = await extApi.storage.local.get([
+        'fpToolsAutoBumpRunning', 'fpToolsBumpInterval', 'fpToolsLastAutoBumpTime'
+    ]);
+    
+    if (!fpToolsAutoBumpRunning) return;
+    
+    const intervalMs = (fpToolsBumpInterval || 15) * 60 * 1000;
+    const last = fpToolsLastAutoBumpTime || 0;
+    const diff = intervalMs - (Date.now() - last);
+    
+    // Если время вышло и цикл ещё не запущен, стартуем его
+    if (diff <= 0 && !_isBumpCycleRunning) {
+        runBumpCycle();
+    }
 }

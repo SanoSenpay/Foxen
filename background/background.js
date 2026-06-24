@@ -2473,11 +2473,7 @@ function setupInitialAlarms() {
             chrome.alarms.clear(BUMP_ALARM_NAME);
             startSmartBump();
         } else if (settings.autoBumpEnabled && settings.autoBumpCooldown) {
-            chrome.alarms.create(BUMP_ALARM_NAME, {
-                delayInMinutes: 1,
-                periodInMinutes: parseInt(settings.autoBumpCooldown, 10)
-            });
-            runBumpCycle();
+            startAutoBump(settings.autoBumpCooldown);
         }
         // 3.0: Periodic lot restore/disable check (every 5 minutes)
         const AUTO_RESTORE_ALARM = 'fpToolsAutoRestore';
@@ -2577,7 +2573,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
             // re-arm the classic bump if it's still enabled
             chrome.storage.local.get(['autoBumpEnabled', 'autoBumpCooldown'], (s) => {
                 if (s.autoBumpEnabled && s.autoBumpCooldown) {
-                    chrome.alarms.create(BUMP_ALARM_NAME, { delayInMinutes: 1, periodInMinutes: parseInt(s.autoBumpCooldown, 10) });
+                    startAutoBump(s.autoBumpCooldown);
                 }
             });
         }

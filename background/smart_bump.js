@@ -138,8 +138,14 @@ function logToTabs(message) {
 
 // Run one smart-bump pass. Raises only due categories, updates per-category nextRaiseAt,
 // and arms the alarm for the soonest upcoming due time.
+let _isSmartBumpCycleRunning = false;
+
 export async function runSmartBumpCycle() {
-    // FALLBACK: Arm a fallback alarm so if the service worker dies during the loop, it still recovers.
+    if (_isSmartBumpCycleRunning) return;
+    _isSmartBumpCycleRunning = true;
+
+    try {
+        // FALLBACK: Arm a fallback alarm so if the service worker dies during the loop, it still recovers.
     await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(SMART_BUMP_ALARM + '_fallback', { delayInMinutes: 10 });
 
     const { fpToolsSelectiveBumpEnabled, fpToolsSelectedBumpCategories, fpToolsBumpOnlyAutoDelivery } =
@@ -207,14 +213,45 @@ export async function runSmartBumpCycle() {
     
     // Clear the fallback since we succeeded
     await (typeof browser !== 'undefined' ? browser : chrome).alarms.clear(SMART_BUMP_ALARM + '_fallback');
+    } finally {
+        _isSmartBumpCycleRunning = false;
+    }
 }
 
 export async function startSmartBump() {
-    await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(SMART_BUMP_ALARM, { delayInMinutes: 0.1 });
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    await extApi.storage.local.set({ fpToolsSmartBumpRunning: true });
+    await extApi.alarms.create(SMART_BUMP_ALARM, { delayInMinutes: 0.1 });
     await runSmartBumpCycle();
 }
 
 export async function stopSmartBump() {
-    await (typeof browser !== 'undefined' ? browser : chrome).alarms.clear(SMART_BUMP_ALARM);
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(STATE_KEY);
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    await extApi.storage.local.set({ fpToolsSmartBumpRunning: false });
+    await extApi.alarms.clear(SMART_BUMP_ALARM);
+    await extApi.storage.local.remove(STATE_KEY);
+}
+
+// Прослушивание пингов со страницы для стабильного интервала (как в AutoRaise.js)
+(typeof browser !== 'undefined' ? browser : chrome).runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'fptAutobumpPing') {
+        handleSmartBumpPing();
+    }
+});
+
+async function handleSmartBumpPing() {
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    const { fpToolsSmartBumpRunning } = await extApi.storage.local.get('fpToolsSmartBumpRunning');
+    if (!fpToolsSmartBumpRunning) return;
+    
+    const state = await getState();
+    const now = Date.now();
+    let soonest = Infinity;
+    for (const url in state) {
+        soonest = Math.min(soonest, state[url].nextRaiseAt || 0);
+    }
+    
+    if (now >= soonest && !_isSmartBumpCycleRunning) {
+        runSmartBumpCycle();
+    }
 }
