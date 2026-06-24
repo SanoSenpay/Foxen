@@ -226,13 +226,19 @@ export async function runBumpCycle() {
 
 export async function startAutoBump(cooldownMinutes) {
     const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    // Жёстко ограничиваем минимальный интервал до 10 минут для защиты от спама
+    let interval = parseInt(cooldownMinutes, 10);
+    if (isNaN(interval) || interval < 10) {
+        interval = 10;
+    }
+
     await extApi.storage.local.set({ 
-        fpToolsBumpInterval: parseInt(cooldownMinutes, 10),
+        fpToolsBumpInterval: interval,
         fpToolsAutoBumpRunning: true,
         fpToolsLastAutoBumpTime: 0 // Сбрасываем время для немедленного запуска
     });
     // Сохраняем будильник как запасной вариант (fallback)
-    await extApi.alarms.create(BUMP_ALARM_NAME, { delayInMinutes: 1, periodInMinutes: parseInt(cooldownMinutes, 10) });
+    await extApi.alarms.create(BUMP_ALARM_NAME, { delayInMinutes: 1, periodInMinutes: interval });
     await runBumpCycle();
 }
 
