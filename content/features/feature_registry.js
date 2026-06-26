@@ -227,10 +227,10 @@ const FPT_FEATURE_REGISTRY = [
     {
         id: 'multi_clone_foreign',
         label: 'Копирование лотов на чужом профиле',
-        desc: 'На странице чужого профиля появляется кнопка «Выбрать» (как на своём): отмечаешь несколько лотов галочками и жмёшь «Копировать» — массовое серверное клонирование выбранных лотов к себе.',
+        desc: 'На странице чужого профиля появляется кнопка «Выбрать» (как на своём): отмечаешь несколько лотов галочками и жмёшь «Экспорт копий» — выбранные лоты скачиваются в JSON файл для последующего импорта.',
         group: 'Чужие лоты',
         selector: '.actions .clone-lots',
-        preview: { kind: 'html', html: '<div class="fpt-pv-buyrow"><span class="fpt-pv-fpbtn" style="background:#7c5cff;color:#fff;">Копировать</span></div>' }
+        preview: { kind: 'html', html: '<div class="fpt-pv-buyrow"><span class="fpt-pv-fpbtn" style="background:#7c5cff;color:#fff;">Экспорт копий</span></div>' }
     },
 
     // ───────────── Заметки ─────────────

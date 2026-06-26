@@ -35,7 +35,6 @@
         s.id = 'fpt-mclone-styles';
         s.textContent = `
         .fpt-mc-chk{margin-right:8px;width:16px;height:16px;cursor:pointer;vertical-align:middle;accent-color:#7c5cff;flex:0 0 auto;}
-        a.tc-item.fpt-mc-row{display:flex;align-items:center;}
         .fpt-mc-bar{position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
             background:var(--fpt-surface,#fff);border:1px solid var(--fpt-border,#e3e3ea);border-radius:12px;
             padding:10px 14px;margin:0 0 12px;font-family:Inter,'Segoe UI',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.06);}
@@ -73,13 +72,17 @@
             chk.type = 'checkbox';
             chk.className = 'fpt-mc-chk';
             chk.title = 'Выбрать для копирования';
-            // не давать клику по чекбоксу открывать лот
-            chk.addEventListener('click', (e) => {
+            chk.style.cssText = 'margin-right:10px; cursor:pointer; width:14px; height:14px; display:inline-block; vertical-align:middle;';
+            chk.addEventListener('click', e => {
                 e.stopPropagation();
                 if (chk.checked) selected.add(offerId); else selected.delete(offerId);
                 updateBar();
             });
-            a.insertBefore(chk, a.firstChild);
+            // Insert into the first cell instead of the row to prevent table layout shift
+            const firstCell = a.firstElementChild;
+            if (firstCell) {
+                firstCell.insertBefore(chk, firstCell.firstChild);
+            }
         });
     }
 
@@ -92,11 +95,11 @@
         bar.id = 'fpt-mc-bar';
         bar.className = 'fpt-mc-bar';
         bar.innerHTML = `
-            <b>📋 Копирование лотов</b>
+            <b>📋 Экспорт копий лотов</b>
             <span class="fpt-mc-count">Отметьте лоты галочками</span>
             <button class="fpt-mc-btn fpt-mc-all" type="button" style="margin-left:auto;">Выбрать все</button>
             <button class="fpt-mc-btn fpt-mc-none" type="button">Снять все</button>
-            <button class="fpt-mc-btn primary fpt-mc-go" type="button" disabled>Копировать выбранные</button>
+            <button class="fpt-mc-btn primary fpt-mc-go" type="button" disabled>Экспорт (JSON)</button>
             <div class="fpt-mc-log"></div>`;
         firstOffer.parentElement.insertBefore(bar, firstOffer);
 
@@ -114,10 +117,13 @@
         updateBar();
     }
 
-    async function cloneOne(offerId) {
+    async function getExportDataOne(offerId) {
         // 1) читаем источник + решённые поля
-        const src = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId });
-        if (!src || !src.success) throw new Error(src?.error || 'не удалось прочитать лот');
+        const src = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId, batch: true });
+        if (!src || !src.success) {
+            const errStr = [src?.error, src?.formError].filter(Boolean).join(' - ');
+            throw new Error(errStr || 'не удалось прочитать лот');
+        }
         if (src.source?.isChips) throw new Error('лот из раздела валюты — пропущен');
         if (!src.fields) throw new Error(src.formError || 'не удалось подобрать поля категории');
 
@@ -136,9 +142,11 @@
         fields['secrets'] = fields['secrets'] || '';
         fields['fields[images]'] = fields['fields[images]'] || '';
 
-        const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneCreateLot', fields, location: 'trade' });
-        if (!res || !res.success) throw new Error(res?.error || 'ошибка создания');
-        return res.newId;
+        return {
+            sourceTitle: s.summary || `Лот #${offerId}`,
+            sourceCategory: s.categoryName || 'Неизвестная категория',
+            data: fields
+        };
     }
 
     async function runBatchClone() {
@@ -147,28 +155,67 @@
         const logEl = bar.querySelector('.fpt-mc-log');
         const ids = [...selected];
         if (!ids.length) return;
-        if (!confirm(`Скопировать ${ids.length} лот(ов) к себе? Они будут созданы на твоём аккаунте.`)) return;
+        if (!confirm(`Экспортировать ${ids.length} лот(ов) в JSON для последующего импорта?`)) return;
 
         go.disabled = true;
         logEl.style.display = 'block';
         logEl.innerHTML = '';
         let ok = 0, fail = 0;
         const log = (html, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.innerHTML = html; logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight; };
+        
+        const exportedData = [];
 
         for (let i = 0; i < ids.length; i++) {
             const id = ids[i];
-            log(`(${i + 1}/${ids.length}) Лот #${id}…`);
-            try {
-                const newId = await cloneOne(id);
-                ok++;
-                log(`✓ #${id} → создан${newId ? ' #' + newId : ''}`, 'ok');
-            } catch (e) {
-                fail++;
-                log(`✗ #${id}: ${e.message}`, 'err');
+            log(`(${i + 1}/${ids.length}) Экспорт #${id}…`);
+            
+            let attempts = 0;
+            let success = false;
+            
+            while (attempts < 2 && !success) {
+                attempts++;
+                try {
+                    const data = await getExportDataOne(id);
+                    exportedData.push(data);
+                    ok++;
+                    success = true;
+                    log(`✓ #${id} → считан`, 'ok');
+                } catch (e) {
+                    if (e.message.includes('429')) {
+                        log(`⚠ #${id}: Слишком много запросов (429). Ждём 10 секунд...`, 'err');
+                        await new Promise(resolve => setTimeout(resolve, 10000));
+                        if (attempts === 2) {
+                            fail++;
+                            log(`✗ #${id}: Пропущен после ошибки 429`, 'err');
+                        }
+                    } else {
+                        fail++;
+                        log(`✗ #${id}: ${e.message}`, 'err');
+                        break; // No retry for other errors
+                    }
+                }
+            }
+            
+            // Задержка между лотами, чтобы избежать 429 в будущем
+            if (i < ids.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
         }
-        log(`<b>Готово: ${ok} создано, ${fail} с ошибкой.</b>`);
-        showNotification?.(`Копирование завершено: ${ok} ок, ${fail} ошибок`, fail > 0);
+        
+        if (exportedData.length > 0) {
+            const blob = new Blob([JSON.stringify(exportedData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `funpay_lots_cloned_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        log(`<b>Готово: ${ok} экспортировано, ${fail} с ошибкой.</b>`);
+        if (typeof showNotification === 'function') showNotification(`Экспорт завершен: ${ok} ок, ${fail} ошибок`, fail > 0);
         go.disabled = false;
     }
 

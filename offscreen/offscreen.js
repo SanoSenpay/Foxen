@@ -1392,7 +1392,7 @@ function parseTicketDetails(html) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.target !== 'offscreen') return true;
+    if (message.target !== 'offscreen') return;
     
     switch (message.action) {
         case 'parseSalesPage':

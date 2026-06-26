@@ -119,9 +119,7 @@ function initializeLotManagement() {
 
         const controlsContainer = $(`
             <div id="fp-tools-selection-controls">
-                <label>
-                    <input type="checkbox" id="fp-tools-select-all-lots"> Выбрать все
-                </label>
+                <button type="button" class="btn btn-default btn-xs" id="fp-tools-select-all-lots-btn">Выбрать все</button>
                 <button type="button" class="btn btn-default btn-xs" id="fp-tools-cancel-selection">Отмена</button>
             </div>
         `);
@@ -181,9 +179,18 @@ function initializeLotManagement() {
             $('.actions').hide();
         });
 
-        controlsContainer.find('#fp-tools-select-all-lots').on('change', function() {
-            const isChecked = this.checked;
-            $('.lot-box input').prop('checked', isChecked).trigger('change');
+        let isAllSelected = false;
+        controlsContainer.find('#fp-tools-select-all-lots-btn').on('click', function() {
+            isAllSelected = !isAllSelected;
+            $('.lot-box input').prop('checked', isAllSelected);
+            // Запускаем событие change только один раз для производительности
+            if ($('.lot-box input').length > 0) {
+                $('.lot-box input').first().trigger('change');
+            } else {
+                // Если лотов нет, просто обновляем интерфейс
+                $('.actions').hide();
+            }
+            $(this).text(isAllSelected ? 'Снять выделение' : 'Выбрать все');
         });
 
         $(document).on('click', '#fp-tools-edit-pinned-lots-btn', function() {
@@ -225,18 +232,17 @@ function initializeLotManagement() {
 
 function toggleSelectionMode(enable) {
     if (enable) {
-        if ($('.tc-header').length && $('.action-lots-header-cell').length === 0) {
-            $('.tc-header').prepend('<div class="action-lots-header-cell"></div>');
+        if ($('.tc-header').length && $('.tc-header').find('.action-lots-header-cell').length === 0) {
+            $('.tc-header').children().first().prepend('<div class="action-lots-header-cell" style="float: left; width: 22px; height: 1px;"></div>');
         }
         
         // Добавление чекбоксов для категорий
         $('.offer-list-title').each(function() {
             if ($(this).find('.fp-tools-category-selector').length === 0) {
                 const categoryCheckbox = $(`
-                    <label class="lot-box fp-tools-category-selector">
-                        <input type="checkbox" hidden />
-                        <span class="lot-mark"></span>
-                    </label>
+                    <div class="fp-tools-category-selector" style="display: inline-block; margin-right: 10px; vertical-align: middle;">
+                        <input type="checkbox" class="category-select-all" title="Выбрать все лоты в категории" style="cursor: pointer; width: 14px; height: 14px; margin: 0;">
+                    </div>
                 `);
                 $(this).prepend(categoryCheckbox);
             }
@@ -244,8 +250,8 @@ function toggleSelectionMode(enable) {
 
         $('.tc-item').each(function() {
             if ($(this).find('.action-lots-checkbox-cell').length === 0) {
-                const checkboxCell = $('<div class="action-lots-checkbox-cell"><label class="lot-box"><input type="checkbox" hidden /><span class="lot-mark"></span></label></div>');
-                $(this).prepend(checkboxCell);
+                const checkboxCell = $('<div class="action-lots-checkbox-cell" style="float: left; margin-right: 8px;"><div class="lot-box" style="margin:0;"><input type="checkbox" style="margin: 0; cursor: pointer; width: 14px; height: 14px;" /></div></div>');
+                $(this).children().first().prepend(checkboxCell);
             }
         });
     } else {
@@ -339,7 +345,7 @@ function setupActionProcessing() {
             <div class="actions">
                 <span class="log">Выберите действие</span>
                 <div>
-                    <button class="action-lot clone-lots" style="background:#7c5cff;display:none;">Копировать</button>
+                    <button class="action-lot clone-lots" style="background:#7c5cff;display:none;">Экспорт копий</button>
                     <button class="action-lot price-editor">Редактор цен</button>
                     <button class="action-lot pin-lot" style="background: #27ae60;">Закрепить</button>
                     <button class="action-lot unpin-lot" style="background: #c0392b;">Открепить</button>
@@ -382,23 +388,24 @@ function setupActionProcessing() {
         else { $act.hide().text('Включить'); }
         if (activeSel > 0) { $deact.show().text('Отключить x' + activeSel); }
         else { $deact.hide().text('Отключить'); }
+
+        // Показывать кнопку Экспорт и на своем профиле тоже
+        $('.actions .clone-lots').show().text('Экспорт (JSON)');
     }
 
     $(document).on('change', '.lot-box input', function() {
         // [ИСПРАВЛЕНО] Считаем только чекбоксы лотов для общего счетчика
         const totalLots = $('.tc-item .lot-box input').length;
         const checkedLots = $('.tc-item .lot-box input:checked').length;
-        const selectAllCheckbox = $('#fp-tools-select-all-lots');
-
+        
         $('.actions').css('display', checkedLots > 0 ? 'flex' : 'none');
         updateActivateDeactivateCounts();
         
-        // Обновляем главный чекбокс "Выбрать все"
+        // Обновляем кнопку "Выбрать все"
         if (totalLots > 0) {
-            selectAllCheckbox.prop('checked', checkedLots === totalLots);
-            selectAllCheckbox.prop('indeterminate', checkedLots > 0 && checkedLots < totalLots);
-        }
-        
+            isAllSelected = (checkedLots === totalLots);
+            $('#fp-tools-select-all-lots-btn').text(isAllSelected ? 'Снять выделение' : 'Выбрать все');
+        }    
         updatePinButtonsState();
 
         // [ИСПРАВЛЕНО] Логика синхронизации чекбокса категории
@@ -546,8 +553,8 @@ function setupActionProcessing() {
             if ($('#fp-tools-selection-controls').is(':visible')) {
                 $('#fp-tools-pinned-lots-container .tc-item').each(function() {
                     if ($(this).find('.action-lots-checkbox-cell').length === 0) {
-                        const checkboxCell = $('<div class="action-lots-checkbox-cell"><label class="lot-box"><input type="checkbox" hidden /><span class="lot-mark"></span></label></div>');
-                        $(this).prepend(checkboxCell);
+                        const checkboxCell = $('<div class="action-lots-checkbox-cell" style="float: left; margin-right: 8px;"><div class="lot-box" style="margin:0;"><input type="checkbox" style="margin: 0; cursor: pointer; width: 14px; height: 14px;" /></div></div>');
+                        $(this).children().first().prepend(checkboxCell);
                     }
                 });
             }
@@ -805,7 +812,7 @@ function setupActionProcessing() {
     $actionsBar.on('click', '.deactivate-lot', () => processSelectedLots('deactivate'));
     $actionsBar.on('click', '.activate-lot', () => processSelectedLots('activate'));
 
-    // Чужой профиль: копирование выбранных лотов к себе через клон-бэкенд.
+    // Чужой профиль: экспорт выбранных лотов в JSON для импорта.
     $actionsBar.on('click', '.clone-lots', async function () {
         const selected = $('.tc-item .lot-box input:checked').get();
         if (!selected.length) { updateLog('Не выбрано ни одного лота.', true); return; }
@@ -816,23 +823,72 @@ function setupActionProcessing() {
             return m ? m[1] : null;
         }).filter(Boolean);
         if (!offerIds.length) { updateLog('Не удалось определить ID лотов.', true); return; }
-        if (!confirm(`Скопировать ${offerIds.length} лот(ов) к себе? Они будут созданы на твоём аккаунте.`)) return;
+        if (!confirm(`Экспортировать ${offerIds.length} лот(ов) в JSON для последующего импорта?`)) return;
 
         toggleActions(true);
         let ok = 0, fail = 0;
+        const exportedData = [];
+        
         for (let i = 0; i < offerIds.length; i++) {
             const id = offerIds[i];
-            updateLog(`Копирую ${i + 1}/${offerIds.length} (#${id})…`);
+            updateLog(`Экспортирую ${i + 1}/${offerIds.length} (#${id})…`);
             try {
-                await fptCloneOneForeign(id);
+                const src = await browser.runtime.sendMessage({ action: 'cloneGetSource', offerId: id });
+                if (!src || !src.success) throw new Error(src?.error || 'не удалось прочитать лот');
+                if (src.source?.isChips) throw new Error('лот из раздела валюты — пропущен');
+                if (!src.fields) throw new Error(src.formError || 'не удалось подобрать поля категории');
+
+                const s = src.source;
+                const fields = { ...src.fields };
+                fields['offer_id'] = '0';
+                fields['fields[summary][ru]'] = s.summary || '';
+                fields['fields[desc][ru]'] = s.description || '';
+                fields['fields[summary][en]'] = (s.enDiffers && s.summary_en) ? s.summary_en : '';
+                fields['fields[desc][en]'] = (s.enDiffers && s.desc_en) ? s.desc_en : '';
+                
+                const fmtPrice = (v) => {
+                    let n = parseFloat(String(v).replace(',', '.'));
+                    if (Number.isNaN(n) || n <= 0) return '';
+                    if (n < 1) n = 1;
+                    return (Math.round(n * 100) / 100).toString();
+                };
+                let priceStr = '';
+                if (s.finalPrice != null) priceStr = fmtPrice(s.finalPrice);
+                if (!priceStr && s.rawPrice) priceStr = fmtPrice(s.rawPrice);
+                if (priceStr) fields['price'] = priceStr;
+                fields['amount'] = (s.amount && /^\d+$/.test(s.amount)) ? s.amount : (fields['amount'] || '1');
+                fields['active'] = 'on';
+                fields['secrets'] = fields['secrets'] || '';
+                fields['fields[images]'] = fields['fields[images]'] || '';
+
+                exportedData.push({
+                    sourceTitle: s.summary || `Лот #${id}`,
+                    sourceCategory: s.categoryName || 'Неизвестная категория',
+                    data: fields
+                });
+                
                 ok++;
             } catch (e) {
                 fail++;
-                console.warn('Foxen clone fail', id, e);
+                console.warn('Foxen clone export fail', id, e);
             }
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
-        updateLog(`Готово: ${ok} создано, ${fail} с ошибкой.`, fail > 0);
-        if (typeof showNotification === 'function') showNotification(`Копирование: ${ok} ок, ${fail} ошибок`, fail > 0);
+        
+        if (exportedData.length > 0) {
+            const blob = new Blob([JSON.stringify(exportedData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `funpay_lots_cloned_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        updateLog(`Готово: ${ok} экспортировано, ${fail} с ошибкой.`, fail > 0);
+        if (typeof showNotification === 'function') showNotification(`Экспорт: ${ok} ок, ${fail} ошибок`, fail > 0);
         toggleActions(false);
     });
 
