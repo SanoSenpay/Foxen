@@ -979,11 +979,15 @@ async function runDiscordCheckCycle() {
             const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
             buyerViewingObjects.forEach(bv => {
                 tabs.forEach(tab => {
-                    chrome.tabs.sendMessage(tab.id, {
-                        action: 'fpToolsBuyerViewing',
-                        buyerId: bv.id,
-                        data: bv.data
-                    }).catch(() => {});
+                    const b = typeof browser !== 'undefined' ? browser : chrome;
+                    try {
+                        const p = b.tabs.sendMessage(tab.id, {
+                            action: 'fpToolsBuyerViewing',
+                            buyerId: bv.id,
+                            data: bv.data
+                        });
+                        if (p && typeof p.catch === 'function') p.catch(() => {});
+                    } catch (e) {}
                 });
             });
         }
@@ -1040,10 +1044,14 @@ async function runDiscordCheckCycle() {
 async function sendImportProgressUpdate(progressData) {
     const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "*://funpay.com/*" });
     tabs.forEach(tab => {
-        chrome.tabs.sendMessage(tab.id, {
-            action: 'lotImportProgressUpdate',
-            data: progressData
-        }).catch(e => {});
+        const b = typeof browser !== 'undefined' ? browser : chrome;
+        try {
+            const p = b.tabs.sendMessage(tab.id, {
+                action: 'lotImportProgressUpdate',
+                data: progressData
+            });
+            if (p && p.catch) p.catch(() => {});
+        } catch (e) {}
     });
 }
 
@@ -1455,6 +1463,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (!offerId) throw new Error('Не передан ID лота.');
 
                 const ck = { 'Cookie': `golden_key=${auth.golden_key}` };
+                const waitIfBatch = async () => { if (request.batch) await new Promise(r => setTimeout(r, 800)); };
 
                 // 1) ФОРСИРУЕМ РУССКИЙ язык для сбора названий и описаний
                 let ruResp;
@@ -1473,6 +1482,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 let en = null;
                 try {
                     // ФОРСИРУЕМ АНГЛИЙСКИЙ язык для сбора атрибутов для формы
+                     await waitIfBatch();
                     const enResp = await fetch(`https://funpay.com/lots/offer?id=${offerId}&setlocale=en`, { headers: ck });
                     if (enResp.ok) {
                         const enHtml = await enResp.text();
@@ -1482,6 +1492,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 } catch (_) { /* en необязателен */ }
 
                 // ВОЗВРАЩАЕМ РУССКИЙ ЯЗЫК НА АККАУНТ, чтобы не сломать юзеру сайт
+                await waitIfBatch();
                 await fetch(`https://funpay.com/?setlocale=ru`, { headers: ck });
 
                 // Цена.
@@ -1499,6 +1510,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 // 2) Иначе — цена из списка лотов продавца (это цена ПОКУПАТЕЛЯ, нужен пересчёт).
                 if (!rawPrice && ru.sellerId) {
                     try {
+                        await waitIfBatch();
                         const upResp = await fetch(`https://funpay.com/users/${ru.sellerId}/`, { headers: ck });
                         if (upResp.ok) {
                             const upHtml = await upResp.text();
@@ -1512,6 +1524,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 //    это тоже цена продавца нетто. И заодно точный node_id формы.
                 if (!rawPrice || true) { // всегда пробуем offerEdit ради точного node_id
                     try {
+                        await waitIfBatch();
                         const edResp = await fptFetchResilient(
                             `https://funpay.com/lots/offerEdit?offer=${offerId}&location=offer&setlocale=ru`,
                             { headers: ck });
@@ -2461,7 +2474,11 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         // Notify all FunPay tabs to check and restore/disable lots
         const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
         tabs.forEach(tab => {
-            chrome.tabs.sendMessage(tab.id, { action: 'fpToolsCheckRestoreLots' }).catch(() => {});
+            const b = typeof browser !== 'undefined' ? browser : chrome;
+            try {
+                const p = b.tabs.sendMessage(tab.id, { action: 'fpToolsCheckRestoreLots' });
+                if (p && typeof p.catch === 'function') p.catch(() => {});
+            } catch (e) {}
         });
     }
 });
