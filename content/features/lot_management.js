@@ -183,9 +183,18 @@ function initializeLotManagement() {
             $('.actions').hide();
         });
 
-        controlsContainer.find('#fp-tools-select-all-lots').on('change', function() {
-            const isChecked = this.checked;
-            $('.lot-box input').prop('checked', isChecked).trigger('change');
+        let isAllSelected = false;
+        controlsContainer.find('#fp-tools-select-all-lots-btn').on('click', function() {
+            isAllSelected = !isAllSelected;
+            $('.lot-box input').prop('checked', isAllSelected);
+            // Запускаем событие change только один раз для производительности
+            if ($('.lot-box input').length > 0) {
+                $('.lot-box input').first().trigger('change');
+            } else {
+                // Если лотов нет, просто обновляем интерфейс
+                $('.actions').hide();
+            }
+            $(this).text(isAllSelected ? 'Снять выделение' : 'Выбрать все');
         });
 
         $(document).on('click', '#fp-tools-edit-pinned-lots-btn', function() {
@@ -382,18 +391,17 @@ function initializeLotManagement() {
 
 function toggleSelectionMode(enable) {
     if (enable) {
-        if ($('.tc-header').length && $('.action-lots-header-cell').length === 0) {
-            $('.tc-header').prepend('<div class="action-lots-header-cell"></div>');
+        if ($('.tc-header').length && $('.tc-header').find('.action-lots-header-cell').length === 0) {
+            $('.tc-header').children().first().prepend('<div class="action-lots-header-cell" style="float: left; width: 22px; height: 1px;"></div>');
         }
         
         // Добавление чекбоксов для категорий
         $('.offer-list-title').each(function() {
             if ($(this).find('.fp-tools-category-selector').length === 0) {
                 const categoryCheckbox = $(`
-                    <label class="lot-box fp-tools-category-selector">
-                        <input type="checkbox" hidden />
-                        <span class="lot-mark"></span>
-                    </label>
+                    <div class="fp-tools-category-selector" style="display: inline-block; margin-right: 10px; vertical-align: middle;">
+                        <input type="checkbox" class="category-select-all" title="Выбрать все лоты в категории" style="cursor: pointer; width: 14px; height: 14px; margin: 0;">
+                    </div>
                 `);
                 $(this).prepend(categoryCheckbox);
             }
@@ -401,8 +409,8 @@ function toggleSelectionMode(enable) {
 
         $('.tc-item').each(function() {
             if ($(this).find('.action-lots-checkbox-cell').length === 0) {
-                const checkboxCell = $('<div class="action-lots-checkbox-cell"><label class="lot-box"><input type="checkbox" hidden /><span class="lot-mark"></span></label></div>');
-                $(this).prepend(checkboxCell);
+                const checkboxCell = $('<div class="action-lots-checkbox-cell" style="float: left; margin-right: 8px;"><div class="lot-box" style="margin:0;"><input type="checkbox" style="margin: 0; cursor: pointer; width: 14px; height: 14px;" /></div></div>');
+                $(this).children().first().prepend(checkboxCell);
             }
         });
     } else {
@@ -496,7 +504,7 @@ function setupActionProcessing() {
             <div class="actions">
                 <span class="log">Выберите действие</span>
                 <div>
-                    <button class="action-lot export-json-lots" style="background:#10b981;display:none;">Экспорт (JSON)</button>
+                    <button class="action-lot clone-lots" style="background:#7c5cff;display:none;">Экспорт копий</button>
                     <button class="action-lot price-editor">Редактор цен</button>
                     <button class="action-lot pin-lot" style="background: #27ae60;">Закрепить</button>
                     <button class="action-lot unpin-lot" style="background: #c0392b;">Открепить</button>
@@ -539,23 +547,24 @@ function setupActionProcessing() {
         else { $act.hide().text('Включить'); }
         if (activeSel > 0) { $deact.show().text('Отключить x' + activeSel); }
         else { $deact.hide().text('Отключить'); }
+
+        // Показывать кнопку Экспорт и на своем профиле тоже
+        $('.actions .clone-lots').show().text('Экспорт (JSON)');
     }
 
     $(document).on('change', '.lot-box input', function() {
         // [ИСПРАВЛЕНО] Считаем только чекбоксы лотов для общего счетчика
         const totalLots = $('.tc-item .lot-box input').length;
         const checkedLots = $('.tc-item .lot-box input:checked').length;
-        const selectAllCheckbox = $('#fp-tools-select-all-lots');
-
+        
         $('.actions').css('display', checkedLots > 0 ? 'flex' : 'none');
         updateActivateDeactivateCounts();
         
-        // Обновляем главный чекбокс "Выбрать все"
+        // Обновляем кнопку "Выбрать все"
         if (totalLots > 0) {
-            selectAllCheckbox.prop('checked', checkedLots === totalLots);
-            selectAllCheckbox.prop('indeterminate', checkedLots > 0 && checkedLots < totalLots);
-        }
-        
+            isAllSelected = (checkedLots === totalLots);
+            $('#fp-tools-select-all-lots-btn').text(isAllSelected ? 'Снять выделение' : 'Выбрать все');
+        }    
         updatePinButtonsState();
 
         // [ИСПРАВЛЕНО] Логика синхронизации чекбокса категории
@@ -703,8 +712,8 @@ function setupActionProcessing() {
             if ($('#fp-tools-selection-controls').is(':visible')) {
                 $('#fp-tools-pinned-lots-container .tc-item').each(function() {
                     if ($(this).find('.action-lots-checkbox-cell').length === 0) {
-                        const checkboxCell = $('<div class="action-lots-checkbox-cell"><label class="lot-box"><input type="checkbox" hidden /><span class="lot-mark"></span></label></div>');
-                        $(this).prepend(checkboxCell);
+                        const checkboxCell = $('<div class="action-lots-checkbox-cell" style="float: left; margin-right: 8px;"><div class="lot-box" style="margin:0;"><input type="checkbox" style="margin: 0; cursor: pointer; width: 14px; height: 14px;" /></div></div>');
+                        $(this).children().first().prepend(checkboxCell);
                     }
                 });
             }
@@ -962,8 +971,8 @@ function setupActionProcessing() {
     $actionsBar.on('click', '.deactivate-lot', () => processSelectedLots('deactivate'));
     $actionsBar.on('click', '.activate-lot', () => processSelectedLots('activate'));
 
-    // Чужой профиль: экспорт выбранных лотов в JSON.
-    $actionsBar.on('click', '.export-json-lots', async function () {
+    // Чужой профиль: экспорт выбранных лотов в JSON для импорта.
+    $actionsBar.on('click', '.clone-lots', async function () {
         const selected = $('.tc-item .lot-box input:checked').get();
         if (!selected.length) { updateLog('Не выбрано ни одного лота.', true); return; }
         const offerIds = selected.map(chk => {

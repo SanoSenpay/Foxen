@@ -5,6 +5,116 @@
 (function () {
     'use strict';
 
+
+    function ownUserId() {
+        const a = document.querySelector('.user-link-dropdown[href*="/users/"]');
+        const m = a?.getAttribute('href')?.match(/\/users\/(\d+)/);
+        return m ? m[1] : null;
+    }
+    function profileUserId() {
+        const m = window.location.pathname.match(/\/users\/(\d+)/);
+        return m ? m[1] : null;
+    }
+    function isForeignProfile() {
+        const pid = profileUserId();
+        if (!pid) return false;
+        const own = ownUserId();
+        return own && pid !== own;
+    }
+
+    function offerIdOf(a) {
+        const m = (a.getAttribute('href') || '').match(/[?&]id=(\d+)/);
+        return m ? m[1] : null;
+    }
+
+    const selected = new Set();
+
+    function ensureStyles() {
+        if (document.getElementById('fpt-mclone-styles')) return;
+        const s = document.createElement('style');
+        s.id = 'fpt-mclone-styles';
+        s.textContent = `
+        .fpt-mc-chk{margin-right:8px;width:16px;height:16px;cursor:pointer;vertical-align:middle;accent-color:#7c5cff;flex:0 0 auto;}
+        .fpt-mc-bar{position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+            background:var(--fpt-surface,#fff);border:1px solid var(--fpt-border,#e3e3ea);border-radius:12px;
+            padding:10px 14px;margin:0 0 12px;font-family:Inter,'Segoe UI',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.06);}
+        .fpt-mc-bar b{font-size:13px;}
+        .fpt-mc-btn{padding:7px 14px;border-radius:9px;border:1px solid var(--fpt-border,#dadbe2);background:var(--fpt-surface-2,#fff);
+            color:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+        .fpt-mc-btn.primary{background:#7c5cff;border-color:#7c5cff;color:#fff;}
+        .fpt-mc-btn.primary:disabled{opacity:.5;cursor:default;}
+        .fpt-mc-btn:hover:not(:disabled){border-color:#7c5cff;}
+        .fpt-mc-count{font-size:12px;color:var(--fpt-text-muted,#8a8a94);}
+        .fpt-mc-log{max-height:160px;overflow:auto;font-size:12px;line-height:1.5;width:100%;margin-top:4px;
+            border-top:1px solid var(--fpt-border,#ececf0);padding-top:8px;display:none;}
+        .fpt-mc-log .ok{color:#16a34a;} .fpt-mc-log .err{color:#ef4444;}
+        `;
+        document.head.appendChild(s);
+    }
+
+    function updateBar() {
+        const bar = document.getElementById('fpt-mc-bar');
+        if (!bar) return;
+        const cnt = bar.querySelector('.fpt-mc-count');
+        const btn = bar.querySelector('.fpt-mc-go');
+        cnt.textContent = selected.size ? `Выбрано: ${selected.size}` : 'Отметьте лоты галочками';
+        btn.disabled = selected.size === 0;
+    }
+
+    function addCheckboxes() {
+        document.querySelectorAll('a.tc-item[href*="lots/offer?id="]').forEach(a => {
+            if (a.dataset.fptMc) return;
+            const offerId = offerIdOf(a);
+            if (!offerId) return;
+            a.dataset.fptMc = '1';
+            a.classList.add('fpt-mc-row');
+            const chk = document.createElement('input');
+            chk.type = 'checkbox';
+            chk.className = 'fpt-mc-chk';
+            chk.title = 'Выбрать для копирования';
+            chk.style.cssText = 'margin-right:10px; cursor:pointer; width:14px; height:14px; display:inline-block; vertical-align:middle;';
+            chk.addEventListener('click', e => {
+                e.stopPropagation();
+                if (chk.checked) selected.add(offerId); else selected.delete(offerId);
+                updateBar();
+            });
+            const firstCell = a.firstElementChild;
+            if (firstCell) {
+                firstCell.insertBefore(chk, firstCell.firstChild);
+            }
+        });
+    }
+
+    function buildBar() {
+        if (document.getElementById('fpt-mc-bar')) return;
+        const firstOffer = document.querySelector('.offer');
+        if (!firstOffer) return;
+        ensureStyles();
+        const bar = document.createElement('div');
+        bar.id = 'fpt-mc-bar';
+        bar.className = 'fpt-mc-bar';
+        bar.innerHTML = `
+            <b>📋 Экспорт копий лотов</b>
+            <span class="fpt-mc-count">Отметьте лоты галочками</span>
+            <button class="fpt-mc-btn fpt-mc-all" type="button" style="margin-left:auto;">Выбрать все</button>
+            <button class="fpt-mc-btn fpt-mc-none" type="button">Снять все</button>
+            <button class="fpt-mc-btn primary fpt-mc-go" type="button" disabled>Экспорт (JSON)</button>
+            <div class="fpt-mc-log"></div>`;
+        firstOffer.parentElement.insertBefore(bar, firstOffer);
+
+        bar.querySelector('.fpt-mc-all').addEventListener('click', () => {
+            document.querySelectorAll('.fpt-mc-chk').forEach(c => {
+                if (!c.checked) { c.checked = true; const a = c.closest('a.tc-item'); const id = offerIdOf(a); if (id) selected.add(id); }
+            });
+            updateBar();
+        });
+        bar.querySelector('.fpt-mc-none').addEventListener('click', () => {
+            document.querySelectorAll('.fpt-mc-chk').forEach(c => c.checked = false);
+            selected.clear(); updateBar();
+        });
+        bar.querySelector('.fpt-mc-go').addEventListener('click', runExportSelectedLots;
+        updateBar();
+    }
     async function getExportDataOne(offerId) {
         // 1) читаем источник + решённые поля
         const src = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId, batch: true });
@@ -43,11 +153,15 @@
 
         if (typeof toggleActions === 'function') toggleActions(true);
         let ok = 0, fail = 0;
+
+        const log = (html, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.innerHTML = html; logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight; };
+        if (typeof toggleActions === 'function') toggleActions(true);
+        let ok = 0, fail = 0;
         const exportedData = [];
 
         for (let i = 0; i < ids.length; i++) {
             const id = ids[i];
-            if (typeof updateLog === 'function') updateLog(`Экспорт ${i + 1}/${ids.length} (#${id})…`);
+            log(`(${i + 1}/${ids.length}) Экспорт #${id}…`);
             
             let attempts = 0;
             let success = false;
@@ -59,21 +173,24 @@
                     exportedData.push(data);
                     ok++;
                     success = true;
+                    log(`✓ #${id} → считан`, 'ok');
                 } catch (e) {
                     if (e.message.includes('429')) {
-                        if (typeof updateLog === 'function') updateLog(`⚠ #${id}: Лимит 429. Ждём 10 сек...`, true);
+                        log(`⚠ #${id}: Слишком много запросов (429). Ждём 10 секунд...`, 'err');
                         await new Promise(resolve => setTimeout(resolve, 10000));
                         if (attempts === 2) {
                             fail++;
+                            log(`✗ #${id}: Пропущен после ошибки 429`, 'err');
                         }
                     } else {
                         fail++;
-                        if (typeof updateLog === 'function') updateLog(`✗ #${id}: ${e.message}`, true);
+                        log(`✗ #${id}: ${e.message}`, 'err');
                         break;
                     }
                 }
             }
             
+            // Задержка между лотами, чтобы избежать 429 в будущем
             if (i < ids.length - 1) {
                 await new Promise(resolve => setTimeout(resolve, 3000));
             }
@@ -91,9 +208,8 @@
             URL.revokeObjectURL(url);
         }
         
-        const summaryMsg = `Экспорт завершен: ${ok} экспортировано, ${fail} с ошибкой.`;
-        if (typeof updateLog === 'function') updateLog(summaryMsg, fail > 0);
-        if (typeof showNotification === 'function') showNotification(summaryMsg, fail > 0);
+        log(`<b>Готово: ${ok} экспортировано, ${fail} с ошибкой.</b>`);
+        if (typeof showNotification === 'function') showNotification(`Экспорт завершен: ${ok} ок, ${fail} ошибок`, fail > 0);
         if (typeof toggleActions === 'function') toggleActions(false);
     }
 
