@@ -1482,7 +1482,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 let en = null;
                 try {
                     // ФОРСИРУЕМ АНГЛИЙСКИЙ язык для сбора атрибутов для формы
+<<<<<<< HEAD
                      await waitIfBatch();
+=======
+                    await waitIfBatch();
+>>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
                     const enResp = await fetch(`https://funpay.com/lots/offer?id=${offerId}&setlocale=en`, { headers: ck });
                     if (enResp.ok) {
                         const enHtml = await enResp.text();
@@ -1564,6 +1568,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 let formError = null;
                 if (source.nodeId && !source.isChips) {
                     try {
+                        await waitIfBatch();
                         fields = await cloneBuildFieldsInternal(auth, source.nodeId, source.matchAttributes, source.matchPairs);
 
                         if (rawPrice) {
