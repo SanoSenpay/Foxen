@@ -114,26 +114,13 @@ function initializeLotManagement() {
             displayPinnedLotsOnLoad();
         }
 
-<<<<<<< HEAD
         const selectBtn = $('<button type="button" class="fp-header-action-btn" id="fp-tools-select-lots-btn">Выбрать</button>');
-=======
-        const selectBtn = $('<button type="button" class="btn btn-default btn-block" id="fp-tools-select-lots-btn">⚡ Выбрать лоты</button>');
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
-        const reactivateBtn = $('<button type="button" class="btn btn-default btn-block" id="fp-tools-reactivate-lots-btn">Включить лоты</button>');
+        const reactivateBtn = $('<button type="button" class="fp-header-action-btn" id="fp-tools-reactivate-lots-btn">Включить лоты</button>');
 
         const controlsContainer = $(`
             <div id="fp-tools-selection-controls">
-<<<<<<< HEAD
                 <button type="button" class="fp-header-action-btn" id="fp-tools-select-all-btn">Выбрать все</button>
                 <button type="button" class="fp-header-action-btn" id="fp-tools-cancel-selection">Отмена</button>
-=======
-                <label class="fp-tools-select-all-label">
-                    <input type="checkbox" id="fp-tools-select-all-lots">
-                    <span class="fp-tools-custom-chk"></span>
-                    <span class="fp-tools-select-all-text">Выбрать все</span>
-                </label>
-                <button type="button" class="btn btn-default btn-xs" id="fp-tools-cancel-selection">✕ Отмена</button>
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
             </div>
         `);
 
@@ -174,11 +161,7 @@ function initializeLotManagement() {
             } else {
                  $('.fp-tools-offer-controls, .fp-original-controls').hide();
             }
-<<<<<<< HEAD
             controlsContainer.addClass('active');
-=======
-            controlsContainer.addClass('active').css('display', 'inline-flex');
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
             toggleSelectionMode(true);
         });
         
@@ -196,26 +179,11 @@ function initializeLotManagement() {
             $('.actions').hide();
         });
 
-<<<<<<< HEAD
         controlsContainer.find('#fp-tools-select-all-btn').on('click', function() {
             const total = $('.tc-item .lot-box input').length;
             const checked = $('.tc-item .lot-box input:checked').length;
             const shouldCheck = checked < total;
             $('.lot-box input').prop('checked', shouldCheck).trigger('change');
-=======
-        let isAllSelected = false;
-        controlsContainer.find('#fp-tools-select-all-lots-btn').on('click', function() {
-            isAllSelected = !isAllSelected;
-            $('.lot-box input').prop('checked', isAllSelected);
-            // Запускаем событие change только один раз для производительности
-            if ($('.lot-box input').length > 0) {
-                $('.lot-box input').first().trigger('change');
-            } else {
-                // Если лотов нет, просто обновляем интерфейс
-                $('.actions').hide();
-            }
-            $(this).text(isAllSelected ? 'Снять выделение' : 'Выбрать все');
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
         });
 
         $(document).on('click', '#fp-tools-edit-pinned-lots-btn', function() {
@@ -240,162 +208,6 @@ function initializeLotManagement() {
                     }
                     .fp-tools-category-selector {
                         margin-right: 15px;
-                    }
-                    h5.mb10.text-bold {
-                        display: flex !important;
-                        align-items: center !important;
-                        gap: 12px !important;
-                        flex-wrap: wrap !important;
-                    }
-                    #fp-tools-select-lots-btn {
-                        display: inline-flex !important;
-                        align-items: center !important;
-                        gap: 6px !important;
-                        padding: 6px 16px !important;
-                        font-size: 13px !important;
-                        font-weight: 700 !important;
-                        text-transform: none !important;
-                        letter-spacing: 0.3px !important;
-                        border-radius: 20px !important;
-                        background: linear-gradient(135deg, #7c5cff 0%, #5b21b6 100%) !important;
-                        color: #ffffff !important;
-                        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                        box-shadow: 0 4px 14px rgba(124, 92, 255, 0.35) !important;
-                        cursor: pointer !important;
-                        transition: all 0.2s ease !important;
-                        margin: 0 !important;
-                    }
-                    #fp-tools-select-lots-btn:hover {
-                        transform: translateY(-2px) scale(1.02) !important;
-                        box-shadow: 0 6px 20px rgba(124, 92, 255, 0.5) !important;
-                        opacity: 0.95 !important;
-                    }
-                    #fp-tools-selection-controls {
-                        display: none !important;
-                        align-items: center !important;
-                        gap: 14px !important;
-                        padding: 6px 14px !important;
-                        border-radius: 12px !important;
-                        background: linear-gradient(135deg, rgba(30, 32, 48, 0.95), rgba(20, 22, 36, 0.98)) !important;
-                        border: 1px solid rgba(124, 92, 255, 0.35) !important;
-                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(124, 92, 255, 0.2) !important;
-                        margin: 0 !important;
-                        backdrop-filter: blur(12px) !important;
-                    }
-                    #fp-tools-selection-controls.active,
-                    #fp-tools-selection-controls[style*="display: flex"],
-                    #fp-tools-selection-controls[style*="display: inline-flex"] {
-                        display: inline-flex !important;
-                    }
-                    .fp-tools-select-all-label {
-                        display: inline-flex !important;
-                        align-items: center !important;
-                        gap: 8px !important;
-                        margin: 0 !important;
-                        font-size: 13px !important;
-                        font-weight: 600 !important;
-                        text-transform: none !important;
-                        letter-spacing: normal !important;
-                        cursor: pointer !important;
-                        user-select: none !important;
-                        color: #e2e8f0 !important;
-                    }
-                    .fp-tools-select-all-label input[type="checkbox"] {
-                        position: absolute !important;
-                        opacity: 0 !important;
-                        width: 0 !important;
-                        height: 0 !important;
-                        margin: 0 !important;
-                    }
-                    .fp-tools-custom-chk {
-                        width: 18px !important;
-                        height: 18px !important;
-                        border-radius: 5px !important;
-                        border: 2px solid rgba(255, 255, 255, 0.3) !important;
-                        background: rgba(255, 255, 255, 0.06) !important;
-                        position: relative !important;
-                        transition: all 0.2s ease !important;
-                        flex-shrink: 0 !important;
-                    }
-                    .fp-tools-select-all-label:hover .fp-tools-custom-chk {
-                        border-color: #7c5cff !important;
-                    }
-                    .fp-tools-select-all-label input[type="checkbox"]:checked ~ .fp-tools-custom-chk {
-                        background: #7c5cff !important;
-                        border-color: #7c5cff !important;
-                        box-shadow: 0 0 10px rgba(124, 92, 255, 0.5) !important;
-                    }
-                    .fp-tools-select-all-label input[type="checkbox"]:checked ~ .fp-tools-custom-chk::after {
-                        content: '' !important;
-                        position: absolute !important;
-                        left: 5px !important;
-                        top: 2px !important;
-                        width: 5px !important;
-                        height: 9px !important;
-                        border: solid #ffffff !important;
-                        border-width: 0 2px 2px 0 !important;
-                        transform: rotate(45deg) !important;
-                    }
-                    #fp-tools-cancel-selection {
-                        display: inline-flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                        padding: 4px 12px !important;
-                        font-size: 12px !important;
-                        font-weight: 600 !important;
-                        text-transform: none !important;
-                        letter-spacing: normal !important;
-                        border-radius: 8px !important;
-                        background: rgba(239, 68, 68, 0.15) !important;
-                        color: #f87171 !important;
-                        border: 1px solid rgba(239, 68, 68, 0.35) !important;
-                        cursor: pointer !important;
-                        transition: all 0.2s ease !important;
-                        margin: 0 !important;
-                    }
-                    #fp-tools-cancel-selection:hover {
-                        background: rgba(239, 68, 68, 0.3) !important;
-                        color: #ffffff !important;
-                        border-color: rgba(239, 68, 68, 0.6) !important;
-                        transform: translateY(-1px) !important;
-                    }
-                    .actions {
-                        width: auto !important;
-                        max-width: 90vw !important;
-                        left: 50% !important;
-                        transform: translateX(-50%) !important;
-                        bottom: 20px !important;
-                        border-radius: 16px !important;
-                        background: linear-gradient(135deg, rgba(26, 27, 40, 0.96), rgba(18, 19, 30, 0.98)) !important;
-                        border: 1px solid rgba(124, 92, 255, 0.3) !important;
-                        padding: 12px 24px !important;
-                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(124, 92, 255, 0.2) !important;
-                        backdrop-filter: blur(16px) !important;
-                        gap: 20px !important;
-                    }
-                    .actions span.log {
-                        font-size: 13px !important;
-                        font-weight: 500 !important;
-                        font-family: Inter, 'Segoe UI', sans-serif !important;
-                    }
-                    .action-lot {
-                        border-radius: 10px !important;
-                        padding: 8px 18px !important;
-                        font-size: 13px !important;
-                        font-weight: 600 !important;
-                        font-family: Inter, 'Segoe UI', sans-serif !important;
-                        transition: all 0.2s ease !important;
-                    }
-                    .action-lot.export-json-lots {
-                        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-                        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4) !important;
-                        border: none !important;
-                        color: #ffffff !important;
-                    }
-                    .action-lot.export-json-lots:hover:not(:disabled) {
-                        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.6) !important;
-                        transform: translateY(-2px) !important;
-                    }
                 </style>
             `);
         }
@@ -412,17 +224,18 @@ function initializeLotManagement() {
 
 function toggleSelectionMode(enable) {
     if (enable) {
-        if ($('.tc-header').length && $('.tc-header').find('.action-lots-header-cell').length === 0) {
-            $('.tc-header').children().first().prepend('<div class="action-lots-header-cell" style="float: left; width: 22px; height: 1px;"></div>');
+        if ($('.tc-header').length && $('.action-lots-header-cell').length === 0) {
+            $('.tc-header').prepend('<div class="action-lots-header-cell"></div>');
         }
         
         // Добавление чекбоксов для категорий
         $('.offer-list-title').each(function() {
             if ($(this).find('.fp-tools-category-selector').length === 0) {
                 const categoryCheckbox = $(`
-                    <div class="fp-tools-category-selector" style="display: inline-block; margin-right: 10px; vertical-align: middle;">
-                        <input type="checkbox" class="category-select-all" title="Выбрать все лоты в категории" style="cursor: pointer; width: 14px; height: 14px; margin: 0;">
-                    </div>
+                    <label class="lot-box fp-tools-category-selector">
+                        <input type="checkbox" hidden />
+                        <span class="lot-mark"></span>
+                    </label>
                 `);
                 $(this).prepend(categoryCheckbox);
             }
@@ -430,8 +243,8 @@ function toggleSelectionMode(enable) {
 
         $('.tc-item').each(function() {
             if ($(this).find('.action-lots-checkbox-cell').length === 0) {
-                const checkboxCell = $('<div class="action-lots-checkbox-cell" style="float: left; margin-right: 8px;"><div class="lot-box" style="margin:0;"><input type="checkbox" style="margin: 0; cursor: pointer; width: 14px; height: 14px;" /></div></div>');
-                $(this).children().first().prepend(checkboxCell);
+                const checkboxCell = $('<div class="action-lots-checkbox-cell"><label class="lot-box"><input type="checkbox" hidden /><span class="lot-mark"></span></label></div>');
+                $(this).prepend(checkboxCell);
             }
         });
     } else {
@@ -441,15 +254,8 @@ function toggleSelectionMode(enable) {
 }
 
 async function updatePinButtonsState() {
-    const $checked = $('.lot-box input:checked');
-    const $pinBtn = $('.action-lot.pin-lot');
-    const $unpinBtn = $('.action-lot.unpin-lot');
-
-    if ($checked.length === 0) {
-        $pinBtn.hide();
-        $unpinBtn.hide();
-        return;
-    }
+    $('.action-lot.pin-lot, .action-lot.unpin-lot').hide();
+    return;
 
     const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
     const pinnedIds = new Set(fpToolsPinnedLots.map(l => l.offerId));
@@ -525,14 +331,8 @@ function setupActionProcessing() {
             <div class="actions">
                 <span class="log">Выберите действие</span>
                 <div>
-<<<<<<< HEAD
                     <button class="action-lot export-lots" style="background:#2563eb;display:none;">Экспорт (JSON)</button>
-=======
-                    <button class="action-lot clone-lots" style="background:#7c5cff;display:none;">Экспорт копий</button>
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
                     <button class="action-lot price-editor">Редактор цен</button>
-                    <button class="action-lot pin-lot" style="background: #27ae60;">Закрепить</button>
-                    <button class="action-lot unpin-lot" style="background: #c0392b;">Открепить</button>
                     <button class="action-lot dublicate">Дублировать</button>
                     <button class="action-lot activate-lot" style="background: #4CAF50; display:none;">Включить</button>
                     <button class="action-lot deactivate-lot">Отключить</button>
@@ -544,13 +344,8 @@ function setupActionProcessing() {
         // В режиме копирования (чужой профиль) показываем только «Экспорт (JSON)»,
         // прячем действия над своими лотами.
         if (window.__fptForeignClone) {
-<<<<<<< HEAD
             $('.actions .action-lot').not('.export-lots').hide();
             $('.actions .export-lots').show();
-=======
-            $('.actions .action-lot').not('.export-json-lots').hide();
-            $('.actions .export-json-lots').show();
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
         }
     }
 
@@ -562,13 +357,8 @@ function setupActionProcessing() {
         // На чужом профиле (режим копирования) кнопок включения/отключения нет —
         // чужие лоты трогать нельзя, показываем только «Экспорт (JSON)».
         if (window.__fptForeignClone) {
-<<<<<<< HEAD
             $('.actions .action-lot').not('.export-lots').hide();
             $('.actions .export-lots').show();
-=======
-            $('.actions .action-lot').not('.export-json-lots').hide();
-            $('.actions .export-json-lots').show();
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
             return;
         }
         let activeSel = 0, inactiveSel = 0;
@@ -582,16 +372,13 @@ function setupActionProcessing() {
         else { $act.hide().text('Включить'); }
         if (activeSel > 0) { $deact.show().text('Отключить x' + activeSel); }
         else { $deact.hide().text('Отключить'); }
-
-        // Показывать кнопку Экспорт и на своем профиле тоже
-        $('.actions .clone-lots').show().text('Экспорт (JSON)');
+        $('.actions .export-lots').show();
     }
 
     $(document).on('change', '.lot-box input', function() {
         // [ИСПРАВЛЕНО] Считаем только чекбоксы лотов для общего счетчика
         const totalLots = $('.tc-item .lot-box input').length;
         const checkedLots = $('.tc-item .lot-box input:checked').length;
-<<<<<<< HEAD
         const selectAllBtn = $('#fp-tools-select-all-btn');
 
         $('.actions').css('display', checkedLots > 0 ? 'flex' : 'none');
@@ -606,17 +393,6 @@ function setupActionProcessing() {
             }
         }
         
-=======
-        
-        $('.actions').css('display', checkedLots > 0 ? 'flex' : 'none');
-        updateActivateDeactivateCounts();
-        
-        // Обновляем кнопку "Выбрать все"
-        if (totalLots > 0) {
-            isAllSelected = (checkedLots === totalLots);
-            $('#fp-tools-select-all-lots-btn').text(isAllSelected ? 'Снять выделение' : 'Выбрать все');
-        }    
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
         updatePinButtonsState();
 
         // [ИСПРАВЛЕНО] Логика синхронизации чекбокса категории
@@ -764,8 +540,8 @@ function setupActionProcessing() {
             if ($('#fp-tools-selection-controls').is(':visible')) {
                 $('#fp-tools-pinned-lots-container .tc-item').each(function() {
                     if ($(this).find('.action-lots-checkbox-cell').length === 0) {
-                        const checkboxCell = $('<div class="action-lots-checkbox-cell" style="float: left; margin-right: 8px;"><div class="lot-box" style="margin:0;"><input type="checkbox" style="margin: 0; cursor: pointer; width: 14px; height: 14px;" /></div></div>');
-                        $(this).children().first().prepend(checkboxCell);
+                        const checkboxCell = $('<div class="action-lots-checkbox-cell"><label class="lot-box"><input type="checkbox" hidden /><span class="lot-mark"></span></label></div>');
+                        $(this).prepend(checkboxCell);
                     }
                 });
             }
@@ -1023,28 +799,7 @@ function setupActionProcessing() {
     $actionsBar.on('click', '.deactivate-lot', () => processSelectedLots('deactivate'));
     $actionsBar.on('click', '.activate-lot', () => processSelectedLots('activate'));
 
-<<<<<<< HEAD
-=======
-    // Чужой профиль: экспорт выбранных лотов в JSON для импорта.
-    $actionsBar.on('click', '.clone-lots', async function () {
-        const selected = $('.tc-item .lot-box input:checked').get();
-        if (!selected.length) { updateLog('Не выбрано ни одного лота.', true); return; }
-        const offerIds = selected.map(chk => {
-            const $a = $(chk).closest('a.tc-item');
-            const href = $a.attr('href') || '';
-            const m = href.match(/[?&]id=(\d+)/) || href.match(/offer=(\d+)/) || ($a.attr('data-offer') ? [null, $a.attr('data-offer')] : null);
-            return m ? m[1] : null;
-        }).filter(Boolean);
-        if (!offerIds.length) { updateLog('Не удалось определить ID лотов.', true); return; }
 
-        if (typeof window.fptRunExportSelectedLots === 'function') {
-            await window.fptRunExportSelectedLots(offerIds, updateLog, toggleActions);
-        } else {
-            updateLog('Модуль экспорта не загружен.', true);
-        }
-    });
-
->>>>>>> 8d69b2878acfe0dfe794386150062e62d9eee387
     
     $(document).on('click', '.actions .price-editor', function() {
         $('#fp-price-editor-overlay').css('display', 'flex').hide().fadeIn(200);
