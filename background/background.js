@@ -552,7 +552,15 @@ async function sendChatImageInBackground(chatId, dataUrl, chatName) {
     return { fileId };
 }
 
+let _authCache = null;
+let _authCacheTime = 0;
+
 async function getAuthDetailsForBackground() {
+    const now = Date.now();
+    if (_authCache && (now - _authCacheTime < 15000)) {
+        return _authCache;
+    }
+
     const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
     if (!goldenKeyCookie || !goldenKeyCookie.value) {
         console.error("Foxen: golden_key не найден. Пользователь не авторизован.");
@@ -571,14 +579,16 @@ async function getAuthDetailsForBackground() {
             if (response && response.success) {
                 const appData = Array.isArray(response.data) ? response.data[0] : response.data;
                 if (appData && appData['csrf-token'] && appData.userId) {
-                    console.log("Foxen: Auth-данные получены из активной вкладки.");
-                    return {
+                    const authRes = {
                         golden_key: golden_key,
                         phpsessid: phpsessid,
                         csrf_token: appData['csrf-token'],
                         userId: appData.userId,
                         username: appData.userName,
                     };
+                    _authCache = authRes;
+                    _authCacheTime = now;
+                    return authRes;
                 }
             }
         } catch (e) {
@@ -602,13 +612,16 @@ async function getAuthDetailsForBackground() {
             const userData = Array.isArray(appData) ? appData[0] : appData;
             if (userData && userData['csrf-token'] && userData.userId) {
                 console.log("Foxen: Auth-данные успешно получены через прямой запрос.");
-                return {
+                const authRes = {
                     golden_key: golden_key,
                     phpsessid: phpsessid,
                     csrf_token: userData['csrf-token'],
                     userId: userData.userId,
                     username: userData.userName,
                 };
+                _authCache = authRes;
+                _authCacheTime = now;
+                return authRes;
             }
         }
         throw new Error("Не удалось найти data-app-data в HTML страницы.");
@@ -1463,15 +1476,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (!offerId) throw new Error('Не передан ID лота.');
 
                 const ck = { 'Cookie': `golden_key=${auth.golden_key}` };
-                const waitIfBatch = async () => { if (request.batch) await new Promise(r => setTimeout(r, 800)); };
+                const waitIfBatch = async () => { if (request.batch) await new Promise(r => setTimeout(r, 1500)); };
 
                 // 1) ФОРСИРУЕМ РУССКИЙ язык для сбора названий и описаний
                 let ruResp;
                 try {
                     ruResp = await fptFetchResilient(`https://funpay.com/lots/offer?id=${offerId}&setlocale=ru`, { headers: ck });
-                } catch (_) {
-                    throw new Error('FunPay не отвечает (похоже, временные неполадки сайта — 502/таймаут). Попробуйте ещё раз через минуту.');
+                } catch (err) {
+                    const msg = String(err?.message || err);
+                    if (msg.includes('429')) throw new Error('429 (Слишком много запросов)');
+                    throw new Error(msg || 'FunPay не отвечает (таймаут сети)');
                 }
+                if (ruResp.status === 429) throw new Error('429 (Слишком много запросов)');
                 if (ruResp.status >= 500) throw new Error(`FunPay вернул ошибку сервера (${ruResp.status}) — это со стороны FunPay. Повторите позже.`);
                 if (!ruResp.ok) throw new Error(`Ошибка загрузки лота: ${ruResp.status}`);
                 const ruHtml = await ruResp.text();
@@ -1483,7 +1499,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 try {
                     // ФОРСИРУЕМ АНГЛИЙСКИЙ язык для сбора атрибутов для формы
                     await waitIfBatch();
-                    const enResp = await fetch(`https://funpay.com/lots/offer?id=${offerId}&setlocale=en`, { headers: ck });
+                    const enResp = await fptFetchResilient(`https://funpay.com/lots/offer?id=${offerId}&setlocale=en`, { headers: ck });
                     if (enResp.ok) {
                         const enHtml = await enResp.text();
                         en = await parseHtmlViaOffscreen(enHtml, 'parsePublicLotForClone');
@@ -1493,7 +1509,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 // ВОЗВРАЩАЕМ РУССКИЙ ЯЗЫК НА АККАУНТ, чтобы не сломать юзеру сайт
                 await waitIfBatch();
-                await fetch(`https://funpay.com/?setlocale=ru`, { headers: ck });
+                try { await fptFetchResilient(`https://funpay.com/?setlocale=ru`, { headers: ck }); } catch (_) {}
 
                 // Цена.
                 // 1) ЛУЧШИЙ источник: data-factors на странице покупки (цена продавца нетто).
@@ -1511,7 +1527,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (!rawPrice && ru.sellerId) {
                     try {
                         await waitIfBatch();
-                        const upResp = await fetch(`https://funpay.com/users/${ru.sellerId}/`, { headers: ck });
+                        const upResp = await fptFetchResilient(`https://funpay.com/users/${ru.sellerId}/`, { headers: ck });
                         if (upResp.ok) {
                             const upHtml = await upResp.text();
                             const pr = await parseHtmlViaOffscreen(upHtml, 'parseSellerLotPrice', { offerId });
