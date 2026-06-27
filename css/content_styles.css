@@ -8360,3 +8360,107 @@ textarea.fp-cw-input { line-height:1.4; }
 }
 /* Лёгкое затухание блока карточек, когда показываем загрузку поверх */
 .fp-stats-dimmed { opacity: .35; pointer-events: none; transition: opacity .2s ease; }
+
+/* ==========================================
+   Foxen Minimalist Selection & Action Controls
+   ========================================== */
+h5.mb10.text-bold {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+#fp-tools-selection-controls {
+    display: none;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#fp-tools-selection-controls.active {
+    display: inline-flex !important;
+}
+
+.fp-header-action-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    color: #e2e8f0 !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+    text-transform: none !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15) !important;
+    vertical-align: middle !important;
+    user-select: none !important;
+}
+
+.fp-header-action-btn:hover {
+    background: rgba(124, 92, 255, 0.18) !important;
+    border-color: rgba(124, 92, 255, 0.5) !important;
+    color: #fff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(124, 92, 255, 0.25) !important;
+}
+
+.fp-header-action-btn:active,
+.fp-header-action-btn.active {
+    background: rgba(124, 92, 255, 0.3) !important;
+    border-color: #7c5cff !important;
+    color: #fff !important;
+}
+
+#fp-tools-cancel-selection:hover {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    color: #fca5a5 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
+}
+
+
+/* Redesigned Floating Action Bar */
+.actions {
+    background: rgba(18, 20, 29, 0.92) !important;
+    backdrop-filter: blur(14px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4) !important;
+    padding: 12px 24px !important;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+.action-lot {
+    border-radius: 10px !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    padding: 9px 18px !important;
+    letter-spacing: 0.2px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.action-lot:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    filter: brightness(1.1) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+.action-lot.export-lots {
+    background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+}

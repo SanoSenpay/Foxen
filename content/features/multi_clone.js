@@ -1,7 +1,6 @@
 // content/features/multi_clone.js
-// На странице ЧУЖОГО профиля (funpay.com/users/ID/, где ID ≠ наш) добавляет чекбоксы
-// к лотам и кнопку «Копировать выбранные» — массовое серверное клонирование лотов.
-// Использует тот же бэкенд, что и одиночное клонирование (cloneGetSource → cloneCreateLot).
+// На странице ЧУЖОГО профиля позволяет экспортировать выбранные лоты в JSON файл.
+// Интегрировано в режим выбора ("Выбрать") и всплывающую панель действий (.actions).
 
 (function () {
     'use strict';
@@ -9,7 +8,12 @@
     function ownUserId() {
         const a = document.querySelector('.user-link-dropdown[href*="/users/"]');
         const m = a?.getAttribute('href')?.match(/\/users\/(\d+)/);
-        return m ? m[1] : null;
+        if (m) return m[1];
+        try {
+            const raw = document.body?.dataset?.appData;
+            if (raw) { const d = JSON.parse(raw); return String((Array.isArray(d) ? d[0] : d)?.userId || '') || null; }
+        } catch (_) {}
+        return null;
     }
     function profileUserId() {
         const m = window.location.pathname.match(/\/users\/(\d+)/);
@@ -22,102 +26,13 @@
         return own && pid !== own;
     }
 
-    function offerIdOf(a) {
-        const m = (a.getAttribute('href') || '').match(/[?&]id=(\d+)/);
-        return m ? m[1] : null;
-    }
-
-    const selected = new Set();
-
-    function ensureStyles() {
-        if (document.getElementById('fpt-mclone-styles')) return;
-        const s = document.createElement('style');
-        s.id = 'fpt-mclone-styles';
-        s.textContent = `
-        .fpt-mc-chk{margin-right:8px;width:16px;height:16px;cursor:pointer;vertical-align:middle;accent-color:#7c5cff;flex:0 0 auto;}
-        a.tc-item.fpt-mc-row{display:flex;align-items:center;}
-        .fpt-mc-bar{position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-            background:var(--fpt-surface,#fff);border:1px solid var(--fpt-border,#e3e3ea);border-radius:12px;
-            padding:10px 14px;margin:0 0 12px;font-family:Inter,'Segoe UI',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.06);}
-        .fpt-mc-bar b{font-size:13px;}
-        .fpt-mc-btn{padding:7px 14px;border-radius:9px;border:1px solid var(--fpt-border,#dadbe2);background:var(--fpt-surface-2,#fff);
-            color:inherit;font-size:13px;font-weight:600;cursor:pointer;}
-        .fpt-mc-btn.primary{background:#7c5cff;border-color:#7c5cff;color:#fff;}
-        .fpt-mc-btn.primary:disabled{opacity:.5;cursor:default;}
-        .fpt-mc-btn:hover:not(:disabled){border-color:#7c5cff;}
-        .fpt-mc-count{font-size:12px;color:var(--fpt-text-muted,#8a8a94);}
-        .fpt-mc-log{max-height:160px;overflow:auto;font-size:12px;line-height:1.5;width:100%;margin-top:4px;
-            border-top:1px solid var(--fpt-border,#ececf0);padding-top:8px;display:none;}
-        .fpt-mc-log .ok{color:#16a34a;} .fpt-mc-log .err{color:#ef4444;}
-        `;
-        document.head.appendChild(s);
-    }
-
-    function updateBar() {
-        const bar = document.getElementById('fpt-mc-bar');
-        if (!bar) return;
-        const cnt = bar.querySelector('.fpt-mc-count');
-        const btn = bar.querySelector('.fpt-mc-go');
-        cnt.textContent = selected.size ? `Выбрано: ${selected.size}` : 'Отметьте лоты галочками';
-        btn.disabled = selected.size === 0;
-    }
-
-    function addCheckboxes() {
-        document.querySelectorAll('a.tc-item[href*="lots/offer?id="]').forEach(a => {
-            if (a.dataset.fptMc) return;
-            const offerId = offerIdOf(a);
-            if (!offerId) return;
-            a.dataset.fptMc = '1';
-            a.classList.add('fpt-mc-row');
-            const chk = document.createElement('input');
-            chk.type = 'checkbox';
-            chk.className = 'fpt-mc-chk';
-            chk.title = 'Выбрать для копирования';
-            // не давать клику по чекбоксу открывать лот
-            chk.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (chk.checked) selected.add(offerId); else selected.delete(offerId);
-                updateBar();
-            });
-            a.insertBefore(chk, a.firstChild);
-        });
-    }
-
-    function buildBar() {
-        if (document.getElementById('fpt-mc-bar')) return;
-        const firstOffer = document.querySelector('.offer');
-        if (!firstOffer) return;
-        ensureStyles();
-        const bar = document.createElement('div');
-        bar.id = 'fpt-mc-bar';
-        bar.className = 'fpt-mc-bar';
-        bar.innerHTML = `
-            <b>📋 Копирование лотов</b>
-            <span class="fpt-mc-count">Отметьте лоты галочками</span>
-            <button class="fpt-mc-btn fpt-mc-all" type="button" style="margin-left:auto;">Выбрать все</button>
-            <button class="fpt-mc-btn fpt-mc-none" type="button">Снять все</button>
-            <button class="fpt-mc-btn primary fpt-mc-go" type="button" disabled>Копировать выбранные</button>
-            <div class="fpt-mc-log"></div>`;
-        firstOffer.parentElement.insertBefore(bar, firstOffer);
-
-        bar.querySelector('.fpt-mc-all').addEventListener('click', () => {
-            document.querySelectorAll('.fpt-mc-chk').forEach(c => {
-                if (!c.checked) { c.checked = true; const a = c.closest('a.tc-item'); const id = offerIdOf(a); if (id) selected.add(id); }
-            });
-            updateBar();
-        });
-        bar.querySelector('.fpt-mc-none').addEventListener('click', () => {
-            document.querySelectorAll('.fpt-mc-chk').forEach(c => c.checked = false);
-            selected.clear(); updateBar();
-        });
-        bar.querySelector('.fpt-mc-go').addEventListener('click', runBatchClone);
-        updateBar();
-    }
-
-    async function cloneOne(offerId) {
+    async function getExportDataOne(offerId) {
         // 1) читаем источник + решённые поля
-        const src = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId });
-        if (!src || !src.success) throw new Error(src?.error || 'не удалось прочитать лот');
+        const src = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId, batch: true });
+        if (!src || !src.success) {
+            const errStr = [src?.error, src?.formError].filter(Boolean).join(' - ');
+            throw new Error(errStr || 'не удалось прочитать лот');
+        }
         if (src.source?.isChips) throw new Error('лот из раздела валюты — пропущен');
         if (!src.fields) throw new Error(src.formError || 'не удалось подобрать поля категории');
 
@@ -136,52 +51,113 @@
         fields['secrets'] = fields['secrets'] || '';
         fields['fields[images]'] = fields['fields[images]'] || '';
 
-        const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneCreateLot', fields, location: 'trade' });
-        if (!res || !res.success) throw new Error(res?.error || 'ошибка создания');
-        return res.newId;
+        return {
+            sourceTitle: s.summary || `Лот #${offerId}`,
+            sourceCategory: s.categoryName || 'Неизвестная категория',
+            data: fields
+        };
     }
 
-    async function runBatchClone() {
-        const bar = document.getElementById('fpt-mc-bar');
-        const go = bar.querySelector('.fpt-mc-go');
-        const logEl = bar.querySelector('.fpt-mc-log');
-        const ids = [...selected];
-        if (!ids.length) return;
-        if (!confirm(`Скопировать ${ids.length} лот(ов) к себе? Они будут созданы на твоём аккаунте.`)) return;
+    async function runBatchExport() {
+        const selectedCheckboxes = document.querySelectorAll('.tc-item .lot-box input:checked');
+        const ids = [];
+        selectedCheckboxes.forEach(chk => {
+            const a = chk.closest('a.tc-item');
+            if (!a) return;
+            const href = a.getAttribute('href') || '';
+            const m = href.match(/[?&]id=(\d+)/) || href.match(/offer=(\d+)/) || (a.getAttribute('data-offer') ? [null, a.getAttribute('data-offer')] : null);
+            if (m && m[1]) ids.push(m[1]);
+        });
 
-        go.disabled = true;
-        logEl.style.display = 'block';
-        logEl.innerHTML = '';
+        const logEl = document.querySelector('.actions .log');
+        const actionButtons = document.querySelectorAll('.actions .action-lot');
+
+        const updateLog = (msg, isErr = false) => {
+            if (logEl) {
+                logEl.textContent = msg;
+                logEl.style.color = isErr ? '#ff6b6b' : '#ccc';
+            }
+        };
+
+        const toggleActions = (disabled) => {
+            actionButtons.forEach(btn => btn.disabled = disabled);
+            const actionsBar = document.querySelector('.actions');
+            if (actionsBar) actionsBar.style.cursor = disabled ? 'wait' : 'default';
+        };
+
+        if (!ids.length) {
+            updateLog('Не выбрано ни одного лота.', true);
+            return;
+        }
+
+        if (!confirm(`Экспортировать ${ids.length} лот(ов) в JSON для последующего импорта?`)) return;
+
+        toggleActions(true);
         let ok = 0, fail = 0;
-        const log = (html, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.innerHTML = html; logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight; };
+        const exportedData = [];
 
         for (let i = 0; i < ids.length; i++) {
             const id = ids[i];
-            log(`(${i + 1}/${ids.length}) Лот #${id}…`);
-            try {
-                const newId = await cloneOne(id);
-                ok++;
-                log(`✓ #${id} → создан${newId ? ' #' + newId : ''}`, 'ok');
-            } catch (e) {
-                fail++;
-                log(`✗ #${id}: ${e.message}`, 'err');
+            updateLog(`Экспорт ${i + 1}/${ids.length} (#${id})…`);
+            
+            let attempts = 0;
+            let success = false;
+            
+            while (attempts < 2 && !success) {
+                attempts++;
+                try {
+                    const data = await getExportDataOne(id);
+                    exportedData.push(data);
+                    ok++;
+                    success = true;
+                } catch (e) {
+                    if (e.message.includes('429')) {
+                        updateLog(`⚠ #${id}: Слишком много запросов (429). Ждём 10 сек...`, true);
+                        await new Promise(resolve => setTimeout(resolve, 10000));
+                        if (attempts === 2) {
+                            fail++;
+                        }
+                    } else {
+                        fail++;
+                        break;
+                    }
+                }
+            }
+            
+            if (i < ids.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
         }
-        log(`<b>Готово: ${ok} создано, ${fail} с ошибкой.</b>`);
-        showNotification?.(`Копирование завершено: ${ok} ок, ${fail} ошибок`, fail > 0);
-        go.disabled = false;
+        
+        if (exportedData.length > 0) {
+            const blob = new Blob([JSON.stringify(exportedData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `funpay_lots_cloned_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        const finalText = `Экспорт завершён: ${ok} экспортировано, ${fail} с ошибкой.`;
+        updateLog(finalText, fail > 0);
+        if (typeof showNotification === 'function') showNotification(finalText, fail > 0);
+        toggleActions(false);
     }
 
     function init() {
         if (!isForeignProfile()) return;
-        const tryBuild = () => {
-            if (!document.querySelector('.offer')) return;
-            buildBar();
-            addCheckboxes();
-        };
-        tryBuild();
-        const root = document.getElementById('content') || document.body;
-        new MutationObserver(tryBuild).observe(root, { childList: true, subtree: true });
+
+        // Навешиваем обработчик на клик по кнопке .export-lots в панели действий
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.actions .export-lots');
+            if (btn) {
+                e.preventDefault();
+                runBatchExport();
+            }
+        });
     }
 
     if (document.readyState === 'loading') {
