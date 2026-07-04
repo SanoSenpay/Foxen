@@ -100,6 +100,7 @@ function createMainPopup() {
                     <li data-page="lot_io"><a><span class="nav-icon material-symbols-rounded">inventory_2</span><span>Лоты</span></a></li>
                     <li data-page="autobump"><a><span class="nav-icon material-symbols-rounded">rocket_launch</span><span>Авто-поднятие</span></a></li>
                     <li data-page="ai_audit"><a><span class="nav-icon material-symbols-rounded">search_insights</span><span>ИИ-аудит</span></a></li>
+                    <li data-page="ai_settings"><a><span class="nav-icon material-symbols-rounded">vpn_key</span><span>ИИ API-ключ</span></a></li>
                     <li data-page="blacklist"><a><span class="nav-icon material-symbols-rounded">block</span><span>Чёрный список</span></a></li>
                     <li class="fp-nav-divider">Финансы</li>
                     <li data-page="piggy_banks"><a><span class="nav-icon material-symbols-rounded">savings</span><span>Копилки</span></a></li>
@@ -766,6 +767,74 @@ function createMainPopup() {
                     <div class="overview-container"><h3 style="border:none">Видео-обзор функций</h3><p class="template-info">Посмотрите короткий кинематографический ролик, демонстрирующий все возможности Foxen в действии. Откройте для себя инструменты, о которых вы могли не знать!</p><div class="overview-promo-art"></div><button id="start-overview-tour-btn" class="btn">▶️ Начать обзор</button></div>
                     <div class="feature-list-container"><h3>Справочник по функциям</h3><div class="feature-item"><div class="feature-title"><span class="material-icons">smart_toy</span>ИИ-Ассистент в чате</div><div class="feature-location"><strong>Где найти:</strong> В любом чате, кнопка "AI" рядом с полем ввода.</div><div class="feature-desc">Улучшает ваш текст, делая его вежливым и профессиональным. Активируйте режим и нажмите Enter для обработки. Также предупреждает о грубости.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">auto_fix_high</span>AI-Генератор лотов</div><div class="feature-location"><strong>Где найти:</strong> На странице создания/редактирования лота.</div><div class="feature-desc">Создает название и описание для лота на основе ваших идей, анализируя и копируя стиль ваших существующих предложений.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">add_photo_alternate</span>AI-Генератор изображений</div><div class="feature-location"><strong>Где найти:</strong> На странице создания/редактирования лота, в разделе "Изображения".</div><div class="feature-desc">Создавайте уникальные и стильные превью для ваших предложений с помощью встроенного генератора, в том числе по текстовому запросу.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">palette</span>Полная кастомизация</div><div class="feature-location"><strong>Где найти:</strong> Вкладка "Кастомизация".</div><div class="feature-desc">Измените внешний вид FunPay: установите анимированный фон, настройте цвета, шрифты, прозрачность блоков и даже расположение верхней панели.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">auto_fix_normal</span>"Кастомизатор (режим редактора)</div><div class="feature-location"><strong>Где найти:</strong> Вкладка "Кастомизация".</div><div class="feature-desc">Редактируйте любой элемент сайта в реальном времени. Меняйте цвета, размеры или скрывайте ненужное, сохраняя стили навсегда.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">description</span>Шаблоны и AI-переменные</div><div class="feature-location"><strong>Где найти:</strong> Под полем ввода в чате. Настраиваются во вкладке "Шаблоны".</div><div class="feature-desc">Быстрая вставка готовых сообщений. Поддерживают переменные {buyername}, {date} и даже генерацию текста через {ai:ваш запрос}.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">checklist</span>Управление лотами и ценами</div><div class="feature-location"><strong>Где найти:</strong> На странице вашего профиля (funpay.com/users/...).</div><div class="feature-desc">Кнопка "Выбрать" позволяет выделить несколько лотов для массового удаления, дублирования, отключения или редактирования цен.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">control_point_duplicate</span>Клонирование лотов</div><div class="feature-location"><strong>Где найти:</strong> На странице редактирования любого вашего лота.</div><div class="feature-desc">Кнопка "Копировать" позволяет создать точную копию лота или массово размножить его по разным категориям (например, по разным серверам).</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">public</span>Глобальный импорт лотов</div><div class="feature-location"><strong>Где найти:</strong> На странице редактирования лота, кнопка "Импорт".</div><div class="feature-desc">Импортируйте название и описание любого лота с FunPay, чтобы анализировать конкурентов или использовать как основу.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">sort_by_alpha</span>Сортировка по отзывам</div><div class="feature-location"><strong>Где найти:</strong> На любой странице со списком лотов.</div><div class="feature-desc">Кликните на заголовок "Продавец" в таблице, чтобы отсортировать все предложения по количеству отзывов у продавцов.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">label</span>Пометки для пользователей</div><div class="feature-location"><strong>Где найти:</strong> В выпадающем меню в заголовке чата с человеком.</div><div class="feature-desc">Устанавливайте настраиваемые цветные метки для пользователей, которые будут видны в вашем списке контактов.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">rocket_launch</span>Авто-поднятие лотов</div><div class="feature-location"><strong>Где найти:</strong> Вкладка "Авто-поднятие".</div><div class="feature-desc">Настройте автоматическое поднятие лотов по таймеру. Можно выбрать для поднятия только определенные категории.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">monitoring</span>Статистика</div><div class="feature-location"><strong>Где найти:</strong> Страница "Продажи" - статистика продаж, кнопка "Аналитика рынка" на странице игры.</div><div class="feature-desc">Получайте детальную статистику по своим продажам и анализируйте рыночную ситуацию в любой категории.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">savings</span>Финансовые копилки</div><div class="feature-location"><strong>Где найти:</strong> Вкладка "Копилки" и иконка в шапке сайта.</div><div class="feature-desc">Устанавливайте финансовые цели и отслеживайте их достижение. Копилка синхронизируется с балансом FunPay.</div></div></div>
                 </div>
+                <div class="fp-tools-page-content" data-page="ai_settings">
+                    <h3>ИИ — свой API-ключ</h3>
+                    <p class="template-info">Вставьте собственный ключ и ИИ-запросы пойдут напрямую к выбранному провайдеру. Если ключ не задан или не работает — используется Foxen-сервер как резерв.</p>
+
+                    <div class="support-promo" style="background:rgba(192,38,211,0.07);border-color:rgba(192,38,211,0.2);margin-bottom:16px;">
+                        <span class="material-symbols-rounded" style="font-size:16px;color:#f4c84a;vertical-align:-3px;">info</span>
+                        <span>Ключ хранится только локально в браузере и отправляется исключительно к выбранному вами провайдеру.</span>
+                    </div>
+
+                    <!-- Provider selector -->
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label style="font-size:12px;color:var(--fpt-text-sub,#5a5f7a);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:block;">Провайдер</label>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn btn-default fpt-ai-provider-btn" data-provider="gemini" style="flex:1;min-width:90px;">
+                                <span style="font-size:15px;">🔮</span> Gemini
+                            </button>
+                            <button class="btn btn-default fpt-ai-provider-btn" data-provider="openai" style="flex:1;min-width:90px;">
+                                <span style="font-size:15px;">🤖</span> OpenAI
+                            </button>
+                            <button class="btn btn-default fpt-ai-provider-btn" data-provider="openrouter" style="flex:1;min-width:90px;">
+                                <span style="font-size:15px;">🌐</span> OpenRouter
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- API Key input -->
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label for="fptAIApiKey" style="font-size:12px;color:var(--fpt-text-sub,#5a5f7a);text-transform:uppercase;letter-spacing:.05em;">API Ключ</label>
+                        <div class="input-group" style="margin-top:6px;">
+                            <input type="password" id="fptAIApiKey" class="form-control" placeholder="Вставьте ключ сюда..." autocomplete="off">
+                            <span class="input-group-addon" id="fptAIToggleKey" style="cursor:pointer;user-select:none;" title="Показать/скрыть">
+                                <span class="material-symbols-rounded" style="font-size:16px;vertical-align:-3px;">visibility</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Model override -->
+                    <div class="form-group" style="margin-bottom:4px;">
+                        <label for="fptAIModel" style="font-size:12px;color:var(--fpt-text-sub,#5a5f7a);text-transform:uppercase;letter-spacing:.05em;">Модель <span style="text-transform:none;font-size:11px;opacity:.6;">(необязательно)</span></label>
+                        <input type="text" id="fptAIModel" class="form-control" placeholder="Оставьте пустым для модели по умолчанию" style="margin-top:6px;">
+                    </div>
+                    <p id="fptAIModelHint" class="template-info" style="margin-top:4px;margin-bottom:14px;font-size:11px;"></p>
+
+                    <!-- Actions -->
+                    <div style="display:flex;gap:8px;margin-bottom:12px;">
+                        <button id="fptAITestBtn" class="btn" style="flex:2;">
+                            <span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;margin-right:4px;">wifi_tethering</span>Проверить ключ
+                        </button>
+                        <button id="fptAIClearBtn" class="btn btn-default" style="flex:1;">Сбросить</button>
+                    </div>
+                    <div id="fptAITestStatus" class="fpt-ai-test-status" style="min-height:18px;font-size:12px;margin-bottom:14px;"></div>
+
+                    <!-- Active source indicator -->
+                    <div style="text-align:center;">
+                        <span id="fptAIActiveLabel" style="display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(192,38,211,0.1);color:#C026D3;border:1px solid rgba(192,38,211,0.25);">🦊 Foxen сервер (резерв)</span>
+                    </div>
+
+                    <!-- Where to get keys -->
+                    <div style="margin-top:20px;border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;">
+                        <p style="font-size:12px;color:var(--fpt-text-sub,#5a5f7a);margin-bottom:8px;"><strong>Где получить ключ:</strong></p>
+                        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+                            <div>🔮 <strong>Gemini</strong> — <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#C026D3;">aistudio.google.com/apikey</a> (бесплатно, работает в РФ)</div>
+                            <div>🌐 <strong>OpenRouter</strong> — <a href="https://openrouter.ai/keys" target="_blank" style="color:#C026D3;">openrouter.ai/keys</a> (много моделей, есть бесплатные)</div>
+                            <div>🤖 <strong>OpenAI</strong> — <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#C026D3;">platform.openai.com/api-keys</a> (нужен VPN в РФ)</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="fp-tools-page-content" data-page="ai_audit">
                     <h3>ИИ-аудит лотов</h3>
 
@@ -1372,6 +1441,7 @@ function setupPopupNavigation() {
             if (pageId === 'slash_commands') { if (typeof initializeSlashCommandsUI === 'function') initializeSlashCommandsUI(); }
             if (pageId === 'telegram') { if (typeof initializeTelegramUI === 'function') initializeTelegramUI(); }
             if (pageId === 'blacklist') { if (typeof initializeBlacklist === 'function') initializeBlacklist(); }
+            if (pageId === 'ai_settings') { if (typeof initializeAISettings === 'function') initializeAISettings(); }
             if (pageId === 'tickets') { initTicketsTab(); }
             if (pageId === 'theme') {
                 initializeWallpaperPresets();

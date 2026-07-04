@@ -76,6 +76,26 @@ function getMessageType(text) {
     return 'NON_SYSTEM';
 }
 
+/**
+ * Extracts the username of the person who left the feedback directly from the
+ * system message text. Works without any HTTP request.
+ * Examples:
+ *   RU: "Покупатель SanoSenpai написал отзыв к заказу #UNQTE317"
+ *   RU: "Покупатель SanoSenpai изменил отзыв к заказу #UNQTE317"
+ *   EN: "SanoSenpai has given feedback to the order #UNQTE317"
+ *   EN: "SanoSenpai has edited their feedback to the order #UNQTE317"
+ */
+function extractFeedbackAuthor(text) {
+    if (!text) return null;
+    // Russian: "Покупатель USERNAME написал/изменил отзыв..."
+    let m = text.match(/Покупатель\s+(\S+)\s+(?:написал|изменил)\s+отзыв/i);
+    if (m) return m[1];
+    // English: "USERNAME has given/edited... feedback"
+    m = text.match(/^(\S+)\s+has\s+(?:given|edited)/i);
+    if (m) return m[1];
+    return null;
+}
+
 async function getAuth() {
     const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
     if (!goldenKeyCookie?.value) return {};
@@ -445,8 +465,21 @@ async function verifyIAmSeller(orderId, auth) {
         if (!res.ok) return true; // не смогли проверить - не ломаем автоответы
         const html = await res.text();
         const info = await parseViaOffscreen(html, 'parseOrderParticipants');
+        if (!info) return true;
+
+        // FIX: Prefer auth.userId (known from active session) over DOM-parsed myId.
+        // When the order page is fetched via fetch() the HTML may lack correct data-app-data,
+        // so info.myId can be null even if info.sellerId/buyerId are correctly parsed.
+        // By comparing auth.userId directly we avoid false-positives that caused
+        // the extension to auto-reply to reviews the user left themselves as a buyer.
+        const myId = String(auth.userId || '');
+        let iAmSeller = null;
+        if (myId && info.sellerId) iAmSeller = (myId === String(info.sellerId));
+        else if (myId && info.buyerId) iAmSeller = (myId !== String(info.buyerId));
+        else iAmSeller = info.iAmSeller; // fall back to DOM-parsed result
+
         // iAmSeller === false → это МОЯ покупка, блокируем. null/undefined → не уверены, пропускаем.
-        const ok = !(info && info.iAmSeller === false);
+        const ok = !(iAmSeller === false);
         _sellerCheckCache.set(orderId, ok);
         if (_sellerCheckCache.size > 300) _sellerCheckCache.clear();
         return ok;
@@ -691,6 +724,15 @@ async function _runAutoResponderCycleInner() {
                 continue;
             }
 
+            // FIX: Skip chats where the last message was sent BY the current user.
+            // This happens when the user writes to another seller first – the extension
+            // used to see the chat as having a "new" message and fire a greeting.
+            // lastByMe is set by parseChatList when nodeMsg <= userMsg (already read = sent by us).
+            if (chat.lastByMe) {
+                if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
+                continue;
+            }
+
             if (!hasNew) continue;
 
             // Always advance our per-chat marker so we never re-handle this id, even on first run.
@@ -713,6 +755,19 @@ async function _runAutoResponderCycleInner() {
                 await notifyDearVendors(msg);
             } else if (msgType === 'ORDER_PURCHASED' || msgType === 'ORDER_CONFIRMED'
                        || msgType === 'NEW_FEEDBACK' || msgType === 'FEEDBACK_CHANGED') {
+
+                // FIX: Fastest check — if the username embedded in the feedback system message
+                // matches our own username (auth.username), this is OUR review as a buyer.
+                // No HTTP request needed; the name is right in the message text.
+                if (msgType === 'NEW_FEEDBACK' || msgType === 'FEEDBACK_CHANGED') {
+                    const feedbackAuthor = extractFeedbackAuthor(msg.messageText);
+                    if (feedbackAuthor && auth.username &&
+                        feedbackAuthor.toLowerCase() === auth.username.toLowerCase()) {
+                        console.log(`Foxen AR: пропуск — это мой собственный отзыв как покупателя (автор: ${feedbackAuthor}).`);
+                        continue;
+                    }
+                }
+
                 // FIX 2.8.2 (№12): не реагируем на собственные покупки.
                 const _oid = (msg.messageText.match(RX.ORDER_ID) || [])[1] || null;
                 const iAmSeller = await verifyIAmSeller(_oid, auth);
@@ -727,6 +782,14 @@ async function _runAutoResponderCycleInner() {
                     await handleReview(msg, auth, fresh);
                 }
             } else if (msgType === 'NON_SYSTEM' && !isSameText) {
+                // FIX: do NOT fire greeting/keywords when the last message in the chat
+                // was written by the user themselves (lastByMe already filtered above,
+                // but also guard against edge cases where isUnread is false and there's
+                // no nodeMsg/userMsg data available).
+                if (!chat.isUnread) {
+                    if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
+                    continue;
+                }
                 await handleGreeting(msg, auth, fresh);
                 await handleKeywords(msg, auth, fresh);
             }

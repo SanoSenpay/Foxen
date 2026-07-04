@@ -3,7 +3,7 @@
 import './sales_db.js'; // Foxen: IndexedDB-хранилище заказов (self.FPTSalesDB)
 import './purchases_db.js'; // Foxen: IndexedDB-хранилище покупок (self.FPTPurchasesDB)
 import './finance_db.js'; // Foxen: IndexedDB-хранилище финансов (self.FPTFinanceDB)
-import { fetchAIResponse, fetchAILotGeneration, fetchAITranslation, fetchAIImageGeneration } from './ai.js';
+import { fetchAIResponse, fetchAILotGeneration, fetchAITranslation, fetchAIImageGeneration, testAIProviderKey } from './ai.js';
 import { BUMP_ALARM_NAME, startAutoBump, stopAutoBump, runBumpCycle } from './autobump.js';
 import { runAutoResponderCycle, resetAutoResponderState } from './autoresponder.js';
 import { startEngine, stopEngine, onHeartbeat, onKeepalivePing, ENGINE_HEARTBEAT_ALARM } from './fpt_engine.js';
@@ -1361,6 +1361,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     if (request.action === "getAIImageSettings") {
         fetchAIImageGeneration(request.prompt).then(sendResponse);
+        return true;
+    }
+    if (request.action === "testAIProviderKey") {
+        testAIProviderKey(request.provider, request.apiKey, request.model).then(sendResponse);
         return true;
     }
 

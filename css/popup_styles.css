@@ -2406,3 +2406,23 @@
     background: var(--bg-sidebar);
     border-top: 1px solid var(--border-light);
 }
+
+/* ---- AI Settings page ---- */
+.fpt-ai-provider-btn {
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.fpt-ai-provider-btn--active {
+    background: rgba(192, 38, 211, 0.15) !important;
+    border-color: rgba(192, 38, 211, 0.5) !important;
+    color: #e879f9 !important;
+}
+.fpt-ai-provider-btn:hover:not(.fpt-ai-provider-btn--active) {
+    border-color: rgba(192, 38, 211, 0.25);
+    background: rgba(192, 38, 211, 0.05);
+}
+.fpt-ai-test-status { transition: color 0.2s; }
+.fpt-ai-test-status--ok      { color: #4ade80; }
+.fpt-ai-test-status--err     { color: #f87171; }
+.fpt-ai-test-status--warn    { color: #fbbf24; }
+.fpt-ai-test-status--loading { color: var(--fpt-text-sub, #5a5f7a); }

@@ -39,22 +39,31 @@ function initializeExactPrice() {
     inputBuyer.placeholder = 'Например, 100';
     inputBuyer.removeAttribute('id');
 
-    // Add status text inside the input wrapper
-    const statusText = createElement('span', {}, {
+    // Add status text — wrap the input itself so position:relative is isolated
+    // from Bootstrap's flex on .input-group, which breaks absolute positioning.
+    const statusText = document.createElement('span');
+    Object.assign(statusText.style, {
         fontSize: '11px',
         color: 'var(--fpt-text-main, #888)',
         position: 'absolute',
         right: '40px',
-        top: '50%',
-        transform: 'translateY(-50%)',
+        top: '0',
+        bottom: '0',
+        display: 'flex',
+        alignItems: 'center',
+        lineHeight: '1',
         pointerEvents: 'none',
-        opacity: '0.7'
+        opacity: '0.7',
+        zIndex: '1'
     });
 
-    // FunPay usually wraps the input in a .input-group with an addon for '₽'
-    const inputWrapper = buyerFormGroup.querySelector('.input-group') || buyerFormGroup;
-    inputWrapper.style.position = 'relative';
-    inputWrapper.appendChild(statusText);
+    // Wrap just the input in a relative container so our span is positioned against it.
+    const inputWrap = document.createElement('div');
+    inputWrap.style.position = 'relative';
+    inputWrap.style.flex = '1'; // keep Bootstrap input-group layout intact
+    inputBuyer.parentNode.insertBefore(inputWrap, inputBuyer);
+    inputWrap.appendChild(inputBuyer);
+    inputWrap.appendChild(statusText);
 
     priceFormGroup.parentNode.insertBefore(buyerFormGroup, priceFormGroup.nextSibling);
 
@@ -96,17 +105,18 @@ function initializeExactPrice() {
     inputBuyer.addEventListener('input', () => {
         clearTimeout(typingTimer);
         const desiredAmount = parseFloat((inputBuyer.value || '').replace(',', '.'));
-        
+
         if (isNaN(desiredAmount) || desiredAmount <= 0) {
             statusText.textContent = '';
             return;
         }
 
         statusText.textContent = 'Считаю...';
-        
+
         typingTimer = setTimeout(async () => {
             try {
-                // If the seller price field is empty, put desiredAmount as probe
+                // Step 1: get initial commission coefficient using current seller price as a probe.
+                // If the seller field is empty, use desiredAmount as the starting probe.
                 let currentSeller = parseFloat((inputPrice.value || '').replace(',', '.'));
                 if (isNaN(currentSeller) || currentSeller <= 0) {
                     currentSeller = desiredAmount;
@@ -114,30 +124,50 @@ function initializeExactPrice() {
 
                 const prevBuyer = readBuyerPriceRub();
                 setSellerPrice(currentSeller);
-                let buyerForProbe = await waitRecalc(prevBuyer);
+                let buyerAfter = await waitRecalc(prevBuyer);
 
-                if (buyerForProbe === null || buyerForProbe <= 0) {
+                if (buyerAfter === null || buyerAfter <= 0) {
                     statusText.textContent = 'Ошибка: нет таблицы комиссий';
                     return;
                 }
 
-                const k = buyerForProbe / currentSeller;
-                if (!isFinite(k) || k <= 0) {
+                // Step 2: compute initial estimate and apply it.
+                let coeff = buyerAfter / currentSeller;
+                if (!isFinite(coeff) || coeff <= 0) {
                     statusText.textContent = 'Ошибка расчета';
                     return;
                 }
+                let sellerGuess = desiredAmount / coeff;
+                setSellerPrice(sellerGuess);
+                buyerAfter = await waitRecalc(buyerAfter);
 
-                const sellerPrice = desiredAmount / k;
-                setSellerPrice(sellerPrice);
+                // Step 3: correction loop — keep nudging seller price until buyer price
+                // matches exactly, or until we run out of attempts.
+                // FunPay's commission is applied in discrete steps (rounding) so one
+                // division is rarely enough; a few micro-corrections always converge.
+                const MAX_ITER = 8;
+                const TOLERANCE = 0.005; // less than half a kopeck
+                for (let i = 0; i < MAX_ITER; i++) {
+                    if (buyerAfter === null) break;
+                    const diff = buyerAfter - desiredAmount; // positive → buyer sees too much
+                    if (Math.abs(diff) <= TOLERANCE) break;  // close enough, done
 
-                const buyerNow = await waitRecalc(buyerForProbe);
-                if (buyerNow && Math.abs(buyerNow - desiredAmount) > 0.02) {
-                    const k2 = buyerNow / sellerPrice;
-                    if (isFinite(k2) && k2 > 0) setSellerPrice(desiredAmount / k2);
+                    // Re-derive coefficient from the CURRENT seller price we set,
+                    // then compute a corrected seller price.
+                    coeff = buyerAfter / sellerGuess;
+                    if (!isFinite(coeff) || coeff <= 0) break;
+                    const prevGuess = sellerGuess;
+                    sellerGuess = desiredAmount / coeff;
+
+                    // Safety: if the correction is negligibly small, stop to avoid infinite loop.
+                    if (Math.abs(sellerGuess - prevGuess) < 0.001) break;
+
+                    setSellerPrice(sellerGuess);
+                    buyerAfter = await waitRecalc(buyerAfter);
                 }
 
                 statusText.textContent = '✓ Рассчитано';
-                setTimeout(() => { if(statusText.textContent === '✓ Рассчитано') statusText.textContent = ''; }, 2000);
+                setTimeout(() => { if (statusText.textContent === '✓ Рассчитано') statusText.textContent = ''; }, 2000);
             } catch (e) {
                 statusText.textContent = 'Ошибка';
             }

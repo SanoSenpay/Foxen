@@ -94,6 +94,7 @@
                 "content/features/piggy_bank.js",
                 "content/features/lot_io.js",
                 "content/features/auto_review.js",
+                "content/features/ai_settings.js",
                 "content/features/fpt_identifier.js",
                 "content/features/needs_tab.js",
                 "content/features/slash_telegram_ui.js",

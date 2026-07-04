@@ -11,7 +11,133 @@ function fptNorm(t) {
         : t;
 }
 
+// ---------------------------------------------------------------------------
+// USER PROVIDER: read settings from storage
+// ---------------------------------------------------------------------------
+async function getUserAIProvider() {
+    const { fpToolsAIProvider = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAIProvider');
+    return fpToolsAIProvider;
+}
+
+// ---------------------------------------------------------------------------
+// makeAIRequestViaUserKey — direct call to user's chosen provider
+// Returns { success, data, source } or throws on network error
+// ---------------------------------------------------------------------------
+async function makeAIRequestViaUserKey(provider, apiKey, model, finalPrompt) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+    try {
+        if (provider === 'gemini') {
+            // Google Gemini — generativelanguage.googleapis.com
+            const mdl = model || 'gemini-2.0-flash';
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${apiKey}`;
+            const body = {
+                system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                contents: [{ role: 'user', parts: [{ text: finalPrompt.trim() }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+            };
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err?.error?.message || `HTTP ${res.status}`);
+            }
+            const json = await res.json();
+            const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error('Gemini: пустой ответ');
+            return { success: true, data: text.trim(), source: 'gemini' };
+
+        } else if (provider === 'openai') {
+            // OpenAI — api.openai.com
+            const mdl = model || 'gpt-4o-mini';
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: mdl,
+                    messages: [
+                        { role: 'system', content: SYSTEM_PROMPT },
+                        { role: 'user', content: finalPrompt.trim() }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 2048
+                }),
+                signal: controller.signal
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err?.error?.message || `HTTP ${res.status}`);
+            }
+            const json = await res.json();
+            const text = json?.choices?.[0]?.message?.content;
+            if (!text) throw new Error('OpenAI: пустой ответ');
+            return { success: true, data: text.trim(), source: 'openai' };
+
+        } else if (provider === 'openrouter') {
+            // OpenRouter — openrouter.ai (supports Gemini, Claude, Deepseek, etc.)
+            const mdl = model || 'google/gemini-2.0-flash-exp:free';
+            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                    'HTTP-Referer': 'https://funpay.com',
+                    'X-Title': 'Foxen Extension'
+                },
+                body: JSON.stringify({
+                    model: mdl,
+                    messages: [
+                        { role: 'system', content: SYSTEM_PROMPT },
+                        { role: 'user', content: finalPrompt.trim() }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 2048
+                }),
+                signal: controller.signal
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err?.error?.message || `HTTP ${res.status}`);
+            }
+            const json = await res.json();
+            const text = json?.choices?.[0]?.message?.content;
+            if (!text) throw new Error('OpenRouter: пустой ответ');
+            return { success: true, data: text.trim(), source: 'openrouter' };
+        }
+
+        throw new Error('Неизвестный провайдер: ' + provider);
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// makeAIRequest — main entry point. Tries user key first, falls back to Foxen
+// ---------------------------------------------------------------------------
 async function makeAIRequest(finalPrompt) {
+    // 1. Try user's own API key if configured
+    const userProv = await getUserAIProvider();
+    if (userProv.provider && userProv.apiKey) {
+        try {
+            const result = await makeAIRequestViaUserKey(
+                userProv.provider, userProv.apiKey, userProv.model || '', finalPrompt
+            );
+            return result; // { success, data, source: 'gemini'/'openai'/'openrouter' }
+        } catch (e) {
+            console.warn(`Foxen AI: ошибка провайдера ${userProv.provider}: ${e.message}. Переключаюсь на Foxen-сервер.`);
+            // fall through to Foxen server
+        }
+    }
+
+    // 2. Fallback: Foxen server (current behaviour)
     if (VERCEL_API_URL.includes('YOUR_VERCEL_PROJECT_NAME')) {
         return { success: false, error: "URL сервера не настроен в background/ai.js" };
     }
@@ -23,7 +149,6 @@ async function makeAIRequest(finalPrompt) {
     };
 
     try {
-        // 3.0: hard timeout so the UI never waits forever if the server hangs or is unreachable.
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 45000);
         let response;
@@ -58,7 +183,7 @@ async function makeAIRequest(finalPrompt) {
         const result = await response.json();
         
         if (result && result.response) {
-            return { success: true, data: result.response.trim() };
+            return { success: true, data: result.response.trim(), source: 'foxen' };
         } else {
             return { success: false, error: 'AI response format is incorrect or empty.' };
         }
@@ -73,6 +198,9 @@ async function makeAIRequest(finalPrompt) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Public API — unchanged signatures, source field added to return value
+// ---------------------------------------------------------------------------
 
 export async function fetchAIResponse(textForAI, context, myUsername, type = "rewrite") {
     let finalPrompt;
@@ -230,13 +358,13 @@ ${styleExamples}
 
     try {
         const aiJson = JSON.parse(result.data);
-        return { success: true, data: _cleanGen(aiJson) };
+        return { success: true, data: _cleanGen(aiJson), source: result.source };
     } catch (e) {
         const jsonMatch = result.data.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             try {
                 const cleanedJson = JSON.parse(jsonMatch[0]);
-                return { success: true, data: _cleanGen(cleanedJson) };
+                return { success: true, data: _cleanGen(cleanedJson), source: result.source };
             } catch (e2) {
                  return { success: false, error: `AI returned invalid JSON even after cleaning: ${e2.message}` };
             }
@@ -277,13 +405,13 @@ Output JSON:
 
     try {
         const aiJson = JSON.parse(result.data);
-        return { success: true, data: _clean(aiJson) };
+        return { success: true, data: _clean(aiJson), source: result.source };
     } catch (e) {
         const jsonMatch = result.data.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             try {
                 const cleanedJson = JSON.parse(jsonMatch[0]);
-                return { success: true, data: _clean(cleanedJson) };
+                return { success: true, data: _clean(cleanedJson), source: result.source };
             } catch (e2) {
                 return { success: false, error: `AI returned invalid JSON for translation (cleaned): ${e2.message}` };
             }
@@ -332,17 +460,30 @@ Your response MUST be a single, valid JSON object and nothing else.
 
     try {
         const aiJson = JSON.parse(result.data);
-        return { success: true, data: aiJson };
+        return { success: true, data: aiJson, source: result.source };
     } catch (e) {
         const jsonMatch = result.data.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             try {
                 const cleanedJson = JSON.parse(jsonMatch[0]);
-                return { success: true, data: cleanedJson };
+                return { success: true, data: cleanedJson, source: result.source };
             } catch (e2) {
                 return { success: false, error: `AI returned invalid JSON for image generation (cleaned): ${e2.message}` };
             }
         }
         return { success: false, error: `AI returned invalid JSON for image generation: ${e.message}` };
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Test connectivity for a provider — used by the settings UI
+// ---------------------------------------------------------------------------
+export async function testAIProviderKey(provider, apiKey, model) {
+    try {
+        const result = await makeAIRequestViaUserKey(provider, apiKey, model, 'Reply with exactly: ok');
+        if (result.success) return { success: true, source: result.source };
+        return { success: false, error: result.error || 'Нет ответа' };
+    } catch (e) {
+        return { success: false, error: e.message };
     }
 }

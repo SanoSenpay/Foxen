@@ -781,14 +781,23 @@ function parseChatList(html) {
             const lastByBot = rawMsg.startsWith(BOT_MARKER) || rawMsg.startsWith(OLD_BOT_MARKER);
             // strip marker + zero-width chars for clean text used in matching
             const cleanMsg = rawMsg.replace(/[\u2061\u2064]/g, '').trim();
+            // lastByMe: true when the last message was sent BY the current user (not incoming).
+            // If nodeMsg <= userMsg the message was already "read" by the account owner,
+            // which on FunPay means it was written by themselves. Also covers the case where
+            // the chat is not marked unread (isUnread=false) while nodeMsg advanced – i.e. the
+            // user typed a message in someone else's chat first.
+            const nodeMsgVal = Number.isNaN(nodeMsg) ? null : nodeMsg;
+            const userMsgVal = Number.isNaN(userMsg) ? null : userMsg;
+            const lastByMe = nodeMsgVal !== null && userMsgVal !== null && nodeMsgVal <= userMsgVal;
             return {
                 chatId: item.dataset.id,
                 chatName: nameEl ? nameEl.textContent.trim() : 'Unknown',
                 msgId: item.dataset.nodeMsg,
-                nodeMsg: Number.isNaN(nodeMsg) ? null : nodeMsg,
-                userMsg: Number.isNaN(userMsg) ? null : userMsg,
+                nodeMsg: nodeMsgVal,
+                userMsg: userMsgVal,
                 messageText: cleanMsg,
                 lastByBot,
+                lastByMe,
                 isUnread: item.classList.contains('unread'),
                 avatarUrl: avatarEl ? avatarEl.style.backgroundImage.slice(5, -2) : null
             };
