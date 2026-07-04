@@ -46,6 +46,14 @@ const FPT_FEATURE_REGISTRY = [
         selector: '.fpt-pd',
         preview: { kind: 'html', html: '<div class="fpt-pv-rmthub" style="justify-content:center; width:100%;"><span>📝 Описание профиля</span></div>' }
     },
+    {
+        id: 'profile_raise_all',
+        label: 'Кнопка «Поднять все лоты»',
+        desc: 'Кнопка на странице собственного профиля, позволяющая автоматически поднять лоты во всех активных разделах.',
+        group: 'Профиль продавца',
+        selector: '#fpt-raise-all-btn',
+        preview: { kind: 'html', html: '<div class="fpt-pv-rmthub" style="justify-content:center; width:100%;"><span style="color:#22c55e;">⬆ Поднять все (15)</span></div>' }
+    },
 
     // ───────────── Чат: поле ввода ─────────────
     {

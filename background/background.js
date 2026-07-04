@@ -1216,6 +1216,12 @@ function fptSnapshotForKey(key) {
 
 // --- Главный обработчик сообщений ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request && request.action === 'fptRaiseAllNow') {
+        runBumpCycle()
+            .then(res => sendResponse({ ok: true, summary: res || {} }))
+            .catch(e => sendResponse({ ok: false, error: e && e.message }));
+        return true;
+    }
     // 3.0: offscreen keepalive ping - receiving it resets the worker idle timer.
     if (request && request.target === 'background' && request.action === 'fptEngineKeepalive') {
         onKeepalivePing();

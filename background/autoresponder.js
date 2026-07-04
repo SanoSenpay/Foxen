@@ -265,7 +265,7 @@ function applyVariables(template, vars = {}) {
     const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const orderLink = vars.orderId ? `https://funpay.com/orders/${vars.orderId}/` : '';
 
-    return template
+    let result = template
         
         .replace(/{buyername}/gi,  vars.buyerName  || '')
         .replace(/{lotname}/gi,    vars.lotName    || '')

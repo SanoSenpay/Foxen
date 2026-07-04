@@ -10,10 +10,12 @@ async function logToConsole(message) {
         const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "*://funpay.com/*" });
         if (tabs.length > 0) {
             tabs.forEach(tab => {
-                chrome.tabs.sendMessage(tab.id, {
-                    action: 'logToAutoBumpConsole',
-                    message: logMessage
-                }).catch(e => {});
+                try {
+                    (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, {
+                        action: 'logToAutoBumpConsole',
+                        message: logMessage
+                    }, () => { let err = chrome.runtime.lastError; });
+                } catch(e) {}
             });
         }
     } catch (error) {

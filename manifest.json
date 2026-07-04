@@ -116,6 +116,7 @@
                 "content/features/rmthub_search.js",
                 "content/features/rmthub_profile_banner.js",
                 "content/features/profile_descriptions.js",
+                "content/features/profile_raise_all.js",
                 "content/features/support.js",
                 "content/features/chat_lot_note.js",
                 "content/features/discord.js",
