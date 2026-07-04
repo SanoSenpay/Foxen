@@ -343,6 +343,7 @@
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content .template-input,
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content select,
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content input[type="text"],
+.fp-tools-popup.fpt-menu-transparent .fp-tools-content input[type="password"],
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content input[type="number"],
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content input[type="range"],
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content input[type="search"],
@@ -363,6 +364,7 @@
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content .template-container .template-input,
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content .template-container select,
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content .template-container input[type="text"],
+.fp-tools-popup.fpt-menu-transparent .fp-tools-content .template-container input[type="password"],
 .fp-tools-popup.fpt-menu-transparent .fp-tools-content .template-container input[type="number"] {
     background: transparent !important;
 }
@@ -613,6 +615,7 @@
 }
 
 .fp-tools-popup input[type="text"],
+.fp-tools-popup input[type="password"],
 .fp-tools-popup input[type="number"],
 .fp-tools-popup textarea,
 .fp-tools-popup input[type="color"],
@@ -635,6 +638,7 @@
 }
 
 .fp-tools-popup input[type="text"]:focus,
+.fp-tools-popup input[type="password"]:focus,
 .fp-tools-popup input[type="number"]:focus,
 .fp-tools-popup textarea:focus,
 .fp-tools-popup select:focus {
@@ -644,6 +648,7 @@
 }
 
 .fp-tools-popup input[type="text"]:disabled,
+.fp-tools-popup input[type="password"]:disabled,
 .fp-tools-popup input[type="number"]:disabled,
 .fp-tools-popup input[type="color"]:disabled,
 .fp-tools-popup button:disabled,
@@ -6450,6 +6455,7 @@ a.contact-item:hover {
 /* ── Inputs & textareas ─────────────────────────────────────────── */
 .fp-tools-popup .template-input,
 .fp-tools-popup input[type="text"],
+.fp-tools-popup input[type="password"],
 .fp-tools-popup input[type="number"],
 .fp-tools-popup textarea {
     background: #0e0f16 !important;
@@ -6462,11 +6468,46 @@ a.contact-item:hover {
 
 .fp-tools-popup .template-input:focus,
 .fp-tools-popup input[type="text"]:focus,
+.fp-tools-popup input[type="password"]:focus,
 .fp-tools-popup input[type="number"]:focus,
 .fp-tools-popup textarea:focus {
     border-color: #C026D3 !important;
     outline: none;
     box-shadow: 0 0 0 2px rgba(192, 38, 211, 0.15) !important;
+}
+
+/* ── Input groups ────────────────────────────────────────────────── */
+.fp-tools-popup .input-group {
+    display: flex !important;
+    align-items: stretch !important;
+    width: 100% !important;
+}
+
+.fp-tools-popup .input-group .form-control {
+    flex: 1 !important;
+    margin-bottom: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.fp-tools-popup .input-group-addon {
+    background: #1a1c2e !important;
+    border: 1px solid #22253a !important;
+    border-left: none !important;
+    border-top-right-radius: 6px !important;
+    border-bottom-right-radius: 6px !important;
+    color: #a78bfa !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 12px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.fp-tools-popup .input-group-addon:hover {
+    background: #252840 !important;
+    color: #c084fc !important;
 }
 
 /* ── Checkbox rows ──────────────────────────────────────────────── */

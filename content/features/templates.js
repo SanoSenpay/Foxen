@@ -84,11 +84,36 @@ async function replaceTemplateVariables(template) {
     if(lotNameInChat) lotName = lotNameInChat.textContent.trim();
     result = result.replace(/{lotname}/g, lotName);
 
-    // NOTE: {orderlink}/{orderid} are intentionally NOT supported in chat templates.
-    // A chat can contain many orders, so there is no single reliable "current order" to
-    // link to - the old behaviour grabbed an arbitrary /orders/ link. These variables
-    // remain available only in the autoresponder (new-order / order-confirm), where a
-    // concrete order id exists.
+    let orderLink = '';
+    let orderId = '';
+    if (window.location.pathname.match(/\/orders\/[A-Z0-9]{8}\//i)) {
+        orderLink = window.location.href;
+        const idMatch = window.location.pathname.match(/\/orders\/([A-Z0-9]+)/i);
+        if (idMatch) {
+            orderId = idMatch[1];
+        }
+    } else {
+        let orderLinkEl = document.querySelector('.deal-desc a[href*="/orders/"], .deal-header a[href*="/orders/"], .deal-desc-status a[href*="/orders/"]');
+        if (!orderLinkEl) {
+            const orderLinkElements = Array.from(document.querySelectorAll('a[href*="/orders/"]'));
+            orderLinkEl = orderLinkElements.find(el => {
+                const href = el.getAttribute('href') || '';
+                return /\/orders\/[A-Z0-9]{8}\//i.test(href) || (href.includes('/orders/') && !href.endsWith('/orders/') && !href.includes('/orders/trade'));
+            });
+        }
+        if (orderLinkEl) {
+            orderLink = orderLinkEl.getAttribute('href');
+            if (orderLink.startsWith('/')) {
+                orderLink = 'https://funpay.com' + orderLink;
+            }
+            const idMatch = orderLink.match(/\/orders\/([A-Z0-9]+)/i);
+            if (idMatch) {
+                orderId = idMatch[1];
+            }
+        }
+    }
+    result = result.replace(/{orderlink}/g, orderLink);
+    result = result.replace(/{orderid}/g, orderId);
 
     const aiRegex = /\{ai:([^}]+)\}/g;
     let match;
@@ -130,6 +155,22 @@ async function replaceTemplateVariables(template) {
                 chatInputForLoading.disabled = false;
              }
         }
+    }
+    // Parse Spintax {option1|option2|...}
+    const spintaxRegex = /{([^{}]+)}/g;
+    let prevResult = '';
+    let iterations = 0;
+    while (result !== prevResult && iterations < 5) {
+        prevResult = result;
+        iterations++;
+        result = result.replace(spintaxRegex, (match, optionsText) => {
+            if (optionsText.includes('|')) {
+                const options = optionsText.split('|');
+                const randomIndex = Math.floor(Math.random() * options.length);
+                return options[randomIndex];
+            }
+            return match;
+        });
     }
     return result;
 }

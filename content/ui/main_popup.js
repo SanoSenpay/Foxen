@@ -67,6 +67,8 @@ function createMainPopup() {
             .fp-nav-divider:first-child{margin-top:0!important;}
             .fp-nav-divider:hover{background:none!important;}
             .fp-dark-preset-btn{width:100%;margin-bottom:12px;background:rgba(0,0,0,.3)!important;border-color:rgba(255,255,255,.1)!important;display:flex;align-items:center;justify-content:center;gap:8px;}
+            .fpt-fork-badge{margin-left:8px;font-size:10px;font-weight:600;color:rgba(167,139,250,0.7);background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.18);padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:0.5px;display:inline-flex;align-items:center;height:fit-content;vertical-align:middle;user-select:none;transition:all 0.2s ease;cursor:pointer;text-decoration:none;}
+            .fpt-fork-badge:hover{color:rgba(192,38,211,0.9);background:rgba(192,38,211,0.1);border-color:rgba(192,38,211,0.3);box-shadow:0 0 8px rgba(192,38,211,0.15);}
         `;
         document.head.appendChild(s);
     }
@@ -75,7 +77,7 @@ function createMainPopup() {
     toolsPopup.className = 'fp-tools-popup';
     toolsPopup.innerHTML = `
         <div class="fp-tools-header">
-            <h2><a href="https://funpay.tools" target="_blank" class="fp-tools-site-link">Foxen</a></h2>
+            <h2 style="display:inline-flex;align-items:center;"><a href="https://foxen.page.gd" target="_blank" class="fp-tools-site-link">Foxen</a><a href="https://funpay.tools" target="_blank" class="fpt-fork-badge">FunPay Tools Fork</a></h2>
             <button class="close-btn" aria-label="Закрыть"></button>
         </div>
         <div class="fp-tools-body">
@@ -491,12 +493,17 @@ function createMainPopup() {
                         <ul class="variables-list">
                             <li><span class="variable-code">{buyername}</span> - Имя покупателя в текущем чате.</li>
                             <li><span class="variable-code">{lotname}</span> - Название товара, который обсуждается в чате.</li>
+                            <li><span class="variable-code">{orderlink}</span> - Ссылка на заказ (если открыт заказ или есть активная сделка в чате).</li>
+                            <li><span class="variable-code">{orderid}</span> - ID заказа (если открыт заказ или есть активная сделка в чате).</li>
                             <li><span class="variable-code">{welcome}</span> - "Доброе утро!", "Добрый день!" или "Добрый вечер!" в зависимости от времени.</li>
                             <li><span class="variable-code">{date}</span> - Текущая дата и время (например, 25.12.2025 14:30).</li>
                             <li><span class="variable-code">{bal}</span> - Ваш текущий баланс на FunPay.</li>
                             <li><span class="variable-code">{activesells}</span> - Количество ваших активных продаж.</li>
                             <li><span class="variable-code">{ai: ваш запрос}</span> - Вставляет текст, сгенерированный ИИ на основе вашего запроса. 
                                 <br><em>Пример: <code>{ai: вежливо поблагодари за покупку}</code></em>
+                            </li>
+                            <li><span class="variable-code">{вариант1|вариант2}</span> - Выберет один случайный вариант при отправке (спинтакс для рандомизации сообщений).
+                                <br><em>Пример: <code>{Привет|Здравствуйте}, {как успехи|рад вас видеть}!</code></em>
                             </li>
                         </ul>
                      </div>
@@ -798,7 +805,8 @@ function createMainPopup() {
                         <div class="input-group" style="margin-top:6px;">
                             <input type="password" id="fptAIApiKey" class="form-control" placeholder="Вставьте ключ сюда..." autocomplete="off">
                             <span class="input-group-addon" id="fptAIToggleKey" style="cursor:pointer;user-select:none;" title="Показать/скрыть">
-                                <span class="material-symbols-rounded" style="font-size:16px;vertical-align:-3px;">visibility</span>
+                                <span class="material-symbols-rounded eye-open" style="font-size:16px;vertical-align:-3px;">visibility</span>
+                                <span class="material-symbols-rounded eye-closed" style="font-size:16px;vertical-align:-3px;display:none;">visibility_off</span>
                             </span>
                         </div>
                     </div>

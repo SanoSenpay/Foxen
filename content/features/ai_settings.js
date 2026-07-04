@@ -69,7 +69,12 @@ async function initializeAISettings() {
         toggleKeyBtn.addEventListener('click', () => {
             const isHidden = apiKeyInput.type === 'password';
             apiKeyInput.type = isHidden ? 'text' : 'password';
-            toggleKeyBtn.querySelector('.material-symbols-rounded').textContent = isHidden ? 'visibility_off' : 'visibility';
+            const eyeOpen = toggleKeyBtn.querySelector('.eye-open');
+            const eyeClosed = toggleKeyBtn.querySelector('.eye-closed');
+            if (eyeOpen && eyeClosed) {
+                eyeOpen.style.display = isHidden ? 'none' : 'inline-block';
+                eyeClosed.style.display = isHidden ? 'inline-block' : 'none';
+            }
         });
     }
 

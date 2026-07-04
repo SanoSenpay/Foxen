@@ -284,6 +284,24 @@ function applyVariables(template, vars = {}) {
         .replace(/\$date/g,         dateStr)
         .replace(/\$time/g,         timeStr)
         .replace(/\$chat_name/g,    vars.buyerName  || '');
+
+    // Parse Spintax {option1|option2|...}
+    const spintaxRegex = /{([^{}]+)}/g;
+    let prevResult = '';
+    let iterations = 0;
+    while (result !== prevResult && iterations < 5) {
+        prevResult = result;
+        iterations++;
+        result = result.replace(spintaxRegex, (match, optionsText) => {
+            if (optionsText.includes('|')) {
+                const options = optionsText.split('|');
+                const randomIndex = Math.floor(Math.random() * options.length);
+                return options[randomIndex];
+            }
+            return match;
+        });
+    }
+    return result;
 }
 
 async function atomicUpdate(updater) {
