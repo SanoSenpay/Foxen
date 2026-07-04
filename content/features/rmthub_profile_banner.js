@@ -10,7 +10,7 @@
                 margin-top: 15px;
                 margin-bottom: 15px;
                 background: rgba(20, 20, 30, 0.4);
-                border: 1px solid rgba(192, 38, 211, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.08);
                 border-radius: 12px;
                 overflow: hidden;
                 backdrop-filter: blur(8px);
@@ -18,8 +18,8 @@
                 box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             }
             .fpt-rmth-banner:hover {
-                border-color: rgba(192, 38, 211, 0.5);
-                box-shadow: 0 4px 20px rgba(192, 38, 211, 0.15);
+                border-color: rgba(255, 255, 255, 0.15);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             }
             .fpt-rmth-btn {
                 display: flex;
@@ -28,22 +28,23 @@
                 gap: 8px;
                 width: 100%;
                 padding: 12px 16px;
-                background: linear-gradient(135deg, rgba(192,38,211,0.1), rgba(100,50,200,0.05));
-                color: #E9A8FF;
+                background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+                color: #dddddd;
                 font-weight: 600;
                 font-size: 14px;
                 border: none;
                 outline: none;
                 cursor: pointer;
-                transition: background 0.2s;
+                transition: background 0.2s, color 0.2s;
             }
             .fpt-rmth-btn:hover {
-                background: linear-gradient(135deg, rgba(192,38,211,0.2), rgba(100,50,200,0.1));
+                background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+                color: #ffffff;
             }
             .fpt-rmth-content {
                 display: none;
                 padding: 16px;
-                border-top: 1px solid rgba(192, 38, 211, 0.1);
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
             }
             .fpt-rmth-content.active {
                 display: block;

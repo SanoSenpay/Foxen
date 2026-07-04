@@ -311,16 +311,24 @@
     const s = document.createElement('style');
     s.id = 'fpt-pd-styles';
     s.textContent =
-      '.' + CARD + '{background:#0a0a0a;border-radius:16px;overflow:hidden;margin-bottom:24px;}' +
-      '.' + CARD + ' .profile.fpt-profile-body{padding:56px 28px 32px;text-align:center;background:#0a0a0a;}' +
+      '.' + CARD + '{background:rgba(18,18,18,0.4);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:16px;overflow:hidden;margin-bottom:24px;box-shadow:0 12px 40px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.06);position:relative;}' +
+      '.' + CARD + ' .profile.fpt-profile-body{padding:80px 28px 32px;text-align:center;background:transparent;position:relative;}' +
       '.' + CARD + ' .profile > h1.mb40{display:none !important;}' +
-      '.' + IDENTITY + '{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:32px;}' +
+      '.' + IDENTITY + '{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}' +
       '.fpt-profile-name{font-size:26px;font-weight:700;color:#fff;line-height:1.2;}' +
       '.fpt-profile-status{font-size:14px;font-weight:500;color:#888;line-height:1.2;}' +
       '.fpt-profile-status.fpt-online{color:#22c55e;}' +
       '.' + IDENTITY + ' .user-badges{margin:0;}' +
-      '.' + META + '{display:flex;justify-content:center;align-items:flex-start;gap:56px;flex-wrap:wrap;max-width:760px;margin:0 auto;text-align:left;}' +
-      '.' + META + ' .profile-header-cols{display:block;flex:0 1 auto;min-width:200px;}' +
+      '.fpt-profile-rating{display:inline-flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:24px;cursor:pointer;position:relative;z-index:20;}' +
+      '.fpt-stars-wrapper{position:relative;display:inline-flex;}' +
+      '.fpt-stars-bg, .fpt-stars-fg{display:flex;gap:4px;}' +
+      '.fpt-stars-bg{color:#d1d5db;}' +
+      '.fpt-stars-fg{color:#fbbf24;position:absolute;top:0;left:0;overflow:hidden;width:var(--rating-pct);}' +
+      '.fpt-stars-wrapper svg{width:22px;height:22px;flex-shrink:0;}' +
+      '.fpt-profile-rating .fpt-count{color:rgba(255,255,255,0.6);font-size:14px;font-weight:500;transition:color 0.2s;margin:0;}' +
+      '.fpt-profile-rating:hover .fpt-count{color:#fff;}' +
+      '.' + META + '{display:flex;justify-content:center;align-items:flex-start;gap:40px;flex-wrap:wrap;max-width:760px;margin:0 auto;text-align:center;}' +
+      '.' + META + ' .profile-header-cols{display:block;flex:1 1 50%;min-width:200px;max-width:320px;text-align:center;}' +
       '.' + META + ' .param-item{margin:0;}' +
       '.' + META + ' .param-item h5,.fpt-profile-meta .' + ROOT + ' h5{margin:0 0 8px;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#888;font-weight:600;}' +
       '.' + META + ' .param-item h5.text-bold{font-weight:600;}' +
@@ -328,7 +336,7 @@
       '.' + META + ' .param-item .text-nowrap{font-weight:400;}' +
       '.' + ROW + '{display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;}' +
       '.' + ROW + ' > .profile-header-cols{flex:0 0 auto;}' +
-      '.' + ROOT + '{flex:0 1 280px;min-width:200px;max-width:360px;}' +
+      '.' + ROOT + '{flex:1 1 50%;min-width:200px;max-width:320px;text-align:center;}' +
       '.' + ROOT + ' h5.fpt-pd-h{font-weight:600;}' +
       '.' + TEXT + '{white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:' + MAX_LINES + ';line-clamp:' + MAX_LINES + ';overflow:hidden;}' +
       '.' + EDIT + '{border:0;background:transparent;color:var(--fpt-pd-primary,#f59e0b);cursor:pointer;font-size:12px;font-weight:600;padding:0;margin-top:6px;}' +
@@ -342,21 +350,21 @@
       '.fpt-pd-dots > span:nth-child(2){animation-delay:.15s;}' +
       '.fpt-pd-dots > span:nth-child(3){animation-delay:.3s;}' +
       '@keyframes fpt-pd-bounce{0%,80%,100%{opacity:.25;transform:translateY(0);}40%{opacity:.9;transform:translateY(-4px);}}' +
-      '.' + CARD + ' .profile-cover.fpt-cover-host{position:relative !important;overflow:visible !important;min-height:200px !important;height:200px !important;border-radius:0 !important;background:#0d1321 !important;}' +
-      '.' + CARD + ' .profile-cover{position:relative !important;overflow:visible !important;min-height:200px !important;height:200px !important;background:#0d1321 !important;}' +
+      '.' + CARD + ' .profile-cover.fpt-cover-host{position:relative !important;overflow:visible !important;min-height:350px !important;height:350px !important;border-radius:0 !important;background:#0d1321 !important;}' +
+      '.' + CARD + ' .profile-cover{position:relative !important;overflow:visible !important;min-height:350px !important;height:350px !important;background:#0d1321 !important;}' +
       '.' + CARD + ' .profile-cover.fpt-cover-host .profile-cover-container{display:none !important;}' +
-      '.' + CARD + ' .profile-cover:not(.fpt-cover-host) .profile-cover-container{position:absolute !important;inset:0 !important;height:200px !important;overflow:hidden !important;}' +
-      '.' + CARD + ' .profile-cover:not(.fpt-cover-host) .profile-cover-img{height:200px !important;background-size:cover !important;background-position:center 25% !important;}' +
-      '.' + CARD + ' .profile-cover-img.fpt-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:200px !important;overflow:hidden !important;border-radius:0 !important;z-index:0 !important;}' +
+      '.' + CARD + ' .profile-cover:not(.fpt-cover-host) .profile-cover-container{position:absolute !important;inset:0 !important;height:350px !important;overflow:hidden !important;}' +
+      '.' + CARD + ' .profile-cover:not(.fpt-cover-host) .profile-cover-img{height:350px !important;background-size:cover !important;background-position:center 25% !important;}' +
+      '.' + CARD + ' .profile-cover-img.fpt-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:350px !important;overflow:hidden !important;border-radius:0 !important;z-index:0 !important;}' +
       '.' + CARD + ' .fpt-cover-host,' + '.' + CARD + ' .fpt-cover-host .profile-cover-img,' + '.' + CARD + ' .profile-cover-img.fpt-cover,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-pic,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gtop,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gbottom,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gdark{transform:none !important;filter:none !important;opacity:1 !important;}' +
       '.container.profile-header:not(.' + CARD + ') .fpt-cover-host{position:relative !important;overflow:hidden !important;min-height:350px !important;border-radius:0 0 40px 40px !important;background:#0d1321 !important;}' +
       '.container.profile-header:not(.' + CARD + ') .profile-cover-img.fpt-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;overflow:hidden !important;border-radius:0 0 40px 40px !important;z-index:0 !important;}' +
       '.fpt-cover-pic{position:absolute !important;inset:0 !important;background-size:cover !important;background-position:center 25% !important;background-repeat:no-repeat !important;z-index:0 !important;}' +
-      '.fpt-cover-gtop{position:absolute !important;inset:0 !important;background:linear-gradient(180deg,rgba(13,19,33,.22) 0%,transparent 35%,transparent 75%,rgba(13,19,33,.32) 100%) !important;z-index:1 !important;pointer-events:none;}' +
-      '.fpt-cover-gbottom{position:absolute !important;bottom:0 !important;left:0 !important;width:100% !important;height:120px !important;background:linear-gradient(0deg,rgba(10,10,10,.85) 0%,rgba(10,10,10,.35) 55%,transparent 100%) !important;z-index:1 !important;pointer-events:none;}' +
-      '.fpt-cover-gdark{position:absolute !important;inset:0 !important;background:rgba(0,0,0,.05) !important;z-index:1 !important;pointer-events:none;}' +
-      '.' + CARD + ' .avatar{position:absolute !important;bottom:0 !important;left:50% !important;transform:translate(-50%,50%) !important;margin:0 !important;z-index:10 !important;}' +
-      '.' + CARD + ' .avatar-photo{border:3px solid rgba(245,158,11,.55);box-shadow:0 0 24px rgba(245,158,11,.25);}' +
+      '.fpt-cover-gtop{position:absolute !important;inset:0 !important;background:linear-gradient(180deg,rgba(13,19,33,.15) 0%,transparent 25%,transparent 100%) !important;z-index:1 !important;pointer-events:none;}' +
+      '.fpt-cover-gbottom{display:none !important;}' +
+      '.fpt-cover-gdark{display:none !important;}' +
+      '.' + CARD + ' .avatar{position:absolute !important;bottom:-25px !important;left:50% !important;transform:translate(-50%,50%) !important;margin:0 !important;z-index:10 !important;}' +
+      '.' + CARD + ' .avatar-photo{border:1.5px solid rgba(255,255,255,0.15);box-shadow:0 8px 24px rgba(0,0,0,0.5);}' +
       '.container.profile-header:not(.' + CARD + ') .fpt-cover-host .avatar,.container.profile-header:not(.' + CARD + ') .profile-cover-img.fpt-cover .avatar{position:relative !important;z-index:10 !important;margin-top:60px !important;transform:none !important;}' +
       '.fpt-banner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);opacity:0;transition:opacity .18s ease,background .18s ease;cursor:pointer;z-index:5;}' +
       '.profile-cover-img.fpt-cover:hover .fpt-banner-overlay{opacity:1;background:rgba(0,0,0,.45);}' +
@@ -450,6 +458,44 @@
       }
     }
 
+    const identity = profile.querySelector('.' + IDENTITY);
+    if (identity && !profile.querySelector('.fpt-profile-rating')) {
+      const ratingCol = profile.querySelector('.profile-header-col-rating');
+      if (ratingCol) {
+        const txt = ratingCol.textContent;
+        const scoreMatch = txt.match(/(\d+(?:\.\d+)?)\s*из\s*\d+/i) || txt.match(/(\d+(?:\.\d+)?)/);
+        const score = scoreMatch ? scoreMatch[1] : '';
+        const countMatch = txt.match(/(?:Всего\s+)?(\d+)\s*отзыв/i);
+        const count = countMatch ? countMatch[1] : '';
+
+        let numScore = parseFloat(score.replace(',', '.'));
+        if (isNaN(numScore)) numScore = 0;
+        let pct = (numScore / 5) * 100;
+        if (pct > 100) pct = 100;
+
+        if (score || count) {
+          const rBlock = document.createElement('a');
+          rBlock.href = '#reviews';
+          rBlock.className = 'fpt-profile-rating';
+          rBlock.style.textDecoration = 'none';
+          rBlock.title = 'Нажмите, чтобы прочитать отзывы';
+          
+          const starSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>';
+          const fiveStars = starSvg.repeat(5);
+
+          rBlock.innerHTML = 
+            '<div class="fpt-stars-wrapper" style="--rating-pct: ' + pct + '%;">' +
+               '<div class="fpt-stars-bg">' + fiveStars + '</div>' +
+               '<div class="fpt-stars-fg">' + fiveStars + '</div>' +
+            '</div>' +
+            '<span class="fpt-count">' + count + ' отзывов</span>';
+
+          identity.after(rBlock);
+          ratingCol.style.display = 'none';
+        }
+      }
+    }
+
     let meta = profile.querySelector('.' + META);
     if (!meta) {
       meta = document.createElement('div');
@@ -512,27 +558,36 @@
     root.innerHTML = '';
     const h = document.createElement('h5');
     h.className = 'fpt-pd-h';
-    h.textContent = 'Описание';
+    h.style.display = 'flex';
+    h.style.alignItems = 'center';
+    h.style.justifyContent = 'center';
+    h.style.gap = '8px';
+    
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = 'Описание';
+    h.appendChild(titleSpan);
+
+    if (state.isOwn) {
+      const editIcon = document.createElement('i');
+      editIcon.className = 'fa fa-pen';
+      editIcon.style.cursor = 'pointer';
+      editIcon.style.color = 'rgba(255,255,255,0.6)';
+      editIcon.style.fontSize = '11px';
+      editIcon.style.transition = 'color 0.2s';
+      editIcon.title = state.description ? 'Редактировать описание' : 'Добавить описание';
+      editIcon.onmouseover = () => editIcon.style.color = '#fff';
+      editIcon.onmouseout = () => editIcon.style.color = 'rgba(255,255,255,0.6)';
+      editIcon.addEventListener('click', () => renderEditor(root, state));
+      h.appendChild(editIcon);
+    }
+    
     root.appendChild(h);
+    
     if (state.description) {
       const d = document.createElement('div');
       d.className = TEXT;
       d.textContent = state.description;
       root.appendChild(d);
-    }
-    if (!state.isOwn) return;
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = EDIT;
-    btn.textContent = state.description ? 'Редактировать описание' : 'Добавить описание';
-    btn.addEventListener('click', () => renderEditor(root, state));
-    if (state.description) {
-      const wrap = document.createElement('div');
-      wrap.style.marginTop = '6px';
-      wrap.appendChild(btn);
-      root.appendChild(wrap);
-    } else {
-      root.appendChild(btn);
     }
   }
 
