@@ -10,6 +10,9 @@
   const MAX_LINES = 4;
   const ROOT = 'fpt-pd';
   const ROW = 'fpt-pd-row';
+  const CARD = 'fpt-profile-card';
+  const META = 'fpt-profile-meta';
+  const IDENTITY = 'fpt-profile-identity';
   const TEXT = 'fpt-pd-text';
   const EDIT = 'fpt-pd-edit';
   const SESSION_KEY = 'fptProfileSession';
@@ -308,11 +311,25 @@
     const s = document.createElement('style');
     s.id = 'fpt-pd-styles';
     s.textContent =
+      '.' + CARD + '{background:#0a0a0a;border-radius:16px;overflow:hidden;margin-bottom:24px;}' +
+      '.' + CARD + ' .profile.fpt-profile-body{padding:56px 28px 32px;text-align:center;background:#0a0a0a;}' +
+      '.' + CARD + ' .profile > h1.mb40{display:none !important;}' +
+      '.' + IDENTITY + '{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:32px;}' +
+      '.fpt-profile-name{font-size:26px;font-weight:700;color:#fff;line-height:1.2;}' +
+      '.fpt-profile-status{font-size:14px;font-weight:500;color:#888;line-height:1.2;}' +
+      '.fpt-profile-status.fpt-online{color:#22c55e;}' +
+      '.' + IDENTITY + ' .user-badges{margin:0;}' +
+      '.' + META + '{display:flex;justify-content:center;align-items:flex-start;gap:56px;flex-wrap:wrap;max-width:760px;margin:0 auto;text-align:left;}' +
+      '.' + META + ' .profile-header-cols{display:block;flex:0 1 auto;min-width:200px;}' +
+      '.' + META + ' .param-item{margin:0;}' +
+      '.' + META + ' .param-item h5,.fpt-profile-meta .' + ROOT + ' h5{margin:0 0 8px;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#888;font-weight:600;}' +
+      '.' + META + ' .param-item h5.text-bold{font-weight:600;}' +
+      '.' + META + ' .param-item .text-nowrap,.fpt-profile-meta .' + ROOT + ' .' + TEXT + '{color:#fff;font-size:14px;line-height:1.5;}' +
+      '.' + META + ' .param-item .text-nowrap{font-weight:400;}' +
       '.' + ROW + '{display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;}' +
       '.' + ROW + ' > .profile-header-cols{flex:0 0 auto;}' +
-      '.' + ROOT + '{flex:1 1 320px;min-width:280px;}' +
-      '.' + ROOT + ' h5{margin:0 0 6px;}' +
-      '.' + ROOT + ' h5.fpt-pd-h{font-weight:700;}' +
+      '.' + ROOT + '{flex:0 1 280px;min-width:200px;max-width:360px;}' +
+      '.' + ROOT + ' h5.fpt-pd-h{font-weight:600;}' +
       '.' + TEXT + '{white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:' + MAX_LINES + ';line-clamp:' + MAX_LINES + ';overflow:hidden;}' +
       '.' + EDIT + '{border:0;background:transparent;color:var(--fpt-pd-primary,#f59e0b);cursor:pointer;font-size:12px;font-weight:600;padding:0;margin-top:6px;}' +
       '.' + EDIT + ':hover{color:var(--fpt-pd-primary-hover,var(--fpt-pd-primary,#f59e0b));text-decoration:underline;}' +
@@ -325,14 +342,22 @@
       '.fpt-pd-dots > span:nth-child(2){animation-delay:.15s;}' +
       '.fpt-pd-dots > span:nth-child(3){animation-delay:.3s;}' +
       '@keyframes fpt-pd-bounce{0%,80%,100%{opacity:.25;transform:translateY(0);}40%{opacity:.9;transform:translateY(-4px);}}' +
-      '.fpt-cover-host{position:relative !important;overflow:hidden !important;min-height:350px !important;border-radius:0 0 40px 40px !important;background:#0d1321 !important;}' +
-      '.profile-cover-img.fpt-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;overflow:hidden !important;border-radius:0 0 40px 40px !important;z-index:0 !important;}' +
-      '.fpt-cover-host,.fpt-cover-host .profile-cover-img,.profile-cover-img.fpt-cover,.profile-cover-img.fpt-cover *{transform:none !important;filter:none !important;opacity:1 !important;}' +
+      '.' + CARD + ' .profile-cover.fpt-cover-host{position:relative !important;overflow:visible !important;min-height:200px !important;height:200px !important;border-radius:0 !important;background:#0d1321 !important;}' +
+      '.' + CARD + ' .profile-cover{position:relative !important;overflow:visible !important;min-height:200px !important;height:200px !important;background:#0d1321 !important;}' +
+      '.' + CARD + ' .profile-cover.fpt-cover-host .profile-cover-container{display:none !important;}' +
+      '.' + CARD + ' .profile-cover:not(.fpt-cover-host) .profile-cover-container{position:absolute !important;inset:0 !important;height:200px !important;overflow:hidden !important;}' +
+      '.' + CARD + ' .profile-cover:not(.fpt-cover-host) .profile-cover-img{height:200px !important;background-size:cover !important;background-position:center 25% !important;}' +
+      '.' + CARD + ' .profile-cover-img.fpt-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:200px !important;overflow:hidden !important;border-radius:0 !important;z-index:0 !important;}' +
+      '.' + CARD + ' .fpt-cover-host,' + '.' + CARD + ' .fpt-cover-host .profile-cover-img,' + '.' + CARD + ' .profile-cover-img.fpt-cover,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-pic,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gtop,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gbottom,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gdark{transform:none !important;filter:none !important;opacity:1 !important;}' +
+      '.container.profile-header:not(.' + CARD + ') .fpt-cover-host{position:relative !important;overflow:hidden !important;min-height:350px !important;border-radius:0 0 40px 40px !important;background:#0d1321 !important;}' +
+      '.container.profile-header:not(.' + CARD + ') .profile-cover-img.fpt-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;overflow:hidden !important;border-radius:0 0 40px 40px !important;z-index:0 !important;}' +
       '.fpt-cover-pic{position:absolute !important;inset:0 !important;background-size:cover !important;background-position:center 25% !important;background-repeat:no-repeat !important;z-index:0 !important;}' +
-      '.fpt-cover-gtop{position:absolute !important;inset:0 !important;background:linear-gradient(180deg,rgba(13,19,33,.22) 0%,transparent 35%,transparent 75%,rgba(13,19,33,.32) 100%) !important;z-index:1 !important;border-radius:0 0 40px 40px !important;pointer-events:none;}' +
-      '.fpt-cover-gbottom{position:absolute !important;bottom:0 !important;left:0 !important;width:100% !important;height:160px !important;background:linear-gradient(0deg,rgba(13,19,33,.6) 0%,rgba(13,19,33,.25) 45%,transparent 100%) !important;z-index:1 !important;border-radius:0 0 40px 40px !important;pointer-events:none;}' +
-      '.fpt-cover-gdark{position:absolute !important;inset:0 !important;background:rgba(0,0,0,.05) !important;z-index:1 !important;border-radius:0 0 40px 40px !important;pointer-events:none;}' +
-      '.profile-cover-img.fpt-cover .avatar,.fpt-cover-host .avatar{position:relative !important;z-index:10 !important; margin-top: 60px !important;}' +
+      '.fpt-cover-gtop{position:absolute !important;inset:0 !important;background:linear-gradient(180deg,rgba(13,19,33,.22) 0%,transparent 35%,transparent 75%,rgba(13,19,33,.32) 100%) !important;z-index:1 !important;pointer-events:none;}' +
+      '.fpt-cover-gbottom{position:absolute !important;bottom:0 !important;left:0 !important;width:100% !important;height:120px !important;background:linear-gradient(0deg,rgba(10,10,10,.85) 0%,rgba(10,10,10,.35) 55%,transparent 100%) !important;z-index:1 !important;pointer-events:none;}' +
+      '.fpt-cover-gdark{position:absolute !important;inset:0 !important;background:rgba(0,0,0,.05) !important;z-index:1 !important;pointer-events:none;}' +
+      '.' + CARD + ' .avatar{position:absolute !important;bottom:0 !important;left:50% !important;transform:translate(-50%,50%) !important;margin:0 !important;z-index:10 !important;}' +
+      '.' + CARD + ' .avatar-photo{border:3px solid rgba(245,158,11,.55);box-shadow:0 0 24px rgba(245,158,11,.25);}' +
+      '.container.profile-header:not(.' + CARD + ') .fpt-cover-host .avatar,.container.profile-header:not(.' + CARD + ') .profile-cover-img.fpt-cover .avatar{position:relative !important;z-index:10 !important;margin-top:60px !important;transform:none !important;}' +
       '.fpt-banner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);opacity:0;transition:opacity .18s ease,background .18s ease;cursor:pointer;z-index:5;}' +
       '.profile-cover-img.fpt-cover:hover .fpt-banner-overlay{opacity:1;background:rgba(0,0,0,.45);}' +
       '.fpt-banner-pencil{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;}' +
@@ -376,10 +401,89 @@
     } catch {}
   }
 
+  function parseProfileStatus(h1, statusEl) {
+    if (h1 && h1.classList.contains('online')) return { text: 'Онлайн', online: true };
+    if (!statusEl) return { text: '', online: false };
+    const raw = statusEl.textContent.replace(/\s+/g, ' ').trim();
+    const paren = raw.match(/\(([^)]+)\)/);
+    if (paren) return { text: paren[1].trim(), online: false };
+    const first = raw.split(/\n/)[0].trim();
+    if (/^онлайн$/i.test(first)) return { text: 'Онлайн', online: true };
+    return { text: first, online: false };
+  }
+
+  function ensureProfileLayout(descRoot) {
+    const card = document.querySelector('.container.profile-header');
+    const profile = card && card.querySelector(':scope > .profile');
+    if (!card || !profile) return null;
+
+    card.classList.add(CARD);
+    profile.classList.add('fpt-profile-body');
+
+    if (!profile.querySelector('.' + IDENTITY)) {
+      const h1 = profile.querySelector('h1.mb40');
+      if (h1) {
+        const identity = document.createElement('div');
+        identity.className = IDENTITY;
+
+        const nameSrc = h1.querySelector('.mr4') || h1.querySelector('a');
+        if (nameSrc) {
+          const name = document.createElement('span');
+          name.className = 'fpt-profile-name';
+          name.textContent = nameSrc.textContent.trim();
+          identity.appendChild(name);
+        }
+
+        const badges = h1.querySelector('.user-badges');
+        if (badges) identity.appendChild(badges.cloneNode(true));
+
+        const statusEl = h1.querySelector('.media-user-status');
+        const st = parseProfileStatus(h1, statusEl);
+        if (st.text) {
+          const status = document.createElement('span');
+          status.className = 'fpt-profile-status' + (st.online ? ' fpt-online' : '');
+          status.textContent = st.text;
+          identity.appendChild(status);
+        }
+
+        profile.insertBefore(identity, h1);
+      }
+    }
+
+    let meta = profile.querySelector('.' + META);
+    if (!meta) {
+      meta = document.createElement('div');
+      meta.className = META;
+      const cols = profile.querySelector('.profile-header-cols');
+      if (cols) {
+        profile.insertBefore(meta, cols);
+        meta.appendChild(cols);
+      } else {
+        profile.appendChild(meta);
+      }
+    }
+
+    const cols = profile.querySelector('.profile-header-cols');
+    if (cols && cols.parentElement !== meta) meta.appendChild(cols);
+
+    const legacyRow = profile.querySelector('.' + ROW);
+    if (legacyRow) {
+      legacyRow.querySelectorAll('.profile-header-cols, .' + ROOT).forEach((el) => {
+        if (el.parentElement !== meta) meta.appendChild(el);
+      });
+      legacyRow.remove();
+    }
+
+    if (descRoot && descRoot.parentElement !== meta) meta.appendChild(descRoot);
+    return meta;
+  }
+
   function buildRoot(anchor) {
     const root = document.createElement('div');
     root.className = 'param-item ' + ROOT;
     applyPrimaryColor(root);
+    const meta = ensureProfileLayout(root);
+    if (meta) return root;
     if (anchor.classList.contains('profile-header-cols') && anchor.parentElement) {
       const row = document.createElement('div');
       row.className = ROW;
@@ -856,7 +960,11 @@
     if (mounted) return;
     const profileId = profileIdFromUrl();
     if (profileId === null) return;
-    if (document.querySelector('.' + ROOT)) { mounted = true; return; }
+    if (document.querySelector('.' + ROOT)) {
+      mounted = true;
+      ensureProfileLayout(document.querySelector('.' + ROOT));
+      return;
+    }
 
     console.log('[FPT PD] mount() start, waiting for anchor…');
     const anchor = (await waitFor('.profile-header-cols', 10000))
@@ -865,7 +973,11 @@
     console.log('[FPT PD] anchor found:', !!anchor, anchor && anchor.className);
     if (!anchor) return;
     if (profileIdFromUrl() !== profileId) return;
-    if (document.querySelector('.' + ROOT)) { mounted = true; return; }
+    if (document.querySelector('.' + ROOT)) {
+      mounted = true;
+      ensureProfileLayout(document.querySelector('.' + ROOT));
+      return;
+    }
 
     injectStyles();
     mounted = true;
@@ -898,12 +1010,8 @@
 
     if (!description && !isOwn) {
       console.log('[FPT PD] empty + not own → removing block');
-      const row = root.closest('.' + ROW);
-      if (row && row.firstElementChild && row.firstElementChild.classList.contains('profile-header-cols')) {
-        row.parentElement.insertBefore(row.firstElementChild, row);
-      }
+      ensureProfileLayout(null);
       root.remove();
-      if (row) row.remove();
       return;
     }
     console.log('[FPT PD] rendering view, isOwn=', isOwn);
@@ -925,6 +1033,7 @@
         if (cover) {
           cover.classList.add('fpt-cover-host');
           applyBanner(cached.bannerUrl);
+          ensureProfileLayout(null);
           return;
         }
         if (n > 0) setTimeout(() => tryApply(n - 1), 40);
