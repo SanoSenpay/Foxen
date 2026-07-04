@@ -1275,6 +1275,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    // Generic Fetch Proxy for bypassing CSP (used by profile_descriptions.js)
+    if (request.action === 'fptFetchProxy') {
+        (async () => {
+            try {
+                const res = await fetch(request.url, request.options);
+                const text = await res.text();
+                const headers = {};
+                res.headers.forEach((val, key) => { headers[key] = val; });
+                sendResponse({ ok: res.ok, status: res.status, statusText: res.statusText, text, headers });
+            } catch (e) {
+                sendResponse({ ok: false, error: e.message });
+            }
+        })();
+        return true;
+    }
+
     // RMTHUB PROXY (bypasses CORS - content scripts can't fetch cross-origin)
     if (request.action === 'rmthubFetch') {
         (async () => {

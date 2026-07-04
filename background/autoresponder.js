@@ -666,17 +666,19 @@ async function _runAutoResponderCycleInner() {
     if (!auth.golden_key || !auth.csrf_token || !auth.userId) return;
 
     try {
-        // Foxen's approach: use a FRESH RANDOM tag every cycle. A single persisted tag
-        // (the old behaviour) goes stale and FunPay stops returning chat updates - the
-        // classic "autoresponder stops working until reload". We also request
-        // orders_counters alongside chat_bookmarks so order events surface immediately.
-        const msgTag = randomTag();
-        const orderTag = randomTag();
+        // Foxen 2.8.2: Use server-provided tags to enable true long-polling instead of 
+        // hammering the server with random tags every 3 seconds.
+        if (!globalThis._fptRunnerTags) {
+            globalThis._fptRunnerTags = {
+                chat: randomTag(),
+                order: randomTag()
+            };
+        }
 
         const runnerPayload = {
             objects: JSON.stringify([
-                { type: 'chat_bookmarks',  id: auth.userId, tag: msgTag,   data: false },
-                { type: 'orders_counters', id: auth.userId, tag: orderTag, data: false }
+                { type: 'chat_bookmarks',  id: auth.userId, tag: globalThis._fptRunnerTags.chat,   data: false },
+                { type: 'orders_counters', id: auth.userId, tag: globalThis._fptRunnerTags.order, data: false }
             ]),
             request: false,
             csrf_token: auth.csrf_token
@@ -696,7 +698,13 @@ async function _runAutoResponderCycleInner() {
 
         if (!res.ok) throw new Error(`Runner HTTP ${res.status}`);
         const data = await res.json();
+        
         const chatObj = data.objects?.find(o => o.type === 'chat_bookmarks');
+        const orderObj = data.objects?.find(o => o.type === 'orders_counters');
+        
+        if (chatObj?.tag) globalThis._fptRunnerTags.chat = chatObj.tag;
+        if (orderObj?.tag) globalThis._fptRunnerTags.order = orderObj.tag;
+
         if (!chatObj || !chatObj.data?.html) return;
 
         const chats = await parseViaOffscreen(chatObj.data.html, 'parseChatList');

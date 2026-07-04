@@ -38,6 +38,14 @@ const FPT_FEATURE_REGISTRY = [
         selector: '.fpt-rmth-banner',
         preview: { kind: 'html', html: '<div class="fpt-pv-rmthub" style="justify-content:center; width:100%;"><span>📊 Статистика RMT Hub</span></div>' }
     },
+    {
+        id: 'profile_descriptions',
+        label: 'Описание и баннер профиля',
+        desc: 'Позволяет установить кастомное описание и анимированный баннер на вашей странице профиля, которые будут видеть все пользователи расширения.',
+        group: 'Профиль продавца',
+        selector: '.fpt-pd',
+        preview: { kind: 'html', html: '<div class="fpt-pv-rmthub" style="justify-content:center; width:100%;"><span>📝 Описание профиля</span></div>' }
+    },
 
     // ───────────── Чат: поле ввода ─────────────
     {
