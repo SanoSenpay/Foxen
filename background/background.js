@@ -104,7 +104,7 @@ async function runSalesUpdateCycle() {
             const options = {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Cookie': `golden_key=${auth.golden_key}` },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest', 'X-Csrf-Token': auth.csrf_token, 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` },
                 body: body
             };
             // 429/5xx-aware retry: если FunPay всё-таки притормозит — откатываемся и
@@ -259,7 +259,8 @@ async function runFinanceUpdateCycle() {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Cookie': `golden_key=${auth.golden_key}`
+                    'X-Csrf-Token': auth.csrf_token,
+                    'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
                 },
                 body: params
             };
@@ -369,7 +370,7 @@ async function runPurchasesUpdateCycle() {
             const options = {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Cookie': `golden_key=${auth.golden_key}` },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest', 'X-Csrf-Token': auth.csrf_token, 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` },
                 body: body
             };
             // 429/5xx-aware retry: если FunPay всё-таки притормозит — откатываемся и
@@ -841,12 +842,12 @@ async function cloneBuildFieldsInternal(auth, nodeId, attributes, attributePairs
     if (!nodeId) throw new Error('Неизвестна подкатегория (node) лота.');
     
     const editUrl = `https://funpay.com/lots/offerEdit?node=${nodeId}&setlocale=en`;
-    const resp = await fetch(editUrl, { headers: { 'Cookie': `golden_key=${auth.golden_key}` } });
+    const resp = await fetch(editUrl, { headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` } });
     if (!resp.ok) throw new Error(`Не удалось открыть форму категории: ${resp.status}`);
     const html = await resp.text();
     
     // ВОЗВРАЩАЕМ русский язык вашему аккаунту
-    await fetch(`https://funpay.com/?setlocale=ru`, { headers: { 'Cookie': `golden_key=${auth.golden_key}` } });
+    await fetch(`https://funpay.com/?setlocale=ru`, { headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` } });
     
     const fields = await parseHtmlViaOffscreen(html, 'solveCloneForm', { attributes: attributes || [], attributePairs: attributePairs || [] });
     if (!fields) throw new Error('Не удалось разобрать форму категории.');
@@ -865,7 +866,7 @@ async function cloneCalcNetPrice(auth, nodeId, buyerPrice, currencyCode) {
         'accept': '*/*',
         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'x-requested-with': 'XMLHttpRequest',
-        'Cookie': `golden_key=${auth.golden_key}`
+        'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
     };
     const base = 100; // как в плагине
     const body = new URLSearchParams({ nodeId: String(nodeId), price: String(base) });
@@ -1103,7 +1104,14 @@ async function processNextLotImport() {
         const auth = await getAuthDetailsForBackground();
         if (!auth.csrf_token) throw new Error("Не удалось получить CSRF-токен.");
 
-        const formData = new URLSearchParams(currentLot.data);
+        // Автоматическая адаптация полей (FunPay использует name в одних категориях и summary в других, либо изменил API)
+        const d = currentLot.data;
+        if (d['fields[summary][ru]'] && !d['fields[name][ru]']) d['fields[name][ru]'] = d['fields[summary][ru]'];
+        if (d['fields[summary][en]'] && !d['fields[name][en]']) d['fields[name][en]'] = d['fields[summary][en]'];
+        if (d['fields[name][ru]'] && !d['fields[summary][ru]']) d['fields[summary][ru]'] = d['fields[name][ru]'];
+        if (d['fields[name][en]'] && !d['fields[summary][en]']) d['fields[summary][en]'] = d['fields[name][en]'];
+
+        const formData = new URLSearchParams(d);
         formData.set('csrf_token', auth.csrf_token);
         formData.set('offer_id', '0'); // Всегда создаем новый лот
         formData.set('active', 'on'); // Активируем по умолчанию
@@ -1112,8 +1120,9 @@ async function processNextLotImport() {
             method: "POST",
             headers: { 
                 "X-Requested-With": "XMLHttpRequest", 
+                "X-Csrf-Token": auth.csrf_token,
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'Cookie': `golden_key=${auth.golden_key}`
+                'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
             },
             body: formData
         });
@@ -1405,7 +1414,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const auth = await getAuthDetailsForBackground();
                 if (!auth.userId) throw new Error("Не удалось получить ID пользователя.");
                 const userUrl = `https://funpay.com/users/${auth.userId}/`;
-                const userPageResponse = await fetch(userUrl, { headers: { 'Cookie': `golden_key=${auth.golden_key}` } });
+                const userPageResponse = await fetch(userUrl, { headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` } });
                 if (!userPageResponse.ok) throw new Error(`Ошибка сети: ${userPageResponse.status}`);
                 const userPageHtml = await userPageResponse.text();
                 const categories = await parseHtmlViaOffscreen(userPageHtml, 'parseUserCategories');
@@ -1424,7 +1433,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 const auth = await getAuthDetailsForBackground();
                 const editUrl = `https://funpay.com/lots/offerEdit?node=${request.nodeId}&offer=${request.offerId}`;
-                const response = await fetch(editUrl, { headers: { 'Cookie': `golden_key=${auth.golden_key}` } });
+                const response = await fetch(editUrl, { headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` } });
                 if (!response.ok) throw new Error(`Network Error: ${response.status}`);
                 const html = await response.text();
                 const data = await parseHtmlViaOffscreen(html, 'parseLotEditPage');
@@ -1452,7 +1461,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const editUrl = request.nodeId
                     ? `https://funpay.com/lots/offerEdit?node=${request.nodeId}&offer=${offerId}`
                     : `https://funpay.com/lots/offerEdit?offer=${offerId}`;
-                const resp = await fetch(editUrl, { headers: { 'Cookie': `golden_key=${auth.golden_key}` } });
+                const resp = await fetch(editUrl, { headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` } });
                 if (!resp.ok) throw new Error(`Ошибка загрузки лота: ${resp.status}`);
                 const html = await resp.text();
                 const data = await parseHtmlViaOffscreen(html, 'parseLotEditPage');
@@ -1501,7 +1510,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const offerId = request.offerId;
                 if (!offerId) throw new Error('Не передан ID лота.');
 
-                const ck = { 'Cookie': `golden_key=${auth.golden_key}` };
+                const ck = { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` };
                 const waitIfBatch = async () => { if (request.batch) await new Promise(r => setTimeout(r, 1500)); };
 
                 // 1) ФОРСИРУЕМ РУССКИЙ язык для сбора названий и описаний
@@ -1664,7 +1673,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 for (const url of urls) {
                     try {
                         // 1) скачиваем картинку (публичный sfunpay.com)
-                        const imgResp = await fetch(url, { headers: { 'Cookie': `golden_key=${auth.golden_key}` } });
+                        const imgResp = await fetch(url, { headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` } });
                         if (!imgResp.ok) throw new Error(`download ${imgResp.status}`);
                         const blob = await imgResp.blob();
 
@@ -1680,7 +1689,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             headers: {
                                 'Accept': '*/*',
                                 'X-Requested-With': 'XMLHttpRequest',
-                                'Cookie': `golden_key=${auth.golden_key}`
+                                'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
                             },
                             body: fd
                         });
@@ -1724,9 +1733,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         method: 'POST',
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
+                            'X-Csrf-Token': auth.csrf_token,
                             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                             'Accept': 'application/json, text/javascript, */*; q=0.01',
-                            'Cookie': `golden_key=${auth.golden_key}`
+                            'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
                         },
                         body
                     });
@@ -1789,7 +1799,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        'Cookie': `golden_key=${auth.golden_key}`
+                        'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
                     },
                     body
                 });
@@ -1823,7 +1833,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         const editUrl = nodeId
                             ? `https://funpay.com/lots/offerEdit?node=${nodeId}&offer=${payload.offer_id}`
                             : `https://funpay.com/lots/offerEdit?offer=${payload.offer_id}`;
-                        const r = await fetch(editUrl, { headers: { 'Cookie': `golden_key=${auth.golden_key}` } });
+                        const r = await fetch(editUrl, { headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` } });
                         if (r.ok) {
                             const html = await r.text();
                             const full = await parseHtmlViaOffscreen(html, 'parseLotEditPage');
@@ -1844,8 +1854,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
+                        'X-Csrf-Token': auth.csrf_token,
                         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        'Cookie': `golden_key=${auth.golden_key}`
+                        'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
                     },
                     body: formData
                 });
@@ -1888,7 +1899,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
-                        'Cookie': `golden_key=${auth.golden_key}`
+                        'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
                     }
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);

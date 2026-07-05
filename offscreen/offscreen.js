@@ -248,6 +248,44 @@ function parseLotEditPage(html) {
         // keep csrf_token for saving; remove only location
         delete dataObject.location;
 
+        // FIX 3.2: Зависимые поля (например, "Название игры" при выборе "Прочие") 
+        // подгружаются FunPay через AJAX, поэтому их нет в чистом HTML формы.
+        // Вытаскиваем их из встроенного JSON или data-атрибутов.
+        try {
+            const processOfferData = (offerObj) => {
+                if (offerObj && offerObj.fields) {
+                    for (const [key, val] of Object.entries(offerObj.fields)) {
+                        if (typeof val === 'object' && val !== null) {
+                            for (const [lang, lval] of Object.entries(val)) {
+                                const fName = `fields[${key}][${lang}]`;
+                                if (!dataObject[fName] && lval != null) dataObject[fName] = String(lval);
+                            }
+                        } else if (val != null) {
+                            const fName = `fields[${key}]`;
+                            if (!dataObject[fName]) dataObject[fName] = String(val);
+                        }
+                    }
+                }
+            };
+
+            // Проверяем data-offer на любых элементах
+            const offerEl = doc.querySelector('[data-offer]');
+            if (offerEl) {
+                processOfferData(JSON.parse(offerEl.getAttribute('data-offer')));
+            }
+
+            // Проверяем inline-скрипты
+            doc.querySelectorAll('script').forEach(script => {
+                const text = script.textContent;
+                if (text && text.includes('fields')) {
+                    const match = text.match(/(?:var|let|const)\s+(?:offer|offerData|lotData|data)\s*=\s*(\{.*?\});/);
+                    if (match) processOfferData(JSON.parse(match[1]));
+                }
+            });
+        } catch (err) {
+            console.warn('Не удалось распарсить скрытые зависимые поля:', err);
+        }
+
         // FIX 2.8.2 (№9): надёжно вытаскиваем «сообщение покупателю» (payment_msg).
         // FormData(form) иногда не захватывает это поле (ленивая отрисовка/свёрнутый
         // блок автовыдачи) - тогда сообщение покупателю терялось при импорте.

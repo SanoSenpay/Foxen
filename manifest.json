@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "description": "+35 инструментов для FunPay в одном расширении — ИИ, автоматизация, аналитика.",
     "permissions": [
         "storage",
@@ -158,7 +158,7 @@
     ],
     "browser_action": {
         "default_popup": "popup/popup.html",
-        "default_title": "FP Tools"
+        "default_title": "Foxen"
     },
     "browser_specific_settings": {
         "gecko": {
