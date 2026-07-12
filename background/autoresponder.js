@@ -332,6 +332,14 @@ async function handleGreeting(msg, auth, settings) {
     
     if (await isBlacklisted(msg.buyerName, 'response')) return;
 
+    // FIX: If WE initiated this chat (wrote first to another seller), do NOT send greeting
+    // when that seller replies. selfInitiatedChats is populated when lastByMe=true.
+    const selfInitiated = settings.selfInitiatedChats || [];
+    if (selfInitiated.includes(msg.chatId)) {
+        console.log(`Foxen AR: пропуск приветствия — чат ${msg.chatId} инициирован нами.`);
+        return;
+    }
+
     
     const cooldownDays = parseFloat(settings.greetingCooldownDays || 0);
     const greetedTimestamps = settings.greetedTimestamps || {};
@@ -371,6 +379,13 @@ async function handleKeywords(msg, auth, settings) {
     if (!settings.keywordsEnabled || !settings.keywords?.length) return;
     if (getMessageType(msg.messageText) !== 'NON_SYSTEM') return;
     if (await isBlacklisted(msg.buyerName, 'response')) return;
+
+    // FIX: Same as handleGreeting — if WE wrote first, don't react to keywords in their reply.
+    const selfInitiated = settings.selfInitiatedChats || [];
+    if (selfInitiated.includes(msg.chatId)) {
+        console.log(`Foxen AR: пропуск ключевых слов — чат ${msg.chatId} инициирован нами.`);
+        return;
+    }
 
     // 3.0: strip zero-width identifier chars and collapse whitespace before matching.
     // Bug fix: exact-match ("точно") commands failed because incoming messages can carry
@@ -413,10 +428,19 @@ async function handleReview(msg, auth, settings) {
     const orderId = orderMatch[1];
 
     const alreadyReplied = (settings.repliedOrderIds || []).includes(orderId);
-    if (alreadyReplied && msgType === 'NEW_FEEDBACK') return;
+    // FIX: block re-reply for BOTH NEW_FEEDBACK and FEEDBACK_CHANGED.
+    // Previously only NEW_FEEDBACK was blocked, so editing a review would
+    // trigger another auto-reply even though we already answered.
+    if (alreadyReplied) return;
 
     try {
-        const orderRes = await fetchWithRetry(`https://funpay.com/orders/${orderId}/`, { headers: { cookie: `golden_key=${auth.golden_key}` } });
+        // FIX: include PHPSESSID so FunPay returns an authenticated page with a proper
+        // review block and star rating. Without it the page may be served as guest HTML
+        // and parseOrderPageForReview returns null, silently skipping the reply.
+        const cookieStr = auth.phpsessid
+            ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
+            : `golden_key=${auth.golden_key}`;
+        const orderRes = await fetchWithRetry(`https://funpay.com/orders/${orderId}/`, { headers: { cookie: cookieStr } });
         if (!orderRes.ok) throw new Error(`HTTP ${orderRes.status}`);
         const orderHtml = await orderRes.text();
         const orderData = await parseViaOffscreen(orderHtml, 'parseOrderPageForReview');
@@ -479,7 +503,14 @@ async function verifyIAmSeller(orderId, auth) {
     if (!orderId) return true; // нет orderId - не блокируем (старое поведение)
     if (_sellerCheckCache.has(orderId)) return _sellerCheckCache.get(orderId);
     try {
-        const res = await fetchWithRetry(`https://funpay.com/orders/${orderId}/`, { headers: { cookie: `golden_key=${auth.golden_key}` } });
+        // FIX: include PHPSESSID alongside golden_key so FunPay returns a properly
+        // authenticated page with sellerId/buyerId in the HTML. Without PHPSESSID the
+        // page may be served as a guest and parseOrderParticipants finds nothing,
+        // causing iAmSeller=null which defaults to "allow" (correct but fragile).
+        const cookieStr = auth.phpsessid
+            ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
+            : `golden_key=${auth.golden_key}`;
+        const res = await fetchWithRetry(`https://funpay.com/orders/${orderId}/`, { headers: { cookie: cookieStr } });
         if (!res.ok) return true; // не смогли проверить - не ломаем автоответы
         const html = await res.text();
         const info = await parseViaOffscreen(html, 'parseOrderParticipants');
@@ -756,6 +787,18 @@ async function _runAutoResponderCycleInner() {
             // lastByMe is set by parseChatList when nodeMsg <= userMsg (already read = sent by us).
             if (chat.lastByMe) {
                 if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
+                // FIX: Remember that WE initiated this chat. If the other party replies later,
+                // greeting/keywords must NOT fire — we are the ones who wrote first.
+                // FIX #3: Only write to storage if the chatId is not already tracked,
+                // to avoid an atomicUpdate (get+set) on every polling cycle for every outgoing chat.
+                if (!(fresh.selfInitiatedChats || []).includes(chat.chatId)) {
+                    await atomicUpdate(s => {
+                        const arr = s.selfInitiatedChats || [];
+                        if (!arr.includes(chat.chatId)) arr.push(chat.chatId);
+                        if (arr.length > 500) arr.splice(0, arr.length - 500);
+                        s.selfInitiatedChats = arr;
+                    });
+                }
                 continue;
             }
 
@@ -863,6 +906,9 @@ export async function resetAutoResponderState() {
         delete fpToolsAutoReplies.lastSeenMsgIds;
         delete fpToolsAutoReplies.lastHandledText;
         delete fpToolsAutoReplies.autoResponderSeeded;
+        // FIX #7: also reset selfInitiatedChats so that after a full reset the user
+        // gets a clean slate — chats they previously initiated will be re-evaluated.
+        delete fpToolsAutoReplies.selfInitiatedChats;
         return chrome.storage.local.set({ fpToolsAutoReplies });
     });
 }

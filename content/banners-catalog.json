@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "categories": ["Аниме", "Игры", "Природа", "Космос", "Разное"],
+  "banners": [
+    {
+      "id": "foxen_blackhole",
+      "category": "Космос",
+      "title": "Черная дыра",
+      "url": "https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/foxen_blackhole.gif"
+    }
+  ]
+}

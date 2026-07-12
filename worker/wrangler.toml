@@ -1,0 +1,17 @@
+name = "foxen-profiles"
+main = "src/index.js"
+compatibility_date = "2024-03-20"
+
+# AI Binding для модерации
+[ai]
+binding = "AI"
+
+# KV Binding для хранения данных
+# ВАЖНО: Замените id на свой после создания namespace
+[[kv_namespaces]]
+binding = "FPT_PROFILES"
+id = "b5202dd2d5a34360967231ae21221e17"
+
+# Настройки CORS
+[vars]
+CORS_ORIGIN = "https://funpay.com"

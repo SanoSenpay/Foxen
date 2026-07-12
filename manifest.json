@@ -154,7 +154,8 @@
         "background/remake.js",
         "icons/magic.png",
         "icons/icon128.png",
-        "fonts/*.woff2"
+        "fonts/*.woff2",
+        "content/banners-catalog.json"
     ],
     "browser_action": {
         "default_popup": "popup/popup.html",

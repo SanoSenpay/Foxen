@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const SERVER = 'https://fpt-descs.starobinskiy01.workers.dev';
+  const SERVER = 'https://foxen-profiles.sanosenpay.workers.dev';
   const SHARED_KEY = 'fptoolsdim';
   const VERIFY_NODE_ID = '2046';
   const VERIFY_TITLE = 'FPT Verify';
@@ -90,14 +90,16 @@
   async function cacheRead(id) {
     const all = (await storageGet([CACHE_KEY]))[CACHE_KEY] || {};
     const e = all[id];
-    if (e && Date.now() - e.t < CLIENT_CACHE_TTL) return e;
+    if (e && Date.now() - e.t < CLIENT_CACHE_TTL && e.lastDescUpdate !== undefined) return e;
     return null;
   }
   async function cacheWrite(id, profile) {
     const all = (await storageGet([CACHE_KEY]))[CACHE_KEY] || {};
     all[id] = {
       description: profile && profile.description != null ? profile.description : null,
-      bannerUrl: profile && profile.bannerUrl != null ? profile.bannerUrl : null,
+      bannerId: profile && profile.bannerId != null ? profile.bannerId : null,
+      lastDescUpdate: profile && profile.lastDescUpdate || 0,
+      lastBannerUpdate: profile && profile.lastBannerUpdate || 0,
       t: Date.now(),
     };
     const keys = Object.keys(all);
@@ -129,11 +131,13 @@
     const r = await proxiedFetch(SERVER + '/funpay/users/' + id + '/profile', {
       method: 'GET', cache: 'no-store',
     });
-    if (!r.ok) return { description: null, bannerUrl: null };
+    if (!r.ok) return { description: null, bannerId: null, lastDescUpdate: 0, lastBannerUpdate: 0 };
     const j = await r.json();
     return {
       description: j && j.description != null ? j.description : null,
-      bannerUrl: j && j.bannerUrl != null ? j.bannerUrl : null,
+      bannerId: j && j.bannerId != null ? j.bannerId : null,
+      lastDescUpdate: j && j.lastDescUpdate || 0,
+      lastBannerUpdate: j && j.lastBannerUpdate || 0,
     };
   }
   async function serverLinkStart(id) {
@@ -151,20 +155,54 @@
       body: JSON.stringify({ description }),
     });
     if (!r.ok) { const c = await safeErr(r); const e = new Error(c); e.httpStatus = r.status; throw e; }
-    return r.json();
+    const j = await r.json();
+    return {
+      description: j && j.description != null ? j.description : null,
+      lastDescUpdate: j && j.lastDescUpdate || 0,
+    };
   }
-  async function serverSaveBanner(session, bannerUrl) {
+  async function serverSaveBanner(session, bannerId) {
     const r = await proxiedFetch(SERVER + '/me/funpay/banner', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-FPT-Key': SHARED_KEY, Authorization: 'Bearer ' + session },
-      body: JSON.stringify({ bannerUrl }),
+      body: JSON.stringify({ bannerId }),
     });
     if (!r.ok) { const c = await safeErr(r); const e = new Error(c); e.httpStatus = r.status; throw e; }
-    return r.json();
+    const j = await r.json();
+    return { lastBannerUpdate: j && j.lastBannerUpdate || 0 };
   }
+
+  let _catalog = null;
+  async function loadCatalog() {
+    if (_catalog) return _catalog;
+    try {
+      const u = chrome.runtime.getURL('content/banners-catalog.json');
+      const r = await fetch(u);
+      _catalog = await r.json();
+      return _catalog;
+    } catch (e) {
+      console.error('[FPT PD] Failed to load catalog', e);
+      return { version: 1, categories: [], banners: [] };
+    }
+  }
+
+  function getBannerUrl(bannerId) {
+    if (!bannerId || !_catalog) return null;
+    const b = _catalog.banners.find(x => x.id === bannerId);
+    return b ? b.url : null;
+  }
+
   async function safeErr(res) {
-    try { const j = await res.json(); return (j && j.error && j.error.code) || ('HTTP_' + res.status); }
-    catch { return 'HTTP_' + res.status; }
+    try {
+      const j = await res.json();
+      if (j && j.error) {
+        if (j.error.code === 'DESCRIPTION_SPAM' && j.error.message) {
+          return 'DESCRIPTION_SPAM:' + j.error.message;
+        }
+        return j.error.code;
+      }
+      return 'HTTP_' + res.status;
+    } catch { return 'HTTP_' + res.status; }
   }
 
   function collectForm(doc) {
@@ -249,29 +287,59 @@
     if (!offerId) throw new Error('OFFER_ID_NOT_FOUND');
     return offerId;
   }
-  async function deleteVerificationLot(offerId) {
-    const body = new URLSearchParams();
-    body.append('offer_id', String(offerId));
-    body.append('deleted', '1');
-    body.append('csrf_token', getCsrf());
-    const res = await fetch(location.origin + '/lots/offerSave', {
-      method: 'POST', credentials: 'same-origin',
-      headers: { accept: '*/*', 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', 'x-requested-with': 'XMLHttpRequest' },
-      body,
-    });
-    if (!res.ok) throw new Error('FUNPAY_DELETE_' + res.status);
-    const json = await res.json().catch(() => ({}));
-    if (json && json.error) {
-      const e = typeof json.error === 'string' ? json.error : JSON.stringify(json.error);
-      throw new Error('FUNPAY_DELETE_ERROR: ' + e);
+  async function deleteVerificationLot(offerId, csrfToken) {
+    let token = csrfToken || getCsrf();
+    
+    async function attemptDelete(t) {
+      if (!t) throw new Error('NO_CSRF_TOKEN');
+      const body = new URLSearchParams();
+      body.append('offer_id', String(offerId));
+      body.append('node_id', VERIFY_NODE_ID);
+      body.append('deleted', '1');
+      body.append('csrf_token', t);
+      const res = await fetch(location.origin + '/lots/offerSave', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { accept: '*/*', 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', 'x-requested-with': 'XMLHttpRequest' },
+        body,
+      });
+      if (!res.ok) throw new Error('FUNPAY_DELETE_' + res.status);
+      const json = await res.json().catch(() => ({}));
+      if (json && json.error) throw new Error(typeof json.error === 'string' ? json.error : JSON.stringify(json.error));
+      return true;
     }
-  }
-  async function pollConfirm(id, maxMs) {
+
+    try {
+      await attemptDelete(token);
+    } catch (e) {
+      console.warn('[FPT PD] Ошибка при удалении лота:', e.message, 'Пробуем получить свежий CSRF токен...');
+      try {
+        const pageRes = await fetch(location.origin + '/lots/offerEdit?node=' + VERIFY_NODE_ID);
+        if (pageRes.ok) {
+           const html = await pageRes.text();
+           const doc = new DOMParser().parseFromString(html, 'text/html');
+           const raw = doc.body?.getAttribute('data-app-data');
+           if (raw) {
+              const d = JSON.parse(raw);
+              const freshToken = Array.isArray(d) ? d[0]['csrf-token'] : d['csrf-token'];
+              if (freshToken) {
+                 console.log('[FPT PD] Свежий CSRF получен, пробуем удалить...');
+                 await attemptDelete(freshToken);
+                 return;
+              }
+           }
+        }
+      } catch (e2) {
+        console.error('[FPT PD] Ошибка получения свежего CSRF токена:', e2.message);
+      }
+      throw e;
+    }
+  };
+  async function pollConfirm(id, offerId, maxMs) {
     const deadline = Date.now() + (maxMs || 90000);
     while (Date.now() < deadline) {
       const r = await proxiedFetch(SERVER + '/me/funpay/link/confirm', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-FPT-Key': SHARED_KEY },
-        body: JSON.stringify({ funpayUserId: id }),
+        body: JSON.stringify({ funpayUserId: id, offerId }),
       });
       if (r.ok) {
         const j = await r.json();
@@ -296,13 +364,15 @@
     try {
       offerId = await createVerificationLot(start.code);
       console.log('[FPT PD] lot created, offerId=', offerId, '- ждём проверку сервером…');
-      const conf = await pollConfirm(id, 90000);
+      const conf = await pollConfirm(id, offerId, 90000);
       console.log('[FPT PD] confirmed by server');
       const session = { token: conf.session, funpayUserId: id, funpayUsername: conf.funpayUsername };
       await saveSession(session);
       return session;
     } finally {
-      if (offerId !== null) deleteVerificationLot(offerId).catch(() => {});
+      if (offerId !== null) {
+        deleteVerificationLot(offerId).catch(e => console.error('[FPT PD] Ошибка при удалении проверочного лота:', e));
+      }
     }
   }
 
@@ -618,43 +688,116 @@
     root.appendChild(actions);
     cancel.addEventListener('click', () => renderView(root, state));
     save.addEventListener('click', async () => {
-      save.disabled = true; cancel.disabled = true;
       const text = ta.value;
-      try {
-        let session = state.session || (await loadSession(state.funpayUserId));
-        if (!session || session.funpayUserId !== state.funpayUserId) {
-          console.log('[FPT PD] no session, starting verification for', state.funpayUserId);
-          toast('Подтверждаем владение аккаунтом…', false);
-          session = await runVerification(state.funpayUserId);
-          console.log('[FPT PD] verification OK, got session');
-        }
-        let res;
-        try { res = await serverSaveDescription(session.token, text); }
-        catch (e) {
-          if (e.httpStatus === 401) {
-            console.log('[FPT PD] session expired, re-verifying');
-            session = await runVerification(state.funpayUserId);
-            res = await serverSaveDescription(session.token, text);
-          }
-          else throw e;
-        }
-        console.log('[FPT PD] saved:', res);
-        const newDesc = res && res.description != null ? res.description : text;
-        const newState = Object.assign({}, state, { description: newDesc, session });
-        await cacheWrite(state.funpayUserId, { description: newDesc, bannerUrl: state.bannerUrl });
-        renderView(root, newState);
-        toast('Описание сохранено', false);
-      } catch (e) {
-        console.error('[FPT PD] save failed:', e && e.message, e);
-        toast(humanError(e && e.message), true);
-        save.disabled = false; cancel.disabled = false;
+      if (text === state.description) { renderView(root, state); return; }
+      
+      const now = Date.now();
+      const lastUpdate = state.lastDescUpdate || 0;
+      const timePassed = now - lastUpdate;
+      const cooldownMs = 24 * 60 * 60 * 1000;
+      if (timePassed < cooldownMs) {
+        const remaining = cooldownMs - timePassed;
+        const h = Math.floor(remaining / (60 * 60 * 1000));
+        const m = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+        toast(`Описание можно менять раз в 24 часа. Осталось: ${h} ч. ${m} мин.`, true);
+        return;
       }
+
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.zIndex = '10000';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.background = 'rgba(0,0,0,0.4)';
+      modal.style.opacity = '0';
+      modal.style.transition = 'opacity 0.2s ease';
+      
+      modal.innerHTML = `
+        <div style="background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 24px; border-radius: 16px; max-width: 340px; text-align: center; color: #fff; box-shadow: 0 16px 40px rgba(0,0,0,0.5); transform: translateY(10px); transition: transform 0.2s ease;">
+          <h5 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; letter-spacing: 0.3px;">Сохранить описание?</h5>
+          <p style="margin: 0 0 24px; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.5;">Вы уверены? После сохранения вам придётся подождать 24 часа перед внесением следующего изменения.</p>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <button type="button" class="btn btn-primary fpt-confirm-yes" style="flex: 1; border-radius: 8px; font-weight: 500;">Сохранить</button>
+            <button type="button" class="btn btn-gray fpt-confirm-no" style="flex: 1; border-radius: 8px; font-weight: 500; background: rgba(255,255,255,0.1); color: #fff; border: none;">Отмена</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Animate in
+      requestAnimationFrame(() => {
+        modal.style.opacity = '1';
+        modal.firstElementChild.style.transform = 'translateY(0)';
+      });
+
+      const closeModal = () => {
+        modal.style.opacity = '0';
+        modal.firstElementChild.style.transform = 'translateY(10px)';
+        setTimeout(() => modal.remove(), 200);
+      };
+
+      modal.querySelector('.fpt-confirm-no').addEventListener('click', closeModal);
+      modal.querySelector('.fpt-confirm-yes').addEventListener('click', async () => {
+        closeModal();
+        save.disabled = true; cancel.disabled = true;
+        try {
+          let session = state.session || (await loadSession(state.funpayUserId));
+          if (!session || session.funpayUserId !== state.funpayUserId) {
+            console.log('[FPT PD] no session, starting verification for', state.funpayUserId);
+            toast('Подтверждаем владение аккаунтом…', false);
+            session = await runVerification(state.funpayUserId);
+            console.log('[FPT PD] verification OK, got session');
+          }
+          let res;
+          try { res = await serverSaveDescription(session.token, text); }
+          catch (e) {
+            if (e.httpStatus === 401) {
+              console.log('[FPT PD] session expired, re-verifying');
+              session = await runVerification(state.funpayUserId);
+              
+              // Cloudflare KV might take a moment to propagate the new session
+              for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                  res = await serverSaveDescription(session.token, text);
+                  break; // success
+                } catch (e2) {
+                  if (e2.httpStatus === 401 && attempt < 3) {
+                    console.log('[FPT PD] KV не синхронизировался, ждём 2сек...', attempt);
+                    await new Promise(r => setTimeout(r, 2000));
+                  } else {
+                    throw e2;
+                  }
+                }
+              }
+            }
+            else throw e;
+          }
+          console.log('[FPT PD] saved:', res);
+          const newDesc = res && res.description != null ? res.description : text;
+          const newUpdate = res && res.lastDescUpdate || Date.now();
+          const newState = Object.assign({}, state, { description: newDesc, session, lastDescUpdate: newUpdate });
+          await cacheWrite(state.funpayUserId, { description: newDesc, bannerUrl: state.bannerUrl, lastDescUpdate: newUpdate });
+          renderView(root, newState);
+          toast('Описание сохранено', false);
+        } catch (e) {
+          console.error('[FPT PD] save error:', e);
+          toast(humanError(e && e.message), true);
+          save.disabled = false; cancel.disabled = false;
+        }
+      });
     });
     ta.focus();
   }
 
   function humanError(code) {
+    if (typeof code === 'string') {
+      if (code.startsWith('DESCRIPTION_SPAM:')) return 'Модерация отклонила текст: ' + code.substring(17);
+      if (code.includes('"NO_SESSION"')) return 'Ваша сессия FunPay истекла. Пожалуйста, обновите страницу (F5).';
+    }
     switch (code) {
+      case 'DESCRIPTION_SPAM': return 'Описание содержит запрещённые слова или контакты.';
       case 'VERIFY_TIMEOUT': return 'Проверка заняла слишком долго. Попробуйте ещё раз через минуту.';
       case 'VERIFY_COOLDOWN': return 'Подождите минуту перед повторной попыткой.';
       case 'WRITE_COOLDOWN': return 'Описание можно менять раз в 24 часа.';
@@ -669,7 +812,16 @@
   }
 
   function findCover() {
-    return document.querySelector('.profile-cover');
+    let cover = document.querySelector('.profile-cover');
+    if (!cover) {
+      const header = document.querySelector('.profile-header-cols') || document.querySelector('.profile-header');
+      if (header && header.parentNode) {
+        cover = document.createElement('div');
+        cover.className = 'profile-cover';
+        header.parentNode.insertBefore(cover, header);
+      }
+    }
+    return cover;
   }
 
 
@@ -739,7 +891,7 @@
       overlay.className = 'fpt-banner-overlay';
       overlay.innerHTML = '<span class="fpt-banner-pencil"><i class="fa fa-pen"></i></span>';
       img.appendChild(overlay);
-      overlay.addEventListener('click', () => openBannerForm(cover, editorMount.profileId, editorMount.state));
+      overlay.addEventListener('click', () => openBannerCatalog(cover, editorMount.profileId, editorMount.state));
     }
   }
 
@@ -790,136 +942,243 @@
   }
 
   function applyBanner(url) {
-    const cover = findCover();
-    if (!cover || !url) return;
+    if (!url) return;
     activeBannerUrl = url;
-    const pic = cover.querySelector(':scope > .profile-cover-img.fpt-cover .fpt-cover-pic');
-    if (pic && cover.getAttribute('data-fpt-banner') === url) { guardBanner(); return; }
-    buildCoverBanner(cover, url);
-    console.log('[FPT PD] banner applied');
     guardBanner();
-  }
-
-  function validateBannerUrl(url) {
-    const u = (url || '').trim();
-    if (!u) return { ok: false, msg: 'Вставьте ссылку на картинку.' };
-    if (!/^https:\/\//i.test(u)) return { ok: false, msg: 'Ссылка должна начинаться с https://' };
-    return { ok: true, url: u };
-  }
-
-  function checkImageSize(url, maxBytes) {
-    return new Promise((resolve) => {
-      let settled = false;
-      const done = (v) => { if (!settled) { settled = true; resolve(v); } };
-      try {
-        const xhr = new XMLHttpRequest();
-        xhr.open('HEAD', url, true);
-        xhr.timeout = 8000;
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState === xhr.HEADERS_RECEIVED) {
-            const len = Number(xhr.getResponseHeader('Content-Length') || 0);
-            if (len && len > maxBytes) return done({ ok: false, tooBig: true });
-            done({ ok: true });
-          }
-        };
-        xhr.onerror = () => done({ ok: true });
-        xhr.ontimeout = () => done({ ok: true });
-        xhr.send();
-      } catch { done({ ok: true }); }
-    });
+    const cover = findCover();
+    if (!cover) return;
+    const pic = cover.querySelector(':scope > .profile-cover-img.fpt-cover .fpt-cover-pic');
+    if (pic && cover.getAttribute('data-fpt-banner') === url) return;
+    buildCoverBanner(cover, url);
+    reattachEditor();
+    console.log('[FPT PD] banner applied');
   }
 
   function mountBannerEditor(profileId, session, currentBanner) {
-    const cover = findCover();
-    if (!cover) return;
+    let state = { banner: currentBanner || null, session };
+    editorMount = { profileId, state };
+    
+    const tryMount = () => {
+      const cover = findCover();
+      if (!cover) return;
 
-    let img = cover.querySelector(':scope > .profile-cover-img.fpt-cover');
-    if (!img) {
-      const r = buildCoverBanner(cover, currentBanner || activeBannerUrl || '');
-      img = r.img;
-    }
-    if (currentBanner) activeBannerUrl = currentBanner;
+      let img = cover.querySelector(':scope > .profile-cover-img.fpt-cover');
+      if (!img) {
+        const r = buildCoverBanner(cover, activeBannerUrl || '');
+        img = r.img;
+      }
 
-    if (!img.querySelector('.fpt-banner-overlay')) {
-      const overlay = document.createElement('div');
-      overlay.className = 'fpt-banner-overlay';
-      overlay.innerHTML = '<span class="fpt-banner-pencil"><i class="fa fa-pen"></i></span>';
-      img.appendChild(overlay);
-      let state = { banner: currentBanner || null, session };
-      editorMount = { profileId, state };
-      overlay.addEventListener('click', () => openBannerForm(cover, profileId, state));
-      console.log('[FPT PD] banner editor mounted');
+      if (!img.querySelector('.fpt-banner-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'fpt-banner-overlay';
+        overlay.innerHTML = '<span class="fpt-banner-pencil"><i class="fa fa-pen"></i></span>';
+        img.appendChild(overlay);
+        overlay.addEventListener('click', () => openBannerCatalog(cover, profileId, state));
+        console.log('[FPT PD] banner editor mounted');
+      }
+    };
+
+    if (findCover()) tryMount();
+    else {
+      // Use observer to wait for cover
+      const obs = new MutationObserver(() => {
+        if (findCover()) { tryMount(); obs.disconnect(); }
+      });
+      obs.observe(document.body, { childList: true, subtree: true });
     }
   }
 
-  function openBannerForm(cover, profileId, state) {
-    if (document.querySelector('.fpt-banner-modal')) return;
-    const MAX_BYTES = 30 * 1024 * 1024;
+  async function openBannerCatalog(cover, profileId, state) {
+    if (document.querySelector('.fpt-banner-catalog')) return;
+
+    const catalog = await loadCatalog();
 
     const modal = document.createElement('div');
-    modal.className = 'fpt-banner-modal';
-    modal.innerHTML =
-      '<div class="fpt-banner-box">' +
-      '<h5 class="fpt-pd-h">Баннер профиля</h5>' +
-      '<input type="text" class="fpt-banner-input" placeholder="https://i.ibb.co/.../kartinka.png" />' +
-      '<div class="fpt-banner-hint">Нужна <b>прямая ссылка на картинку</b> (png, jpg, gif), до 30 МБ.</div>' +
-      '<div class="fpt-banner-help">' +
-      '<div class="fpt-help-title">Как получить прямую ссылку?</div>' +
-      '<div class="fpt-help-step">1. Загрузите картинку на <b>postimages.org</b> или <b>imgbb.com</b> (без регистрации).</div>' +
-      '<div class="fpt-help-step">2. Скопируйте поле <b>«Прямая ссылка»</b> / <b>«Direct link»</b>.</div>' +
-      '<div class="fpt-help-step">Если такого поля нет - нажмите <b>правой кнопкой по картинке</b> и выберите <b>«Копировать ссылку на изображение»</b>.</div>' +
-      '<div class="fpt-help-note">Ссылка на страницу сайта (например, на пост в VK или Pinterest) <b>не подойдёт</b> - нужна ссылка на саму картинку.</div>' +
-      '</div>' +
-      '<div class="fpt-banner-actions">' +
-      '<button type="button" class="btn btn-gray fpt-banner-preview">Предпросмотр</button>' +
-      '<button type="button" class="btn btn-primary fpt-banner-save">Сохранить</button>' +
-      '<button type="button" class="btn btn-gray fpt-banner-cancel">Отмена</button>' +
-      '</div></div>';
+    modal.className = 'fpt-banner-catalog';
+    modal.style.position = 'fixed';
+    modal.style.bottom = '0';
+    modal.style.left = '0';
+    modal.style.right = '0';
+    modal.style.zIndex = '10000';
+    modal.style.display = 'flex';
+    modal.style.flexDirection = 'column';
+    modal.style.justifyContent = 'flex-end';
+    modal.style.alignItems = 'center';
+    modal.style.pointerEvents = 'none'; // allow clicking through empty space
+    modal.style.background = 'transparent';
+    modal.style.opacity = '0';
+    modal.style.transition = 'opacity 0.35s ease';
+
+    let html = `
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,600&family=Inter:wght@400;500;600&display=swap');
+        
+        .fpt-banner-catalog {
+          --black: #0a0a0b;
+          --white: #ffffff;
+          --ink-70: rgba(255,255,255,0.7);
+          --ink-45: rgba(255,255,255,0.45);
+          --glass-fill: rgba(255,255,255,0.06);
+          --glass-fill-hover: rgba(255,255,255,0.10);
+          --glass-border: rgba(255,255,255,0.14);
+          --glass-border-strong: rgba(255,255,255,0.30);
+          --radius-lg: 22px;
+          --radius-md: 14px;
+          font-family: 'Inter', -apple-system, sans-serif;
+          color: var(--white);
+        }
+        .fpt-bottom-sheet {
+          width: 100%; max-width: 1000px; height: 450px; max-height: 60vh;
+          margin: 0 20px 20px 20px;
+          background: linear-gradient(180deg, rgba(20,20,22,0.9), rgba(8,8,9,0.95));
+          border: 1px solid var(--glass-border); border-radius: var(--radius-lg);
+          backdrop-filter: blur(28px) saturate(140%); -webkit-backdrop-filter: blur(28px) saturate(140%);
+          box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.15);
+          display: flex; flex-direction: column; overflow: hidden;
+          pointer-events: auto;
+          animation: fpt-slide-up .5s cubic-bezier(.19,1,.22,1);
+        }
+        @keyframes fpt-slide-up { from{ opacity:0; transform: translateY(40px);} to{ opacity:1; transform:translateY(0);} }
+
+        .fpt-sheet-header {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
+          flex-shrink: 0;
+        }
+        .fpt-sheet-header-left { display: flex; align-items: center; gap: 16px; }
+        .fpt-sheet-header h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px; letter-spacing: -0.01em; margin: 0; color: #fff; }
+        
+        .fpt-sheet-actions { display: flex; align-items: center; gap: 12px; }
+        .fpt-catalog-hint { font-size: 13px; color: #ff4d4d; margin-right: 8px; }
+        .fpt-catalog-hint-info { color: var(--ink-70); }
+
+        .fpt-btn-ghost {
+          font-size: 13px; background: transparent; color: var(--ink-70);
+          border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 100px; cursor: pointer;
+          transition: all .2s ease;
+        }
+        .fpt-btn-ghost:hover { border-color: var(--glass-border-strong); color: var(--white); }
+        .fpt-btn-primary {
+          font-size: 13px; background: var(--white); color: var(--black); border: none;
+          padding: 8px 20px; border-radius: 100px; cursor: pointer; font-weight: 500;
+          transition: transform .2s ease, opacity .2s ease;
+        }
+        .fpt-btn-primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+        .fpt-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .fpt-filters { display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding: 16px 24px; flex-shrink: 0; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .fpt-filters::-webkit-scrollbar { display: none; }
+        .fpt-chip {
+          font-size: 13px; letter-spacing: 0.02em; padding: 6px 14px; border-radius: 100px;
+          background: transparent; border: 1px solid var(--glass-border); color: var(--ink-70);
+          cursor: pointer; transition: all .2s ease; white-space: nowrap;
+        }
+        .fpt-chip:hover { border-color: var(--glass-border-strong); color: var(--white); }
+        .fpt-chip.active { background: var(--white); color: var(--black); border-color: var(--white); font-weight: 500; }
+
+        .fpt-sheet-body { padding: 20px 24px; overflow-y: auto; flex-grow: 1; }
+        .fpt-sheet-body::-webkit-scrollbar { width: 6px; }
+        .fpt-sheet-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+
+        .fpt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .fpt-swatch {
+          position: relative; aspect-ratio: 16 / 7; border-radius: 12px;
+          border: 1.5px solid var(--glass-border); cursor: pointer; overflow: hidden;
+          opacity: 0; transform: translateY(10px);
+          animation: card-in .4s cubic-bezier(.19,1,.22,1) forwards;
+          transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+          background-color: #111;
+        }
+        .fpt-swatch:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -10px rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.5); }
+        .fpt-swatch.selected { border-color: var(--white); box-shadow: 0 0 0 2px rgba(255,255,255,0.18); }
+        @keyframes card-in { to{ opacity:1; transform:translateY(0);} }
+
+        .fpt-swatch .check {
+          position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%;
+          background: var(--white); color: var(--black);
+          display: flex; align-items: center; justify-content: center;
+          opacity: 0; transform: scale(0.6); transition: all .2s cubic-bezier(.34,1.56,.64,1);
+        }
+        .fpt-swatch.selected .check { opacity: 1; transform: scale(1); }
+        .fpt-swatch .check svg { width: 10px; height: 10px; }
+
+        .fpt-swatch .label {
+          position: absolute; left: 8px; bottom: 6px; font-size: 11px; font-weight: 500;
+          color: rgba(255,255,255,0.95); background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+          padding: 4px 10px; border-radius: 100px; opacity: 0; transition: opacity .2s ease; pointer-events: none;
+        }
+        .fpt-swatch:hover .label, .fpt-swatch.selected .label { opacity: 1; }
+
+      </style>
+      <div class="fpt-bottom-sheet" role="dialog" aria-modal="true" aria-label="Выбор баннера профиля">
+        <div class="fpt-sheet-header">
+          <div class="fpt-sheet-header-left">
+            <h1>Баннер профиля</h1>
+          </div>
+          <div class="fpt-sheet-actions">
+            <span class="fpt-catalog-hint"></span>
+            <button class="fpt-btn-ghost fpt-catalog-cancel">Отмена</button>
+            <button class="fpt-btn-primary fpt-catalog-save" disabled>Сохранить баннер</button>
+          </div>
+        </div>
+
+        <div class="fpt-filters">
+          <button class="fpt-chip active fpt-cat-btn" data-cat="all">Все</button>
+          ${catalog.categories.map(c => `<button class="fpt-chip fpt-cat-btn" data-cat="${c}">${c}</button>`).join('')}
+        </div>
+
+        <div class="fpt-sheet-body">
+          <div class="fpt-grid">
+            ${catalog.banners.map((b, i) => `
+              <div class="fpt-swatch fpt-banner-item ${state.bannerId === b.id ? 'selected' : ''}" style="animation-delay: ${i*0.02}s;" data-id="${b.id}" data-cat="${b.category}" data-url="${b.url}" data-name="${b.title}">
+                <div style="position: absolute; inset: 0; background-image: url('${b.url}'); background-size: cover; background-position: center; pointer-events: none;"></div>
+                <span class="label">${b.title}</span>
+                <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></span>
+              </div>
+            `).join('')}
+            ${catalog.banners.length === 0 ? '<div style="grid-column: 1 / -1; text-align: center; color: var(--ink-45); padding: 40px;">Каталог пуст</div>' : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    modal.innerHTML = html;
     document.body.appendChild(modal);
+    requestAnimationFrame(() => {
+      modal.style.opacity = '1';
+    });
 
-    const input = modal.querySelector('.fpt-banner-input');
-    const hint = modal.querySelector('.fpt-banner-hint');
-    const btnPrev = modal.querySelector('.fpt-banner-preview');
-    const btnSave = modal.querySelector('.fpt-banner-save');
-    const btnCancel = modal.querySelector('.fpt-banner-cancel');
-    if (state.banner) input.value = state.banner;
+    const closeBtn = modal.querySelector('.fpt-catalog-close');
+    const cancelBtn = modal.querySelector('.fpt-catalog-cancel');
+    const saveBtn = modal.querySelector('.fpt-catalog-save');
+    const hint = modal.querySelector('.fpt-catalog-hint');
+    const catBtns = modal.querySelectorAll('.fpt-cat-btn');
+    const items = modal.querySelectorAll('.fpt-banner-item');
 
-    const DOTS = '<span class="fpt-btn-dots"><i></i><i></i><i></i></span>';
-    function btnLoading(btn, on) {
-      if (on) {
-        if (btn.getAttribute('data-label') == null) btn.setAttribute('data-label', btn.innerHTML);
-        btn.innerHTML = DOTS;
-        btn.disabled = true;
-      } else {
-        const lbl = btn.getAttribute('data-label');
-        if (lbl != null) { btn.innerHTML = lbl; btn.removeAttribute('data-label'); }
-        btn.disabled = false;
-      }
+    let selectedId = null;
+    let selectedUrl = null;
+
+    // Check cooldown on open
+    const now = Date.now();
+    const lastUpdate = state.lastBannerUpdate || 0;
+    const cooldownMs = 30 * 60 * 1000;
+    const timePassed = now - lastUpdate;
+    let isOnCooldown = timePassed < cooldownMs;
+    
+    if (isOnCooldown) {
+      const remaining = cooldownMs - timePassed;
+      const m = Math.ceil(remaining / (60 * 1000));
+      hint.textContent = `Баннер можно менять раз в 30 минут. Осталось: ${m} мин.`;
     }
-    function lockButtons(on) {
-      [btnPrev, btnSave, btnCancel].forEach((b) => { b.disabled = on; });
-    }
-
-    let previewing = false;
-    const setHint = (msg, bad) => { hint.textContent = msg; hint.classList.toggle('fpt-bad', !!bad); };
 
     function getPic() {
       const cv = findCover();
       if (!cv) return null;
       let img = cv.querySelector(':scope > .profile-cover-img.fpt-cover');
-      if (!img) { const r = buildCoverBanner(cv, state.banner || ''); img = r.img; }
+      if (!img) { const r = buildCoverBanner(cv, getBannerUrl(state.bannerId) || ''); img = r.img; }
       return img.querySelector('.fpt-cover-pic');
     }
+
     function showPreview(url) {
-      let vg = document.querySelector('.fpt-banner-vignette');
-      if (!vg) {
-        vg = document.createElement('div');
-        vg.className = 'fpt-banner-vignette';
-        vg.innerHTML = '<span>Предпросмотр - это видите только вы</span>';
-        document.body.appendChild(vg);
-        requestAnimationFrame(() => vg.classList.add('show'));
-      }
-      modal.classList.add('fpt-preview-mode');
       const pic = getPic();
       if (pic) {
         if (pic.getAttribute('data-prevbackup') == null) {
@@ -927,86 +1186,167 @@
         }
         pic.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
       }
-      previewing = true;
     }
+
     function clearPreview() {
-      modal.classList.remove('fpt-preview-mode');
-      const vg = document.querySelector('.fpt-banner-vignette');
-      if (vg) { vg.classList.remove('show'); setTimeout(() => vg.remove(), 350); }
       const cv = findCover();
       const pic = cv && cv.querySelector(':scope > .profile-cover-img.fpt-cover .fpt-cover-pic');
       if (pic && pic.getAttribute('data-prevbackup') != null) {
         pic.style.backgroundImage = pic.getAttribute('data-prevbackup');
         pic.removeAttribute('data-prevbackup');
       }
-      previewing = false;
+    }
+    
+    // Initialize preview
+    clearPreview();
+
+    function closeModal() {
+      modal.style.opacity = '0';
+      modal.children[0].style.transform = 'translateY(10px)';
+      setTimeout(() => modal.remove(), 350);
     }
 
-    function progressHint(prefix) {
-      return (p) => {
-        if (p == null) setHint(prefix + '… (это может занять время на большой картинке)', false);
-        else setHint(prefix + '… ' + p + '%', false);
-      };
-    }
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
 
-    btnPrev.addEventListener('click', async () => {
-      const v = validateBannerUrl(input.value);
-      if (!v.ok) { setHint(v.msg, true); return; }
-      btnLoading(btnPrev, true); btnSave.disabled = true;
-      setHint('Загружаю предпросмотр…', false);
-      const pre = await preloadImage(v.url, progressHint('Загружаю предпросмотр'));
-      btnLoading(btnPrev, false); btnSave.disabled = false;
-      if (!pre.ok) {
-        if (pre.reason === 'timeout') setHint('Картинка грузится слишком долго. Возможно, она очень большая или интернет медленный - попробуйте ещё раз или выберите картинку полегче.', true);
-        else setHint('Это не похоже на прямую ссылку на картинку. Нужна ссылка, которая заканчивается прямо на изображении (см. подсказку ниже).', true);
-        return;
-      }
-      setHint('Так баннер будет выглядеть. Нажмите «Сохранить», чтобы применить.', false);
-      showPreview(v.url);
+    // Categories
+    catBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        catBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const cat = btn.getAttribute('data-cat');
+        items.forEach(item => {
+          if (cat === 'all' || item.getAttribute('data-cat') === cat) item.style.display = 'block';
+          else item.style.display = 'none';
+        });
+      });
     });
 
-    btnCancel.addEventListener('click', () => { clearPreview(); modal.remove(); });
+    // Items
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        const warning = document.querySelector('.fpt-warning-modal');
+        if (warning) {
+          warning.style.opacity = '0';
+          warning.style.transform = 'translateY(10px)';
+          setTimeout(() => warning.remove(), 300);
+        }
 
-    btnSave.addEventListener('click', async () => {
-      const v = validateBannerUrl(input.value);
-      if (!v.ok) { setHint(v.msg, true); return; }
-      btnLoading(btnSave, true); btnPrev.disabled = true; btnCancel.disabled = true;
-      setHint('Загружаю картинку…', false);
-      const pre = await preloadImage(v.url, progressHint('Загружаю картинку'));
-      if (!pre.ok) {
-        if (pre.reason === 'timeout') setHint('Картинка грузится слишком долго. Возможно, она очень большая или интернет медленный - попробуйте ещё раз или выберите картинку полегче.', true);
-        else setHint('Это не похоже на прямую ссылку на картинку. Нужна ссылка, которая заканчивается прямо на изображении (см. подсказку ниже).', true);
-        btnLoading(btnSave, false); btnPrev.disabled = false; btnCancel.disabled = false; return;
-      }
-      try {
-        let session = state.session || (await loadSession(profileId));
-        if (!session || session.funpayUserId !== profileId) {
-          setHint('Подтверждаем владение аккаунтом…', false);
-          session = await runVerification(profileId);
-          state.session = session;
-        }
-        setHint('Сохраняю ссылку…', false);
-        try { await serverSaveBanner(session.token, v.url); }
-        catch (e) {
-          if (e.httpStatus === 401) { session = await runVerification(profileId); state.session = session; await serverSaveBanner(session.token, v.url); }
-          else throw e;
-        }
-        setHint('Применяю баннер…', false);
-        clearPreview();
-        applyBanner(v.url);
-        state.banner = v.url;
-        const cur = await cacheRead(profileId);
-        await cacheWrite(profileId, { description: cur ? cur.description : null, bannerUrl: v.url });
-        toast('Баннер обновлён', false);
-        modal.remove();
-      } catch (e) {
-        console.error('[FPT PD] banner save failed:', e && e.message, e);
-        setHint(humanError(e && e.message), true);
-        btnLoading(btnSave, false); btnPrev.disabled = false; btnCancel.disabled = false;
-      }
+        items.forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+        selectedId = item.getAttribute('data-id');
+        selectedUrl = item.getAttribute('data-url');
+        saveBtn.disabled = isOnCooldown || selectedId === state.bannerId;
+        showPreview(selectedUrl);
+        hint.innerHTML = '<span class="fpt-catalog-hint-info">Выбрано: ' + item.getAttribute('data-name') + '</span>';
+      });
     });
 
-    input.focus();
+    saveBtn.addEventListener('click', async () => {
+      if (!selectedId) return;
+
+      if (document.querySelector('.fpt-warning-modal')) return;
+
+      const warning = document.createElement('div');
+      warning.className = 'fpt-warning-modal';
+      warning.style.width = '100%';
+      warning.style.maxWidth = '1000px';
+      warning.style.height = '150px';
+      warning.style.margin = '0 20px 10px 20px';
+      warning.style.background = 'linear-gradient(180deg, rgba(20,20,22,0.95), rgba(8,8,9,0.98))';
+      warning.style.border = '1px solid rgba(255,255,255,0.14)';
+      warning.style.borderRadius = '22px';
+      warning.style.backdropFilter = 'blur(28px) saturate(140%)';
+      warning.style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
+      warning.style.display = 'flex';
+      warning.style.flexDirection = 'column';
+      warning.style.justifyContent = 'center';
+      warning.style.alignItems = 'center';
+      warning.style.color = '#fff';
+      warning.style.pointerEvents = 'auto';
+      warning.style.opacity = '0';
+      warning.style.transform = 'translateY(10px)';
+      warning.style.transition = 'all 0.3s ease';
+
+      warning.innerHTML = `
+        <div style="font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; margin-bottom: 8px;">Сохранить баннер?</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 16px;">Новый баннер будет виден всем посетителям вашего профиля.</div>
+        <div style="display: flex; gap: 12px;">
+          <button class="fpt-btn-ghost fpt-warn-cancel">Отмена</button>
+          <button class="fpt-btn-primary fpt-warn-confirm">Да, сохранить</button>
+        </div>
+      `;
+
+      modal.insertBefore(warning, modal.children[0]);
+
+      requestAnimationFrame(() => {
+        warning.style.opacity = '1';
+        warning.style.transform = 'translateY(0)';
+      });
+
+      const wCancel = warning.querySelector('.fpt-warn-cancel');
+      const wConfirm = warning.querySelector('.fpt-warn-confirm');
+
+      wCancel.addEventListener('click', () => {
+        warning.style.opacity = '0';
+        warning.style.transform = 'translateY(10px)';
+        setTimeout(() => warning.remove(), 300);
+      });
+
+      wConfirm.addEventListener('click', async () => {
+        warning.style.opacity = '0';
+        setTimeout(() => warning.remove(), 300);
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="fpt-btn-dots"><i></i><i></i><i></i></span>';
+        
+        try {
+          let session = state.session || (await loadSession(profileId));
+          if (!session || session.funpayUserId !== profileId) {
+            hint.textContent = 'Подтверждаем аккаунт...';
+            session = await runVerification(profileId);
+            state.session = session;
+          }
+          hint.textContent = 'Сохраняем...';
+          
+          let res;
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+              res = await serverSaveBanner(session.token, selectedId);
+              break;
+            } catch (e2) {
+              if (e2.httpStatus === 401 && attempt < 3) {
+                await new Promise(r => setTimeout(r, 2000));
+              } else if (e2.httpStatus === 401 && attempt === 3) {
+                session = await runVerification(profileId);
+                state.session = session;
+                res = await serverSaveBanner(session.token, selectedId);
+                break;
+              } else {
+                throw e2;
+              }
+            }
+          }
+
+          clearPreview();
+          applyBanner(selectedUrl);
+          state.bannerId = selectedId;
+          state.lastBannerUpdate = res.lastBannerUpdate || Date.now();
+          
+          const cur = await cacheRead(profileId);
+          await cacheWrite(profileId, Object.assign({}, cur, { bannerId: selectedId, lastBannerUpdate: state.lastBannerUpdate }));
+          
+          toast('Баннер успешно обновлён', false);
+          closeModal();
+        } catch (e) {
+          console.error('[FPT PD] banner save failed:', e);
+          hint.textContent = humanError(e && e.message);
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = 'Сохранить';
+        }
+      });
+    });
   }
 
   let mounted = false;
@@ -1044,24 +1384,37 @@
     const isOwn = myId !== null && myId === profileId;
     console.log('[FPT PD] myId=', myId, 'isOwn=', isOwn);
 
+    // Preload catalog early
+    await loadCatalog();
+
     let description = null;
-    let bannerUrl = null;
+    let bannerId = null;
+    let lastDescUpdate = 0;
+    let lastBannerUpdate = 0;
     const cached = await cacheRead(profileId);
     console.log('[FPT PD] cache:', cached);
-    if (cached) { description = cached.description; bannerUrl = cached.bannerUrl; }
-    else {
+    if (cached) { 
+      description = cached.description; 
+      bannerId = cached.bannerId; 
+      lastDescUpdate = cached.lastDescUpdate || 0;
+      lastBannerUpdate = cached.lastBannerUpdate || 0;
+    } else {
       console.log('[FPT PD] fetching from server…');
-      const prof = await withTimeout(serverGetProfile(profileId), 8000, { description: null, bannerUrl: null });
+      const prof = await withTimeout(serverGetProfile(profileId), 8000, { description: null, bannerId: null, lastDescUpdate: 0, lastBannerUpdate: 0 });
       description = prof.description;
-      bannerUrl = prof.bannerUrl;
+      bannerId = prof.bannerId;
+      lastDescUpdate = prof.lastDescUpdate || 0;
+      lastBannerUpdate = prof.lastBannerUpdate || 0;
       console.log('[FPT PD] server profile:', prof);
       await cacheWrite(profileId, prof);
     }
 
     const session = await loadSession(profileId);
 
+    const bannerUrl = getBannerUrl(bannerId);
+
     if (bannerUrl) applyBanner(bannerUrl);
-    if (isOwn) mountBannerEditor(profileId, session, bannerUrl);
+    if (isOwn) mountBannerEditor(profileId, session, bannerId);
 
     if (!description && !isOwn) {
       console.log('[FPT PD] empty + not own → removing block');
@@ -1070,7 +1423,7 @@
       return;
     }
     console.log('[FPT PD] rendering view, isOwn=', isOwn);
-    renderView(root, { funpayUserId: profileId, isOwn, description, bannerUrl, session });
+    renderView(root, { funpayUserId: profileId, isOwn, description, bannerId, lastBannerUpdate, session, lastDescUpdate });
   }
 
   function checkNav(getLast, setLast) {
@@ -1081,13 +1434,16 @@
     const profileId = profileIdFromUrl();
     if (profileId === null) return;
     const cached = await cacheRead(profileId);
-    if (cached && cached.bannerUrl) {
+    if (cached && cached.bannerId) {
+      await loadCatalog();
+      const bannerUrl = getBannerUrl(cached.bannerId);
+      if (!bannerUrl) return;
       injectStyles();
       const tryApply = (n) => {
         const cover = findCover();
         if (cover) {
           cover.classList.add('fpt-cover-host');
-          applyBanner(cached.bannerUrl);
+          applyBanner(bannerUrl);
           ensureProfileLayout(null);
           return;
         }
