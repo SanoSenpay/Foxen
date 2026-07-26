@@ -68,7 +68,7 @@
     }
 
     function buildCss(s) {
-        const bgImageUrl = s.bgImage ? `url(${s.bgImage})` : 'url(https://i.ibb.co/ZpS0d56R/PH6-UEvp-Kn-KI.jpg)';
+        const bgImageUrl = s.bgImage ? `url(${s.bgImage})` : 'url(https://i.ibb.co/Kpm5M7gg/Foxen-BCKG.png)';
         const op = s.containerBgOpacity;
 
         // Поверхности на основе цвета контейнера

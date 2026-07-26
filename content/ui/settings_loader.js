@@ -420,6 +420,27 @@ async function loadSavedSettings() {
     { const _fs=document.getElementById('showFinanceStatsCheckbox'); if(_fs) _fs.checked = settings.showFinanceStats !== false; }
     document.getElementById('hideBalanceCheckbox').checked = settings.hideBalance === true;
     document.getElementById('viewSellersPromoCheckbox').checked = settings.viewSellersPromo !== false;
+
+    const commEl = document.getElementById('fptShowCommissionCheckbox');
+    const realEl = document.getElementById('fptShowRealPricesCheckbox');
+    if (commEl) {
+        commEl.checked = settings.fptShowCommission === true;
+        if (!commEl.dataset.bound) {
+            commEl.dataset.bound = '1';
+            commEl.addEventListener('change', () => {
+                (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fptShowCommission: commEl.checked });
+            });
+        }
+    }
+    if (realEl) {
+        realEl.checked = settings.fptShowRealPrices === true;
+        if (!realEl.dataset.bound) {
+            realEl.dataset.bound = '1';
+            realEl.addEventListener('change', () => {
+                (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fptShowRealPrices: realEl.checked });
+            });
+        }
+    }
     // 2.8: FPT identifier toggle (default: enabled)
     const identifierEl = document.getElementById('fptIdentifierEnabled');
     if (identifierEl) {

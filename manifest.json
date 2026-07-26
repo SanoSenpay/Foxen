@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "3.2.0",
-    "description": "+35 инструментов для FunPay в одном расширении — ИИ, автоматизация, аналитика.",
+    "version": "3.2.2",
+    "description": "+299 инструментов для FunPay в одном расширении — ИИ, автоматизация, аналитика.",
     "permissions": [
         "storage",
         "tabs",
@@ -111,7 +111,6 @@
                 "content/features/chat_search.js",
                 "content/features/order_enhancements.js",
                 "content/features/blacklist.js",
-                "content/features/epic_nicknames.js",
                 "content/features/auto_delivery_ui.js",
                 "content/features/rmthub_search.js",
                 "content/features/rmthub_profile_banner.js",
@@ -136,7 +135,14 @@
                 "content/features/sales_modes.js",
                 "content/features/slash_commands.js",
                 "content/features/category_peek_panel.js",
-                "content/features/chat_reply.js"
+                "content/features/chat_reply.js",
+                "content/features/section_commission.js",
+                "content/features/open_lot_button.js",
+                "content/features/order_lot_copy.js",
+                "content/features/export_studio.js",
+                "content/features/new_chat_starter.js",
+                "content/features/particle_fx.js",
+                "content/error_page_reload.js"
             ],
             "css": [
                 "css/content_styles.css",
@@ -152,6 +158,7 @@
         "sounds/*.mp3",
         "background/remake.html",
         "background/remake.js",
+        "icons/*.png",
         "icons/magic.png",
         "icons/icon128.png",
         "fonts/*.woff2",

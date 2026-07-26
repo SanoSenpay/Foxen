@@ -143,7 +143,7 @@
     }
     
     function getCustomThemeCss(settings) {
-        const bgImageUrl = settings.bgImage ? `url(${settings.bgImage})` : 'url(https://i.ibb.co/ZpS0d56R/PH6-UEvp-Kn-KI.jpg)';
+        const bgImageUrl = settings.bgImage ? `url(${settings.bgImage})` : 'url(https://i.ibb.co/Kpm5M7gg/Foxen-BCKG.png)';
         const containerBgRgba = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
 
         let baseCss = `

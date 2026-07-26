@@ -1,0 +1,36 @@
+# Инструкции и вспомогательные директории
+mozilla-instruction.md
+website/
+supabase/
+bot/
+
+# Секреты и ключи
+background/secrets.js
+.env
+.env.local
+.dev.vars
+
+# Cloudflare Worker / Wrangler
+.wrangler/
+**/node_modules/
+
+# Логи и временные файлы
+npm-debug.log*
+yarn-debug.log*
+*.log
+*.tmp
+*.swp
+
+# Файлы ОС и IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Сборки расширения
+*.xpi
+*.zip
+*.crx
+dist/
+build/

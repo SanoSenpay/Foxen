@@ -23,7 +23,7 @@ async function logToConsole(message) {
     }
 }
 
-// --- НОВЫЙ БЛОК: Скопированная функция для связи с offscreen.js ---
+// Offscreen HTML Parser Helper
 async function parseHtmlViaOffscreen(html, action, extra = {}) {
     return Promise.resolve().then(() => {
         if (action === 'parseSellerLotPrice') return window[action](html, extra.offerId);
@@ -33,12 +33,12 @@ async function parseHtmlViaOffscreen(html, action, extra = {}) {
         else throw new Error('Unknown parser action: ' + action);
     });
 }
-// --- КОНЕЦ НОВОГО БЛОКА ---
 
 async function getAuthDetails() {
     const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
     if (!goldenKeyCookie) throw new Error('Не удалось найти cookie "golden_key". Вы вошли в свой аккаунт FunPay?');
-    // FIX: include PHPSESSID - FunPay requires it alongside golden_key for runner requests
+    
+    // FunPay requires PHPSESSID alongside golden_key for runner requests
     const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
     const phpsessidPart = phpSessIdCookie?.value ? `; PHPSESSID=${phpSessIdCookie.value}` : '';
     const cookies = `golden_key=${goldenKeyCookie.value}${phpsessidPart};`;

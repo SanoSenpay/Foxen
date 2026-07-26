@@ -307,6 +307,23 @@ function hideStatsLoading() {
     if (host) host.style.display = '';
 }
 
+// Показывает ошибку сбора данных прямо в блоке статистики вместо молчаливых нулей.
+function _showStatsCollectError(errorMsg) {
+    const ordersEl = document.getElementById('fpTools-stats-total-orders');
+    if (!ordersEl) return;
+    ordersEl.innerHTML = `<span style="color:#f87171;font-size:12px;">⚠ Ошибка сбора: ${String(errorMsg).slice(0, 120)}</span>`;
+    // Также показываем уведомление в заголовке контейнера если он есть
+    const container = document.querySelector('.fp-tools-stats-container');
+    if (container && !container.querySelector('.fp-stats-error-banner')) {
+        const banner = document.createElement('div');
+        banner.className = 'fp-stats-error-banner';
+        banner.style.cssText = 'display:flex;align-items:center;gap:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#f87171;';
+        banner.innerHTML = `<span style="font-size:18px;">⚠️</span><div><strong>Ошибка сбора данных</strong><br><span style="opacity:0.85;font-size:12px;">${String(errorMsg).slice(0, 200)}</span></div>`;
+        const modebar = document.getElementById('fpTools-stats-modebar');
+        if (modebar) modebar.before(banner);
+    }
+}
+
 async function displaySalesStats() {
     if (!document.getElementById("fpTools-stats-period")) return;
     
@@ -315,16 +332,24 @@ async function displaySalesStats() {
         // База пуста. Если прямо сейчас идёт сбор — показываем красивую загрузку
         // вместо пугающего «Нет данных».
         let collecting = false;
+        let lastError = null;
         try {
             const _ck = _fptCfg().collectingKey;
-            const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(_ck);
+            const errKey = _fptCfg().collectingKey === 'fpToolsSalesCollecting'
+                ? 'fpToolsSalesError' : 'fpToolsPurchasesError';
+            const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([_ck, errKey]);
             collecting = !!st[_ck];
+            lastError = st[errKey] || null;
         } catch (_) {}
         if (collecting) {
             showStatsLoading();
         } else {
             hideStatsLoading();
-            document.getElementById("fpTools-stats-total-orders").textContent = "Нет данных (Нажмите 'Обновить')";
+            if (lastError) {
+                _showStatsCollectError(lastError);
+            } else {
+                document.getElementById("fpTools-stats-total-orders").textContent = "Нет данных (Нажмите 'Обновить')";
+            }
         }
         return;
     };
@@ -357,7 +382,15 @@ async function displaySalesStats() {
 
     const stats = await calculateSalesStats(fpToolsSalesData, startDate, endDate);
 
-    document.getElementById("fpTools-stats-total-orders").textContent = stats.totalOrders;
+    document.getElementById("fpTools-stats-total-orders").textContent = stats.totalOrders || 0;
+    // Подсказка: данные есть, но за выбранный период нет заказов.
+    if (stats.totalOrders === 0) {
+        const totalOrdersEl = document.getElementById("fpTools-stats-total-orders");
+        const totalKeys = Object.keys(fpToolsSalesData).length;
+        if (totalKeys > 0) {
+            totalOrdersEl.innerHTML = `0 <span style="font-size:11px;opacity:0.55;font-weight:400;">(в базе ${totalKeys.toLocaleString('ru-RU')} — смените период)</span>`;
+        }
+    }
     document.getElementById("fpTools-stats-total-revenue").innerHTML = formatRevenue(stats.totalRevenue);
     document.getElementById("fpTools-stats-average-sale-price").innerHTML = formatRevenue(stats.averageCheck);
     document.getElementById("fpTools-stats-orders-closed").textContent = stats.totalClosed;
@@ -651,6 +684,19 @@ function initializeSalesStatistics() {
             console.log("Foxen: Сбор завершён, показываем статистику.");
             hideStatsLoading();
             displaySalesStats();
+            const updateBtn = document.getElementById("fpTools-stats-reset");
+            if (updateBtn) {
+                updateBtn.disabled = false;
+                updateBtn.textContent = "Обновить данные";
+            }
+        }
+
+        // Ошибка сбора — показываем причину прямо в блоке статистики.
+        const errKey = _fptCfg().collectingKey === 'fpToolsSalesCollecting'
+            ? 'fpToolsSalesError' : 'fpToolsPurchasesError';
+        if (changes[errKey] && changes[errKey].newValue) {
+            hideStatsLoading();
+            _showStatsCollectError(changes[errKey].newValue);
             const updateBtn = document.getElementById("fpTools-stats-reset");
             if (updateBtn) {
                 updateBtn.disabled = false;

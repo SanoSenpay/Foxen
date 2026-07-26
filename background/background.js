@@ -87,7 +87,7 @@ async function runSalesUpdateCycle() {
     _salesCycleRunning = true;
     console.log("Foxen: Запуск полного цикла сбора статистики продаж...");
     try {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSalesCollecting: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSalesCollecting: true, fpToolsSalesError: null });
         // Однократно переносим старые данные из storage.local в IndexedDB
         // (и освобождаем квоту). Безопасно вызывать каждый раз — отработает один раз.
         await FPTSalesDB.migrateFromLocalStorage();
@@ -353,7 +353,7 @@ async function runPurchasesUpdateCycle() {
     _purchasesCycleRunning = true;
     console.log("Foxen: Запуск полного цикла сбора статистики покупок...");
     try {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPurchasesCollecting: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPurchasesCollecting: true, fpToolsPurchasesError: null });
         // Однократно переносим старые данные из storage.local в IndexedDB
         // (и освобождаем квоту). Безопасно вызывать каждый раз — отработает один раз.
         await FPTPurchasesDB.migrateFromLocalStorage();
@@ -492,6 +492,7 @@ async function runPurchasesUpdateCycle() {
 
     } catch (e) {
         console.error(`Foxen: Ошибка в цикле сбора статистики: ${e.message}`);
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPurchasesError: e.message });
     } finally {
         _purchasesCycleRunning = false;
         console.log("Foxen: Сбор статистики покупок завершен.");

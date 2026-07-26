@@ -77,11 +77,26 @@ function createMainPopup() {
     toolsPopup.className = 'fp-tools-popup';
     toolsPopup.innerHTML = `
         <div class="fp-tools-header">
-            <h2 style="display:inline-flex;align-items:center;"><a href="https://foxen.page.gd" target="_blank" class="fp-tools-site-link">Foxen</a><a href="https://funpay.tools" target="_blank" class="fpt-fork-badge">FunPay Tools Fork</a></h2>
+            <h2 class="fp-tools-title-wrap"><a href="https://foxen.page.gd" target="_blank" class="fp-tools-site-link">Foxen</a><a href="https://funpay.tools" target="_blank" class="fpt-fork-badge" title="Основано на FunPay Tools (v2.9.9)"><span class="fpt-fork-dot"></span>FPT 2.9.9</a></h2>
+            <div class="fp-tools-header-actions">
+                <button type="button" id="fptAccentBtn" class="fpt-accent-btn" title="Сменить акцентный цвет" aria-label="Сменить акцентный цвет">
+                    <span class="fpt-accent-preview-dot"></span>
+                    <span class="material-symbols-rounded" style="font-size:16px;">palette</span>
+                    <input type="color" id="fptAccentInput" class="fpt-accent-input" value="#C026D3" aria-hidden="true" tabindex="-1">
+                </button>
+                <div class="fp-tools-social">
+                    <a class="fp-tools-social-btn" data-social="telegram" href="https://t.me/FoxenFF" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram"><img class="fp-tools-social-ico" data-icon="telegram" alt="Telegram"></a>
+                </div>
+            </div>
             <button class="close-btn" aria-label="Закрыть"></button>
         </div>
         <div class="fp-tools-body">
             <nav class="fp-tools-nav">
+                <div class="fpt-nav-search">
+                    <input type="text" id="fptNavSearch" class="fpt-nav-search-input" placeholder="Поиск функций…" autocomplete="off" spellcheck="false">
+                    <button type="button" id="fptNavSearchClear" class="fpt-nav-search-clear" aria-label="Очистить" title="Очистить">✕</button>
+                    <div id="fptNavSearchResults" class="fpt-nav-search-results"></div>
+                </div>
                 <ul>
                     <li class="fp-nav-divider">Основное</li>
                     <li data-page="general" class="active"><a><span class="nav-icon material-symbols-rounded">settings</span><span>Общие</span></a></li>
@@ -89,8 +104,6 @@ function createMainPopup() {
                     <li data-page="needs"><a><span class="nav-icon material-symbols-rounded">tune</span><span>Что тебе нужно</span></a></li>
                     <li data-page="slash_commands"><a><span class="nav-icon material-symbols-rounded">terminal</span><span>Слэш-команды</span></a></li>
                     <li data-page="telegram"><a><span class="nav-icon material-symbols-rounded">send</span><span>Telegram</span></a></li>
-                    <li class="fp-nav-divider">Эксклюзив</li>
-                    <li data-page="epic_nicks"><a><span class="nav-icon material-symbols-rounded">diamond</span><span>Это увидят все</span></a></li>
                     <li class="fp-nav-divider">Интерфейс</li>
                     <li data-page="theme"><a><span class="nav-icon material-symbols-rounded">palette</span><span>Кастомизация</span></a></li>
                     <li data-page="effects"><a><span class="nav-icon material-symbols-rounded">auto_awesome</span><span>Эффекты</span></a></li>
@@ -134,6 +147,14 @@ function createMainPopup() {
                     <div class="checkbox-label-inline">
                         <input type="checkbox" id="viewSellersPromoCheckbox">
                         <label for="viewSellersPromoCheckbox" style="margin-bottom:0;"><span>Отображение иконок промо-лотов</span></label>
+                    </div>
+                    <div class="checkbox-label-inline">
+                        <input type="checkbox" id="fptShowCommissionCheckbox">
+                        <label for="fptShowCommissionCheckbox" style="margin-bottom:0;"><span>Показывать комиссию разделов</span></label>
+                    </div>
+                    <div class="checkbox-label-inline">
+                        <input type="checkbox" id="fptShowRealPricesCheckbox">
+                        <label for="fptShowRealPricesCheckbox" style="margin-bottom:0;"><span>Показывать реальные цены лотов</span></label>
                     </div>
                     
                     <h3>Звук уведомления</h3>
@@ -232,27 +253,6 @@ function createMainPopup() {
                     </div>
                 </div> <!-- КОНЕЦ ВКЛАДКИ "ОБЩИЕ" -->
 
-                <!-- НАЧАЛО ВКЛАДКИ "ЭПИЧЕСКИЕ НИКИ" -->
-                <div class="fp-tools-page-content" data-page="epic_nicks">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Эпический никнейм <span class="material-symbols-rounded" style="vertical-align:-3px;color:#e9a8ff;">diamond</span></h3>
-                    </div>
-                    <p class="template-info" style="font-size: 14px; line-height: 1.5;">
-                        Выделитесь среди конкурентов! Ваш никнейм будет светиться, переливаться и излучать частицы <b>у всех пользователей расширения Foxen</b> (более 100 человек).
-                    </p>
-
-                    <div style="background: rgba(192, 38, 211, 0.1); border: 1px solid rgba(192, 38, 211, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;">
-                        <span class="material-symbols-rounded" style="font-size: 32px; color: #e9a8ff; margin-bottom: 10px;">construction</span>
-                        <div style="font-size: 15px; margin-bottom: 8px; color: #fff; font-weight: bold;">Функция находится в разработке</div>
-                        <div style="font-size: 13px; color: #a0a0a0;">В данный момент мы перерабатываем систему эпических ников специально для пользователей Foxen. В скором времени вы сможете получить уникальный стиль за подписку на наш Telegram-канал!</div>
-                    </div>
-
-                    <h4 style="margin-bottom: 15px;">Вот несколько примеров для того, чтобы вы посмотрели, как это будет выглядеть у всех пользователей расширения:</h4>
-                    <div id="fpt-epic-previews-container" style="display: flex; flex-direction: column; gap: 30px; margin-top: 10px; background: #0e0f16; border: 1px solid #1e2030; border-radius: 8px; padding: 20px;">
-                        <div style="text-align: center; color: #5a5f7a; font-size: 12px;">Загрузка движка частиц...</div>
-                    </div>
-                </div> <!-- КОНЕЦ ВКЛАДКИ "ЭПИЧЕСКИЕ НИКИ" -->
-
                 <!-- НАЧАЛО ВКЛАДКИ "АККАУНТЫ" -->
                 <div class="fp-tools-page-content" data-page="accounts">
                     <h3>Управление аккаунтами</h3>
@@ -286,7 +286,7 @@ function createMainPopup() {
                             <h4 style="margin:0;">Все добавленные элементы</h4>
                             <input type="text" id="fptNeedsFilter" class="fpt-needs-filter" placeholder="Поиск по названию…">
                         </div>
-                        <p class="template-info" style="margin-top:6px;">Галочка = элемент показывается. Снимите галочку, чтобы убрать его со страниц - сохраняется и применяется сразу, без перезагрузки и без кнопки «применить». Нажмите <span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;color:#e9a8ff;">visibility</span>, чтобы увидеть, как элемент выглядит.</p>
+                        <p class="template-info" style="margin-top:6px;">Галочка = элемент показывается. Снимите галочку, чтобы убрать его со страниц — сохраняется и применяется сразу, без перезагрузки.</p>
                         <div id="fptNeedsList" class="fpt-needs-list"></div>
                         <div class="fpt-needs-footer">
                             <span class="fpt-needs-autosave-note"><span class="material-symbols-rounded">bolt</span>Изменения сохраняются автоматически</span>
@@ -758,14 +758,77 @@ function createMainPopup() {
                     <div class="currency-converter-container"><div class="currency-input-group"><input type="number" id="currencyAmountFrom" class="template-input currency-input" value="100"><select id="currencySelectFrom" class="template-input currency-select"></select></div><div class="currency-swap-container"><button id="currencySwapBtn" class="currency-swap-btn">⇅</button><div id="currencyRateDisplay" class="currency-rate-display"></div></div><div class="currency-input-group"><input type="text" id="currencyAmountTo" class="template-input currency-input" readonly><select id="currencySelectTo" class="template-input currency-select"></select></div></div><div id="currency-error-display" class="currency-error"></div>
                 </div>
                 <div class="fp-tools-page-content" data-page="effects">
-                    <h3>Эффекты частиц</h3>
-                    <div class="checkbox-label-inline"><input type="checkbox" id="cursorFxEnabled"><label for="cursorFxEnabled" style="margin-bottom:0;"><span>Включить эффекты частиц</span></label></div>
+                    <h3>Фоновые частицы на всю страницу</h3>
+                    <p class="template-info">Падающие частицы отображаются на всех страницах сайта. Оптимизировано: авто-пауза при переключении вкладок для сохранения ресурсов ПК.</p>
+                    <div class="checkbox-label-inline">
+                        <input type="checkbox" id="fptParticleToggle">
+                        <label for="fptParticleToggle" style="margin-bottom:0;"><span><b>Включить фоновые частицы</b></span></label>
+                    </div>
+
+                    <div id="fptParticleControls" style="display:none;margin-top:12px;">
+                        <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:600;">Выбрать эффект:</label>
+                        <div class="fpt-particle-presets-grid">
+                            <button type="button" class="fpt-particle-preset-card active" data-preset="snow">
+                                <span class="fpt-pp-emoji">❄️</span>
+                                <span class="fpt-pp-title">Снег</span>
+                            </button>
+                            <button type="button" class="fpt-particle-preset-card" data-preset="rain">
+                                <span class="fpt-pp-emoji">💧</span>
+                                <span class="fpt-pp-title">Дождь</span>
+                            </button>
+                            <button type="button" class="fpt-particle-preset-card" data-preset="sakura">
+                                <span class="fpt-pp-emoji">🌸</span>
+                                <span class="fpt-pp-title">Сакура</span>
+                            </button>
+                            <button type="button" class="fpt-particle-preset-card" data-preset="autumn">
+                                <span class="fpt-pp-emoji">🍂</span>
+                                <span class="fpt-pp-title">Осенние листья</span>
+                            </button>
+                            <button type="button" class="fpt-particle-preset-card" data-preset="stardust">
+                                <span class="fpt-pp-emoji">✨</span>
+                                <span class="fpt-pp-title">Звёздная пыль</span>
+                            </button>
+                            <button type="button" class="fpt-particle-preset-card" data-preset="bubbles">
+                                <span class="fpt-pp-emoji">🫧</span>
+                                <span class="fpt-pp-title">Пузырьки</span>
+                            </button>
+                        </div>
+
+                        <div class="setting-group" style="margin-top:14px;">
+                            <div class="range-label">
+                                <label for="fptParticleCountSlider">Количество частиц:</label>
+                                <span id="fptParticleCountValue">40</span>
+                            </div>
+                            <input type="range" id="fptParticleCountSlider" min="15" max="90" step="5" value="40">
+                        </div>
+
+                        <div class="setting-group">
+                            <div class="range-label">
+                                <label for="fptParticleSpeedSlider">Скорость анимации:</label>
+                                <span id="fptParticleSpeedValue">1.0x</span>
+                            </div>
+                            <input type="range" id="fptParticleSpeedSlider" min="0.5" max="2.5" step="0.1" value="1.0">
+                        </div>
+
+                        <div class="setting-group">
+                            <div class="range-label">
+                                <label for="fptParticleScaleSlider">Размер частиц:</label>
+                                <span id="fptParticleScaleValue">1.0x</span>
+                            </div>
+                            <input type="range" id="fptParticleScaleSlider" min="0.5" max="2.5" step="0.1" value="1.0">
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(255,255,255,0.08); margin: 25px 0;"></div>
+
+                    <h3>Эффекты курсора</h3>
+                    <div class="checkbox-label-inline"><input type="checkbox" id="cursorFxEnabled"><label for="cursorFxEnabled" style="margin-bottom:0;"><span>Включить следящие искры за курсором</span></label></div>
                     <div class="template-container"><label for="cursorFxType">Тип эффекта:</label><select id="cursorFxType"><option value="sparkle">Искры</option><option value="trail">След</option><option value="snow">Снег</option><option value="blood">Кровь</option></select></div>
                     <div class="template-container color-input-grid"><div><label for="cursorFxColor1">Цвет 1:</label><input type="color" id="cursorFxColor1" class="theme-color-input"></div><div><label for="cursorFxColor2">Цвет 2 (градиент):</label><input type="color" id="cursorFxColor2" class="theme-color-input"></div></div>
                     <div class="checkbox-label-inline"><input type="checkbox" id="cursorFxRgb"><label for="cursorFxRgb" style="margin-bottom:0;"><span>Радужный (RGB)</span></label></div>
                     <div class="template-container"><div class="range-label"><label for="cursorFxCount">Интенсивность:</label><span id="cursorFxCountValue">50%</span></div><input type="range" id="cursorFxCount" min="0" max="100" step="1"></div>
                     <div style="margin-top: 20px;"><button id="resetCursorFxBtn" class="btn btn-default">Сбросить эффекты</button></div>
-                    <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 25px 0;"></div>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.08); margin: 25px 0;"></div>
                     <h3>Пользовательский курсор</h3>
                     <div class="checkbox-label-inline"><input type="checkbox" id="customCursorEnabled"><label for="customCursorEnabled" style="margin-bottom:0;"><span>Включить свой курсор</span></label></div>
                     <div id="customCursorControls" style="display: none;"><div class="template-container"><label>Изображение курсора:</label><div id="cursor-image-preview" style="width:64px; height:64px; background-color:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:10px; background-size:contain; background-position:center; background-repeat: no-repeat; display:flex; align-items:center; justify-content:center; color: #888; font-size:12px;">Нет</div><button id="uploadCursorImageBtn" class="btn">Загрузить</button><button id="removeCursorImageBtn" class="btn btn-default" style="margin-left: 10px;">Удалить</button><input type="file" id="cursorImageInput" accept="image/*" style="display: none;"></div><div class="checkbox-label-inline"><input type="checkbox" id="hideSystemCursor" checked><label for="hideSystemCursor" style="margin-bottom:0;"><span>Скрыть системный курсор</span></label></div><div class="template-container"><div class="range-label"><label for="customCursorSize">Размер:</label><span id="customCursorSizeValue">32px</span></div><input type="range" id="customCursorSize" min="16" max="128" step="1" value="32"></div><div class="template-container"><div class="range-label"><label for="customCursorOpacity">Прозрачность:</label><span id="customCursorOpacityValue">100%</span></div><input type="range" id="customCursorOpacity" min="0" max="100" step="1" value="100"></div></div>
@@ -1114,6 +1177,17 @@ function createMainPopup() {
             <button id="saveSettings" class="btn">Сохранить</button>
         </div>
     `;
+    try {
+        toolsPopup.querySelectorAll('img[data-icon]').forEach(img => {
+            const key = img.getAttribute('data-icon');
+            const runtime = typeof browser !== 'undefined' && browser.runtime ? browser.runtime : chrome.runtime;
+            if (key && runtime?.getURL) img.src = runtime.getURL(`icons/${key}.png`);
+        });
+    } catch (_) {}
+    setupNavSearch(toolsPopup);
+    setupAccentPicker(toolsPopup);
+    fptInjectMenuThemeCSS();
+    try { fptApplyMenuTheme(toolsPopup); } catch (_) {}
     return toolsPopup;
 }
 
@@ -1438,7 +1512,6 @@ function setupPopupNavigation() {
             contentPages.forEach(page => {
                 page.classList.toggle('active', page.dataset.page === pageId);
             });
-            if (pageId === 'epic_nicks') { if (typeof renderEpicPreviews === 'function') renderEpicPreviews(); }
             if (pageId === 'currency_calc') initializeCurrencyCalculator();
             if (pageId === 'notes') { if (typeof initializeNotes === 'function') initializeNotes(); }
             if (pageId === 'templates') { if (typeof setupTemplateSettingsHandlers === 'function') setupTemplateSettingsHandlers(); }
@@ -1475,12 +1548,91 @@ function setupPopupNavigation() {
 
     compactNav(toolsPopup);
     attachAutoReplyImageButtons(toolsPopup);
-    
-    // Общий чат: подтянуть удалённый конфиг и сразу применить видимость вкладки.
-    // Если чат выключен/скрыт на GitHub - юзер увидит это без обновления расширения.
-    if (typeof fptGcRefreshConfig === 'function') {
-        fptGcRefreshConfig(false).then(() => {
-            if (typeof fptGcApplyVisibility === 'function') fptGcApplyVisibility();
+    setupParticleUI(toolsPopup);
+}
+
+function setupParticleUI(toolsPopup) {
+    const toggle = toolsPopup.querySelector('#fptParticleToggle');
+    const controls = toolsPopup.querySelector('#fptParticleControls');
+    const countSlider = toolsPopup.querySelector('#fptParticleCountSlider');
+    const countVal = toolsPopup.querySelector('#fptParticleCountValue');
+    const speedSlider = toolsPopup.querySelector('#fptParticleSpeedSlider');
+    const speedVal = toolsPopup.querySelector('#fptParticleSpeedValue');
+    const scaleSlider = toolsPopup.querySelector('#fptParticleScaleSlider');
+    const scaleVal = toolsPopup.querySelector('#fptParticleScaleValue');
+    const presetCards = toolsPopup.querySelectorAll('.fpt-particle-preset-card');
+
+    if (!toggle || !controls) return;
+
+    chrome.storage.local.get([
+        'fpToolsParticleEnabled',
+        'fpToolsParticlePreset',
+        'fpToolsParticleCount',
+        'fpToolsParticleSpeed',
+        'fpToolsParticleScale'
+    ]).then((st) => {
+        const enabled = st.fpToolsParticleEnabled === true;
+        const preset = st.fpToolsParticlePreset || 'snow';
+        const count = Number(st.fpToolsParticleCount) || 40;
+        const speed = Number(st.fpToolsParticleSpeed) || 1.0;
+        const scale = Number(st.fpToolsParticleScale) || 1.0;
+
+        toggle.checked = enabled;
+        controls.style.display = enabled ? 'block' : 'none';
+
+        if (countSlider) { countSlider.value = count; }
+        if (countVal) { countVal.textContent = count; }
+
+        if (speedSlider) { speedSlider.value = speed; }
+        if (speedVal) { speedVal.textContent = speed.toFixed(1) + 'x'; }
+
+        if (scaleSlider) { scaleSlider.value = scale; }
+        if (scaleVal) { scaleVal.textContent = scale.toFixed(1) + 'x'; }
+
+        presetCards.forEach(card => {
+            card.classList.toggle('active', card.dataset.preset === preset);
+        });
+    }).catch(() => {});
+
+    toggle.addEventListener('change', () => {
+        const on = toggle.checked;
+        controls.style.display = on ? 'block' : 'none';
+        chrome.storage.local.set({ fpToolsParticleEnabled: on });
+    });
+
+    presetCards.forEach(card => {
+        card.addEventListener('click', () => {
+            presetCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            const preset = card.dataset.preset;
+            chrome.storage.local.set({ fpToolsParticlePreset: preset });
+        });
+    });
+
+    if (countSlider) {
+        countSlider.addEventListener('input', () => {
+            if (countVal) countVal.textContent = countSlider.value;
+        });
+        countSlider.addEventListener('change', () => {
+            chrome.storage.local.set({ fpToolsParticleCount: Number(countSlider.value) });
+        });
+    }
+
+    if (speedSlider) {
+        speedSlider.addEventListener('input', () => {
+            if (speedVal) speedVal.textContent = Number(speedSlider.value).toFixed(1) + 'x';
+        });
+        speedSlider.addEventListener('change', () => {
+            chrome.storage.local.set({ fpToolsParticleSpeed: Number(speedSlider.value) });
+        });
+    }
+
+    if (scaleSlider) {
+        scaleSlider.addEventListener('input', () => {
+            if (scaleVal) scaleVal.textContent = Number(scaleSlider.value).toFixed(1) + 'x';
+        });
+        scaleSlider.addEventListener('change', () => {
+            chrome.storage.local.set({ fpToolsParticleScale: Number(scaleSlider.value) });
         });
     }
 }
@@ -1632,3 +1784,441 @@ function makePopupInteractive(popupEl) {
     });
     resizeObserver.observe(popupEl, { attributes: true, attributeFilter: ['style'] });
 }
+
+/* =============================================================================
+   МЕНЮ: ДИНАМИЧЕСКАЯ ТЕМИЗАЦИЯ И АКЦЕНТНЫЙ ЦВЕТ
+   ============================================================================= */
+const FPT_MENU_THEME_CSS = `
+.fp-tools-popup.fptm-themed{
+    background:var(--fptm-bg) !important;
+    border:1px solid var(--fptm-border) !important;
+    color:var(--fptm-text) !important;
+    border-radius:16px !important;
+    box-shadow:0 18px 48px var(--fptm-shadow) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-header{
+    background:var(--fptm-head) !important;
+    border-bottom:1px solid var(--fptm-border) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-nav{
+    background:var(--fptm-nav) !important;
+    border-right:1px solid var(--fptm-border) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-content{
+    background:var(--fptm-bg) !important;
+    color:var(--fptm-text) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-footer{
+    background:var(--fptm-head) !important;
+    border-top:1px solid var(--fptm-border) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-nav li a{
+    color:var(--fptm-muted) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-nav li a:hover{
+    background:var(--fptm-hover) !important;
+    color:var(--fptm-text) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-nav li.active a{
+    background:var(--fptm-accent-soft) !important;
+    color:var(--fptm-accent) !important;
+    border-left:3px solid var(--fptm-accent) !important;
+    font-weight:600 !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-nav li.active a .nav-icon{
+    color:var(--fptm-accent) !important;
+}
+.fp-tools-popup.fptm-themed h2, .fp-tools-popup.fptm-themed h3, .fp-tools-popup.fptm-themed h4{
+    color:var(--fptm-text) !important;
+}
+.fp-tools-popup.fptm-themed .btn:not(.btn-default):not(.delete-custom-template-btn){
+    background:var(--fptm-accent) !important;
+    color:var(--fptm-on-accent, #ffffff) !important;
+    border:none !important;
+}
+.fp-tools-popup.fptm-themed .btn:not(.btn-default):not(.delete-custom-template-btn):hover{
+    opacity:.92 !important;
+}
+.fp-tools-popup.fptm-themed .btn-default{
+    background:var(--fptm-surface-2) !important;
+    color:var(--fptm-text) !important;
+    border:1px solid var(--fptm-border) !important;
+}
+.fp-tools-popup.fptm-themed .btn-default:hover{
+    background:var(--fptm-hover) !important;
+}
+.fp-tools-popup.fptm-themed input[type="text"],
+.fp-tools-popup.fptm-themed input[type="number"],
+.fp-tools-popup.fptm-themed textarea,
+.fp-tools-popup.fptm-themed select{
+    background:var(--fptm-field) !important;
+    color:var(--fptm-text) !important;
+    border:1px solid var(--fptm-border) !important;
+}
+.fp-tools-popup.fptm-themed input[type="text"]:focus,
+.fp-tools-popup.fptm-themed input[type="number"]:focus,
+.fp-tools-popup.fptm-themed textarea:focus,
+.fp-tools-popup.fptm-themed select:focus{
+    border-color:var(--fptm-accent-border) !important;
+}
+.fp-tools-popup.fptm-themed input[type="checkbox"]:checked{
+    accent-color:var(--fptm-accent) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-radio-option input[type="radio"]:checked{
+    accent-color:var(--fptm-accent) !important;
+}
+.fp-tools-popup.fptm-themed .close-btn{
+    color:var(--fptm-muted) !important;
+}
+.fp-tools-popup.fptm-themed .close-btn:hover{
+    color:var(--fptm-text) !important;
+}
+.fp-tools-popup.fptm-themed .fp-tools-social{ display:flex; align-items:center; gap:8px; margin-right:auto; padding-left:14px; }
+.fp-tools-popup.fptm-themed .fp-tools-social-btn{
+    display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px;
+    border-radius:9px; transition:transform .16s ease, background .16s ease; text-decoration:none;
+}
+.fp-tools-popup.fptm-themed .fp-tools-social-btn:hover{ transform:translateY(-2px); background:var(--fptm-accent-soft); }
+.fp-tools-popup.fptm-themed .fp-tools-social-ico{ width:22px !important; height:22px !important; max-width:22px !important; max-height:22px !important; display:block; object-fit:contain; }
+`;
+
+function fptParseMenuColors() {
+    const pick = (sel) => document.querySelector(sel);
+    const candidates = [pick('.content-account'), pick('.content'), pick('.container'), document.body, document.documentElement].filter(Boolean);
+    let bgStr = '';
+    for (const el of candidates) {
+        const b = getComputedStyle(el).backgroundColor;
+        if (b && b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent') { bgStr = b; break; }
+    }
+    if (!bgStr) bgStr = getComputedStyle(document.body).backgroundColor || 'rgb(255,255,255)';
+    const rgb = (bgStr.match(/\d+/g) || [255, 255, 255]).map(Number);
+    const lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]);
+    const isLight = lum > 140;
+
+    let accent = '';
+    const btn = document.querySelector('.btn-primary');
+    if (btn) {
+        const bc = getComputedStyle(btn).backgroundColor;
+        if (bc && bc !== 'rgba(0, 0, 0, 0)' && bc !== 'transparent') {
+            const arr = (bc.match(/\d+/g) || []).map(Number);
+            if (arr.length >= 3 && (arr[0] + arr[1] + arr[2]) > 90 && !(Math.abs(arr[0]-arr[1])<12 && Math.abs(arr[1]-arr[2])<12)) accent = bc;
+        }
+    }
+    if (!accent) accent = '#C026D3';
+    return { isLight, accent };
+}
+
+function fptInjectMenuThemeCSS() {
+    if (document.getElementById('fpt-menu-theme-css')) return;
+    const s = document.createElement('style');
+    s.id = 'fpt-menu-theme-css';
+    s.textContent = FPT_MENU_THEME_CSS;
+    document.head.appendChild(s);
+}
+
+function fptIsWhitish(color) {
+    if (!color) return false;
+    let r, g, b;
+    const hx = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+    const hx3 = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(color);
+    if (hx) {
+        r = parseInt(hx[1], 16); g = parseInt(hx[2], 16); b = parseInt(hx[3], 16);
+    } else if (hx3) {
+        r = parseInt(hx3[1] + hx3[1], 16); g = parseInt(hx3[2] + hx3[2], 16); b = parseInt(hx3[3] + hx3[3], 16);
+    } else {
+        const arr = (String(color).match(/\d+/g) || []).map(Number);
+        if (arr.length < 3) return false;
+        [r, g, b] = arr;
+    }
+    const minC = Math.min(r, g, b);
+    const maxC = Math.max(r, g, b);
+    return minC >= 225 && (maxC - minC) <= 20;
+}
+
+function fptApplyMenuTheme(root) {
+    if (!root) return;
+    try {
+        const parsed = fptParseMenuColors();
+        const isLight = parsed.isLight;
+        let accent = window.__fptUserAccent || parsed.accent;
+
+        const SOFT_ACCENT = '#C026D3';
+        const customThemeOff = document.documentElement.classList.contains('fpt-custom-theme-off');
+        if (customThemeOff && fptIsWhitish(accent)) {
+            accent = SOFT_ACCENT;
+        }
+        let vars;
+        if (isLight) {
+            vars = {
+                bg:'#ffffff', head:'#f7f8fb', nav:'#fbfcfe', text:'#16181d',
+                muted:'rgba(22,24,29,0.74)', faint:'rgba(22,24,29,0.56)', border:'rgba(22,24,29,0.10)',
+                surface:'#f5f7fa', surface2:'#eef1f6', hover:'rgba(22,24,29,0.05)', field:'#ffffff',
+                shadow:'rgba(22,24,29,0.16)', navFade:'rgba(22,24,29,0.12)'
+            };
+        } else {
+            vars = {
+                bg:'#1e1f24', head:'#191a1e', nav:'#1b1c21', text:'#e7e8ec',
+                muted:'rgba(231,232,236,0.76)', faint:'rgba(231,232,236,0.56)', border:'rgba(255,255,255,0.10)',
+                surface:'#26272d', surface2:'#2c2e35', hover:'rgba(255,255,255,0.07)', field:'#26272d',
+                shadow:'rgba(0,0,0,0.55)', navFade:'rgba(0,0,0,0.30)'
+            };
+        }
+        let rgb;
+        const hx = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(accent);
+        if (hx) {
+            rgb = [parseInt(hx[1], 16), parseInt(hx[2], 16), parseInt(hx[3], 16)];
+        } else {
+            rgb = (accent.match(/\d+/g) || [192,38,211]).slice(0,3).map(Number);
+        }
+        const accentSoft = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${isLight ? 0.12 : 0.22})`;
+        const accentBorder = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${isLight ? 0.35 : 0.5})`;
+        const accentLuma = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]);
+        const onAccent = accentLuma > 150 ? '#14161c' : '#ffffff';
+
+        const st = root.style;
+        st.setProperty('--fptm-bg', vars.bg);
+        st.setProperty('--fptm-head', vars.head);
+        st.setProperty('--fptm-nav', vars.nav);
+        st.setProperty('--fptm-text', vars.text);
+        st.setProperty('--fptm-muted', vars.muted);
+        st.setProperty('--fptm-faint', vars.faint);
+        st.setProperty('--fptm-border', vars.border);
+        st.setProperty('--fptm-surface', vars.surface);
+        st.setProperty('--fptm-surface-2', vars.surface2);
+        st.setProperty('--fptm-hover', vars.hover);
+        st.setProperty('--fptm-field', vars.field);
+        st.setProperty('--fptm-accent', accent);
+        st.setProperty('--fptm-accent-soft', accentSoft);
+        st.setProperty('--fptm-accent-border', accentBorder);
+        st.setProperty('--fptm-on-accent', onAccent);
+        st.setProperty('--fptm-shadow', vars.shadow);
+        st.setProperty('--fptm-nav-fade', vars.navFade);
+
+        st.setProperty('--fpt-accent', accent);
+        st.setProperty('--fpt-accent-soft', accentSoft);
+        st.setProperty('--fpt-accent-border', accentBorder);
+        st.setProperty('--fpt-on-accent', onAccent);
+        st.setProperty('--fpt-accent-2', accent);
+        st.setProperty('--fpt-text', vars.text);
+        st.setProperty('--fpt-text-muted', vars.muted);
+        st.setProperty('--fpt-border', vars.border);
+        st.setProperty('--fpt-surface', vars.surface);
+        st.setProperty('--fpt-surface-2', vars.surface2);
+        st.setProperty('--fpt-bg', vars.bg);
+        st.setProperty('--fpt-shadow', vars.shadow);
+
+        root.classList.remove('fpt-menu-transparent', 'fpt-menu-blur', 'fpt-menu-on-light', 'fpt-menu-on-dark');
+        root.classList.add('fptm-themed');
+        root.classList.toggle('fptm-dark', !isLight);
+        root.classList.toggle('fptm-light', isLight);
+    } catch (_) {}
+}
+
+function setupAccentPicker(toolsPopup) {
+    const btn = toolsPopup.querySelector('#fptAccentBtn');
+    const input = toolsPopup.querySelector('#fptAccentInput');
+    if (!btn || !input) return;
+
+    const DEFAULT_ACCENT = '#C026D3';
+
+    function applyAccent(hex) {
+        window.__fptUserAccent = hex;
+        try { if (typeof fptApplyMenuTheme === 'function') fptApplyMenuTheme(toolsPopup); } catch (_) {}
+    }
+
+    let lastApply = 0;
+    let pending = null;
+    function throttledApply(hex) {
+        const now = Date.now();
+        if (now - lastApply >= 120) {
+            lastApply = now;
+            applyAccent(hex);
+        } else {
+            if (pending) clearTimeout(pending);
+            pending = setTimeout(() => { lastApply = Date.now(); applyAccent(hex); pending = null; }, 120 - (now - lastApply));
+        }
+    }
+
+    const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+    if (storage && storage.local) {
+        storage.local.get('fpToolsAccentColor').then((res) => {
+            const fpToolsAccentColor = res ? res.fpToolsAccentColor : null;
+            if (fpToolsAccentColor) {
+                input.value = fpToolsAccentColor;
+                applyAccent(fpToolsAccentColor);
+            } else {
+                input.value = DEFAULT_ACCENT;
+            }
+        }).catch(() => {});
+    }
+
+    input.addEventListener('input', () => throttledApply(input.value));
+    input.addEventListener('change', () => {
+        applyAccent(input.value);
+        try { storage.local.set({ fpToolsAccentColor: input.value }); } catch (_) {}
+    });
+}
+
+function setupNavSearch(toolsPopup) {
+    const input = toolsPopup.querySelector('#fptNavSearch');
+    const clearBtn = toolsPopup.querySelector('#fptNavSearchClear');
+    const resultsBox = toolsPopup.querySelector('#fptNavSearchResults');
+    const nav = toolsPopup.querySelector('.fp-tools-nav');
+    const body = toolsPopup.querySelector('.fp-tools-body');
+    if (!input || !nav || !resultsBox) return;
+
+    if (body && resultsBox.parentElement !== body) {
+        body.appendChild(resultsBox);
+    }
+
+    const norm = (s) => (s || '').toLowerCase().replace(/ё/g, 'е').trim();
+
+    let hideTimer = null;
+    function showResults() {
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        resultsBox.classList.add('active');
+    }
+    function hideResults(clear) {
+        resultsBox.classList.remove('active');
+        if (clear) {
+            if (hideTimer) clearTimeout(hideTimer);
+            hideTimer = setTimeout(() => { resultsBox.innerHTML = ''; hideTimer = null; }, 180);
+        }
+    }
+
+    function buildFeatureIndex() {
+        const index = [];
+        const pages = toolsPopup.querySelectorAll('.fp-tools-page-content');
+        pages.forEach(page => {
+            const pageId = page.dataset.page;
+            const navLi = toolsPopup.querySelector(`.fp-tools-nav li[data-page="${pageId}"]`);
+            const pageLabel = navLi ? (navLi.querySelector('span:last-child')?.textContent || '').trim() : pageId;
+            const seen = new Set();
+            page.querySelectorAll('h3, h4, h5, label > span, .feature-title, .setting-group > h4').forEach(el => {
+                if (el.closest('.fpt-nav-search')) return;
+                const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (!text || text.length < 3 || text.length > 80) return;
+                const key = pageId + '::' + text.toLowerCase();
+                if (seen.has(key)) return;
+                seen.add(key);
+                index.push({ pageId, pageLabel, text, el });
+            });
+        });
+        return index;
+    }
+
+    function clearHighlights() {
+        toolsPopup.querySelectorAll('.fpt-search-flash').forEach(el => el.classList.remove('fpt-search-flash'));
+    }
+
+    function jumpToFeature(item) {
+        const navLi = toolsPopup.querySelector(`.fp-tools-nav li[data-page="${item.pageId}"]`);
+        if (navLi) navLi.click();
+        setTimeout(() => {
+            clearHighlights();
+            const target = item.el.closest('.setting-group, .feature-item, .form-group, .template-container, .checkbox-label-inline') || item.el;
+            try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) { target.scrollIntoView(); }
+            target.classList.add('fpt-search-flash');
+            setTimeout(() => target.classList.remove('fpt-search-flash'), 2200);
+        }, 90);
+    }
+
+    let lastKeys = '';
+    function renderResults(query) {
+        const q = norm(query);
+        if (!q) { hideResults(true); lastKeys = ''; return; }
+        const index = buildFeatureIndex();
+        const hits = index.filter(it => norm(it.text).includes(q)).slice(0, 20);
+        if (!hits.length) { hideResults(true); lastKeys = ''; return; }
+
+        const keys = hits.map(h => h.pageId + '::' + h.text).join('|');
+        if (keys === lastKeys) { showResults(); return; }
+        lastKeys = keys;
+
+        resultsBox.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        hits.forEach((it, i) => {
+            const row = document.createElement('div');
+            row.className = 'fpt-nav-search-result';
+            row.style.animationDelay = Math.min(i * 18, 180) + 'ms';
+            row.innerHTML = `<span class="fpt-nsr-text"></span><span class="fpt-nsr-page"></span>`;
+            row.querySelector('.fpt-nsr-text').textContent = it.text;
+            row.querySelector('.fpt-nsr-page').textContent = it.pageLabel;
+            row.addEventListener('click', () => {
+                input.value = '';
+                applyFilter('');
+                hideResults(true);
+                jumpToFeature(it);
+            });
+            frag.appendChild(row);
+        });
+        resultsBox.appendChild(frag);
+        showResults();
+    }
+
+    function applyFilter(query) {
+        const q = norm(query);
+        const items = toolsPopup.querySelectorAll('.fp-tools-nav li[data-page]');
+        const dividers = toolsPopup.querySelectorAll('.fp-tools-nav li.fp-nav-divider');
+        if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+
+        if (!q) {
+            nav.classList.remove('fpt-search-active');
+            items.forEach(li => { li.classList.remove('fpt-nav-hidden', 'fpt-nav-match'); });
+            dividers.forEach(d => d.classList.remove('fpt-nav-hidden'));
+            return;
+        }
+
+        nav.classList.add('fpt-search-active');
+        const index = buildFeatureIndex();
+        const matchedPageIds = new Set(index.filter(it => norm(it.text).includes(q)).map(it => it.pageId));
+
+        items.forEach(li => {
+            const pageId = li.dataset.page;
+            const labelText = (li.querySelector('span:last-child')?.textContent || '').trim();
+            const directMatch = norm(labelText).includes(q);
+            const contentMatch = matchedPageIds.has(pageId);
+            if (directMatch || contentMatch) {
+                li.classList.remove('fpt-nav-hidden');
+                li.classList.add('fpt-nav-match');
+            } else {
+                li.classList.add('fpt-nav-hidden');
+                li.classList.remove('fpt-nav-match');
+            }
+        });
+
+        dividers.forEach(div => {
+            let next = div.nextElementSibling;
+            let hasVisible = false;
+            while (next && !next.classList.contains('fp-nav-divider')) {
+                if (next.dataset.page && !next.classList.contains('fpt-nav-hidden')) {
+                    hasVisible = true;
+                    break;
+                }
+                next = next.nextElementSibling;
+            }
+            if (hasVisible) div.classList.remove('fpt-nav-hidden');
+            else div.classList.add('fpt-nav-hidden');
+        });
+    }
+
+    input.addEventListener('input', () => {
+        applyFilter(input.value);
+        renderResults(input.value);
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            applyFilter('');
+            hideResults(true);
+            input.focus();
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!toolsPopup.contains(e.target)) return;
+        if (e.target.closest('#fptNavSearch') || e.target.closest('#fptNavSearchResults')) return;
+        hideResults(false);
+    });
+}

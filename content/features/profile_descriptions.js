@@ -173,15 +173,66 @@
   }
 
   let _catalog = null;
+  const CATALOG_CACHE_KEY = 'fptBannersCatalogCache';
+  const CATALOG_CACHE_TTL = 30 * 60 * 1000; // 30 минут
+
+  /**
+   * Загрузка свежего каталога баннеров с удаленного сервера
+   */
+  async function fetchServerCatalog() {
+    try {
+      const r = await proxiedFetch(SERVER + '/banners/catalog', { method: 'GET', cache: 'no-store' });
+      if (r.ok) {
+        const data = await r.json();
+        if (data && Array.isArray(data.banners)) {
+          _catalog = data;
+          await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
+          return _catalog;
+        }
+      }
+    } catch (e) {
+      console.warn('[FPT PD] Ошибка загрузки каталога с сервера:', e);
+    }
+    return null;
+  }
+
+  /**
+   * Фоновое обновление каталога баннеров
+   */
+  function refreshCatalogBackground() {
+    fetchServerCatalog().catch(() => {});
+  }
+
+  /**
+   * Полный цикл получения каталога (Локальный кэш -> Сервер -> Резервный файл расширения)
+   */
   async function loadCatalog() {
     if (_catalog) return _catalog;
+
+    // 1. Быстрое чтение из локального кэша для моментального отображения
+    try {
+      const cached = (await storageGet([CATALOG_CACHE_KEY]))[CATALOG_CACHE_KEY];
+      if (cached && cached.catalog && Array.isArray(cached.catalog.banners)) {
+        _catalog = cached.catalog;
+        if (Date.now() - (cached.t || 0) > CATALOG_CACHE_TTL) {
+          refreshCatalogBackground();
+        }
+        return _catalog;
+      }
+    } catch (e) {}
+
+    // 2. Запрос актуального каталога с бэкенда
+    const fetched = await fetchServerCatalog();
+    if (fetched) return fetched;
+
+    // 3. Запасной вариант: локальный встроенный файл
     try {
       const u = chrome.runtime.getURL('content/banners-catalog.json');
       const r = await fetch(u);
       _catalog = await r.json();
       return _catalog;
     } catch (e) {
-      console.error('[FPT PD] Failed to load catalog', e);
+      console.error('[FPT PD] Ошибка загрузки резервного каталога:', e);
       return { version: 1, categories: [], banners: [] };
     }
   }

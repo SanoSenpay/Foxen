@@ -3,8 +3,9 @@ const API_SECRET_KEY = 'fptoolsdim';
 
 const SYSTEM_PROMPT = 'You are a text editing model. Follow user instructions precisely.';
 
-// 3.0 FIX: убирает лишние пустые строки, которые ИИ-перевод/генерация любят добавлять
-// между пунктами. Схлопывает 2+ переносов в один и обрезает края.
+/**
+ * Нормализация текста от ИИ: удаляет лишние пустые строки и обрезает пробелы.
+ */
 function fptNorm(t) {
     return typeof t === 'string'
         ? t.replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()

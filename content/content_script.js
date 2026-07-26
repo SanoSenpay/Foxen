@@ -396,15 +396,6 @@
                 initSalesChart();
                 if (typeof initializeOverviewTour === 'function') initializeOverviewTour();
 
-                // Общий чат: опрашиваем public-chat.json раз в 16 минут.
-                // Так active/display/url меняются на лету без обновления расширения.
-                if (typeof fptGcRefreshConfig === 'function' && !window.__fptGcConfigTimer) {
-                    window.__fptGcConfigTimer = setInterval(() => {
-                        fptGcRefreshConfig(true).then(() => {
-                            if (typeof fptGcApplyVisibility === 'function') fptGcApplyVisibility();
-                        });
-                    }, 16 * 60 * 1000);
-                }
 
                 __fpPopupReady = true;
                 return toolsPopup;
@@ -468,12 +459,21 @@
             if (request.action === "getAppData") {
                 try {
                     const appDataString = document.body.dataset.appData;
-                    if (!appDataString) {
-                         sendResponse({ success: false, error: "data-app-data not found on page" });
-                    } else {
-                        const appData = JSON.parse(appDataString);
-                        sendResponse({ success: true, data: appData });
+                    let appData = {};
+                    if (appDataString) {
+                        const parsed = JSON.parse(appDataString);
+                        appData = Array.isArray(parsed) ? parsed[0] : parsed;
                     }
+                    let userName = appData?.userName || appData?.username || appData?.user?.name || '';
+                    if (!userName) {
+                        const nameEl = document.querySelector('.user-link-name, a.user-link-dropdown .user-link-name, .navbar-right .user-link-name');
+                        if (nameEl) userName = nameEl.textContent.trim();
+                    }
+                    if (userName) appData.userName = userName;
+                    if (appData.userId || userName) {
+                        chrome.storage.local.set({ fpCurrentUserInfo: { userId: String(appData.userId || ''), username: userName } });
+                    }
+                    sendResponse({ success: true, data: appData });
                 } catch (e) {
                     sendResponse({ success: false, error: e.message });
                 }

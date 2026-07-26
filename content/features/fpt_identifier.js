@@ -1,34 +1,79 @@
+// content/features/fpt_identifier.js
+// =============================================================================
+// FOXEN & FUNPAY TOOLS USER IDENTIFIER (ULTRA-OPTIMIZED)
+//  • Identifies active users of Foxen and original FunPay Tools via zero-width signatures.
+//  • Dual Signatures:
+//      - FPT_SIGNATURE   : '\u200B\u200D\u200C' (FunPay Tools)
+//      - FOXEN_SIGNATURE : '\u200C\u200D\u200B' (Foxen)
+//  • Body Event Delegation: Captures form submit/click/enter BEFORE FunPay reads content.
+//  • Header, Profile, and Message Badges: Displays distinct "🦊 Foxen" and "⚡ FunPay Tools" labels.
+// =============================================================================
 
-
-function initializeFPTIdentifier() {
+(function () {
     'use strict';
 
-    const path = window.location.pathname;
-
-    // FIX: Added /users/ - previously this returned early on profile pages
-    // which have an inline chat form (sends messages to seller).
     const ALLOWED = ['/chat/', '/lots/offer', '/orders/', '/users/'];
-    if (!ALLOWED.some(p => path.startsWith(p))) return;
+    if (!ALLOWED.some(p => window.location.pathname.startsWith(p))) return;
 
     const FPT_SIGNATURE   = '\u200B\u200D\u200C';
-    const FPT_LABEL_CLASS = 'fpt-status-label';
-    const identifiedUsers = new Set();
+    const FOXEN_SIGNATURE = '\u200C\u200D\u200B';
+
+    const foxenUsers = new Set();
+    const fptUsers   = new Set();
+
     let currentChatUserId = null;
     let lastSeenAuthorId  = null;
+    let lastRenderedBadgeKey = '';
 
-    // ── Styles ──────────────────────────────────────────────────────────────
+    // ── Inject Badge Styles ──────────────────────────────────────────────────
     function addIdentifierStyles() {
         if (document.getElementById('fpt-identifier-styles')) return;
         const s = document.createElement('style');
         s.id = 'fpt-identifier-styles';
         s.textContent = `
-            .${FPT_LABEL_CLASS} {
-                color: #C026D3;
+            .fpt-status-badge-wrap {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                margin-left: 6px;
+                vertical-align: middle;
+                user-select: none;
+            }
+            .fpt-badge-foxen {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                color: #d946ef;
                 font-size: 11px;
                 font-weight: 600;
-                margin-left: 6px;
-                opacity: 0.85;
-                user-select: none;
+                opacity: 0.9;
+            }
+            .fpt-badge-foxen::before {
+                content: '';
+                display: inline-block;
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: #d946ef;
+                box-shadow: 0 0 6px rgba(217, 70, 239, 0.7);
+            }
+            .fpt-badge-fpt {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                color: #38bdf8;
+                font-size: 11px;
+                font-weight: 600;
+                opacity: 0.9;
+            }
+            .fpt-badge-fpt::before {
+                content: '';
+                display: inline-block;
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: #38bdf8;
+                box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
             }
         `;
         document.head.appendChild(s);
@@ -36,165 +81,245 @@ function initializeFPTIdentifier() {
 
     function getUserIdFromUrl(url) {
         if (!url) return null;
-        const m = url.match(/users\/(\d+)/);
+        const m = String(url).match(/users\/(\d+)/);
         return m ? m[1] : null;
     }
 
-    // ── Header badge ────────────────────────────────────────────────────────
+    // ── Update Header / Profile Status Badge ──────────────────────────────────
     function updateHeaderStatus() {
-        const header = document.querySelector('.chat-header');
+        const header = document.querySelector('.chat-header') || document.querySelector('.profile-header');
         if (!header) return;
-        const statusEl  = header.querySelector('.media-user-status');
-        const userLink  = header.querySelector('.media-user-name a');
+
+        const statusEl = header.querySelector('.media-user-status') || header.querySelector('.user-status') || header.querySelector('.media-user-name');
+        const userLink = header.querySelector('.media-user-name a') || header.querySelector('a[href*="/users/"]');
         if (!statusEl || !userLink) return;
 
-        statusEl.querySelector(`.${FPT_LABEL_CLASS}`)?.remove();
         const userId = getUserIdFromUrl(userLink.href);
         currentChatUserId = userId;
-        if (userId && identifiedUsers.has(userId)) {
-            const lbl = document.createElement('span');
-            lbl.className = FPT_LABEL_CLASS;
-            lbl.textContent = '· Foxen';
-            statusEl.appendChild(lbl);
+
+        if (!userId) {
+            statusEl.querySelector('.fpt-status-badge-wrap')?.remove();
+            lastRenderedBadgeKey = '';
+            return;
+        }
+
+        const isFoxen = foxenUsers.has(userId);
+        const isFPT   = fptUsers.has(userId);
+        const badgeKey = `${userId}:${isFoxen}:${isFPT}`;
+
+        if (badgeKey === lastRenderedBadgeKey && statusEl.querySelector('.fpt-status-badge-wrap')) {
+            return;
+        }
+        lastRenderedBadgeKey = badgeKey;
+
+        statusEl.querySelector('.fpt-status-badge-wrap')?.remove();
+
+        if (isFoxen) {
+            const wrap = document.createElement('span');
+            wrap.className = 'fpt-status-badge-wrap';
+            const bFoxen = document.createElement('span');
+            bFoxen.className = 'fpt-badge-foxen';
+            bFoxen.textContent = 'Foxen';
+            bFoxen.title = 'Пользователь расширения Foxen';
+            wrap.appendChild(bFoxen);
+            statusEl.appendChild(wrap);
+        } else if (isFPT) {
+            const wrap = document.createElement('span');
+            wrap.className = 'fpt-status-badge-wrap';
+            const bFPT = document.createElement('span');
+            bFPT.className = 'fpt-badge-fpt';
+            bFPT.textContent = 'FunPay Tools';
+            bFPT.title = 'Пользователь расширения FunPay Tools';
+            wrap.appendChild(bFPT);
+            statusEl.appendChild(wrap);
         }
     }
 
-    // ── Message scanning ────────────────────────────────────────────────────
+    // ── Message Scanning Logic (With Message-Level Badges) ────────────────────
     function processMessage(node) {
+        if (node.classList.contains('fpt-scanned-msg')) return;
+        node.classList.add('fpt-scanned-msg');
+
         let authorId = null;
         if (node.classList.contains('chat-msg-with-head')) {
             const link = node.querySelector('.chat-msg-author-link');
-            if (link) { authorId = getUserIdFromUrl(link.href); lastSeenAuthorId = authorId; }
+            if (link) {
+                authorId = getUserIdFromUrl(link.href);
+                lastSeenAuthorId = authorId;
+            }
         } else {
             authorId = lastSeenAuthorId;
         }
-        if (!authorId) return;
+
         const txt = node.querySelector('.chat-msg-text');
-        if (txt?.textContent.includes(FPT_SIGNATURE)) {
-            if (!identifiedUsers.has(authorId)) {
-                identifiedUsers.add(authorId);
-                if (authorId === currentChatUserId) updateHeaderStatus();
+        if (!txt) return;
+
+        const content = txt.textContent || '';
+        const hasFoxen = content.includes(FOXEN_SIGNATURE);
+        const hasFPT   = content.includes(FPT_SIGNATURE);
+
+        if (hasFoxen || hasFPT) {
+            if (authorId) {
+                if (hasFoxen) foxenUsers.add(authorId);
+                if (hasFPT) fptUsers.add(authorId);
+            }
+
+            // Inline badge on message author header
+            const headAuthor = node.querySelector('.chat-msg-author');
+            if (headAuthor && !headAuthor.querySelector('.fpt-status-badge-wrap')) {
+                const wrap = document.createElement('span');
+                wrap.className = 'fpt-status-badge-wrap';
+
+                if (hasFoxen) {
+                    const bFoxen = document.createElement('span');
+                    bFoxen.className = 'fpt-badge-foxen';
+                    bFoxen.textContent = 'Foxen';
+                    wrap.appendChild(bFoxen);
+                } else if (hasFPT) {
+                    const bFPT = document.createElement('span');
+                    bFPT.className = 'fpt-badge-fpt';
+                    bFPT.textContent = 'FunPay Tools';
+                    wrap.appendChild(bFPT);
+                }
+                headAuthor.appendChild(wrap);
+            }
+
+            if (authorId && authorId === currentChatUserId) {
+                updateHeaderStatus();
             }
         }
     }
 
-    // ── Injection guard ──────────────────────────────────────────────────────
+    // ── Should Inject Guard ──────────────────────────────────────────────────
     function shouldInject(text) {
-        if (!text || text.trim().length < 4) return false;
+        if (!text || text.trim().length < 1) return false;
+        if (text.includes(FOXEN_SIGNATURE)) return false; // Already injected
         if (/(https?:\/\/|www\.|ftp:\/\/)/i.test(text)) return false;
         if (/funpay\.com/i.test(text)) return false;
         if (/[A-Za-z]:\\/i.test(text) || /^\/[a-z]/i.test(text)) return false;
-        // Already contains zero-width chars (own or foreign signature)
-        if (/[\u200B\u200C\u200D\uFEFF]/.test(text)) return false;
 
-        // Skip if the message STARTS with any of these symbols (commands / special syntax).
-        // Checked on the trimmed text so leading spaces don't bypass it.
+        // Skip commands
         const trimmed = text.trimStart();
         const blockedFirstChars = ['/', '.', '!', '+', '№', '\\', '"', ':', '(', ')', '?', '#'];
         if (blockedFirstChars.includes(trimmed.charAt(0))) return false;
 
-        // Skip if the message has more than 24 English (Latin) letters total.
-        const latinCount = (text.match(/[A-Za-z]/g) || []).length;
-        if (latinCount > 24) return false;
-
         return true;
     }
 
-    // ── Find chat textarea across ALL page types ────────────────────────────
-    // FunPay uses .chat-form > form > .chat-form-input > textarea[name="content"]
-    // on /users/, /orders/, /chat/ pages (same structure, just different parents).
-    // FIX: waitForElement('.chat-form form') was broken because form was found
-    // but querySelector('button[type="submit"]') on it failed on some pages.
-    async function setupFormInjection() {
-        // Wait for the textarea directly - works on ALL page types
-        const textarea = await waitForElement('textarea[name="content"]', 8000);
-        if (!textarea) return;
-
-        // The submit button is always .btn-round[type=submit] OR .btn-gray.btn-round inside .chat-form-btn
-        const form = textarea.closest('form');
-        if (!form) return;
-
-        const sendBtn = form.querySelector('button[type="submit"], button.btn-round');
-        if (!sendBtn) return;
-
-        const injectSig = () => {
-            const val = textarea.value;
+    // ── Body Delegation for Outgoing Messages (Synchronous Capture) ───────────
+    function attachGlobalFormDelegation() {
+        const injectSignatureIntoTextarea = (textarea) => {
+            if (!textarea) return;
+            let val = textarea.value;
             if (!shouldInject(val)) return;
-            if (!val.endsWith(FPT_SIGNATURE)) {
-                if (!val.endsWith(' ')) textarea.value += ' ';
-                textarea.value += FPT_SIGNATURE;
-            }
+
+            if (!val.endsWith(' ')) val += ' ';
+            val += FOXEN_SIGNATURE;
+            textarea.value = val;
         };
 
-        sendBtn.addEventListener('click', injectSig, true);
-        textarea.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && !e.shiftKey) injectSig();
+        // Capture submit on forms
+        document.body.addEventListener('submit', (e) => {
+            const form = e.target;
+            if (form && form.tagName === 'FORM') {
+                const textarea = form.querySelector('textarea[name="content"]');
+                injectSignatureIntoTextarea(textarea);
+            }
+        }, true);
+
+        // Capture button clicks
+        document.body.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[type="submit"], button.btn-round, .chat-form-btn button');
+            if (!btn) return;
+            const form = btn.closest('form');
+            const textarea = form ? form.querySelector('textarea[name="content"]') : document.querySelector('textarea[name="content"]');
+            injectSignatureIntoTextarea(textarea);
+        }, true);
+
+        // Capture Enter keypress
+        document.body.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                const textarea = e.target.closest('textarea[name="content"]');
+                if (textarea) {
+                    injectSignatureIntoTextarea(textarea);
+                }
+            }
         }, true);
     }
 
-    // ── Find chat message container across ALL page types ───────────────────
-    // /chat/ full page  → .chat-full .chat
-    // /orders/          → .chat.chat-float  (inside .chat-float-container)
-    // /users/           → .chat-form parent does NOT have a .chat wrapper;
-    //                     messages are in .chat-message-list if any, or we
-    //                     observe .chat-form's parent container instead.
-    async function setupMessageObserver() {
-        // Try all known selectors, prefer most specific
-        const containerSelector =
-            '.chat.chat-float, .chat-full .chat, .chat-message-list, .chat-message-container';
+    // ── Throttled Observer for Incoming Chat Messages ────────────────────────
+    function setupMessageObserver() {
+        let scanTimer = null;
 
-        const container = await waitForElement(containerSelector, 8000);
-        if (!container) return;
-
-        // Scan existing messages
-        container.querySelectorAll('.chat-msg-item').forEach(processMessage);
-        updateHeaderStatus();
-
-        const observer = new MutationObserver(() => {
-            // Detect chat switch (clicking a different contact in the list)
-            const headerLink = document.querySelector('.chat-header .media-user-name a');
+        const scanAll = () => {
+            const headerLink = document.querySelector('.chat-header .media-user-name a') || document.querySelector('a[href*="/users/"]');
             const newUserId  = headerLink ? getUserIdFromUrl(headerLink.href) : null;
             if (newUserId !== currentChatUserId) {
                 lastSeenAuthorId = null;
-                container.querySelectorAll('.chat-msg-item').forEach(processMessage);
-                updateHeaderStatus();
+                currentChatUserId = newUserId;
+                lastRenderedBadgeKey = '';
             }
-            // Process new messages
-            container.querySelectorAll('.chat-msg-item:not(.fpt-processed)').forEach(node => {
-                node.classList.add('fpt-processed');
-                processMessage(node);
-            });
-        });
-        observer.observe(container, { childList: true, subtree: true });
-    }
 
-    // ── waitForElement with optional timeout ─────────────────────────────────
-    function waitForElement(selector, timeout = 0) {
-        return new Promise(resolve => {
-            const el = document.querySelector(selector);
-            if (el) return resolve(el);
+            document.querySelectorAll('.chat-msg-item:not(.fpt-scanned-msg)').forEach(processMessage);
+            updateHeaderStatus();
+        };
 
-            const obs = new MutationObserver(() => {
-                const found = document.querySelector(selector);
-                if (found) { obs.disconnect(); resolve(found); }
-            });
-            obs.observe(document.body, { childList: true, subtree: true });
+        const scheduleScan = () => {
+            if (scanTimer) return;
+            scanTimer = setTimeout(() => {
+                scanTimer = null;
+                scanAll();
+            }, 250);
+        };
 
-            if (timeout > 0) {
-                setTimeout(() => { obs.disconnect(); resolve(null); }, timeout);
+        scanAll();
+
+        const containerSelector = '.chat.chat-float, .chat-full .chat, .chat-message-list, .chat-message-container, .chat-full';
+        const targetContainer = document.querySelector(containerSelector) || document.body;
+
+        const observer = new MutationObserver((mutations) => {
+            let shouldScan = false;
+
+            for (const m of mutations) {
+                for (const node of m.addedNodes) {
+                    if (node.nodeType === 1) {
+                        if (node.classList && node.classList.contains('fpt-status-badge-wrap')) continue;
+
+                        if (node.classList && node.classList.contains('chat-msg-item')) {
+                            shouldScan = true;
+                            break;
+                        } else if (node.querySelector && node.querySelector('.chat-msg-item')) {
+                            shouldScan = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldScan) break;
+            }
+
+            if (shouldScan) {
+                scheduleScan();
             }
         });
+
+        observer.observe(targetContainer, { childList: true, subtree: true });
     }
 
     // ── Boot ────────────────────────────────────────────────────────────────
     async function boot() {
-        const { fpToolsIdentifierEnabled } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsIdentifierEnabled');
-        if (fpToolsIdentifierEnabled === false) return;
+        try {
+            const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsIdentifierEnabled');
+            if (st.fpToolsIdentifierEnabled === false) return;
+        } catch (_) {}
 
         addIdentifierStyles();
-        // Run both in parallel - they each wait independently
-        await Promise.all([setupFormInjection(), setupMessageObserver()]);
+        attachGlobalFormDelegation();
+        setupMessageObserver();
     }
 
-    boot();
-}
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+})();

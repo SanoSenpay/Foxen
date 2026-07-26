@@ -79,11 +79,6 @@ async function fptRenderNeedsList(filterText) {
                         <span class="fpt-needs-item-desc">${fptEscapeHtml(entry.desc)}</span>
                     </span>
                 </label>
-                <button type="button" class="fpt-needs-preview-btn" data-id="${entry.id}" title="Показать предпросмотр"><span class="material-symbols-rounded">visibility</span></button>
-            </div>
-            <div class="fpt-needs-preview-row" data-id="${entry.id}" style="display:none;">
-                <span class="fpt-needs-preview-caption">Так выглядит элемент:</span>
-                ${fptNeedsPreviewHtml(entry)}
             </div>`;
         }).join('');
         return `
@@ -263,20 +258,8 @@ function initializeNeedsTab() {
         }
     });
 
-    // delegated clicks: toggle inline preview + AI confirm
+    // delegated clicks: AI confirm
     page.addEventListener('click', async (e) => {
-        const previewBtn = e.target.closest('.fpt-needs-preview-btn');
-        if (previewBtn) {
-            e.preventDefault();
-            const id = previewBtn.dataset.id;
-            const row = page.querySelector(`.fpt-needs-preview-row[data-id="${CSS.escape(id)}"]`);
-            if (row) {
-                const showing = row.style.display !== 'none';
-                row.style.display = showing ? 'none' : 'flex';
-                previewBtn.classList.toggle('fpt-needs-preview-open', !showing);
-            }
-            return;
-        }
         if (e.target.closest('#fptNeedsAiConfirm')) {
             const resultBox = document.getElementById('fptNeedsAiResult');
             const picks = resultBox.querySelectorAll('.fpt-needs-ai-pick');

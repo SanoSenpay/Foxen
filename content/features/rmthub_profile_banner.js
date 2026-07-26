@@ -212,7 +212,7 @@
         
         const nameEl = document.querySelector('.media-user-name, .profile-header h1, .profile-user-name');
         
-        // Надежный парсинг никнейма из Title страницы ("Пользователь echkere091 / FunPay")
+        // Парсинг никнейма из заголовка страницы (Title)
         let username = document.title
             .replace(/ \/ FunPay$/i, '')
             .replace(/ - FunPay$/i, '')

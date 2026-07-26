@@ -1087,48 +1087,55 @@ function parseOrderParticipants(html) {
 
         // текущий пользователь (я) - из data-app-data или из ссылки в шапке
         let myId = null;
+        let myName = '';
         const appDataRaw = doc.querySelector('body')?.getAttribute('data-app-data');
         if (appDataRaw) {
             try {
                 const d = JSON.parse(appDataRaw.replace(/&quot;/g, '"'));
                 const u = Array.isArray(d) ? d[0] : d;
                 myId = String(u.userId || u.id || '') || null;
+                myName = String(u.userName || u.username || '') || '';
             } catch (_) {}
         }
-        if (!myId) {
+        if (!myId || !myName) {
             const meLink = doc.querySelector('a.user-link-dropdown[href*="/users/"], .navbar-right a[href*="/users/"]');
             const m = meLink?.getAttribute('href')?.match(/\/users\/(\d+)/);
             if (m) myId = m[1];
+            const nameEl = doc.querySelector('.user-link-name, a.user-link-dropdown .user-link-name');
+            if (nameEl) myName = nameEl.textContent.trim();
         }
 
         // на странице заказа стороны размечены как «Продавец» и «Покупатель».
-        // Ищем блоки param-item с этими заголовками и тянем id из ссылки на профиль.
         let sellerId = null, buyerId = null, sellerName = '', buyerName = '';
-        doc.querySelectorAll('.param-item').forEach(item => {
-            const h = item.querySelector('h5')?.textContent.trim().toLowerCase() || '';
+        doc.querySelectorAll('.param-item, .order-property, div.row, dl').forEach(item => {
+            const label = (item.querySelector('h5, .param-title, dt, label')?.textContent || '').trim().toLowerCase();
             const a = item.querySelector('a[href*="/users/"]');
             if (!a) return;
             const idm = a.getAttribute('href')?.match(/\/users\/(\d+)/);
             const id = idm ? idm[1] : null;
             const name = a.textContent.trim();
-            if (/продавец|seller/.test(h)) { sellerId = id; sellerName = name; }
-            else if (/покупатель|buyer/.test(h)) { buyerId = id; buyerName = name; }
+            if (/продавец|seller/.test(label)) { sellerId = id; sellerName = name; }
+            else if (/покупатель|buyer/.test(label)) { buyerId = id; buyerName = name; }
         });
 
-        // запасной вариант: ссылки с классами-маркерами
         if (!sellerId) {
             const sl = doc.querySelector('.order-seller a[href*="/users/"], [data-seller] a[href*="/users/"]');
             const m = sl?.getAttribute('href')?.match(/\/users\/(\d+)/);
             if (m) { sellerId = m[1]; sellerName = sl.textContent.trim(); }
         }
+        if (!buyerId) {
+            const bl = doc.querySelector('.order-buyer a[href*="/users/"], [data-buyer] a[href*="/users/"]');
+            const m = bl?.getAttribute('href')?.match(/\/users\/(\d+)/);
+            if (m) { buyerId = m[1]; buyerName = bl.textContent.trim(); }
+        }
 
-        // если знаем продавца и себя - однозначно. Если продавца не нашли, но нашли
-        // покупателя и это Я - значит я НЕ продавец (моя покупка).
         let iAmSeller = null;
         if (myId && sellerId) iAmSeller = (myId === sellerId);
         else if (myId && buyerId) iAmSeller = (myId !== buyerId);
+        else if (myName && sellerName) iAmSeller = (myName.toLowerCase() === sellerName.toLowerCase());
+        else if (myName && buyerName) iAmSeller = (myName.toLowerCase() !== buyerName.toLowerCase());
 
-        return { myId, sellerId, buyerId, sellerName, buyerName, iAmSeller };
+        return { myId, myName, sellerId, buyerId, sellerName, buyerName, iAmSeller };
     } catch (e) {
         console.error("Foxen Offscreen: Error in parseOrderParticipants", e);
         return { iAmSeller: null };

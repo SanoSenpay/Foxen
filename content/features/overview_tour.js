@@ -167,7 +167,7 @@ const SCENES = [
         title: "Спасибо за просмотр!",
         icon: "thumb_up",
         description: "Присоединяйтесь к нашему Telegram-каналу, чтобы быть в курсе обновлений и общаться с другими пользователями.",
-        visualization: `<a href="https://t.me/FPTools" target="_blank" class="tour-telegram-btn">
+        visualization: `<a href="https://t.me/FoxenFF" target="_blank" class="tour-telegram-btn">
             <svg viewBox="0 0 24 24" height="24" width="24"><path fill="currentColor" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-1.37.2-1.64l16.44-5.99c.73-.27 1.36.17 1.15.99l-2.28 10.82c-.15.71-.56 1.01-1.2 1.01l-4.82-.01-1.15 4.35c-.32.74-1.23.46-1.42-.47z"></path></svg>
             Перейти в Telegram
         </a>`,

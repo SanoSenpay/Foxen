@@ -19,10 +19,7 @@ function isBotMarked(text) {
 
 async function fetchWithRetry(url, options, { retries = 4, baseDelay = 800 } = {}) {
     let lastErr;
-    // FIX 2.8.1: браузер ИГНОРИРУЕТ заголовок Cookie в fetch() (forbidden header),
-    // поэтому полагаемся на реальные куки активной сессии. Для funpay.com принудительно
-    // включаем credentials:'include' - иначе у части пользователей golden_key/PHPSESSID
-    // не прикладывались и автоответы/раннер работали "через раз".
+    // Блокировка отправки ручных заголовков Cookie и передача куки сессии (golden_key / PHPSESSID)
     const _opts = (options && typeof options === 'object') ? { ...options } : {};
     if (/^https:\/\/(?:[a-z0-9-]+\.)?funpay\.com\//i.test(String(url)) && !_opts.credentials) {
         _opts.credentials = 'include';
@@ -77,23 +74,52 @@ function getMessageType(text) {
 }
 
 /**
- * Extracts the username of the person who left the feedback directly from the
- * system message text. Works without any HTTP request.
- * Examples:
- *   RU: "Покупатель SanoSenpai написал отзыв к заказу #UNQTE317"
- *   RU: "Покупатель SanoSenpai изменил отзыв к заказу #UNQTE317"
- *   EN: "SanoSenpai has given feedback to the order #UNQTE317"
- *   EN: "SanoSenpai has edited their feedback to the order #UNQTE317"
+ * Извлечение имени покупателя из текста системного сообщения о заказе (RU/EN).
  */
-function extractFeedbackAuthor(text) {
+function extractOrderBuyer(text) {
     if (!text) return null;
-    // Russian: "Покупатель USERNAME написал/изменил отзыв..."
-    let m = text.match(/Покупатель\s+(\S+)\s+(?:написал|изменил)\s+отзыв/i);
+    // Парсинг русского формата ("Покупатель ИМЯ")
+    let m = text.match(/Покупатель\s+([^\s,.]+)/i);
     if (m) return m[1];
-    // English: "USERNAME has given/edited... feedback"
-    m = text.match(/^(\S+)\s+has\s+(?:given|edited)/i);
+    // Парсинг английского формата ("Buyer ИМЯ")
+    m = text.match(/Buyer\s+([^\s,.]+)/i);
+    if (m) return m[1];
+    // Парсинг имени в английском сообщении об отзыве
+    m = text.match(/^([^\s,.]+)\s+has\s+(?:given|edited|deleted)/i);
+    if (m) return m[1];
+    // Парсинг имени при возврате средств (RU)
+    m = text.match(/покупателю\s+([^\s,.]+)/i);
+    if (m) return m[1];
+    // Парсинг имени при возврате средств (EN)
+    m = text.match(/to\s+buyer\s+([^\s,.]+)/i);
     if (m) return m[1];
     return null;
+}
+
+function cleanName(n) {
+    if (!n) return '';
+    return String(n)
+        .replace(/[\u200B-\u200D\uFEFF\u2060\u2061\u2064]/g, '')
+        .trim()
+        .split(/\s+/)[0]
+        .toLowerCase();
+}
+
+function extractOrderSeller(text) {
+    if (!text) return null;
+    let m = text.match(/продавцу\s+([^\s,.]+)/i);
+    if (m) return m[1];
+    m = text.match(/Продавец\s+([^\s,.]+)/i);
+    if (m) return m[1];
+    m = text.match(/to\s+seller\s+([^\s,.]+)/i);
+    if (m) return m[1];
+    m = text.match(/Seller\s+([^\s,.]+)/i);
+    if (m) return m[1];
+    return null;
+}
+
+function extractFeedbackAuthor(text) {
+    return extractOrderBuyer(text);
 }
 
 async function getAuth() {
@@ -106,6 +132,12 @@ async function getAuth() {
     const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
     const phpsessid = phpSessIdCookie?.value || '';
 
+    let storedUser = {};
+    try {
+        const s = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpCurrentUserInfo');
+        if (s?.fpCurrentUserInfo) storedUser = s.fpCurrentUserInfo;
+    } catch (_) {}
+
     const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: 'https://funpay.com/*' });
     for (const tab of tabs) {
         if (tab.discarded) continue;
@@ -113,8 +145,13 @@ async function getAuth() {
             const r = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: 'getAppData' });
             if (r?.success) {
                 const d = Array.isArray(r.data) ? r.data[0] : r.data;
-                if (d?.['csrf-token'] && d.userId)
-                    return { golden_key, phpsessid, csrf_token: d['csrf-token'], userId: d.userId, username: d.userName };
+                const username = d?.userName || d?.username || d?.user?.name || storedUser.username || '';
+                const userId = d?.userId || storedUser.userId || '';
+                if (username || userId) {
+                    (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: String(userId), username } });
+                }
+                if (d?.['csrf-token'] && userId)
+                    return { golden_key, phpsessid, csrf_token: d['csrf-token'], userId, username };
             }
         } catch (_) {}
     }
@@ -129,11 +166,16 @@ async function getAuth() {
         if (m) {
             const d = JSON.parse(m[1].replace(/&quot;/g, '"'));
             const u = Array.isArray(d) ? d[0] : d;
-            if (u?.['csrf-token'] && u.userId)
-                return { golden_key, phpsessid, csrf_token: u['csrf-token'], userId: u.userId, username: u.userName };
+            const username = u?.userName || u?.username || u?.user?.name || storedUser.username || '';
+            const userId = u?.userId || storedUser.userId || '';
+            if (username || userId) {
+                (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: String(userId), username } });
+            }
+            if (u?.['csrf-token'] && userId)
+                return { golden_key, phpsessid, csrf_token: u['csrf-token'], userId, username };
         }
     } catch (e) {}
-    return { golden_key, phpsessid };
+    return { golden_key, phpsessid, userId: storedUser.userId || '', username: storedUser.username || '' };
 }
 
 async function parseViaOffscreen(html, action, extra = {}) {
@@ -147,8 +189,7 @@ async function parseViaOffscreen(html, action, extra = {}) {
 }
 
 async function sendChatMessage(chatId, text, auth) {
-    // FIX: FunPay runner requires BOTH golden_key AND PHPSESSID cookies.
-    // Without PHPSESSID the request returns 200 but message is silently dropped.
+    // Для корректной работы раннера FunPay необходимы куки golden_key и PHPSESSID
     const cookieStr = auth.phpsessid
         ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
         : `golden_key=${auth.golden_key}`;
@@ -332,8 +373,7 @@ async function handleGreeting(msg, auth, settings) {
     
     if (await isBlacklisted(msg.buyerName, 'response')) return;
 
-    // FIX: If WE initiated this chat (wrote first to another seller), do NOT send greeting
-    // when that seller replies. selfInitiatedChats is populated when lastByMe=true.
+    // Если чат инициирован нами (написали первыми), пропускаем приветствие
     const selfInitiated = settings.selfInitiatedChats || [];
     if (selfInitiated.includes(msg.chatId)) {
         console.log(`Foxen AR: пропуск приветствия — чат ${msg.chatId} инициирован нами.`);
@@ -380,7 +420,7 @@ async function handleKeywords(msg, auth, settings) {
     if (getMessageType(msg.messageText) !== 'NON_SYSTEM') return;
     if (await isBlacklisted(msg.buyerName, 'response')) return;
 
-    // FIX: Same as handleGreeting — if WE wrote first, don't react to keywords in their reply.
+    // Если чат инициирован нами, не реагируем на ключевые слова
     const selfInitiated = settings.selfInitiatedChats || [];
     if (selfInitiated.includes(msg.chatId)) {
         console.log(`Foxen AR: пропуск ключевых слов — чат ${msg.chatId} инициирован нами.`);
@@ -428,15 +468,27 @@ async function handleReview(msg, auth, settings) {
     const orderId = orderMatch[1];
 
     const alreadyReplied = (settings.repliedOrderIds || []).includes(orderId);
-    // FIX: block re-reply for BOTH NEW_FEEDBACK and FEEDBACK_CHANGED.
-    // Previously only NEW_FEEDBACK was blocked, so editing a review would
-    // trigger another auto-reply even though we already answered.
+    // Блокировка повторного ответа для создания и изменения отзыва
     if (alreadyReplied) return;
 
+    // Double-check: if order buyer is current user (or we are buyer in order), NEVER auto-reply to review!
+    const orderBuyer = extractOrderBuyer(msg.messageText);
+    if (orderBuyer && msg.chatName && orderBuyer.toLowerCase() !== msg.chatName.toLowerCase()) {
+        console.log(`Foxen AR: пропуск ответа на отзыв #${orderId} — это наш отзыв как покупателя (продавцу ${msg.chatName}).`);
+        return;
+    }
+    if (orderBuyer && auth.username && orderBuyer.toLowerCase() === auth.username.toLowerCase()) {
+        console.log(`Foxen AR: пропуск ответа на отзыв #${orderId} — это наш собственный отзыв как покупателя.`);
+        return;
+    }
+    const iAmSeller = await verifyIAmSeller(orderId, auth, msg.chatName);
+    if (!iAmSeller) {
+        console.log(`Foxen AR: пропуск ответа на отзыв #${orderId} — мы покупатель в этом заказе.`);
+        return;
+    }
+
     try {
-        // FIX: include PHPSESSID so FunPay returns an authenticated page with a proper
-        // review block and star rating. Without it the page may be served as guest HTML
-        // and parseOrderPageForReview returns null, silently skipping the reply.
+        // Загрузка авторизованной страницы заказа для получения звезд и отзыва
         const cookieStr = auth.phpsessid
             ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
             : `golden_key=${auth.golden_key}`;
@@ -479,11 +531,7 @@ async function handleReview(msg, auth, settings) {
             else if (settings.bonusMode === 'random' && settings.randomBonuses?.length)
                 bonusText = settings.randomBonuses[Math.floor(Math.random() * settings.randomBonuses.length)];
             if (bonusText?.trim()) {
-                // FIX 2.8.2 (№1): задержка перед отправкой подарка за отзыв.
-                // Ответ на отзыв (sendReviewReply) и подарок (сообщение в чат) шли
-                // встык - в некоторых случаях FunPay глотал
-                // ОТВЕТ НА ОТЗЫВ, если сразу после него летело сообщение. Пауза
-                // настраивается (bonusForReviewDelaySec), по умолчанию 4 секунды.
+                // Настраиваемая задержка перед отправкой бонуса за отзыв
                 const delaySec = Number(settings.bonusForReviewDelaySec);
                 const delayMs = (Number.isFinite(delaySec) && delaySec >= 0 ? delaySec : 4) * 1000;
                 if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs));
@@ -496,17 +544,12 @@ async function handleReview(msg, auth, settings) {
     }
 }
 
-// FIX 2.8.2 (№12): проверка, что в заказе Я - ПРОДАВЕЦ. Кэшируем результат по
-// orderId, чтобы не дёргать страницу заказа повторно в одном цикле.
+// Проверка роли продавца с кэшированием результатов по orderId
 const _sellerCheckCache = new Map();
-async function verifyIAmSeller(orderId, auth) {
+async function verifyIAmSeller(orderId, auth, chatName = '') {
     if (!orderId) return true; // нет orderId - не блокируем (старое поведение)
     if (_sellerCheckCache.has(orderId)) return _sellerCheckCache.get(orderId);
     try {
-        // FIX: include PHPSESSID alongside golden_key so FunPay returns a properly
-        // authenticated page with sellerId/buyerId in the HTML. Without PHPSESSID the
-        // page may be served as a guest and parseOrderParticipants finds nothing,
-        // causing iAmSeller=null which defaults to "allow" (correct but fragile).
         const cookieStr = auth.phpsessid
             ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
             : `golden_key=${auth.golden_key}`;
@@ -516,21 +559,25 @@ async function verifyIAmSeller(orderId, auth) {
         const info = await parseViaOffscreen(html, 'parseOrderParticipants');
         if (!info) return true;
 
-        // FIX: Prefer auth.userId (known from active session) over DOM-parsed myId.
-        // When the order page is fetched via fetch() the HTML may lack correct data-app-data,
-        // so info.myId can be null even if info.sellerId/buyerId are correctly parsed.
-        // By comparing auth.userId directly we avoid false-positives that caused
-        // the extension to auto-reply to reviews the user left themselves as a buyer.
         const myId = String(auth.userId || '');
         let iAmSeller = null;
         if (myId && info.sellerId) iAmSeller = (myId === String(info.sellerId));
         else if (myId && info.buyerId) iAmSeller = (myId !== String(info.buyerId));
         else iAmSeller = info.iAmSeller; // fall back to DOM-parsed result
 
-        // iAmSeller === false → это МОЯ покупка, блокируем. null/undefined → не уверены, пропускаем.
+        if (iAmSeller === null && chatName && info.buyerName) {
+            iAmSeller = (chatName.toLowerCase() === info.buyerName.toLowerCase());
+        }
+        if (iAmSeller === null && auth.username) {
+            if (info.buyerName) iAmSeller = (auth.username.toLowerCase() !== info.buyerName.toLowerCase());
+            else if (info.sellerName) iAmSeller = (auth.username.toLowerCase() === info.sellerName.toLowerCase());
+        }
+
         const ok = !(iAmSeller === false);
-        _sellerCheckCache.set(orderId, ok);
-        if (_sellerCheckCache.size > 300) _sellerCheckCache.clear();
+        if (iAmSeller !== null) {
+            _sellerCheckCache.set(orderId, ok);
+            if (_sellerCheckCache.size > 300) _sellerCheckCache.clear();
+        }
         return ok;
     } catch (e) {
         return true; // при ошибке - не блокируем
@@ -781,16 +828,10 @@ async function _runAutoResponderCycleInner() {
                 continue;
             }
 
-            // FIX: Skip chats where the last message was sent BY the current user.
-            // This happens when the user writes to another seller first – the extension
-            // used to see the chat as having a "new" message and fire a greeting.
-            // lastByMe is set by parseChatList when nodeMsg <= userMsg (already read = sent by us).
+            // Пропускаем чаты, где последнее сообщение отправлено нами
             if (chat.lastByMe) {
                 if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
-                // FIX: Remember that WE initiated this chat. If the other party replies later,
-                // greeting/keywords must NOT fire — we are the ones who wrote first.
-                // FIX #3: Only write to storage if the chatId is not already tracked,
-                // to avoid an atomicUpdate (get+set) on every polling cycle for every outgoing chat.
+                // Фиксируем чаты, инициированные нами (написали первыми)
                 if (!(fresh.selfInitiatedChats || []).includes(chat.chatId)) {
                     await atomicUpdate(s => {
                         const arr = s.selfInitiatedChats || [];
@@ -825,24 +866,59 @@ async function _runAutoResponderCycleInner() {
             } else if (msgType === 'ORDER_PURCHASED' || msgType === 'ORDER_CONFIRMED'
                        || msgType === 'NEW_FEEDBACK' || msgType === 'FEEDBACK_CHANGED') {
 
-                // FIX: Fastest check — if the username embedded in the feedback system message
-                // matches our own username (auth.username), this is OUR review as a buyer.
-                // No HTTP request needed; the name is right in the message text.
-                if (msgType === 'NEW_FEEDBACK' || msgType === 'FEEDBACK_CHANGED') {
-                    const feedbackAuthor = extractFeedbackAuthor(msg.messageText);
-                    if (feedbackAuthor && auth.username &&
-                        feedbackAuthor.toLowerCase() === auth.username.toLowerCase()) {
-                        console.log(`Foxen AR: пропуск — это мой собственный отзыв как покупателя (автор: ${feedbackAuthor}).`);
-                        continue;
+                // 1. Извлекаем реальный ник покупателя и продавца из текста системного сообщения
+                const orderBuyer = extractOrderBuyer(msg.messageText);
+                const orderSeller = extractOrderSeller(msg.messageText);
+                if (orderBuyer) {
+                    msg.buyerName = orderBuyer;
+                }
+
+                let iAmSeller = null;
+
+                // Priority 1: Прямое совпадение продавца/покупателя из сообщения с нашим текущим ником
+                if (orderSeller && auth.username) {
+                    if (cleanName(orderSeller) === cleanName(auth.username)) {
+                        iAmSeller = true;
+                    }
+                }
+                if (orderBuyer && auth.username) {
+                    if (cleanName(orderBuyer) === cleanName(auth.username)) {
+                        iAmSeller = false;
                     }
                 }
 
-                // FIX 2.8.2 (№12): не реагируем на собственные покупки.
-                const _oid = (msg.messageText.match(RX.ORDER_ID) || [])[1] || null;
-                const iAmSeller = await verifyIAmSeller(_oid, auth);
+                // Priority 2: Мгновенная проверка по названию собеседника в чате (очищенному)
+                if (iAmSeller === null && orderBuyer && chat.chatName) {
+                    const cBuyer = cleanName(orderBuyer);
+                    const cChat = cleanName(chat.chatName);
+                    if (cBuyer && cChat) {
+                        iAmSeller = (cBuyer === cChat);
+                    }
+                }
+
+                // Priority 3: Запасная проверка через запрос страницы заказа
+                if (iAmSeller === null) {
+                    const _oid = (msg.messageText.match(RX.ORDER_ID) || [])[1] || null;
+                    iAmSeller = await verifyIAmSeller(_oid, auth, chat.chatName);
+                }
+
+                // Если я ПОКУПАТЕЛЬ (iAmSeller === false), блокируем ВСЕ авто-ответы/авто-выдачи!
                 if (!iAmSeller) {
-                    console.log(`Foxen AR: пропуск события по заказу #${_oid} - это моя покупка, не реагируем.`);
-                } else if (msgType === 'ORDER_PURCHASED') {
+                    console.log(`Foxen AR: пропуск события по заказу — это моя покупка (покупатель: ${msg.buyerName}), не реагируем.`);
+                    if (!(fresh.selfInitiatedChats || []).includes(msg.chatId)) {
+                        await atomicUpdate(s => {
+                            const arr = s.selfInitiatedChats || [];
+                            if (!arr.includes(msg.chatId)) arr.push(msg.chatId);
+                            if (arr.length > 500) arr.splice(0, arr.length - 500);
+                            s.selfInitiatedChats = arr;
+                        });
+                    }
+                    continue;
+                }
+
+                const _oid = (msg.messageText.match(RX.ORDER_ID) || [])[1] || null;
+
+                if (msgType === 'ORDER_PURCHASED') {
                     await handleOrderPurchased(msg, auth, fresh);
                     await handleAutoDelivery(msg, auth, fresh);
                 } else if (msgType === 'ORDER_CONFIRMED') {
@@ -851,10 +927,7 @@ async function _runAutoResponderCycleInner() {
                     await handleReview(msg, auth, fresh);
                 }
             } else if (msgType === 'NON_SYSTEM' && !isSameText) {
-                // FIX: do NOT fire greeting/keywords when the last message in the chat
-                // was written by the user themselves (lastByMe already filtered above,
-                // but also guard against edge cases where isUnread is false and there's
-                // no nodeMsg/userMsg data available).
+                // Пропускаем обычные сообщения, если в чате нет непрочитанных
                 if (!chat.isUnread) {
                     if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
                     continue;
@@ -906,8 +979,7 @@ export async function resetAutoResponderState() {
         delete fpToolsAutoReplies.lastSeenMsgIds;
         delete fpToolsAutoReplies.lastHandledText;
         delete fpToolsAutoReplies.autoResponderSeeded;
-        // FIX #7: also reset selfInitiatedChats so that after a full reset the user
-        // gets a clean slate — chats they previously initiated will be re-evaluated.
+        // Сброс истории чатов, инициированных пользователем
         delete fpToolsAutoReplies.selfInitiatedChats;
         return chrome.storage.local.set({ fpToolsAutoReplies });
     });

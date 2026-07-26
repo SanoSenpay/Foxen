@@ -21,9 +21,7 @@ function addOrderStatusBadge() {
     if (color) statusEl.style.cssText += `;color:${color}!important;font-weight:700;`;
 }
 
-// Task: make the order number easy to copy with one click.
-// The order page header looks like: <h1 ...>Заказ #N2Y2BNJN <br><span>...</span></h1>
-// We wrap the "#XXXXXXXX" token in a clickable chip that copies the raw id to clipboard.
+// Копирование номера заказа в один клик по клику на номер в заголовке
 function makeOrderNumberCopyable() {
     const header = document.querySelector('h1.page-header');
     if (!header || header.dataset.fpOrderCopy) return;

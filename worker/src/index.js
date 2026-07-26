@@ -1,8 +1,11 @@
+/**
+ * Cloudflare Worker API бэкенд для профилей и баннеров Foxen
+ */
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // CORS preflight
+    // --- Обработка CORS preflight запросов ---
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
@@ -19,7 +22,7 @@ export default {
     };
 
     try {
-      // GET /funpay/users/:id/profile
+      // --- Публичный эндпоинт: Получение профиля пользователя ---
       const profileMatch = url.pathname.match(/^\/funpay\/users\/(\d+)\/profile$/);
       if (request.method === "GET" && profileMatch) {
         const userId = profileMatch[1];
@@ -28,30 +31,77 @@ export default {
         return new Response(JSON.stringify(profile), { headers: corsHeaders });
       }
 
-      // API Key check for endpoints below
+      // --- Публичный эндпоинт: Динамический каталог баннеров ---
+      if (request.method === "GET" && url.pathname === "/banners/catalog") {
+        // 1. Проверка пользовательского каталога из KV-хранилища
+        const kvCatalogStr = await env.FPT_PROFILES.get("catalog:banners");
+        if (kvCatalogStr) {
+          return new Response(kvCatalogStr, { headers: corsHeaders });
+        }
+
+        // 2. Загрузка живого каталога из GitHub Raw репозитория (корень или папка banners)
+        try {
+          let ghRes = await fetch("https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners-catalog.json", {
+            cf: { cacheTtl: 300, cacheEverything: true }
+          });
+          if (!ghRes.ok) {
+            ghRes = await fetch("https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/banners-catalog.json", {
+              cf: { cacheTtl: 300, cacheEverything: true }
+            });
+          }
+          if (ghRes.ok) {
+            const ghText = await ghRes.text();
+            return new Response(ghText, { headers: corsHeaders });
+          }
+        } catch (e) {
+          console.error("Ошибка загрузки каталога с GitHub:", e);
+        }
+
+        // 3. Базовый каталог по умолчанию (резервный)
+        const defaultCatalog = {
+          version: 1,
+          categories: ["Аниме", "Игры", "Природа", "Космос", "Разное"],
+          banners: [
+            {
+              id: "foxen_blackhole",
+              category: "Космос",
+              title: "Черная дыра",
+              url: "https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/foxen_blackhole.gif"
+            },
+            {
+              id: "foxen_blackhole2",
+              category: "Космос",
+              title: "Черная дыра 2",
+              url: "https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/foxen_blackhole2.gif"
+            }
+          ]
+        };
+        return new Response(JSON.stringify(defaultCatalog), { headers: corsHeaders });
+      }
+
+      // --- Проверка общего ключа авторизации API ---
       const fptKey = request.headers.get("X-FPT-Key");
-      if (!fptKey || fptKey !== "fptoolsdim") { // Using the original extension's shared key for backward compatibility
+      if (!fptKey || fptKey !== "fptoolsdim") {
         return new Response(JSON.stringify({ error: { code: "BAD_KEY" } }), { status: 403, headers: corsHeaders });
       }
 
-      // POST /me/funpay/link/start
+      // --- Защищенный эндпоинт: Старт привязки аккаунта ---
       if (request.method === "POST" && url.pathname === "/me/funpay/link/start") {
         const body = await request.json();
         const userId = body.funpayUserId;
         if (!userId) return new Response("Bad Request", { status: 400 });
 
-        // Generate verification code
         const code = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-        await env.FPT_PROFILES.put(`link_start:${userId}`, JSON.stringify({ code }), { expirationTtl: 300 }); // 5 min
+        await env.FPT_PROFILES.put(`link_start:${userId}`, JSON.stringify({ code }), { expirationTtl: 300 });
         
         return new Response(JSON.stringify({ ok: true, code }), { headers: corsHeaders });
       }
 
-      // POST /me/funpay/link/confirm
+      // --- Защищенный эндпоинт: Подтверждение привязки аккаунта ---
       if (request.method === "POST" && url.pathname === "/me/funpay/link/confirm") {
         const body = await request.json();
         const userId = body.funpayUserId;
-        const offerId = body.offerId; // We added this to the client
+        const offerId = body.offerId;
         if (!userId || !offerId) return new Response("Bad Request", { status: 400 });
 
         const startDataStr = await env.FPT_PROFILES.get(`link_start:${userId}`);
@@ -60,20 +110,17 @@ export default {
         }
         const { code } = JSON.parse(startDataStr);
 
-        // Verify lot on FunPay
         const fpRes = await fetch(`https://funpay.com/lots/offer?id=${offerId}`);
         if (!fpRes.ok) {
            return new Response(JSON.stringify({ error: { code: "VERIFY_FAILED" } }), { status: 400, headers: corsHeaders });
         }
         const html = await fpRes.text();
 
-        // Check if lot belongs to user and contains code
         const userLink = `https://funpay.com/users/${userId}/`;
         if (!html.includes(userLink) || !html.includes(code)) {
            return new Response(JSON.stringify({ error: { code: "VERIFY_FAILED" } }), { status: 400, headers: corsHeaders });
         }
 
-        // Verification successful
         await env.FPT_PROFILES.delete(`link_start:${userId}`);
         const sessionToken = crypto.randomUUID();
         await env.FPT_PROFILES.put(`session:${sessionToken}`, JSON.stringify({ userId }), { expirationTtl: 365 * 24 * 60 * 60 });
@@ -81,7 +128,7 @@ export default {
         return new Response(JSON.stringify({ ok: true, session: sessionToken, funpayUsername: "VerifiedUser" }), { headers: corsHeaders });
       }
 
-      // Check Session helper
+      // Вспомогательная функция проверки авторизации по сессионному токену
       const getSessionUser = async (req) => {
         const auth = req.headers.get("Authorization");
         if (!auth || !auth.startsWith("Bearer ")) return null;
@@ -91,7 +138,7 @@ export default {
         return JSON.parse(sessStr).userId;
       };
 
-      // PUT /me/funpay/description
+      // --- Защищенный эндпоинт: Обновление описания профиля ---
       if (request.method === "PUT" && url.pathname === "/me/funpay/description") {
         const userId = await getSessionUser(request);
         if (!userId) return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED" } }), { status: 401, headers: corsHeaders });
@@ -99,7 +146,7 @@ export default {
         const body = await request.json();
         const description = body.description || "";
 
-        // AI Moderation
+        // ИИ-модерация на отсутствие сторонних контактов
         if (description.length > 0) {
           const aiPrompt = `Task: Analyze the text for prohibited contact info.
 Prohibited: Phone numbers (e.g. +7..., 89...), Telegram/Discord/VK tags or links, WhatsApp, emails, or asking to contact outside the platform.
@@ -123,17 +170,14 @@ Text: "${description}"`;
                return new Response(JSON.stringify({ error: { code: "DESCRIPTION_SPAM", message: result.reason || "Запрещено правилами" } }), { status: 400, headers: corsHeaders });
             }
           } catch (e) {
-            console.error("AI Moderation failed", e);
-            // On failure, block the save to prevent bypass and return the error message for debugging
+            console.error("Ошибка AI модерации:", e);
             return new Response(JSON.stringify({ error: { code: "DESCRIPTION_SPAM", message: "Ошибка AI модерации: " + String(e) } }), { status: 400, headers: corsHeaders });
           }
         }
 
-        // Save description
         const profileStr = await env.FPT_PROFILES.get(`profile:${userId}`);
         let profile = profileStr ? JSON.parse(profileStr) : {};
 
-        // Cooldown check (24 hours)
         const now = Date.now();
         const lastUpdate = profile.lastDescUpdate || 0;
         if (now - lastUpdate < 24 * 60 * 60 * 1000) {
@@ -147,7 +191,7 @@ Text: "${description}"`;
         return new Response(JSON.stringify({ ok: true, description, lastDescUpdate: now }), { headers: corsHeaders });
       }
 
-      // PUT /me/funpay/banner
+      // --- Защищенный эндпоинт: Обновление баннера профиля ---
       if (request.method === "PUT" && url.pathname === "/me/funpay/banner") {
         const userId = await getSessionUser(request);
         if (!userId) return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED" } }), { status: 401, headers: corsHeaders });
@@ -164,7 +208,6 @@ Text: "${description}"`;
            return new Response(JSON.stringify({ error: { code: "BANNER_COOLDOWN" } }), { status: 429, headers: corsHeaders });
         }
 
-        // Save bannerId
         profile.bannerId = bannerId || null;
         profile.lastBannerUpdate = now;
         await env.FPT_PROFILES.put(`profile:${userId}`, JSON.stringify(profile));
