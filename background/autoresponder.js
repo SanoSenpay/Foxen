@@ -122,15 +122,30 @@ function extractFeedbackAuthor(text) {
     return extractOrderBuyer(text);
 }
 
+let _authCache = null;
+let _authCacheTime = 0;
+const AUTH_CACHE_TTL_MS = 60000;
+
+export function clearAutoresponderAuthCache() {
+    _authCache = null;
+    _authCacheTime = 0;
+}
+
 async function getAuth() {
+    const now = Date.now();
     const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
-    if (!goldenKeyCookie?.value) return {};
+    if (!goldenKeyCookie?.value) {
+        _authCache = null;
+        return {};
+    }
     const golden_key = goldenKeyCookie.value;
 
-    
-    
     const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
     const phpsessid = phpSessIdCookie?.value || '';
+
+    if (_authCache && (now - _authCacheTime < AUTH_CACHE_TTL_MS) && _authCache.golden_key === golden_key && _authCache.phpsessid === phpsessid && _authCache.csrf_token && _authCache.userId) {
+        return _authCache;
+    }
 
     let storedUser = {};
     try {
@@ -150,8 +165,12 @@ async function getAuth() {
                 if (username || userId) {
                     (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: String(userId), username } });
                 }
-                if (d?.['csrf-token'] && userId)
-                    return { golden_key, phpsessid, csrf_token: d['csrf-token'], userId, username };
+                if (d?.['csrf-token'] && userId) {
+                    const res = { golden_key, phpsessid, csrf_token: d['csrf-token'], userId, username };
+                    _authCache = res;
+                    _authCacheTime = now;
+                    return res;
+                }
             }
         } catch (_) {}
     }
@@ -171,10 +190,19 @@ async function getAuth() {
             if (username || userId) {
                 (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: String(userId), username } });
             }
-            if (u?.['csrf-token'] && userId)
-                return { golden_key, phpsessid, csrf_token: u['csrf-token'], userId, username };
+            if (u?.['csrf-token'] && userId) {
+                const result = { golden_key, phpsessid, csrf_token: u['csrf-token'], userId, username };
+                _authCache = result;
+                _authCacheTime = now;
+                return result;
+            }
         }
     } catch (e) {}
+
+    if (_authCache && _authCache.golden_key === golden_key && _authCache.csrf_token && _authCache.userId) {
+        return _authCache;
+    }
+
     return { golden_key, phpsessid, userId: storedUser.userId || '', username: storedUser.username || '' };
 }
 
@@ -968,6 +996,7 @@ async function _runAutoResponderCycleInner() {
         }
 
     } catch (e) {
+        clearAutoresponderAuthCache();
         console.error('Foxen AR: ошибка цикла', e.message);
     }
 }

@@ -181,18 +181,43 @@
    */
   async function fetchServerCatalog() {
     try {
-      const r = await proxiedFetch(SERVER + '/banners/catalog', { method: 'GET', cache: 'no-store' });
+      const r = await proxiedFetch(SERVER + '/banners/catalog', {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'X-FPT-Key': SHARED_KEY }
+      });
       if (r.ok) {
         const data = await r.json();
-        if (data && Array.isArray(data.banners)) {
+        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
           _catalog = data;
           await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
           return _catalog;
         }
       }
     } catch (e) {
-      console.warn('[FPT PD] Ошибка загрузки каталога с сервера:', e);
+      console.warn('[FPT PD] Ошибка загрузки каталога с бэкенда:', e);
     }
+
+    // Запасной вариант: прямое чтение с GitHub Raw
+    const ghUrls = [
+      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners-catalog.json',
+      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/banners-catalog.json',
+      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners.json'
+    ];
+    for (const url of ghUrls) {
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        if (r.ok) {
+          const data = await r.json();
+          if (data && Array.isArray(data.banners) && data.banners.length > 0) {
+            _catalog = data;
+            await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
+            return _catalog;
+          }
+        }
+      } catch (_) {}
+    }
+
     return null;
   }
 
@@ -207,12 +232,12 @@
    * Полный цикл получения каталога (Локальный кэш -> Сервер -> Резервный файл расширения)
    */
   async function loadCatalog() {
-    if (_catalog) return _catalog;
+    if (_catalog && Array.isArray(_catalog.banners) && _catalog.banners.length > 0) return _catalog;
 
     // 1. Быстрое чтение из локального кэша для моментального отображения
     try {
       const cached = (await storageGet([CATALOG_CACHE_KEY]))[CATALOG_CACHE_KEY];
-      if (cached && cached.catalog && Array.isArray(cached.catalog.banners)) {
+      if (cached && cached.catalog && Array.isArray(cached.catalog.banners) && cached.catalog.banners.length > 0) {
         _catalog = cached.catalog;
         if (Date.now() - (cached.t || 0) > CATALOG_CACHE_TTL) {
           refreshCatalogBackground();
@@ -1362,21 +1387,29 @@
           hint.textContent = 'Сохраняем...';
           
           let res;
-          for (let attempt = 1; attempt <= 3; attempt++) {
-            try {
-              res = await serverSaveBanner(session.token, selectedId);
-              break;
-            } catch (e2) {
-              if (e2.httpStatus === 401 && attempt < 3) {
-                await new Promise(r => setTimeout(r, 2000));
-              } else if (e2.httpStatus === 401 && attempt === 3) {
-                session = await runVerification(profileId);
-                state.session = session;
-                res = await serverSaveBanner(session.token, selectedId);
-                break;
-              } else {
-                throw e2;
+          try {
+            res = await serverSaveBanner(session.token, selectedId);
+          } catch (e) {
+            if (e.httpStatus === 401) {
+              console.log('[FPT PD] Banner session expired, re-verifying...');
+              hint.textContent = 'Подтверждаем владение аккаунтом...';
+              session = await runVerification(profileId);
+              state.session = session;
+              
+              for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                  res = await serverSaveBanner(session.token, selectedId);
+                  break;
+                } catch (e2) {
+                  if (e2.httpStatus === 401 && attempt < 3) {
+                    await new Promise(r => setTimeout(r, 2000));
+                  } else {
+                    throw e2;
+                  }
+                }
               }
+            } else {
+              throw e;
             }
           }
 
