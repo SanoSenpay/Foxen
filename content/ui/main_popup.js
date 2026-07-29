@@ -424,250 +424,382 @@ function createMainPopup() {
                 </div>
                 <!-- КОНЕЦ ВКЛАДКИ "TELEGRAM" -->
                 <div class="fp-tools-page-content" data-page="templates">
-                    <h3>Настройки шаблонов</h3>
-                    <div class="checkbox-label-inline"><input type="checkbox" id="templatesEnabled" checked><label for="templatesEnabled" style="margin-bottom:0;"><span><b>Включить шаблоны</b></span></label></div>
-                    <div class="checkbox-label-inline" style="margin-top:8px;"><input type="checkbox" id="sendTemplatesImmediately"><label for="sendTemplatesImmediately" style="margin-bottom:0;"><span>Отправлять шаблоны сразу по клику</span></label></div>
+                    <h3>Шаблоны ответов</h3>
 
-                    <div id="fpt-templates-config">
-                    <label style="margin-top:10px;display:block;">Расположение кнопок:</label>
-                    <div class="fpt-pos-grid">
-                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="above"><span class="fpt-pos-ico"><span class="fpt-pos-row"></span><span class="fpt-pos-field"></span></span><span class="fpt-pos-name">Над полем</span></label>
-                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="bottom" checked><span class="fpt-pos-ico"><span class="fpt-pos-field"></span><span class="fpt-pos-row"></span></span><span class="fpt-pos-name">Под полем</span></label>
-                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="sidebar_top"><span class="fpt-pos-ico fpt-pos-ico-side"><span class="fpt-pos-panel fpt-pos-panel-top"><span class="fpt-pos-srow"></span><span class="fpt-pos-srow"></span></span><span class="fpt-pos-sfield"></span></span><span class="fpt-pos-name">В панели сверху</span></label>
-                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="sidebar_bottom"><span class="fpt-pos-ico fpt-pos-ico-side"><span class="fpt-pos-panel fpt-pos-panel-bottom"><span class="fpt-pos-srow"></span><span class="fpt-pos-srow"></span></span><span class="fpt-pos-sfield"></span></span><span class="fpt-pos-name">В панели снизу</span></label>
-                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="popover"><span class="fpt-pos-ico fpt-pos-ico-pop"><span class="fpt-pos-field"></span><span class="fpt-pos-pop-btn"></span></span><span class="fpt-pos-name">Меню у скрепки</span></label>
-                    </div>
-                    <p class="template-info" id="fpt-popover-hint" style="margin-top:6px;display:none;">«Меню у скрепки»: слева от кнопки прикрепления файла появится отдельная кнопка с иконкой шаблонов. По клику открывается компактное меню со всеми шаблонами и быстрым переходом в эти настройки.</p>
+                    <!-- Карточка: Основные настройки -->
+                    <div class="fpt-section-card">
+                        <div class="fpt-card-header">
+                            <div class="fpt-card-title-group">
+                                <span class="material-symbols-rounded fpt-card-icon">tune</span>
+                                <h4>Основные настройки</h4>
+                            </div>
+                        </div>
+                        <div class="fpt-card-body">
+                            <div class="fpt-toggle-row">
+                                <label class="fpt-switch-label" for="templatesEnabled">
+                                    <input type="checkbox" id="templatesEnabled" checked>
+                                    <span class="fpt-switch-title">Включить функции шаблонов</span>
+                                </label>
+                                <label class="fpt-switch-label" for="sendTemplatesImmediately">
+                                    <input type="checkbox" id="sendTemplatesImmediately">
+                                    <span class="fpt-switch-title">Отправлять сразу по клику (без вставки в поле)</span>
+                                </label>
+                            </div>
 
-                    <h3>Внешний вид кнопок</h3>
-                    <div class="fpt-appx">
-                        <div class="fpt-appx-grid">
-                            <div class="fpt-appx-block">
-                                <div class="fpt-appx-cap">Форма</div>
-                                <div class="fpt-seg" data-fpt-opt="shape">
-                                    <button type="button" data-val="rounded" title="Скруглённые"><span class="fpt-shape-prev" style="border-radius:5px;"></span></button>
-                                    <button type="button" data-val="pill" title="Капсула"><span class="fpt-shape-prev" style="border-radius:999px;"></span></button>
-                                    <button type="button" data-val="square" title="Прямые углы"><span class="fpt-shape-prev" style="border-radius:1px;"></span></button>
+                            <div id="fpt-templates-config">
+                                <div class="fpt-form-group" style="margin-top:14px;">
+                                    <label class="fpt-form-label">Расположение кнопок в чате</label>
+                                    <div class="fpt-pos-grid">
+                                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="above"><span class="fpt-pos-ico"><span class="fpt-pos-row"></span><span class="fpt-pos-field"></span></span><span class="fpt-pos-name">Над полем</span></label>
+                                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="bottom" checked><span class="fpt-pos-ico"><span class="fpt-pos-field"></span><span class="fpt-pos-row"></span></span><span class="fpt-pos-name">Под полем</span></label>
+                                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="sidebar_top"><span class="fpt-pos-ico fpt-pos-ico-side"><span class="fpt-pos-panel fpt-pos-panel-top"><span class="fpt-pos-srow"></span><span class="fpt-pos-srow"></span></span><span class="fpt-pos-sfield"></span></span><span class="fpt-pos-name">В панели сверху</span></label>
+                                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="sidebar_bottom"><span class="fpt-pos-ico fpt-pos-ico-side"><span class="fpt-pos-panel fpt-pos-panel-bottom"><span class="fpt-pos-srow"></span><span class="fpt-pos-srow"></span></span><span class="fpt-pos-sfield"></span></span><span class="fpt-pos-name">В панели снизу</span></label>
+                                        <label class="fpt-pos-card"><input type="radio" name="templatePos" value="popover"><span class="fpt-pos-ico fpt-pos-ico-pop"><span class="fpt-pos-field"></span><span class="fpt-pos-pop-btn"></span></span><span class="fpt-pos-name">Меню у скрепки</span></label>
+                                    </div>
+                                    <p class="template-info" id="fpt-popover-hint" style="margin-top:8px;display:none;">«Меню у скрепки»: слева от кнопки прикрепления файла появится отдельная кнопка с иконкой шаблонов.</p>
+                                </div>
+
+                                <!-- Внешний вид кнопок -->
+                                <div class="fpt-form-group" style="margin-top:16px;">
+                                    <label class="fpt-form-label">Внешний вид кнопок</label>
+                                    <div class="fpt-appx">
+                                        <div class="fpt-appx-grid">
+                                            <div class="fpt-appx-block">
+                                                <div class="fpt-appx-cap">Форма</div>
+                                                <div class="fpt-seg" data-fpt-opt="shape">
+                                                    <button type="button" data-val="rounded" title="Скруглённые"><span class="fpt-shape-prev" style="border-radius:5px;"></span></button>
+                                                    <button type="button" data-val="pill" title="Капсула"><span class="fpt-shape-prev" style="border-radius:999px;"></span></button>
+                                                    <button type="button" data-val="square" title="Прямые углы"><span class="fpt-shape-prev" style="border-radius:1px;"></span></button>
+                                                </div>
+                                            </div>
+                                            <div class="fpt-appx-block">
+                                                <div class="fpt-appx-cap">Размер</div>
+                                                <div class="fpt-seg" data-fpt-opt="size">
+                                                    <button type="button" data-val="s" title="Маленький"><span class="fpt-az" style="font-size:11px;">Aa</span></button>
+                                                    <button type="button" data-val="m" title="Средний"><span class="fpt-az" style="font-size:14px;">Aa</span></button>
+                                                    <button type="button" data-val="l" title="Большой"><span class="fpt-az" style="font-size:17px;">Aa</span></button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="fpt-appx-block">
+                                            <div class="fpt-appx-cap">Заливка</div>
+                                            <div class="fpt-seg fpt-seg-fill" data-fpt-opt="fill">
+                                                <button type="button" data-val="solid" title="Сплошная"><span class="fpt-fill-prev" style="background:var(--fpt-accent, #C026D3);"></span><span class="fpt-fill-name">Сплошная</span></button>
+                                                <button type="button" data-val="soft" title="Мягкая"><span class="fpt-fill-prev" style="background:var(--fpt-accent-soft, rgba(192,38,211,.28));"></span><span class="fpt-fill-name">Мягкая</span></button>
+                                                <button type="button" data-val="outline" title="Контур"><span class="fpt-fill-prev" style="background:transparent;border:2px solid var(--fpt-accent, #C026D3);"></span><span class="fpt-fill-name">Контур</span></button>
+                                                <button type="button" data-val="ghost" title="Призрачная"><span class="fpt-fill-prev" style="background:transparent;border:1px dashed var(--fpt-accent, #C026D3);"></span><span class="fpt-fill-name">Призрак</span></button>
+                                            </div>
+                                        </div>
+
+                                        <div class="fpt-appx-block fpt-align-block" id="fpt-align-block">
+                                            <div class="fpt-appx-cap">Выравнивание текста</div>
+                                            <div class="fpt-seg" data-fpt-opt="align">
+                                                <button type="button" data-val="left" title="Слева"><span class="material-symbols-rounded">format_align_left</span></button>
+                                                <button type="button" data-val="center" title="По центру"><span class="material-symbols-rounded">format_align_center</span></button>
+                                                <button type="button" data-val="right" title="Справа"><span class="material-symbols-rounded">format_align_right</span></button>
+                                            </div>
+                                            <div class="fpt-align-hint">Доступно при включённом «На всю ширину»</div>
+                                        </div>
+
+                                        <div class="fpt-appx-block">
+                                            <div class="fpt-appx-cap">Дополнительно</div>
+                                            <div class="fpt-appx-toggles">
+                                                <button type="button" class="fpt-chip-toggle" data-fpt-toggle="fullWidth"><span class="material-symbols-rounded">width_full</span><span>На всю ширину</span></button>
+                                                <button type="button" class="fpt-chip-toggle" data-fpt-toggle="compact"><span class="material-symbols-rounded">density_small</span><span>Компактно</span></button>
+                                                <button type="button" class="fpt-chip-toggle" data-fpt-toggle="uppercase"><span class="material-symbols-rounded">text_fields</span><span>ЗАГЛАВНЫЕ</span></button>
+                                                <button type="button" class="fpt-chip-toggle" data-fpt-toggle="showPreview"><span class="material-symbols-rounded">preview</span><span>Превью при наведении</span></button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Доп. настройки, видимые только для «в панели» -->
+                                        <div class="fpt-appx-block fpt-sidebar-only" id="fpt-sidebar-extra">
+                                            <div class="fpt-appx-cap">Компактность панели</div>
+                                            <div class="fpt-seg" data-fpt-opt="sidebarDensity">
+                                                <button type="button" data-val="cozy" title="Просторно">Просторно</button>
+                                                <button type="button" data-val="normal" title="Обычно">Обычно</button>
+                                                <button type="button" data-val="dense" title="Плотно">Плотно</button>
+                                            </div>
+                                            <div class="fpt-appx-cap" style="margin-top:10px;">Раскладка</div>
+                                            <div class="fpt-seg" data-fpt-opt="sidebarLayout">
+                                                <button type="button" data-val="flow" title="Авто-сетка (по ширине)">Авто-сетка</button>
+                                                <button type="button" data-val="list" title="Список (в столбик)">Список</button>
+                                            </div>
+                                            <div class="fpt-align-hint" style="display:block;color:#6b7194;">«Авто-сетка» умно раскладывает кнопки по ширине панели.</div>
+                                        </div>
+
+                                        <div class="fpt-appx-block">
+                                            <div class="fpt-appx-cap">Предпросмотр</div>
+                                            <div id="fpt-appearance-preview" class="chat-buttons-container" data-fpt-shape="rounded" data-fpt-size="m" data-fpt-fill="solid" data-fpt-align="center" data-fpt-fullwidth="0" data-fpt-uppercase="0" data-fpt-compact="0">
+                                                <button type="button" class="chat-template-btn" style="background-color:var(--fpt-accent, #C026D3);--btn-color:var(--fpt-accent, #C026D3);">Приветствие</button>
+                                                <button type="button" class="chat-template-btn" style="background-color:#FF6B6B;--btn-color:#FF6B6B;">Спасибо за заказ</button>
+                                                <button type="button" class="custom-chat-template-btn" style="background-color:#7c4dff;--btn-color:#7c4dff;">Свой шаблон</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="fpt-appx-block">
-                                <div class="fpt-appx-cap">Размер</div>
-                                <div class="fpt-seg" data-fpt-opt="size">
-                                    <button type="button" data-val="s" title="Маленький"><span class="fpt-az" style="font-size:11px;">Aa</span></button>
-                                    <button type="button" data-val="m" title="Средний"><span class="fpt-az" style="font-size:14px;">Aa</span></button>
-                                    <button type="button" data-val="l" title="Большой"><span class="fpt-az" style="font-size:17px;">Aa</span></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="fpt-appx-block">
-                            <div class="fpt-appx-cap">Заливка</div>
-                            <div class="fpt-seg fpt-seg-fill" data-fpt-opt="fill">
-                                <button type="button" data-val="solid" title="Сплошная"><span class="fpt-fill-prev" style="background:#C026D3;"></span><span class="fpt-fill-name">Сплошная</span></button>
-                                <button type="button" data-val="soft" title="Мягкая"><span class="fpt-fill-prev" style="background:rgba(192,38,211,.28);"></span><span class="fpt-fill-name">Мягкая</span></button>
-                                <button type="button" data-val="outline" title="Контур"><span class="fpt-fill-prev" style="background:transparent;border:2px solid #C026D3;"></span><span class="fpt-fill-name">Контур</span></button>
-                                <button type="button" data-val="ghost" title="Призрачная"><span class="fpt-fill-prev" style="background:transparent;border:1px dashed #C026D3;"></span><span class="fpt-fill-name">Призрак</span></button>
-                            </div>
-                        </div>
-
-                        <div class="fpt-appx-block fpt-align-block" id="fpt-align-block">
-                            <div class="fpt-appx-cap">Выравнивание текста</div>
-                            <div class="fpt-seg" data-fpt-opt="align">
-                                <button type="button" data-val="left" title="Слева"><span class="material-symbols-rounded">format_align_left</span></button>
-                                <button type="button" data-val="center" title="По центру"><span class="material-symbols-rounded">format_align_center</span></button>
-                                <button type="button" data-val="right" title="Справа"><span class="material-symbols-rounded">format_align_right</span></button>
-                            </div>
-                            <div class="fpt-align-hint">Доступно при включённом «На всю ширину»</div>
-                        </div>
-
-                        <div class="fpt-appx-block">
-                            <div class="fpt-appx-cap">Дополнительно</div>
-                            <div class="fpt-appx-toggles">
-                                <button type="button" class="fpt-chip-toggle" data-fpt-toggle="fullWidth"><span class="material-symbols-rounded">width_full</span><span>На всю ширину</span></button>
-                                <button type="button" class="fpt-chip-toggle" data-fpt-toggle="compact"><span class="material-symbols-rounded">density_small</span><span>Компактно</span></button>
-                                <button type="button" class="fpt-chip-toggle" data-fpt-toggle="uppercase"><span class="material-symbols-rounded">text_fields</span><span>ЗАГЛАВНЫЕ</span></button>
-                                <button type="button" class="fpt-chip-toggle" data-fpt-toggle="showPreview"><span class="material-symbols-rounded">preview</span><span>Превью при наведении</span></button>
-                            </div>
-                        </div>
-
-                        <!-- Доп. настройки, видимые только для «в панели» -->
-                        <div class="fpt-appx-block fpt-sidebar-only" id="fpt-sidebar-extra">
-                            <div class="fpt-appx-cap">Компактность панели</div>
-                            <div class="fpt-seg" data-fpt-opt="sidebarDensity">
-                                <button type="button" data-val="cozy" title="Просторно">Просторно</button>
-                                <button type="button" data-val="normal" title="Обычно">Обычно</button>
-                                <button type="button" data-val="dense" title="Плотно">Плотно</button>
-                            </div>
-                            <div class="fpt-appx-cap" style="margin-top:10px;">Раскладка</div>
-                            <div class="fpt-seg" data-fpt-opt="sidebarLayout">
-                                <button type="button" data-val="flow" title="Авто-сетка (по ширине)">Авто-сетка</button>
-                                <button type="button" data-val="list" title="Список (в столбик)">Список</button>
-                            </div>
-                            <div class="fpt-align-hint" style="display:block;color:#6b7194;">«Авто-сетка» умно раскладывает кнопки по ширине панели, как на скрине.</div>
-                        </div>
-
-                        <div class="fpt-appx-block">
-                            <div class="fpt-appx-cap">Живой предпросмотр</div>
-                            <div id="fpt-appearance-preview" class="chat-buttons-container" data-fpt-shape="rounded" data-fpt-size="m" data-fpt-fill="solid" data-fpt-align="center" data-fpt-fullwidth="0" data-fpt-uppercase="0" data-fpt-compact="0">
-                                <button type="button" class="chat-template-btn" style="background-color:#C026D3;--btn-color:#C026D3;">Приветствие</button>
-                                <button type="button" class="chat-template-btn" style="background-color:#FF6B6B;--btn-color:#FF6B6B;">Спасибо за заказ</button>
-                                <button type="button" class="custom-chat-template-btn" style="background-color:#7c4dff;--btn-color:#7c4dff;">Свой шаблон</button>
-                            </div>
                         </div>
                     </div>
+
+                    <!-- Карточка: Список шаблонов -->
+                    <div class="fpt-section-card">
+                        <div class="fpt-card-header fpt-card-header-flex">
+                            <div class="fpt-card-title-group">
+                                <span class="material-symbols-rounded fpt-card-icon">edit_note</span>
+                                <h4>Мои шаблоны ответов</h4>
+                            </div>
+                            <button id="addCustomTemplateBtn" class="fpt-btn-accent">
+                                <span class="material-symbols-rounded">add</span>
+                                <span>Добавить шаблон</span>
+                            </button>
+                        </div>
+                        <div class="fpt-card-body">
+                            <p class="template-info" style="margin-bottom:12px;">Кликните по названию или тексту для редактирования. Все изменения сохраняются автоматически.</p>
+                            <div id="template-settings-container" class="template-settings-list"></div>
+                        </div>
                     </div>
 
-                    <h3>Редактор шаблонов</h3>
-                     <p class="template-info">Кликните на название или текст шаблона, чтобы его изменить. Все изменения сохраняются автоматически.</p>
-                     
-                     <div class="template-variables-guide">
-                        <h5>Справка по переменным</h5>
-                        <ul class="variables-list">
-                            <li><span class="variable-code">{buyername}</span> - Имя покупателя в текущем чате.</li>
-                            <li><span class="variable-code">{lotname}</span> - Название товара, который обсуждается в чате.</li>
-                            <li><span class="variable-code">{orderlink}</span> - Ссылка на заказ (если открыт заказ или есть активная сделка в чате).</li>
-                            <li><span class="variable-code">{orderid}</span> - ID заказа (если открыт заказ или есть активная сделка в чате).</li>
-                            <li><span class="variable-code">{welcome}</span> - "Доброе утро!", "Добрый день!" или "Добрый вечер!" в зависимости от времени.</li>
-                            <li><span class="variable-code">{date}</span> - Текущая дата и время (например, 25.12.2025 14:30).</li>
-                            <li><span class="variable-code">{bal}</span> - Ваш текущий баланс на FunPay.</li>
-                            <li><span class="variable-code">{activesells}</span> - Количество ваших активных продаж.</li>
-                            <li><span class="variable-code">{ai: ваш запрос}</span> - Вставляет текст, сгенерированный ИИ на основе вашего запроса. 
-                                <br><em>Пример: <code>{ai: вежливо поблагодари за покупку}</code></em>
-                            </li>
-                            <li><span class="variable-code">{вариант1|вариант2}</span> - Выберет один случайный вариант при отправке (спинтакс для рандомизации сообщений).
-                                <br><em>Пример: <code>{Привет|Здравствуйте}, {как успехи|рад вас видеть}!</code></em>
-                            </li>
-                        </ul>
-                     </div>
-                     
-                     <div class="template-info image-upload-warning">
-                        <span class="nav-icon material-symbols-rounded">image</span>
-                        <span><b>Изображения в шаблонах:</b> Нажмите кнопку с иконкой изображения под текстом, чтобы прикрепить картинку. Появится плашка «Прикреплённое изображение» - нажмите на неё, чтобы выбрать порядок отправки (сначала текст, потом картинка - или наоборот). При отправке шаблона всё уйдёт в чат автоматически.</span>
-                     </div>
-
-                    <div id="template-settings-container" class="template-settings-list"></div>
-                    <button id="addCustomTemplateBtn" class="btn" style="margin-top: 10px;">+ Добавить свой шаблон</button>
+                    <!-- Карточка: Справка по переменным и изображениям -->
+                    <details class="fpt-section-card fpt-guide-card">
+                        <summary class="fpt-card-header fpt-guide-summary">
+                            <div class="fpt-card-title-group">
+                                <span class="material-symbols-rounded fpt-card-icon">help_outline</span>
+                                <h4>Справка по динамическим переменным и изображениям</h4>
+                            </div>
+                            <span class="material-symbols-rounded fpt-guide-chevron">expand_more</span>
+                        </summary>
+                        <div class="fpt-card-body" style="padding-top:10px;">
+                            <div class="fpt-vars-grid">
+                                <div class="fpt-var-item"><span class="variable-code">{buyername}</span><span class="fpt-var-desc">Имя покупателя в чате</span></div>
+                                <div class="fpt-var-item"><span class="variable-code">{lotname}</span><span class="fpt-var-desc">Название товара</span></div>
+                                <div class="fpt-var-item"><span class="variable-code">{orderlink}</span><span class="fpt-var-desc">Ссылка на активный заказ</span></div>
+                                <div class="fpt-var-item"><span class="variable-code">{orderid}</span><span class="fpt-var-desc">ID заказа</span></div>
+                                <div class="fpt-var-item"><span class="variable-code">{welcome}</span><span class="fpt-var-desc">Приветствие по времени суток</span></div>
+                                <div class="fpt-var-item"><span class="variable-code">{date}</span><span class="fpt-var-desc">Текущая дата и время</span></div>
+                                <div class="fpt-var-item"><span class="variable-code">{bal}</span><span class="fpt-var-desc">Текущий баланс на FunPay</span></div>
+                                <div class="fpt-var-item"><span class="variable-code">{activesells}</span><span class="fpt-var-desc">Количество активных продаж</span></div>
+                                <div class="fpt-var-item fpt-var-item-wide"><span class="variable-code">{ai: ваш запрос}</span><span class="fpt-var-desc">Генерация текста через ИИ (напр. <code>{ai: вежливо поблагодари}</code>)</span></div>
+                                <div class="fpt-var-item fpt-var-item-wide"><span class="variable-code">{вариант1|вариант2}</span><span class="fpt-var-desc">Спинтакс: выборка одного из вариантов (напр. <code>{Привет|Здравствуйте}!</code>)</span></div>
+                            </div>
+                            <div class="template-info image-upload-warning" style="margin-top:12px;">
+                                <span class="nav-icon material-symbols-rounded">image</span>
+                                <span><b>Изображения:</b> Нажмите иконку изображения под текстом шаблона, чтобы прикрепить файл. Порядок отправки (текст первым или картинка первой) выбирается по клику на плашку картинки.</span>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="fp-tools-page-content" data-page="auto_review">
                     <h3>Ответы на отзывы</h3>
-                    <div class="checkbox-label-inline">
-                        <input type="checkbox" id="autoReviewEnabled">
-                        <label for="autoReviewEnabled" style="margin-bottom:0;"><span>Включить автоматический ответ на отзывы</span></label>
-                    </div>
-                    <p class="template-info">Расширение будет автоматически отвечать на новые отзывы, используя заданные шаблоны. Ответ не будет отправлен, если вы уже ответили вручную.</p>
-                    <div class="template-variables-guide" style="margin-bottom: 15px;">
-                        <h5>Переменные в ответах на отзывы</h5>
-                        <ul class="variables-list">
-                            <li><span class="variable-code">{buyername}</span> - Имя покупателя.</li>
-                            <li><span class="variable-code">{lotname}</span> - Название купленного товара.</li>
-                            <li><span class="variable-code">{orderid}</span> - Номер заказа.</li>
-                            <li><span class="variable-code">{orderlink}</span> - Ссылка на заказ.</li>
-                            <li><span class="variable-code">{date}</span> - Текущая дата.</li>
-                            <li><span class="variable-code">{welcome}</span> - Приветствие по времени суток.</li>
-                        </ul>
-                    </div>
-                    <div class="review-templates-grid">
-                        <div class="template-container">
-                            <label for="fpt-review-5" class="fpt-stars"><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span></label>
-                            <textarea id="fpt-review-5" class="template-input" placeholder="Шаблон для 5 звёзд"></textarea>
-                        </div>
-                        <div class="template-container">
-                            <label for="fpt-review-4" class="fpt-stars"><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span></label>
-                            <textarea id="fpt-review-4" class="template-input" placeholder="Шаблон для 4 звёзд"></textarea>
-                        </div>
-                        <div class="template-container">
-                            <label for="fpt-review-3" class="fpt-stars"><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span></label>
-                            <textarea id="fpt-review-3" class="template-input" placeholder="Шаблон для 3 звёзд"></textarea>
-                        </div>
-                        <div class="template-container">
-                            <label for="fpt-review-2" class="fpt-stars"><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span></label>
-                            <textarea id="fpt-review-2" class="template-input" placeholder="Шаблон для 2 звёзд"></textarea>
-                        </div>
-                        <div class="template-container">
-                            <label for="fpt-review-1" class="fpt-stars"><span class="material-symbols-rounded">star</span></label>
-                            <textarea id="fpt-review-1" class="template-input" placeholder="Шаблон для 1 звезды"></textarea>
-                        </div>
-                    </div>
-                    
-                    <h3>Бонус за отзыв</h3>
-                    <div class="checkbox-label-inline">
-                        <input type="checkbox" id="bonusForReviewEnabled">
-                        <label for="bonusForReviewEnabled" style="margin-bottom:0;"><span>Отправлять бонус в чат за отзыв 5 <span class="material-symbols-rounded" style="font-size:15px;vertical-align:-2px;color:#f4c84a;">star</span></span></label>
-                    </div>
-                    <p class="template-info">Если покупатель оставит отзыв 5 звёзд, ему в чат будет автоматически отправлено сообщение с бонусом. Ничего не будет отправлено за оценки ниже 5 звёзд.</p>
-                    <div class="fp-tools-radio-group" id="bonusModeSelector">
-                        <label class="fp-tools-radio-option"><input type="radio" name="bonusMode" value="single" checked><span>Один бонус</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="bonusMode" value="random"><span>Случайный из списка</span></label>
-                    </div>
-                    <div id="singleBonusContainer" class="template-container">
-                        <textarea id="singleBonusText" class="template-input" placeholder="Текст вашего бонуса..."></textarea>
-                    </div>
-                    <div id="randomBonusContainer" class="template-container" style="display: none;">
-                        <div id="bonus-list-container" class="bonus-list"></div>
-                        <div class="bonus-add-form">
-                            <textarea id="newBonusText" placeholder="Текст нового бонуса для списка..."></textarea>
-                            <button id="addBonusBtn" class="btn btn-default">Добавить бонус в список</button>
-                        </div>
-                    </div>
-                    <div class="template-container" style="margin-top:8px;">
-                        <label for="bonusForReviewDelaySec" style="display:block;margin-bottom:4px;">Задержка перед отправкой бонуса (сек)</label>
-                        <input type="number" id="bonusForReviewDelaySec" class="template-input" min="0" max="60" step="1" value="4" style="max-width:120px;">
-                        <p class="template-info">Пауза между ответом на отзыв и сообщением с бонусом. Без паузы ответ на отзыв в некоторых случаях может не отправиться. Рекомендуется 3-5 секунд.</p>
-                    </div>
 
-                    <h3>Автоответчик в чате</h3>
-                     <div class="template-container">
-                        <div class="checkbox-label-inline">
-                            <input type="checkbox" id="greetingEnabled">
-                            <label for="greetingEnabled" style="margin-bottom:0;"><span>Авто-приветствие для новых покупателей</span></label>
-                        </div>
-                        <textarea id="greetingText" class="template-input" placeholder="Текст приветствия... Переменные: {buyername}, $chat_name"></textarea>
-
-                        <div style="margin-top:10px;">
-                            <div class="checkbox-label-inline">
-                                <input type="checkbox" id="onlyNewChats">
-                                <label for="onlyNewChats" style="margin-bottom:0;"><span>Только совсем новые чаты</span></label>
+                    <!-- Карточка 1: Ответы на отзывы -->
+                    <div class="fpt-section-card">
+                        <div class="fpt-card-header">
+                            <div class="fpt-card-title-group">
+                                <span class="material-symbols-rounded fpt-card-icon">rate_review</span>
+                                <h4>Ответы на отзывы</h4>
                             </div>
-                            <div class="checkbox-label-inline">
-                                <input type="checkbox" id="ignoreSystemMessages">
-                                <label for="ignoreSystemMessages" style="margin-bottom:0;"><span>Не приветствовать при системных сообщениях (заказы, отзывы)</span></label>
+                        </div>
+                        <div class="fpt-card-body">
+                            <div class="fpt-toggle-row">
+                                <label class="fpt-switch-label" for="autoReviewEnabled">
+                                    <input type="checkbox" id="autoReviewEnabled">
+                                    <span class="fpt-switch-title">Включить автоматический ответ на новые отзывы</span>
+                                </label>
                             </div>
-                            <label style="font-size:12px;color:#5a5f7a;margin-top:6px;display:block;">Кулдаун повторного приветствия (дней, 0 = без кулдауна):</label>
-                            <input type="number" id="greetingCooldownDays" min="0" max="365" value="0" class="template-input" style="width:80px;" placeholder="0">
+                            <p class="template-info" style="margin-bottom:12px;">Ответ отправляется автоматически на новые отзывы, если вы ещё не ответили вручную.</p>
+
+                            <!-- Справка по переменным -->
+                            <details class="fpt-guide-card" style="margin-bottom:14px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:8px 12px;">
+                                <summary class="fpt-guide-summary" style="display:flex;align-items:center;justify-content:space-between;">
+                                    <span style="font-size:12px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:16px;color:var(--fpt-accent);">help_outline</span>Динамические переменные в отзывах</span>
+                                    <span class="material-symbols-rounded fpt-guide-chevron">expand_more</span>
+                                </summary>
+                                <div class="fpt-vars-grid" style="margin-top:8px;">
+                                    <div class="fpt-var-item"><span class="variable-code">{buyername}</span><span class="fpt-var-desc">Имя покупателя</span></div>
+                                    <div class="fpt-var-item"><span class="variable-code">{lotname}</span><span class="fpt-var-desc">Название товара</span></div>
+                                    <div class="fpt-var-item"><span class="variable-code">{orderid}</span><span class="fpt-var-desc">ID заказа</span></div>
+                                    <div class="fpt-var-item"><span class="variable-code">{orderlink}</span><span class="fpt-var-desc">Ссылка на заказ</span></div>
+                                    <div class="fpt-var-item"><span class="variable-code">{welcome}</span><span class="fpt-var-desc">Приветствие по времени</span></div>
+                                    <div class="fpt-var-item"><span class="variable-code">{date}</span><span class="fpt-var-desc">Текущая дата</span></div>
+                                </div>
+                            </details>
+
+                            <div class="review-templates-grid">
+                                <div class="template-container fpt-review-card">
+                                    <label for="fpt-review-5" class="fpt-stars"><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span> <span>5 звёзд</span></label>
+                                    <textarea id="fpt-review-5" class="template-input template-text" placeholder="Шаблон для 5 звёзд..."></textarea>
+                                </div>
+                                <div class="template-container fpt-review-card">
+                                    <label for="fpt-review-4" class="fpt-stars"><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span> <span>4 звезды</span></label>
+                                    <textarea id="fpt-review-4" class="template-input template-text" placeholder="Шаблон для 4 звёзд..."></textarea>
+                                </div>
+                                <div class="template-container fpt-review-card">
+                                    <label for="fpt-review-3" class="fpt-stars"><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span> <span>3 звезды</span></label>
+                                    <textarea id="fpt-review-3" class="template-input template-text" placeholder="Шаблон для 3 звёзд..."></textarea>
+                                </div>
+                                <div class="template-container fpt-review-card">
+                                    <label for="fpt-review-2" class="fpt-stars"><span class="material-symbols-rounded">star</span><span class="material-symbols-rounded">star</span> <span>2 звезды</span></label>
+                                    <textarea id="fpt-review-2" class="template-input template-text" placeholder="Шаблон для 2 звёзд..."></textarea>
+                                </div>
+                                <div class="template-container fpt-review-card">
+                                    <label for="fpt-review-1" class="fpt-stars"><span class="material-symbols-rounded">star</span> <span>1 звезда</span></label>
+                                    <textarea id="fpt-review-1" class="template-input template-text" placeholder="Шаблон для 1 звезды..."></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <h3>Ответ на новый заказ</h3>
-                    <div class="checkbox-label-inline">
-                        <input type="checkbox" id="newOrderReplyEnabled">
-                        <label for="newOrderReplyEnabled" style="margin-bottom:0;"><span>Отправлять сообщение при новом заказе</span></label>
-                    </div>
-                    <p class="template-info">Отправляется когда покупатель оплачивает заказ. Переменные: <code>{buyername}</code>, <code>{orderid}</code>, <code>{orderlink}</code>.</p>
-                    <textarea id="newOrderReplyText" class="template-input" placeholder="Спасибо за заказ, {buyername}! Ваш заказ: {orderlink}"></textarea>
 
-                    <h3 style="margin-top:20px;">Ответ при подтверждении заказа</h3>
-                    <div class="checkbox-label-inline">
-                        <input type="checkbox" id="orderConfirmReplyEnabled">
-                        <label for="orderConfirmReplyEnabled" style="margin-bottom:0;"><span>Отправлять сообщение при подтверждении заказа покупателем</span></label>
-                    </div>
-                    <p class="template-info">Переменные: <code>{buyername}</code>, <code>{orderid}</code>, <code>{lotname}</code>, <code>{orderlink}</code>.</p>
-                    <textarea id="orderConfirmReplyText" class="template-input" placeholder="{buyername}, спасибо за подтверждение заказа {orderid}! Если не сложно, оставь, пожалуйста, отзыв!"></textarea>
-
-                    <h3 style="margin-top:20px;">Дополнительно</h3>
-                    <div class="template-container">
-                        <div class="checkbox-label-inline">
-                            <input type="checkbox" id="keywordsEnabled">
-                            <label for="keywordsEnabled" style="margin-bottom:0;"><span>Авто-ответы по ключевым словам</span></label>
-                        </div>
-                        <div id="keywords-list-container" class="keywords-list"></div>
-                        <div class="keyword-add-form">
-                            <input type="text" id="newKeyword" placeholder="Ключевое слово или фраза">
-                            <div class="fp-tools-radio-group" style="margin: 6px 0;">
-                                <label class="fp-tools-radio-option"><input type="radio" name="newKeywordMatchMode" value="exact" checked><span>Точное совпадение</span></label>
-                                <label class="fp-tools-radio-option"><input type="radio" name="newKeywordMatchMode" value="contains"><span>Содержит</span></label>
+                    <!-- Карточка 2: Бонус за отзыв -->
+                    <div class="fpt-section-card">
+                        <div class="fpt-card-header">
+                            <div class="fpt-card-title-group">
+                                <span class="material-symbols-rounded fpt-card-icon">card_giftcard</span>
+                                <h4>Бонус за отзыв 5 ★</h4>
                             </div>
-                            <textarea id="newKeywordResponse" placeholder="Текст ответа (можно использовать {buyername})"></textarea>
-                            <button id="addKeywordBtn" class="btn btn-default">Добавить правило</button>
+                        </div>
+                        <div class="fpt-card-body">
+                            <div class="fpt-toggle-row">
+                                <label class="fpt-switch-label" for="bonusForReviewEnabled">
+                                    <input type="checkbox" id="bonusForReviewEnabled">
+                                    <span class="fpt-switch-title">Отправлять бонус в чат за оценку 5 <span class="material-symbols-rounded" style="font-size:15px;vertical-align:-2px;color:#f4c84a;">star</span></span>
+                                </label>
+                            </div>
+                            <p class="template-info">При отзыве 5 звёзд покупателю автоматически отправится сообщение с бонусом.</p>
+                            
+                            <div class="fpt-form-group" style="margin-top:10px;">
+                                <label class="fpt-form-label">Режим выдачи бонуса</label>
+                                <div class="fp-tools-radio-group" id="bonusModeSelector">
+                                    <label class="fp-tools-radio-option"><input type="radio" name="bonusMode" value="single" checked><span>Один бонус</span></label>
+                                    <label class="fp-tools-radio-option"><input type="radio" name="bonusMode" value="random"><span>Случайный из списка</span></label>
+                                </div>
+                            </div>
+
+                            <div id="singleBonusContainer" class="template-container" style="margin-top:10px;">
+                                <textarea id="singleBonusText" class="template-input template-text" placeholder="Текст вашего бонуса..."></textarea>
+                            </div>
+                            <div id="randomBonusContainer" class="template-container" style="display: none; margin-top:10px;">
+                                <div id="bonus-list-container" class="bonus-list"></div>
+                                <div class="bonus-add-form" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+                                    <textarea id="newBonusText" class="template-input template-text" placeholder="Текст нового бонуса для списка..."></textarea>
+                                    <button id="addBonusBtn" class="fpt-btn-accent" style="align-self:flex-start;">
+                                        <span class="material-symbols-rounded">add</span>
+                                        <span>Добавить бонус в список</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="fpt-form-group" style="margin-top:14px;">
+                                <label for="bonusForReviewDelaySec" class="fpt-form-label">Задержка отправки бонуса (секунды)</label>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <input type="number" id="bonusForReviewDelaySec" class="template-input" min="0" max="60" step="1" value="4" style="width:90px;text-align:center;">
+                                    <span class="template-info" style="margin:0;">Пауза между ответом на отзыв и бонусом (рекомендуется 3-5 сек).</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Карточка 3: Автоответчик в чате (Приветствие) -->
+                    <div class="fpt-section-card">
+                        <div class="fpt-card-header">
+                            <div class="fpt-card-title-group">
+                                <span class="material-symbols-rounded fpt-card-icon">waving_hand</span>
+                                <h4>Авто-приветствие в чате</h4>
+                            </div>
+                        </div>
+                        <div class="fpt-card-body">
+                            <div class="fpt-toggle-row">
+                                <label class="fpt-switch-label" for="greetingEnabled">
+                                    <input type="checkbox" id="greetingEnabled">
+                                    <span class="fpt-switch-title">Включить приветствие для новых покупателей</span>
+                                </label>
+                            </div>
+                            <textarea id="greetingText" class="template-input template-text" placeholder="Текст приветствия... Доступные переменные: {buyername}, $chat_name"></textarea>
+
+                            <div class="fpt-toggle-row" style="margin-top:12px;flex-direction:column;gap:8px;">
+                                <label class="fpt-switch-label" for="onlyNewChats">
+                                    <input type="checkbox" id="onlyNewChats">
+                                    <span class="fpt-switch-title">Приветствовать только в совсем новых чатах</span>
+                                </label>
+                                <label class="fpt-switch-label" for="ignoreSystemMessages">
+                                    <input type="checkbox" id="ignoreSystemMessages">
+                                    <span class="fpt-switch-title">Игнорировать системные сообщения (заказы, отзывы)</span>
+                                </label>
+                            </div>
+
+                            <div class="fpt-form-group" style="margin-top:10px;">
+                                <label for="greetingCooldownDays" class="fpt-form-label">Кулдаун повторного приветствия (дней, 0 = без кулдауна)</label>
+                                <input type="number" id="greetingCooldownDays" min="0" max="365" value="0" class="template-input" style="width:90px;text-align:center;" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Карточка 4: Ответы на события заказов -->
+                    <div class="fpt-section-card">
+                        <div class="fpt-card-header">
+                            <div class="fpt-card-title-group">
+                                <span class="material-symbols-rounded fpt-card-icon">shopping_bag</span>
+                                <h4>Ответы на события заказов</h4>
+                            </div>
+                        </div>
+                        <div class="fpt-card-body" style="gap:16px;">
+                            <div>
+                                <div class="fpt-toggle-row">
+                                    <label class="fpt-switch-label" for="newOrderReplyEnabled">
+                                        <input type="checkbox" id="newOrderReplyEnabled">
+                                        <span class="fpt-switch-title">Сообщение при оплате нового заказа</span>
+                                    </label>
+                                </div>
+                                <p class="template-info" style="margin-bottom:6px;">Переменные: <code>{buyername}</code>, <code>{orderid}</code>, <code>{orderlink}</code>.</p>
+                                <textarea id="newOrderReplyText" class="template-input template-text" placeholder="Спасибо за заказ, {buyername}! Ваш заказ: {orderlink}"></textarea>
+                            </div>
+
+                            <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;">
+                                <div class="fpt-toggle-row">
+                                    <label class="fpt-switch-label" for="orderConfirmReplyEnabled">
+                                        <input type="checkbox" id="orderConfirmReplyEnabled">
+                                        <span class="fpt-switch-title">Сообщение при подтверждении заказа покупателем</span>
+                                    </label>
+                                </div>
+                                <p class="template-info" style="margin-bottom:6px;">Переменные: <code>{buyername}</code>, <code>{orderid}</code>, <code>{lotname}</code>, <code>{orderlink}</code>.</p>
+                                <textarea id="orderConfirmReplyText" class="template-input template-text" placeholder="{buyername}, спасибо за подтверждение заказа {orderid}! Если не сложно, оставь, пожалуйста, отзыв!"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Карточка 5: Ключевые слова -->
+                    <div class="fpt-section-card">
+                        <div class="fpt-card-header">
+                            <div class="fpt-card-title-group">
+                                <span class="material-symbols-rounded fpt-card-icon">key</span>
+                                <h4>Авто-ответы по ключевым словам</h4>
+                            </div>
+                        </div>
+                        <div class="fpt-card-body">
+                            <div class="fpt-toggle-row">
+                                <label class="fpt-switch-label" for="keywordsEnabled">
+                                    <input type="checkbox" id="keywordsEnabled">
+                                    <span class="fpt-switch-title">Включить правила по ключевым фразам</span>
+                                </label>
+                            </div>
+                            <div id="keywords-list-container" class="keywords-list"></div>
+                            
+                            <div class="keyword-add-form" style="margin-top:12px;display:flex;flex-direction:column;gap:10px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;">
+                                <div class="fpt-form-group">
+                                    <label class="fpt-form-label">Новое правило</label>
+                                    <input type="text" id="newKeyword" class="template-input" placeholder="Ключевое слово или фраза (например: привет)" style="min-height:36px;height:36px;padding:6px 10px;">
+                                </div>
+                                <div class="fp-tools-radio-group">
+                                    <label class="fp-tools-radio-option"><input type="radio" name="newKeywordMatchMode" value="exact" checked><span>Точное совпадение</span></label>
+                                    <label class="fp-tools-radio-option"><input type="radio" name="newKeywordMatchMode" value="contains"><span>Содержит ключевое слово</span></label>
+                                </div>
+                                <textarea id="newKeywordResponse" class="template-input template-text" placeholder="Текст ответа (можно использовать {buyername})"></textarea>
+                                <button id="addKeywordBtn" class="fpt-btn-accent" style="align-self:flex-start;">
+                                    <span class="material-symbols-rounded">add</span>
+                                    <span>Добавить правило</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

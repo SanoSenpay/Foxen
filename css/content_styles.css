@@ -9889,3 +9889,98 @@ h5.mb10.text-bold {
     color: var(--fpt-accent, #C026D3) !important;
     transform: none !important;
 }
+
+/* ==========================================================================
+   Tab Content Internal Organization & Setting Cards
+   ========================================================================== */
+.fp-tools-page-content h3,
+.fpt-section-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin: 24px 0 14px 0 !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.fp-tools-page-content h3:first-child,
+.fpt-section-title:first-child {
+    margin-top: 0 !important;
+}
+
+.fpt-card,
+.fpt-setting-group,
+.fp-tools-section {
+    background: #131722 !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 14px !important;
+    padding: 16px 20px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.setting-item,
+.fpt-setting-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 12px 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.035) !important;
+    margin-bottom: 0 !important;
+    gap: 16px !important;
+}
+
+.setting-item:last-child,
+.fpt-setting-row:last-child {
+    border-bottom: none !important;
+    padding-bottom: 4px !important;
+}
+
+.setting-item:first-child,
+.fpt-setting-row:first-child {
+    padding-top: 4px !important;
+}
+
+.setting-item label,
+.fpt-setting-row label {
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    color: #e2e8f0 !important;
+    margin-bottom: 0 !important;
+}
+
+.setting-description,
+.fpt-setting-desc {
+    font-size: 11.5px !important;
+    color: #64748b !important;
+    margin-top: 3px !important;
+    line-height: 1.4 !important;
+}
+
+.fp-tools-popup input[type="text"],
+.fp-tools-popup input[type="password"],
+.fp-tools-popup input[type="number"],
+.fp-tools-popup textarea,
+.fp-tools-popup select {
+    background: rgba(0, 0, 0, 0.28) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    padding: 9px 12px !important;
+    color: #ffffff !important;
+    font-size: 13px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    box-sizing: border-box !important;
+}
+
+.fp-tools-popup input[type="text"]:focus,
+.fp-tools-popup input[type="password"]:focus,
+.fp-tools-popup input[type="number"]:focus,
+.fp-tools-popup textarea:focus,
+.fp-tools-popup select:focus {
+    outline: none !important;
+    border-color: var(--fpt-accent, #C026D3) !important;
+    box-shadow: 0 0 0 3px var(--fpt-accent-soft, rgba(192, 38, 211, 0.2)) !important;
+}
