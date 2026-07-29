@@ -142,6 +142,7 @@
                 "content/features/export_studio.js",
                 "content/features/new_chat_starter.js",
                 "content/features/particle_fx.js",
+                "content/features/news_tab.js",
                 "content/error_page_reload.js"
             ],
             "css": [
@@ -162,7 +163,8 @@
         "icons/magic.png",
         "icons/icon128.png",
         "fonts/*.woff2",
-        "content/banners-catalog.json"
+        "content/banners-catalog.json",
+        "content/news.json"
     ],
     "browser_action": {
         "default_popup": "popup/popup.html",

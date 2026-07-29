@@ -1,4 +1,4 @@
-﻿/* css/content_styles.css */
+/* css/content_styles.css */
 
 /* --- Глобальные стили скроллбара (красивый ползунок) --- */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -9236,4 +9236,188 @@ h5.mb10.text-bold {
 
 .fpt-buyer-status.error {
     color: #f87171 !important;
+}
+
+/* --- News & Changelog Tab Styles --- */
+.fpt-news-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.fpt-news-topbar h3 {
+    margin: 0;
+}
+.fpt-news-refresh-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.fpt-news-refresh-btn.fpt-spin svg, .fpt-news-refresh-btn.fpt-spin .material-symbols-rounded {
+    animation: fpt-news-spin 0.6s linear infinite;
+}
+@keyframes fpt-news-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.fpt-news-tags-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+.fpt-news-tag-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.fpt-news-tag-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+.fpt-news-tag-btn.active {
+    background: var(--fpt-accent, #a855f7);
+    border-color: var(--fpt-accent, #a855f7);
+    color: #ffffff;
+}
+
+.fpt-news-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.fpt-news-card {
+    background: rgba(20, 20, 28, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 20px;
+    backdrop-filter: blur(12px);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.fpt-news-card:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.fpt-news-card-header {
+    margin-bottom: 12px;
+}
+.fpt-news-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.fpt-news-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 12px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+.fpt-news-date {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+}
+.fpt-news-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.35;
+}
+
+.fpt-news-media {
+    margin: 14px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    max-height: 320px;
+}
+.fpt-news-media img {
+    width: 100%;
+    height: auto;
+    max-height: 320px;
+    object-fit: cover;
+    display: block;
+}
+
+.fpt-news-body {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+}
+.fpt-news-h3 {
+    margin: 14px 0 6px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+}
+.fpt-news-h4 {
+    margin: 12px 0 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+.fpt-news-ul {
+    margin: 8px 0;
+    padding-left: 18px;
+}
+.fpt-news-li {
+    margin-bottom: 4px;
+}
+
+.fpt-news-footer {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.fpt-news-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(168, 85, 247, 0.12));
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    color: #ffffff;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.fpt-news-btn:hover {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.4), rgba(168, 85, 247, 0.2));
+    border-color: rgba(168, 85, 247, 0.6);
+    color: #ffffff;
+}
+
+.fpt-news-unread-badge {
+    width: 7px;
+    height: 7px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 6px;
+    box-shadow: 0 0 8px #ef4444;
+}
+.fpt-news-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
 }

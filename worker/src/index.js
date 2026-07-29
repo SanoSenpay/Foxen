@@ -79,6 +79,22 @@ export default {
         return new Response(JSON.stringify(defaultCatalog), { headers: corsHeaders });
       }
 
+      // --- Публичный эндпоинт: Динамические новости и чейнджлог ---
+      if (request.method === "GET" && (url.pathname === "/news" || url.pathname === "/news.json")) {
+        try {
+          const ghRes = await fetch("https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/news.json", {
+            cf: { cacheTtl: 300, cacheEverything: true }
+          });
+          if (ghRes.ok) {
+            const text = await ghRes.text();
+            return new Response(text, { headers: corsHeaders });
+          }
+        } catch (e) {
+          console.error("Ошибка загрузки новостей с GitHub:", e);
+        }
+        return new Response(JSON.stringify({ version: 1, posts: [] }), { headers: corsHeaders });
+      }
+
       // --- Проверка общего ключа авторизации API ---
       const fptKey = request.headers.get("X-FPT-Key");
       if (!fptKey || fptKey !== "fptoolsdim") {

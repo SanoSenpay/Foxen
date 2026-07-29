@@ -99,6 +99,7 @@ function createMainPopup() {
                 </div>
                 <ul>
                     <li class="fp-nav-divider">Основное</li>
+                    <li data-page="news"><a><span class="nav-icon material-symbols-rounded">campaign</span><span>Новости</span><span class="fpt-news-unread-badge" style="display:none;"></span></a></li>
                     <li data-page="general" class="active"><a><span class="nav-icon material-symbols-rounded">settings</span><span>Общие</span></a></li>
                     <li data-page="accounts"><a><span class="nav-icon material-symbols-rounded">group</span><span>Аккаунты</span></a></li>
                     <li data-page="needs"><a><span class="nav-icon material-symbols-rounded">tune</span><span>Что тебе нужно</span></a></li>
@@ -907,6 +908,16 @@ function createMainPopup() {
                     </div>
                 </div>
 
+                <div class="fp-tools-page-content" data-page="news">
+                    <div class="fpt-news-topbar">
+                        <h3>Новости & Чейнджлог</h3>
+                        <button id="fptNewsRefreshBtn" class="btn btn-default fpt-news-refresh-btn" title="Обновить новости">
+                            <span class="material-symbols-rounded" style="font-size:18px;">refresh</span>
+                        </button>
+                    </div>
+                    <div id="fptNewsList" class="fpt-news-feed-list"></div>
+                </div>
+
                 <div class="fp-tools-page-content" data-page="ai_audit">
                     <h3>ИИ-аудит лотов</h3>
 
@@ -1513,6 +1524,7 @@ function setupPopupNavigation() {
             contentPages.forEach(page => {
                 page.classList.toggle('active', page.dataset.page === pageId);
             });
+            if (pageId === 'news') { if (typeof initializeNewsTab === 'function') initializeNewsTab(); }
             if (pageId === 'currency_calc') initializeCurrencyCalculator();
             if (pageId === 'notes') { if (typeof initializeNotes === 'function') initializeNotes(); }
             if (pageId === 'templates') { if (typeof setupTemplateSettingsHandlers === 'function') setupTemplateSettingsHandlers(); }
