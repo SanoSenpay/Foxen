@@ -40,11 +40,11 @@ const FPT_FEATURE_REGISTRY = [
     },
     {
         id: 'profile_descriptions',
-        label: 'Описание и баннер профиля',
-        desc: 'Позволяет установить кастомное описание и анимированный баннер на вашей странице профиля, которые будут видеть все пользователи расширения.',
+        label: 'Кастомный профиль и баннер',
+        desc: 'Перестройка дизайна профиля (кастомный баннер, карточка, описание и рейтинг). При отключении возвращает стандартный вид профиля FunPay.',
         group: 'Профиль продавца',
         selector: '.fpt-pd',
-        preview: { kind: 'html', html: '<div class="fpt-pv-rmthub" style="justify-content:center; width:100%;"><span>📝 Описание профиля</span></div>' }
+        preview: { kind: 'html', html: '<div class="fpt-pv-rmthub" style="justify-content:center; width:100%;"><span>📝 Кастомный профиль</span></div>' }
     },
     {
         id: 'profile_raise_all',

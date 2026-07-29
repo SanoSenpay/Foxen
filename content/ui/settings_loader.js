@@ -378,6 +378,37 @@ async function loadSavedSettings() {
 
     document.getElementById('enableRedesignedHomepage').checked = settings.enableRedesignedHomepage !== false;
 
+    const enableCustomProfileCheckboxEl = document.getElementById('enableCustomProfileCheckbox');
+    if (enableCustomProfileCheckboxEl) {
+        const dfData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
+        const disabled = Array.isArray(dfData.fpToolsDisabledFeatures) ? dfData.fpToolsDisabledFeatures : [];
+        enableCustomProfileCheckboxEl.checked = !disabled.includes('profile_descriptions');
+
+        enableCustomProfileCheckboxEl.addEventListener('change', async (e) => {
+            const checked = e.target.checked;
+            const currentData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
+            let currentDisabled = Array.isArray(currentData.fpToolsDisabledFeatures) ? currentData.fpToolsDisabledFeatures : [];
+            if (checked) {
+                currentDisabled = currentDisabled.filter(id => id !== 'profile_descriptions');
+            } else {
+                if (!currentDisabled.includes('profile_descriptions')) {
+                    currentDisabled.push('profile_descriptions');
+                }
+            }
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDisabledFeatures: currentDisabled });
+        });
+
+        const storageApi = (typeof browser !== 'undefined' && browser.storage) ? browser.storage : (typeof chrome !== 'undefined' && chrome.storage ? chrome.storage : null);
+        if (storageApi && storageApi.onChanged) {
+            storageApi.onChanged.addListener((changes, area) => {
+                if (area !== 'local' || !changes.fpToolsDisabledFeatures) return;
+                const newDisabled = Array.isArray(changes.fpToolsDisabledFeatures.newValue)
+                    ? changes.fpToolsDisabledFeatures.newValue : [];
+                enableCustomProfileCheckboxEl.checked = !newDisabled.includes('profile_descriptions');
+            });
+        }
+    }
+
     const cursorFxSettings = settings.fpToolsCursorFx || {};
     const cursorFxDefaults = { enabled: false, type: 'sparkle', color1: '#FF6B6B', color2: '#C026D3', rgb: false, count: 50 };
     const finalCursorFxSettings = { ...cursorFxDefaults, ...cursorFxSettings };

@@ -976,7 +976,7 @@
     let img = cover.querySelector(':scope > .profile-cover-img.fpt-cover');
     if (!img) {
       Array.from(cover.querySelectorAll(':scope > .profile-cover-img, :scope > .profile-cover-container'))
-        .forEach((el) => { if (!el.classList.contains('fpt-cover')) el.remove(); });
+        .forEach((el) => { if (!el.classList.contains('fpt-cover')) el.style.display = 'none'; });
       img = document.createElement('div');
       img.className = 'profile-cover-img fpt-cover';
       cover.insertBefore(img, cover.firstChild);
@@ -1435,10 +1435,92 @@
 
   let mounted = false;
 
+  async function isProfileDisabled() {
+    try {
+      const data = await storageGet(['fpToolsDisabledFeatures']);
+      const list = Array.isArray(data.fpToolsDisabledFeatures) ? data.fpToolsDisabledFeatures : [];
+      return list.includes('profile_descriptions');
+    } catch {
+      return false;
+    }
+  }
+
+  function unmount() {
+    mounted = false;
+
+    if (bannerWatch) {
+      bannerWatch.disconnect();
+      bannerWatch = null;
+    }
+    activeBannerUrl = null;
+    editorMount = null;
+
+    const cover = findCover();
+    if (cover) {
+      cover.classList.remove('fpt-cover-host');
+      cover.removeAttribute('data-fpt-banner');
+
+      const customCoverImg = cover.querySelector(':scope > .profile-cover-img.fpt-cover');
+      if (customCoverImg) customCoverImg.remove();
+
+      const overlay = cover.querySelector('.fpt-banner-overlay');
+      if (overlay) overlay.remove();
+
+      Array.from(cover.querySelectorAll(':scope > .profile-cover-img, :scope > .profile-cover-container'))
+        .forEach((el) => {
+          if (!el.classList.contains('fpt-cover')) el.style.display = '';
+        });
+    }
+
+    document.querySelector('.fpt-banner-catalog')?.remove();
+    document.querySelector('.fpt-banner-vignette')?.remove();
+    document.querySelector('.fpt-banner-modal')?.remove();
+
+    const card = document.querySelector('.container.profile-header');
+    const profile = card && card.querySelector(':scope > .profile');
+
+    if (card) {
+      card.classList.remove(CARD);
+    }
+
+    if (profile) {
+      profile.classList.remove('fpt-profile-body');
+
+      const identity = profile.querySelector('.' + IDENTITY);
+      if (identity) identity.remove();
+
+      const rBlock = profile.querySelector('.fpt-profile-rating');
+      if (rBlock) rBlock.remove();
+
+      const ratingCol = profile.querySelector('.profile-header-col-rating');
+      if (ratingCol) ratingCol.style.display = '';
+
+      const meta = profile.querySelector('.' + META);
+      if (meta) {
+        const cols = meta.querySelector('.profile-header-cols');
+        if (cols) profile.appendChild(cols);
+        meta.remove();
+      }
+
+      const legacyRow = profile.querySelector('.' + ROW);
+      if (legacyRow) legacyRow.remove();
+    }
+
+    const pdRoot = document.querySelector('.' + ROOT);
+    if (pdRoot) pdRoot.remove();
+
+    const styles = document.getElementById('fpt-pd-styles');
+    if (styles) styles.remove();
+  }
+
   async function mount() {
-    if (mounted) return;
     const profileId = profileIdFromUrl();
     if (profileId === null) return;
+    if (await isProfileDisabled()) {
+      unmount();
+      return;
+    }
+    if (mounted) return;
     if (document.querySelector('.' + ROOT)) {
       mounted = true;
       ensureProfileLayout(document.querySelector('.' + ROOT));
@@ -1515,6 +1597,7 @@
   }
 
   async function earlyBanner() {
+    if (await isProfileDisabled()) return;
     const profileId = profileIdFromUrl();
     if (profileId === null) return;
     const cached = await cacheRead(profileId);
@@ -1522,8 +1605,10 @@
       await loadCatalog();
       const bannerUrl = getBannerUrl(cached.bannerId);
       if (!bannerUrl) return;
+      if (await isProfileDisabled()) return;
       injectStyles();
-      const tryApply = (n) => {
+      const tryApply = async (n) => {
+        if (await isProfileDisabled()) { unmount(); return; }
         const cover = findCover();
         if (cover) {
           cover.classList.add('fpt-cover-host');
@@ -1545,6 +1630,21 @@
     const get = () => lastPath, set = (p) => { lastPath = p; };
     setInterval(() => checkNav(get, set), 700);
     document.addEventListener('click', () => setTimeout(() => checkNav(get, set), 300), true);
+
+    const storageApi = (typeof browser !== 'undefined' && browser.storage) ? browser.storage : (typeof chrome !== 'undefined' && chrome.storage ? chrome.storage : null);
+    if (storageApi && storageApi.onChanged) {
+      storageApi.onChanged.addListener((changes, area) => {
+        if (area !== 'local' || !changes.fpToolsDisabledFeatures) return;
+        const disabled = Array.isArray(changes.fpToolsDisabledFeatures.newValue)
+          ? changes.fpToolsDisabledFeatures.newValue : [];
+        if (disabled.includes('profile_descriptions')) {
+          unmount();
+        } else {
+          mounted = false;
+          mount();
+        }
+      });
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
