@@ -92,43 +92,74 @@ function createMainPopup() {
         </div>
         <div class="fp-tools-body">
             <nav class="fp-tools-nav">
-                <div class="fpt-nav-search">
-                    <input type="text" id="fptNavSearch" class="fpt-nav-search-input" placeholder="Поиск функций…" autocomplete="off" spellcheck="false">
-                    <button type="button" id="fptNavSearchClear" class="fpt-nav-search-clear" aria-label="Очистить" title="Очистить">✕</button>
-                    <div id="fptNavSearchResults" class="fpt-nav-search-results"></div>
+                <!-- Navigation Category Lists -->
+                <div class="fpt-sidebar-nav-scroll">
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">ОСНОВНОЕ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="general" class="active"><a><span class="material-symbols-rounded nav-list-icon">settings</span><span>Общие настройки</span></a></li>
+                            <li data-page="needs"><a><span class="material-symbols-rounded nav-list-icon">tune</span><span>Что тебе нужно</span></a></li>
+                            <li data-page="accounts"><a><span class="material-symbols-rounded nav-list-icon">group</span><span>Аккаунты</span></a></li>
+                            <li data-page="news"><a><span class="material-symbols-rounded nav-list-icon">campaign</span><span>Новости</span><span class="fpt-news-unread-badge" style="display:none;"></span></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">ТОРГОВЛЯ & ПРОДАВЕЦ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="lot_io"><a><span class="material-symbols-rounded nav-list-icon">inventory_2</span><span>Управление лотами</span></a></li>
+                            <li data-page="autobump"><a><span class="material-symbols-rounded nav-list-icon">rocket_launch</span><span>Авто-поднятие</span></a></li>
+                            <li data-page="ai_audit"><a><span class="material-symbols-rounded nav-list-icon">search_insights</span><span>ИИ-Аудит лотов</span></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">КОММУНИКАЦИЯ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="templates"><a><span class="material-symbols-rounded nav-list-icon">description</span><span>Шаблоны ответов</span></a></li>
+                            <li data-page="auto_review"><a><span class="material-symbols-rounded nav-list-icon">smart_toy</span><span>Авто-ответы</span></a></li>
+                            <li data-page="auto_delivery"><a><span class="material-symbols-rounded nav-list-icon">bolt</span><span>Авто-выдача</span></a></li>
+                            <li data-page="blacklist"><a><span class="material-symbols-rounded nav-list-icon">block</span><span>Чёрный список</span></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">КАСТОМИЗАЦИЯ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="theme"><a><span class="material-symbols-rounded nav-list-icon">palette</span><span>Внешний вид</span></a></li>
+                            <li data-page="effects"><a><span class="material-symbols-rounded nav-list-icon">auto_awesome</span><span>Эффекты</span></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">ФИНАНСЫ & ИНСТРУМЕНТЫ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="piggy_banks"><a><span class="material-symbols-rounded nav-list-icon">savings</span><span>Копилки</span></a></li>
+                            <li data-page="calculator"><a><span class="material-symbols-rounded nav-list-icon">calculate</span><span>Калькулятор</span></a></li>
+                            <li data-page="currency_calc"><a><span class="material-symbols-rounded nav-list-icon">currency_exchange</span><span>Валюты</span></a></li>
+                            <li data-page="notes"><a><span class="material-symbols-rounded nav-list-icon">edit_note</span><span>Заметки</span></a></li>
+                            <li data-page="settings_io"><a><span class="material-symbols-rounded nav-list-icon">database</span><span>Импорт / Экспорт</span></a></li>
+                        </ul>
+                    </div>
                 </div>
-                <ul>
-                    <li class="fp-nav-divider">Основное</li>
-                    <li data-page="news"><a><span class="nav-icon material-symbols-rounded">campaign</span><span>Новости</span><span class="fpt-news-unread-badge" style="display:none;"></span></a></li>
-                    <li data-page="general" class="active"><a><span class="nav-icon material-symbols-rounded">settings</span><span>Общие</span></a></li>
-                    <li data-page="accounts"><a><span class="nav-icon material-symbols-rounded">group</span><span>Аккаунты</span></a></li>
-                    <li data-page="needs"><a><span class="nav-icon material-symbols-rounded">tune</span><span>Что тебе нужно</span></a></li>
-                    <li data-page="slash_commands"><a><span class="nav-icon material-symbols-rounded">terminal</span><span>Слэш-команды</span></a></li>
-                    <li data-page="telegram"><a><span class="nav-icon material-symbols-rounded">send</span><span>Telegram</span></a></li>
-                    <li class="fp-nav-divider">Интерфейс</li>
-                    <li data-page="theme"><a><span class="nav-icon material-symbols-rounded">palette</span><span>Кастомизация</span></a></li>
-                    <li data-page="effects"><a><span class="nav-icon material-symbols-rounded">auto_awesome</span><span>Эффекты</span></a></li>
-                    <li class="fp-nav-divider">Чат и продажи</li>
-                    <li data-page="templates"><a><span class="nav-icon material-symbols-rounded">description</span><span>Шаблоны</span></a></li>
-                    <li data-page="auto_review"><a><span class="nav-icon material-symbols-rounded">smart_toy</span><span>Авто-ответы</span></a></li>
-                    <li data-page="auto_delivery"><a><span class="nav-icon material-symbols-rounded">bolt</span><span>Авто-выдача</span></a></li>
-                    <li class="fp-nav-divider">Торговля</li>
-                    <li data-page="lot_io"><a><span class="nav-icon material-symbols-rounded">inventory_2</span><span>Лоты</span></a></li>
-                    <li data-page="autobump"><a><span class="nav-icon material-symbols-rounded">rocket_launch</span><span>Авто-поднятие</span></a></li>
-                    <li data-page="ai_audit"><a><span class="nav-icon material-symbols-rounded">search_insights</span><span>ИИ-аудит</span></a></li>
-                    <li data-page="ai_settings"><a><span class="nav-icon material-symbols-rounded">vpn_key</span><span>ИИ API-ключ</span></a></li>
-                    <li data-page="blacklist"><a><span class="nav-icon material-symbols-rounded">block</span><span>Чёрный список</span></a></li>
-                    <li class="fp-nav-divider">Финансы</li>
-                    <li data-page="piggy_banks"><a><span class="nav-icon material-symbols-rounded">savings</span><span>Копилки</span></a></li>
-                    <li data-page="calculator"><a><span class="nav-icon material-symbols-rounded">calculate</span><span>Калькулятор</span></a></li>
-                    <li data-page="currency_calc"><a><span class="nav-icon material-symbols-rounded">currency_exchange</span><span>Валюты</span></a></li>
-                    <li class="fp-nav-divider">Прочее</li>
-                    <li data-page="notes"><a><span class="nav-icon material-symbols-rounded">edit_note</span><span>Заметки</span></a></li>
-                    <li data-page="overview"><a><span class="nav-icon material-symbols-rounded">movie</span><span>Обзор</span></a></li>
-                    <li data-page="settings_io"><a><span class="nav-icon material-symbols-rounded">database</span><span>Настройки</span></a></li>
-                    <li data-page="tickets"><a><span class="nav-icon material-symbols-rounded">confirmation_number</span><span>Тикеты</span></a></li>
-                    <li data-page="support"><a><span class="nav-icon material-symbols-rounded">favorite</span><span>Поддержка</span></a></li>
-                </ul>
+
+                <!-- Footer Pro Card -->
+                <div class="fpt-sidebar-footer">
+                    <div class="fpt-nav-subscription-card">
+                        <div class="fpt-nav-sub-header">
+                            <div class="fpt-nav-sub-crown">
+                                <span class="material-symbols-rounded" style="font-size:18px;">workspace_premium</span>
+                            </div>
+                            <div class="fpt-nav-sub-title-wrap">
+                                <div class="fpt-nav-sub-title">
+                                    <span>Foxen Premium</span>
+                                    <span class="fpt-badge-admin">Админ</span>
+                                </div>
+                                <div class="fpt-nav-sub-desc">До 24.10.2026</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </nav>
             <main class="fp-tools-content">
                 <div class="fp-tools-page-content active" data-page="general">

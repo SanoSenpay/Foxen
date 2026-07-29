@@ -147,6 +147,7 @@
             ],
             "css": [
                 "css/content_styles.css",
+                "css/main_popup.css",
                 "css/image_generator.css",
                 "css/ai_creator.css",
                 "css/live_styler.css",

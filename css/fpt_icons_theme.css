@@ -321,19 +321,22 @@
     color: var(--fptm-text, #ffffff) !important;
 }
 
-/* Nav Grid List */
-.fp-tools-nav ul {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
+/* Nav Grid List - Vertical List (1 per line) */
+.fp-tools-nav ul,
+.fpt-nav-group ul,
+.fpt-nav-vertical-list {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    gap: 4px !important;
     list-style: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
 }
 
 /* Category Dividers */
 .fp-tools-nav li.fp-nav-divider {
-    grid-column: 1 / -1 !important;
     font-size: 10px !important;
     font-weight: 700 !important;
     letter-spacing: 0.12em !important;
@@ -341,23 +344,30 @@
     color: var(--fptm-faint, rgba(255, 255, 255, 0.4)) !important;
     padding: 12px 4px 4px !important;
     margin: 0 !important;
+    width: 100% !important;
 }
 
-/* Nav Card Buttons - Equal Height 70px */
+/* Nav Row Buttons - Full Width Single Line */
+.fp-tools-nav li[data-page] {
+    width: 100% !important;
+    margin-bottom: 2px !important;
+}
+
 .fp-tools-nav li[data-page] a {
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    padding: 10px 4px !important;
-    height: 70px !important;
-    min-height: 70px !important;
-    border-radius: 14px !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    padding: 9px 12px !important;
+    height: auto !important;
+    min-height: unset !important;
+    width: 100% !important;
+    border-radius: 10px !important;
     background: rgba(255, 255, 255, 0.025) !important;
     border: 1px solid rgba(255, 255, 255, 0.05) !important;
     color: var(--fptm-muted, #9aa0b8) !important;
-    text-align: center !important;
+    text-align: left !important;
     box-sizing: border-box !important;
     text-decoration: none !important;
     position: relative !important;
@@ -365,18 +375,20 @@
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease !important;
 }
 .fp-tools-nav li[data-page] a > span:last-child {
-    font-size: 11.5px !important;
+    font-size: 13px !important;
     font-weight: 500 !important;
-    line-height: 1.25 !important;
+    line-height: 1.3 !important;
     transition: color 0.2s ease !important;
 }
-.fp-tools-nav .nav-icon {
-    font-size: 24px !important;
+.fp-tools-nav .nav-icon,
+.fp-tools-nav .nav-list-icon {
+    font-size: 20px !important;
+    margin-bottom: 0 !important;
     color: var(--fptm-muted, #9aa0b8) !important;
     transition: color 0.2s ease, transform 0.2s ease, filter 0.2s ease !important;
 }
 
-/* Hover Card State - Clean Neon Glow, Zero Y-Shift */
+/* Hover Card State */
 .fp-tools-nav li[data-page] a:hover {
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.14)) !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.4)) !important;
@@ -384,9 +396,10 @@
     box-shadow: 0 4px 16px var(--fptm-accent-soft, rgba(192, 38, 211, 0.2)) !important;
     transform: none !important;
 }
-.fp-tools-nav li[data-page] a:hover .nav-icon {
+.fp-tools-nav li[data-page] a:hover .nav-icon,
+.fp-tools-nav li[data-page] a:hover .nav-list-icon {
     color: var(--fptm-accent, #C026D3) !important;
-    transform: scale(1.12) !important;
+    transform: none !important;
     filter: drop-shadow(0 0 8px var(--fptm-accent-soft, rgba(192, 38, 211, 0.6))) !important;
 }
 

@@ -56,33 +56,74 @@ function getMainPopupHTML() {
         </div>
         <div class="fp-tools-body">
             <nav class="fp-tools-nav">
-                <ul>
-                    <li class="fp-nav-divider">Основное</li>
-                    <li data-page="news"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l5 5v11a2 2 0 01-2 2z"/><polyline points="14 4 14 9 19 9"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="17" x2="13" y2="17"/></svg></span><span>Новости</span><span class="fpt-news-unread-badge" style="display:none;"></span></a></li>
-                    <li data-page="general" class="active"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span><span>Общие</span></a></li>
-                    <li data-page="accounts"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span><span>Аккаунты</span></a></li>
-                    <li class="fp-nav-divider">Чат и продажи</li>
-                    <li data-page="templates"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span><span>Шаблоны</span></a></li>
-                    <li data-page="auto_review"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg></span><span>Авто-ответы</span></a></li>
-                    <li data-page="auto_delivery"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span><span>Авто-выдача</span></a></li>
-                    <li class="fp-nav-divider">Торговля</li>
-                    <li data-page="lot_io"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span><span>Лоты</span></a></li>
-                    <li data-page="autobump"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg></span><span>Авто-поднятие</span></a></li>
-                    <li data-page="ai_audit"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></span><span>ИИ-аудит</span></a></li>
-                    <li data-page="blacklist"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></span><span>Чёрный список</span></a></li>
-                    <li class="fp-nav-divider">Финансы</li>
-                    <li data-page="piggy_banks"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 018 8c0 3-1.5 5.5-4 7v2H8v-2c-2.5-1.5-4-4-4-7a8 8 0 018-8z"/><line x1="9" y1="22" x2="15" y2="22"/><line x1="12" y1="6" x2="12" y2="10"/><line x1="10" y1="8" x2="14" y2="8"/></svg></span><span>Копилки</span></a></li>
-                    <li data-page="calculator"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg></span><span>Калькулятор</span></a></li>
-                    <li data-page="currency_calc"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span><span>Валюты</span></a></li>
-                    <li class="fp-nav-divider">Интерфейс</li>
-                    <li data-page="theme"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 20c-6 0-8-4-8-4s2-4 8-4 8 4 8 4-2 4-8 4z"/></svg></span><span>Кастомизация</span></a></li>
-                    <li data-page="effects"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span><span>Эффекты</span></a></li>
-                    <li class="fp-nav-divider">Прочее</li>
-                    <li data-page="notes"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span><span>Заметки</span></a></li>
-                    <li data-page="overview"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></span><span>Обзор</span></a></li>
-                    <li data-page="settings_io"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Настройки</span></a></li>
-                    <li data-page="tickets"><a><span class="nav-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 010-6h20a3 3 0 010 6"/><path d="M2 15a3 3 0 000 6h20a3 3 0 000-6"/><path d="M6 9v6"/><path d="M18 9v6"/></svg></span><span>Тикеты</span></a></li>
-                </ul>
+                <!-- Navigation Category Lists -->
+                <div class="fpt-sidebar-nav-scroll">
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">ОСНОВНОЕ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="general" class="active"><a><span class="material-symbols-rounded nav-list-icon">settings</span><span>Общие настройки</span></a></li>
+                            <li data-page="needs"><a><span class="material-symbols-rounded nav-list-icon">tune</span><span>Что тебе нужно</span></a></li>
+                            <li data-page="accounts"><a><span class="material-symbols-rounded nav-list-icon">group</span><span>Аккаунты</span></a></li>
+                            <li data-page="news"><a><span class="material-symbols-rounded nav-list-icon">campaign</span><span>Новости</span><span class="fpt-news-unread-badge" style="display:none;"></span></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">ТОРГОВЛЯ & ПРОДАВЕЦ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="lot_io"><a><span class="material-symbols-rounded nav-list-icon">inventory_2</span><span>Управление лотами</span></a></li>
+                            <li data-page="autobump"><a><span class="material-symbols-rounded nav-list-icon">rocket_launch</span><span>Авто-поднятие</span></a></li>
+                            <li data-page="ai_audit"><a><span class="material-symbols-rounded nav-list-icon">search_insights</span><span>ИИ-Аудит лотов</span></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">КОММУНИКАЦИЯ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="templates"><a><span class="material-symbols-rounded nav-list-icon">description</span><span>Шаблоны ответов</span></a></li>
+                            <li data-page="auto_review"><a><span class="material-symbols-rounded nav-list-icon">smart_toy</span><span>Авто-ответы</span></a></li>
+                            <li data-page="auto_delivery"><a><span class="material-symbols-rounded nav-list-icon">bolt</span><span>Авто-выдача</span></a></li>
+                            <li data-page="blacklist"><a><span class="material-symbols-rounded nav-list-icon">block</span><span>Чёрный список</span></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">КАСТОМИЗАЦИЯ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="theme"><a><span class="material-symbols-rounded nav-list-icon">palette</span><span>Внешний вид</span></a></li>
+                            <li data-page="effects"><a><span class="material-symbols-rounded nav-list-icon">auto_awesome</span><span>Эффекты</span></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="fpt-nav-group">
+                        <div class="fpt-nav-group-title">ФИНАНСЫ & ИНСТРУМЕНТЫ</div>
+                        <ul class="fpt-nav-vertical-list">
+                            <li data-page="piggy_banks"><a><span class="material-symbols-rounded nav-list-icon">savings</span><span>Копилки</span></a></li>
+                            <li data-page="calculator"><a><span class="material-symbols-rounded nav-list-icon">calculate</span><span>Калькулятор</span></a></li>
+                            <li data-page="currency_calc"><a><span class="material-symbols-rounded nav-list-icon">currency_exchange</span><span>Валюты</span></a></li>
+                            <li data-page="notes"><a><span class="material-symbols-rounded nav-list-icon">edit_note</span><span>Заметки</span></a></li>
+                            <li data-page="settings_io"><a><span class="material-symbols-rounded nav-list-icon">database</span><span>Импорт / Экспорт</span></a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Footer Pro Card -->
+                <div class="fpt-sidebar-footer">
+                    <div class="fpt-nav-subscription-card">
+                        <div class="fpt-nav-sub-header">
+                            <div class="fpt-nav-sub-crown">
+                                <span class="material-symbols-rounded" style="font-size:18px;">workspace_premium</span>
+                            </div>
+                            <div class="fpt-nav-sub-title-wrap">
+                                <div class="fpt-nav-sub-title">
+                                    <span>Foxen Premium</span>
+                                    <span class="fpt-badge-admin">Админ</span>
+                                </div>
+                                <div class="fpt-nav-sub-desc">До 24.10.2026</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </nav>
             <main class="fp-tools-content">
                 <div class="fp-tools-page-content" data-page="news">
@@ -95,58 +136,121 @@ function getMainPopupHTML() {
                     <div id="fptNewsList" class="fpt-news-feed-list"></div>
                 </div>
                 <div class="fp-tools-page-content active" data-page="general">
-                    <h3>Общие настройки</h3>
+                    <div class="fpt-page-header">
+                        <div class="fpt-page-icon-badge">
+                            <span class="material-symbols-rounded" style="font-size:24px;">cookie</span>
+                        </div>
+                        <div>
+                            <h3 class="fpt-page-title">Для продавца</h3>
+                            <p class="fpt-page-subtitle">Передовые функции для продавцов любого уровня на funpay</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Hero Import Dashboard Card -->
+                    <div class="fpt-dashboard-card">
+                        <div class="fpt-dashboard-grid">
+                            <div class="fpt-user-card">
+                                <img src="https://funpay.com/img/layout/avatar.png" id="fptSellerAvatarImg" class="fpt-user-card-img" alt="MarketFulling">
+                                <div class="fpt-user-card-name" id="fptSellerUsername">MarketFulling</div>
+                                <div class="fpt-user-card-handle">@FunPay</div>
+                            </div>
+                            <div class="fpt-metrics-wrap">
+                                <div class="fpt-file-info-row">
+                                    <div>
+                                        <div class="fpt-file-info-title" id="fptFileNameDisplay">lots (29).json</div>
+                                        <div class="fpt-file-info-size" id="fptFileSizeDisplay">11.43 KB</div>
+                                    </div>
+                                    <span class="fpt-badge-verified">Файл проверен</span>
+                                </div>
+
+                                <div class="fpt-metrics-grid">
+                                    <div class="fpt-metric-box">
+                                        <div class="fpt-metric-label">Количество лотов</div>
+                                        <div class="fpt-metric-value" id="fptMetricLotsCount">6 <span class="fpt-metric-unit">шт</span></div>
+                                    </div>
+                                    <div class="fpt-metric-box">
+                                        <div class="fpt-metric-label">Время загрузки</div>
+                                        <div class="fpt-metric-value" id="fptMetricLoadTime">0 <span class="fpt-metric-unit">мин 12 сек</span></div>
+                                    </div>
+                                    <div class="fpt-metric-box">
+                                        <div class="fpt-metric-label">Размер файла</div>
+                                        <div class="fpt-metric-value" id="fptMetricFileSize">11.43 <span class="fpt-metric-unit">KB</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="fpt-dashboard-actions">
+                            <button id="fptUploadFileBtn" class="fpt-btn-secondary" type="button">Загрузить новый файл</button>
+                            <button id="fptStartImportBtn" class="fpt-btn-primary-blue" type="button">Начать импорт</button>
+                            <input type="file" id="fptFileInput" accept=".json" style="display:none;">
+                        </div>
+                    </div>
+
+                    <!-- Additional Functions Section -->
+                    <div style="margin-top: 24px;">
+                        <h4 style="font-size:15px; font-weight:700; color:#ffffff; margin:0 0 4px;">Дополнительные функции</h4>
+                        <p style="font-size:12px; color:#64748b; margin:0 0 16px;">Настройте и управляйте функциями для активной продажи на FunPay</p>
+
+                        <div class="fpt-feature-cards-grid">
+                            <div class="fpt-feature-card">
+                                <div class="fpt-feature-card-header">
+                                    <span class="fpt-feature-card-title">Закрепление категорий</span>
+                                    <span class="fpt-badge-status-inactive">Не активно</span>
+                                </div>
+                                <div class="fpt-feature-card-desc">Меняет категории местами, поднимите более активные и востребованные в верх списка вашего профиля.</div>
+                            </div>
+
+                            <div class="fpt-feature-card">
+                                <div class="fpt-feature-card-header">
+                                    <span class="fpt-feature-card-title">Удаление лотов</span>
+                                    <span class="fpt-badge-status-active">Активно</span>
+                                </div>
+                                <div class="fpt-feature-card-desc">Удаляет выбранные лоты, вплоть до тысячи, упрощая управление товарами.</div>
+                            </div>
+
+                            <div class="fpt-feature-card">
+                                <div class="fpt-feature-card-header">
+                                    <span class="fpt-feature-card-title">Отключение лотов</span>
+                                    <span class="fpt-badge-status-active">Активно</span>
+                                </div>
+                                <div class="fpt-feature-card-desc">Отключает выбранные лоты, вплоть до тысячи, упрощая управление товарами.</div>
+                            </div>
+
+                            <div class="fpt-feature-card">
+                                <div class="fpt-feature-card-header">
+                                    <span class="fpt-feature-card-title">Авто-поднятие лотов</span>
+                                    <span class="fpt-badge-status-active">Активно</span>
+                                </div>
+                                <div class="fpt-feature-card-desc">Автоматическое поднятие предложений по таймеру для всех выбранных категорий.</div>
+                            </div>
+
+                            <div class="fpt-feature-card">
+                                <div class="fpt-feature-card-header">
+                                    <span class="fpt-feature-card-title">ИИ-Аудит лотов</span>
+                                    <span class="fpt-badge-status-active">Активно</span>
+                                </div>
+                                <div class="fpt-feature-card-desc">Интеллектуальный анализ предложений и отзывов с рекомендациями по увеличению продаж.</div>
+                            </div>
+
+                            <div class="fpt-feature-card">
+                                <div class="fpt-feature-card-header">
+                                    <span class="fpt-feature-card-title">Массовое редактирование</span>
+                                    <span class="fpt-badge-status-active">Активно</span>
+                                </div>
+                                <div class="fpt-feature-card-desc">Быстрое изменение цен и параметров для нескольких лотов одновременно.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px solid rgba(255,255,255,0.06); margin: 30px 0 20px;"></div>
+                    <h3 style="font-size:15px; font-weight:700; color:#ffffff; margin-bottom:14px;">Настройки интерфейса и звуков</h3>
                     <label class="checkbox-label-inline"><input type="checkbox" id="showSalesStatsCheckbox"><span>Статистика продаж в "Продажи"</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="hideBalanceCheckbox"><span>Скрыть баланс</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="viewSellersPromoCheckbox"><span>Отображение иконок промо-лотов</span></label>
-                    
-                    <h3>Звук уведомления</h3>
-                    <div class="fp-tools-radio-group" id="notificationSoundGroup">
-                        <label class="fp-tools-radio-option"><input type="radio" name="notificationSound" value="default" checked><span>Стандартный</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="notificationSound" value="vk"><span>VK</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="notificationSound" value="tg"><span>Telegram</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="notificationSound" value="iphone"><span>iPhone</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="notificationSound" value="discord"><span>Discord</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="notificationSound" value="whatsapp"><span>WhatsApp</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="notificationSound" value="custom"><span>Свой (файл)</span></label>
-                    </div>
-                    <div id="notificationCustomSoundBlock" style="margin-top: 10px; display: none;">
-                        <div style="display:flex; gap:10px; margin-top:10px;">
-                            <button id="testNotificationSoundBtn" class="btn btn-default" type="button" style="flex:1;">
-                                <span class="material-icons" style="font-size: 18px;">volume_up</span>Тест
-                            </button>
-                            <button id="clearNotificationSoundUrlBtn" class="btn btn-default" type="button" style="flex:1;">
-                                <span class="material-icons" style="font-size: 18px;">backspace</span>Очистить
-                            </button>
-                        </div>
-                        <div style="display:flex; gap:10px; margin-top:10px;">
-                            <button id="uploadNotificationSoundBtn" class="btn btn-default" type="button" style="flex:1;">
-                                <span class="material-icons" style="font-size: 18px;">upload_file</span>Загрузить файл
-                            </button>
-                            <input type="file" id="notificationSoundFileInput" accept="audio/mpeg,audio/ogg,audio/wav,.mp3,.ogg,.wav" style="display:none;">
-                        </div>
-                        <p class="template-info" style="margin-top:10px;">
-                            Нажмите «Загрузить файл» и выберите скачанный звук (<code>.mp3</code>/<code>.ogg</code>/<code>.wav</code>, до 500 КБ).
-                            Рекомендуемые источники: <a href="https://pixabay.com/sound-effects/search/notification/" target="_blank">Pixabay</a>
-                        </p>
-                    </div>
-
-                    <h3 style="margin-top: 40px;">Уведомления в Discord</h3>
-                     <label class="checkbox-label-inline"><input type="checkbox" id="discordLogEnabled"><span>Включить уведомления о новых сообщениях</span></label>
-                    <div id="discordSettingsContainer">
-                        <label for="discordWebhookUrl" style="margin-top: 10px;">Webhook URL:</label>
-                        <input type="text" id="discordWebhookUrl" class="template-input" placeholder="Вставьте ссылку на вебхук вашего Discord канала">
-                        <div class="checkbox-label-inline" style="margin-top:10px;"><input type="checkbox" id="discordPingEveryone"><label for="discordPingEveryone" style="margin-bottom:0;"><span>Пинговать @everyone</span></label></div>
-                        <label class="checkbox-label-inline"><input type="checkbox" id="discordPingHere"><span>Пинговать @here</span></label>
-                    </div>
-
-                    <div class="support-promo">
-                        <span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></span> Спасибо за использование этого <a href="https://addons.mozilla.org/ru/firefox/addon/foxen/" target="_blank">расширения</a>!</span>
-                    </div>
-                    <h3 style="margin-top: 30px;">Заказы и статистика</h3>
-                    <label class="checkbox-label-inline"><input type="checkbox" id="fpToolsShowPaymentType" checked><span>Показывать тип оплаты в списке заказов (Сделка / Обычный)</span></label>
+                    <label class="checkbox-label-inline"><input type="checkbox" id="fpToolsShowPaymentType" checked><span>Показывать тип оплаты в списке заказов</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="fpToolsBuyerHistory" checked><span>Показывать историю покупок в чате</span></label>
-                    <label class="checkbox-label-inline"><input type="checkbox" id="fpToolsShowUnconfirmed" checked><span>Показывать сумму неподтверждённых заказов</span></label>
+                </div>
 
                     <h3 style="margin-top: 30px;">Идентификатор FPT</h3>
                     <label class="checkbox-label-inline"><input type="checkbox" id="fptIdentifierEnabled" checked><span>Показывать метку «Foxen» рядом с ником собеседника</span></label>

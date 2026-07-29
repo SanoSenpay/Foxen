@@ -359,10 +359,17 @@
         let __fpPopupReady = false;
         let __fpPopupBuilding = null;
         async function ensureFpToolsPopup() {
-            if (__fpPopupReady) return document.querySelector('.fp-tools-popup');
+            const existingPopup = document.querySelector('.fp-tools-popup');
+            if (existingPopup && !__fpPopupReady) {
+                existingPopup.remove();
+            }
+            if (__fpPopupReady && document.querySelector('.fp-tools-popup')) return document.querySelector('.fp-tools-popup');
             if (__fpPopupBuilding) return __fpPopupBuilding;
 
             __fpPopupBuilding = (async () => {
+                const oldP = document.querySelector('.fp-tools-popup');
+                if (oldP) oldP.remove();
+
                 const toolsPopup = createMainPopup();
                 document.body.appendChild(toolsPopup);
 
