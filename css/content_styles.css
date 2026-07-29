@@ -8660,6 +8660,10 @@ textarea.fp-cw-input { line-height:1.4; }
     border:1px solid var(--fpt-border,rgba(128,128,128,0.4));
     border-radius:5px;overflow:hidden;background:transparent !important;
     box-sizing:border-box;line-height:1;
+    transition:border-color .15s ease;
+}
+.fpt-sec-spin:focus-within{
+    border-color:var(--fpt-accent,#C026D3);
 }
 .fpt-sec-spin input{
     width:24px !important;min-width:0 !important;max-width:24px !important;
@@ -8675,8 +8679,9 @@ textarea.fp-cw-input { line-height:1.4; }
     flex:1;border:none;background:transparent;color:var(--fpt-text,#cfd2dc);
     font-size:9px !important;line-height:1 !important;padding:0 !important;margin:0 !important;cursor:pointer;
     display:flex;align-items:center;justify-content:center;height:9px !important;min-height:0 !important;width:16px !important;
-    transition:color .12s,background .12s;}
+    transition:color .12s ease,background .12s ease;}
 .fpt-sec-spin-btns button:hover{color:var(--fpt-accent,#C026D3);background:var(--fpt-accent-soft,rgba(192,38,211,0.18));}
+.fpt-sec-spin-btns button:active{background:var(--fpt-accent-soft,rgba(192,38,211,0.28));}
 .fpt-sec-spin-btns button:first-child{border-bottom:1px solid var(--fpt-border,rgba(128,128,128,0.3));}
 
 /* === 3.1: redesigned multi-account items (popup is always dark - фиксированная палитра) === */
