@@ -773,7 +773,7 @@ function getMainPopupHTML() {
             <button id="saveSettings" class="btn">Сохранить</button>
         </div>
         <div class="fpt-popup-outer-disclaimer">
-            <span>Используя расширение Foxen, вы автоматически соглашаетесь с <a href="https://t.me/FoxenFF" target="_blank" rel="noopener">Условиями использования</a> и <a href="https://t.me/FoxenFF" target="_blank" rel="noopener">Политикой конфиденциальности</a>.</span>
+            <span>Используя расширение Foxen, вы автоматически соглашаетесь с <a href="https://github.com/SanoSenpay/Foxen/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener">Политикой конфиденциальности</a>.</span>
         </div>
     `;
 }

@@ -1,8 +1,13 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "3.2.2",
-    "description": "+299 инструментов для FunPay в одном расширении — ИИ, автоматизация, аналитика.",
+    "version": "3.3.0",
+    "description": "300+ инструментов для FunPay: ИИ-помощник, автоматизация, аналитика, кастомизация и телеметрия.",
+    "homepage_url": "https://github.com/SanoSenpay/Foxen",
+    "developer": {
+        "name": "SanoSenpay",
+        "url": "https://github.com/SanoSenpay/Foxen/blob/main/PRIVACY_POLICY.md"
+    },
     "permissions": [
         "storage",
         "tabs",
@@ -172,15 +177,17 @@
         "default_title": "Foxen"
     },
     "browser_specific_settings": {
-        "gecko": {
-            "id": "funpay-tools-firefox@sanosenpay",
-            "strict_min_version": "109.0",
-            "data_collection_permissions": {
-                "required": [
-                    "none"
-                ],
-                "optional": []
-            }
+    "gecko": {
+        "id": "funpay-tools-firefox@sanosenpay",
+        "strict_min_version": "109.0",
+        "data_collection_permissions": {
+            "required": [
+                "none"
+            ],
+            "optional": [
+                "technicalAndInteraction"
+            ]
         }
     }
+}
 }
