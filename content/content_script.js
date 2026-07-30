@@ -121,6 +121,10 @@
 
         const button = toolsMenu.querySelector('#fpToolsButton');
 
+        if (typeof applyHeaderButtonStylesEarly === 'function') {
+            applyHeaderButtonStylesEarly();
+        }
+
         button?.addEventListener('click', async () => {
             // Build the popup on first click (perf: avoids a permanent heavy DOM subtree).
             if (typeof window.__fpEnsurePopup === 'function') {

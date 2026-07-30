@@ -416,19 +416,19 @@
     filter: drop-shadow(0 0 10px var(--fptm-accent-soft, rgba(192, 38, 211, 0.7))) !important;
 }
 
-/* Wide Nav Item - Same 70px Height & Perfect Centering */
+/* Wide Nav Item - Single Line Horizontal Row Item */
 .fp-tools-nav li[data-page].fpt-nav-wide {
     grid-column: 1 / -1 !important;
+    width: 100% !important;
 }
 .fp-tools-nav li[data-page].fpt-nav-wide a {
-    flex-direction: column !important;
-    justify-content: center !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
     align-items: center !important;
-    gap: 6px !important;
-    height: 70px !important;
-    min-height: 70px !important;
-    padding: 10px 4px !important;
-    text-align: center !important;
+    gap: 10px !important;
+    height: auto !important;
+    min-height: unset !important;
+    padding: 8px 10px 8px 14px !important;
 }
 
 /* ---------- 5. Content Area Layout ---------- */

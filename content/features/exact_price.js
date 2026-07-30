@@ -337,17 +337,6 @@ function initializeExactPrice() {
         if (!val || val <= 0) {
             val = await apiCalc(sellerPrice, currency);
         }
-        if (!val || val <= 0) {
-            const nodeId = getNodeId();
-            if (nodeId && window.FPTCommission?.getMultiplier) {
-                try {
-                    const mult = await window.FPTCommission.getMultiplier(nodeId);
-                    if (mult && mult > 1) {
-                        val = sellerPrice * mult;
-                    }
-                } catch (_) {}
-            }
-        }
         return val;
     }
 

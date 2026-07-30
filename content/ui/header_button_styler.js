@@ -48,13 +48,28 @@ function hslToHex(h, s, l) {
 // --- Core Logic ---
 
 async function saveButtonStyles(settings) {
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [STORAGE_KEY]: settings });
+    const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
+    await storage.set({ 
+        [STORAGE_KEY]: settings,
+        fpToolsAccentColor: settings.color
+    });
+    if (settings.color) {
+        document.documentElement.style.setProperty('--fpt-accent', settings.color);
+        window.__fptUserAccent = settings.color;
+    }
 }
 
 async function loadAndApplyButtonStyles() {
-    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(STORAGE_KEY);
-    const defaults = { color: '#C026D3', size: 14, opacity: 100 };
+    const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
+    const data = await storage.get([STORAGE_KEY, 'fpToolsAccentColor']);
+    const savedAccent = data.fpToolsAccentColor;
+    const defaults = { color: savedAccent || '#C026D3', size: 14, opacity: 100 };
     const settings = { ...defaults, ...(data[STORAGE_KEY] || {}) };
+    if (savedAccent) {
+        settings.color = savedAccent;
+        document.documentElement.style.setProperty('--fpt-accent', savedAccent);
+        window.__fptUserAccent = savedAccent;
+    }
     applyButtonStyles(settings);
 }
 

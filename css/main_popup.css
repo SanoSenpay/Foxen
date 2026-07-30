@@ -252,6 +252,7 @@
     overflow: hidden !important;
 }
 
+
 /* Hover & Active Indicator Bar (Left Stick) */
 .fp-tools-nav li a::before,
 .fpt-nav-group li a::before,
@@ -1429,6 +1430,19 @@ details[open].fpt-guide-card .fpt-guide-chevron {
 .fp-tools-popup .fpt-footer-btn-tg:hover .nav-list-icon,
 .fp-tools-nav .fpt-footer-btn-tg:hover .nav-list-icon {
     color: #38bdf8 !important;
+}
+
+.fp-tools-popup .fpt-footer-btn-bug:hover,
+.fp-tools-nav .fpt-footer-btn-bug:hover {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #f87171 !important;
+    box-shadow: none !important;
+}
+
+.fp-tools-popup .fpt-footer-btn-bug:hover .nav-list-icon,
+.fp-tools-nav .fpt-footer-btn-bug:hover .nav-list-icon {
+    color: #f87171 !important;
 }
 
 .fp-tools-header {

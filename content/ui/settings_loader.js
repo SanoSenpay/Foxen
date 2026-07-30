@@ -452,30 +452,19 @@ async function loadSavedSettings() {
     document.getElementById('hideBalanceCheckbox').checked = settings.hideBalance === true;
     document.getElementById('viewSellersPromoCheckbox').checked = settings.viewSellersPromo !== false;
 
-    const commEl = document.getElementById('fptShowCommissionCheckbox');
-    const realEl = document.getElementById('fptShowRealPricesCheckbox');
-    if (commEl) {
-        commEl.checked = settings.fptShowCommission === true;
-        if (!commEl.dataset.bound) {
-            commEl.dataset.bound = '1';
-            commEl.addEventListener('change', () => {
-                (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fptShowCommission: commEl.checked });
-            });
-        }
-    }
-    if (realEl) {
-        realEl.checked = settings.fptShowRealPrices === true;
-        if (!realEl.dataset.bound) {
-            realEl.dataset.bound = '1';
-            realEl.addEventListener('change', () => {
-                (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fptShowRealPrices: realEl.checked });
-            });
-        }
-    }
     // 2.8: FPT identifier toggle (default: enabled)
     const identifierEl = document.getElementById('fptIdentifierEnabled');
     if (identifierEl) {
         identifierEl.checked = settings.fpToolsIdentifierEnabled !== false;
+    }
+
+    // Telemetry & Error Tracker settings restore & event handlers
+    const telemetryEnabledEl = document.getElementById('fptTelemetryEnabled');
+    if (telemetryEnabledEl) {
+        telemetryEnabledEl.checked = settings.fpt_telemetry_enabled !== false;
+        telemetryEnabledEl.addEventListener('change', () => {
+            (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpt_telemetry_enabled: telemetryEnabledEl.checked });
+        });
     }
 
     // 2.9: New settings toggles

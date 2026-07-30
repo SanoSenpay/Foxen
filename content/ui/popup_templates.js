@@ -65,6 +65,7 @@ function getMainPopupHTML() {
                             <li data-page="needs"><a><span class="material-symbols-rounded nav-list-icon">tune</span><span>Что тебе нужно</span></a></li>
                             <li data-page="accounts"><a><span class="material-symbols-rounded nav-list-icon">group</span><span>Аккаунты</span></a></li>
                             <li data-page="news"><a><span class="material-symbols-rounded nav-list-icon">campaign</span><span>Новости</span><span class="fpt-news-unread-badge" style="display:none;"></span></a></li>
+                            <li data-page="support"><a><span class="material-symbols-rounded nav-list-icon">favorite</span><span>Поддержка</span></a></li>
                         </ul>
                     </div>
 
@@ -117,10 +118,10 @@ function getMainPopupHTML() {
                             </a>
                         </li>
                         <li>
-                            <button type="button" class="fpt-footer-nav-item fpt-footer-btn-empty">
-                                <span class="material-symbols-rounded nav-list-icon">add</span>
-                                <span>Кнопка</span>
-                            </button>
+                            <a href="https://github.com/SanoSenpay/Foxen/issues/new" target="_blank" rel="noopener" class="fpt-footer-nav-item fpt-footer-btn-bug">
+                                <span class="material-symbols-rounded nav-list-icon">bug_report</span>
+                                <span>Сообщить об ошибке</span>
+                            </a>
                         </li>
                     </ul>
                 </div>

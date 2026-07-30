@@ -100,6 +100,7 @@ function createMainPopup() {
                             <li data-page="needs"><a><span class="material-symbols-rounded nav-list-icon">tune</span><span>Что тебе нужно</span></a></li>
                             <li data-page="accounts"><a><span class="material-symbols-rounded nav-list-icon">group</span><span>Аккаунты</span></a></li>
                             <li data-page="news"><a><span class="material-symbols-rounded nav-list-icon">campaign</span><span>Новости</span><span class="fpt-news-unread-badge" style="display:none;"></span></a></li>
+                            <li data-page="support"><a><span class="material-symbols-rounded nav-list-icon">favorite</span><span>Поддержка</span></a></li>
                         </ul>
                     </div>
 
@@ -152,10 +153,10 @@ function createMainPopup() {
                             </a>
                         </li>
                         <li>
-                            <button type="button" class="fpt-footer-nav-item fpt-footer-btn-empty">
-                                <span class="material-symbols-rounded nav-list-icon">add</span>
-                                <span>Кнопка</span>
-                            </button>
+                            <a href="https://github.com/SanoSenpay/Foxen/issues/new" target="_blank" rel="noopener" class="fpt-footer-nav-item fpt-footer-btn-bug">
+                                <span class="material-symbols-rounded nav-list-icon">bug_report</span>
+                                <span>Сообщить об ошибке</span>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -179,14 +180,7 @@ function createMainPopup() {
                         <input type="checkbox" id="viewSellersPromoCheckbox">
                         <label for="viewSellersPromoCheckbox" style="margin-bottom:0;"><span>Отображение иконок промо-лотов</span></label>
                     </div>
-                    <div class="checkbox-label-inline">
-                        <input type="checkbox" id="fptShowCommissionCheckbox">
-                        <label for="fptShowCommissionCheckbox" style="margin-bottom:0;"><span>Показывать комиссию разделов</span></label>
-                    </div>
-                    <div class="checkbox-label-inline">
-                        <input type="checkbox" id="fptShowRealPricesCheckbox">
-                        <label for="fptShowRealPricesCheckbox" style="margin-bottom:0;"><span>Показывать реальные цены лотов</span></label>
-                    </div>
+
                     
                     <h3>Звук уведомления</h3>
                     <div class="fp-tools-radio-group" id="notificationSoundGroup">
@@ -255,6 +249,12 @@ function createMainPopup() {
                         <div class="checkbox-label-inline" style="margin-top:10px;"><input type="checkbox" id="discordPingEveryone"><label for="discordPingEveryone" style="margin-bottom:0;"><span>Пинговать @everyone</span></label></div>
                         <div class="checkbox-label-inline"><input type="checkbox" id="discordPingHere"><label for="discordPingHere" style="margin-bottom:0;"><span>Пинговать @here</span></label></div>
                     </div>
+                    <h3 style="margin-top: 30px;">Политика сбора данных</h3>
+                    <div class="checkbox-label-inline">
+                        <input type="checkbox" id="fptTelemetryEnabled" checked>
+                        <label for="fptTelemetryEnabled" style="margin-bottom:0;"><span>Автоматическая отправка анонимных отчетов об ошибках разработчику</span></label>
+                    </div>
+                    <p class="template-info">При возникновении ошибок расширение фиксирует логи консоли и данные о сетевых сбоях и отправляет их разработчику для оперативного выпуска исправлений. Личные данные (куки, сессии, токены, пароли) вырезаются перед отправкой.</p>
 
                     <div class="support-promo">
                         <span class="nav-icon material-symbols-rounded">favorite</span>
@@ -1859,24 +1859,10 @@ function attachAutoReplyImageButtons(toolsPopup) {
 // Auto-compaction: in the 2-column nav grid, stretch the last button of any section that
 // would otherwise leave a gap (odd count, or a lone button) so the layout never looks empty.
 function compactNav(toolsPopup) {
-    const ul = toolsPopup.querySelector('.fp-tools-nav ul');
-    if (!ul) return;
-    const children = Array.from(ul.children);
-    let group = [];
-    const flush = () => {
-        // clear previous wide flags in this group
-        group.forEach(li => li.classList.remove('fpt-nav-wide'));
-        if (group.length && group.length % 2 === 1) {
-            // odd count → stretch the last one across both columns
-            group[group.length - 1].classList.add('fpt-nav-wide');
-        }
-        group = [];
-    };
-    for (const li of children) {
-        if (li.classList.contains('fp-nav-divider')) { flush(); continue; }
-        if (li.dataset.page) group.push(li);
-    }
-    flush();
+    const uls = toolsPopup.querySelectorAll('.fp-tools-nav ul, .fpt-nav-vertical-list');
+    uls.forEach(ul => {
+        Array.from(ul.children).forEach(li => li.classList.remove('fpt-nav-wide'));
+    });
 }
 
 
@@ -2244,7 +2230,19 @@ function setupAccentPicker(toolsPopup) {
     input.addEventListener('input', () => throttledApply(input.value));
     input.addEventListener('change', () => {
         applyAccent(input.value);
-        try { storage.local.set({ fpToolsAccentColor: input.value }); } catch (_) {}
+        try {
+            storage.local.get('fpToolsHeaderButtonStyles').then(res => {
+                const current = res?.fpToolsHeaderButtonStyles || { size: 14, opacity: 100 };
+                current.color = input.value;
+                storage.local.set({
+                    fpToolsAccentColor: input.value,
+                    fpToolsHeaderButtonStyles: current
+                });
+                if (typeof applyHeaderButtonStylesEarly === 'function') {
+                    applyHeaderButtonStylesEarly();
+                }
+            });
+        } catch (_) {}
     });
 }
 
