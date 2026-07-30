@@ -107,22 +107,22 @@ function getMainPopupHTML() {
                     </div>
                 </div>
 
-                <!-- Footer Pro Card -->
+                <!-- Footer Buttons Stack (Sidebar style) -->
                 <div class="fpt-sidebar-footer">
-                    <div class="fpt-nav-subscription-card">
-                        <div class="fpt-nav-sub-header">
-                            <div class="fpt-nav-sub-crown">
-                                <span class="material-symbols-rounded" style="font-size:18px;">workspace_premium</span>
-                            </div>
-                            <div class="fpt-nav-sub-title-wrap">
-                                <div class="fpt-nav-sub-title">
-                                    <span>Foxen Premium</span>
-                                    <span class="fpt-badge-admin">Админ</span>
-                                </div>
-                                <div class="fpt-nav-sub-desc">До 24.10.2026</div>
-                            </div>
-                        </div>
-                    </div>
+                    <ul class="fpt-footer-nav-list">
+                        <li>
+                            <a href="https://t.me/FoxenFF" target="_blank" rel="noopener" class="fpt-footer-nav-item fpt-footer-btn-tg">
+                                <span class="material-symbols-rounded nav-list-icon">send</span>
+                                <span>Telegram канал</span>
+                            </a>
+                        </li>
+                        <li>
+                            <button type="button" class="fpt-footer-nav-item fpt-footer-btn-empty">
+                                <span class="material-symbols-rounded nav-list-icon">add</span>
+                                <span>Кнопка</span>
+                            </button>
+                        </li>
+                    </ul>
                 </div>
             </nav>
             <main class="fp-tools-content">
@@ -770,6 +770,9 @@ function getMainPopupHTML() {
         </div>
         <div class="fp-tools-footer">
             <button id="saveSettings" class="btn">Сохранить</button>
+        </div>
+        <div class="fpt-popup-outer-disclaimer">
+            <span>Используя расширение Foxen, вы автоматически соглашаетесь с <a href="https://t.me/FoxenFF" target="_blank" rel="noopener">Условиями использования</a> и <a href="https://t.me/FoxenFF" target="_blank" rel="noopener">Политикой конфиденциальности</a>.</span>
         </div>
     `;
 }

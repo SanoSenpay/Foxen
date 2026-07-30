@@ -532,7 +532,7 @@
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
-    background: #0b0e17 !important;
+    background: #131417 !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 18px !important;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75) !important;
@@ -545,7 +545,7 @@
     width: 92vw !important;
     max-height: 90vh !important;
     height: 740px !important;
-    resize: both;
+    resize: none !important;
     overflow: hidden !important;
 }
 
@@ -8799,7 +8799,7 @@ textarea.fp-cw-input { line-height:1.4; }
     overflow: hidden;
     background: rgba(255,255,255,0.12);
 }
-.fpt-custom-theme-off .fp-stats-loading .fp-stats-loading-bar { background: rgba(0,0,0,0.08); }
+.fpt-custom-theme-off .fp-stats-loading .fp-stats-loading-bar { background: rgba(0,0,0,0); }
 .fp-stats-loading .fp-stats-loading-bar::after {
     content: "";
     display: block;

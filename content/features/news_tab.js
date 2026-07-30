@@ -153,13 +153,20 @@
               ${post.badge ? `<span class="fpt-news-badge" style="${badgeStyle}">${escapeHtml(post.badge)}</span>` : ''}
               <span class="fpt-news-date">${escapeHtml(post.date || '')}</span>
             </div>
-            <h3 class="fpt-news-title">${escapeHtml(post.title || '')}</h3>
+            <div class="fpt-news-title-row">
+              <h3 class="fpt-news-title">${escapeHtml(post.title || '')}</h3>
+              <span class="material-symbols-rounded fpt-news-expand-icon">expand_more</span>
+            </div>
           </header>
-          ${imageHtml}
-          <div class="fpt-news-body">
-            ${formatContent(post.content || post.summary || '')}
+          <div class="fpt-news-expandable-wrapper">
+            <div class="fpt-news-expandable-body">
+              ${imageHtml}
+              <div class="fpt-news-body">
+                ${formatContent(post.content || post.summary || '')}
+              </div>
+              ${linkHtml}
+            </div>
           </div>
-          ${linkHtml}
         </article>
       `;
     }).join('');
@@ -173,6 +180,19 @@
     const allPosts = data.posts || [];
 
     listEl.innerHTML = renderNewsCards(allPosts);
+
+    if (!listEl.dataset.accordionBound) {
+      listEl.dataset.accordionBound = '1';
+      listEl.addEventListener('click', (e) => {
+        const card = e.target.closest('.fpt-news-card');
+        if (!card) return;
+
+        // Ignore clicks inside links so links still work
+        if (e.target.closest('a')) return;
+
+        card.classList.toggle('fpt-news-expanded');
+      });
+    }
   }
 
   async function checkUnreadNews() {

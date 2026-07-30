@@ -77,16 +77,15 @@ function createMainPopup() {
     toolsPopup.className = 'fp-tools-popup';
     toolsPopup.innerHTML = `
         <div class="fp-tools-header">
+            <button type="button" id="fptSidebarToggleBtn" class="fpt-sidebar-toggle-btn" title="Свернуть / развернуть боковую панель" aria-label="Свернуть меню">
+                <span class="material-symbols-rounded">menu_open</span>
+            </button>
             <h2 class="fp-tools-title-wrap"><a href="https://foxen.page.gd" target="_blank" class="fp-tools-site-link">Foxen</a><a href="https://funpay.tools" target="_blank" class="fpt-fork-badge" title="Основано на FunPay Tools (v2.9.9)"><span class="fpt-fork-dot"></span>FPT 2.9.9</a></h2>
             <div class="fp-tools-header-actions">
                 <button type="button" id="fptAccentBtn" class="fpt-accent-btn" title="Сменить акцентный цвет" aria-label="Сменить акцентный цвет">
                     <span class="fpt-accent-preview-dot"></span>
                     <span class="material-symbols-rounded" style="font-size:16px;">palette</span>
                     <input type="color" id="fptAccentInput" class="fpt-accent-input" value="#C026D3" aria-hidden="true" tabindex="-1">
-                </button>
-                <div class="fp-tools-social">
-                    <a class="fp-tools-social-btn" data-social="telegram" href="https://t.me/FoxenFF" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram"><img class="fp-tools-social-ico" data-icon="telegram" alt="Telegram"></a>
-                </div>
             </div>
             <button class="close-btn" aria-label="Закрыть"></button>
         </div>
@@ -143,22 +142,22 @@ function createMainPopup() {
                     </div>
                 </div>
 
-                <!-- Footer Pro Card -->
+                <!-- Footer Buttons Stack (Sidebar style) -->
                 <div class="fpt-sidebar-footer">
-                    <div class="fpt-nav-subscription-card">
-                        <div class="fpt-nav-sub-header">
-                            <div class="fpt-nav-sub-crown">
-                                <span class="material-symbols-rounded" style="font-size:18px;">workspace_premium</span>
-                            </div>
-                            <div class="fpt-nav-sub-title-wrap">
-                                <div class="fpt-nav-sub-title">
-                                    <span>Foxen Premium</span>
-                                    <span class="fpt-badge-admin">Админ</span>
-                                </div>
-                                <div class="fpt-nav-sub-desc">До 24.10.2026</div>
-                            </div>
-                        </div>
-                    </div>
+                    <ul class="fpt-footer-nav-list">
+                        <li>
+                            <a href="https://t.me/FoxenFF" target="_blank" rel="noopener" class="fpt-footer-nav-item fpt-footer-btn-tg">
+                                <span class="material-symbols-rounded nav-list-icon">send</span>
+                                <span>Telegram канал</span>
+                            </a>
+                        </li>
+                        <li>
+                            <button type="button" class="fpt-footer-nav-item fpt-footer-btn-empty">
+                                <span class="material-symbols-rounded nav-list-icon">add</span>
+                                <span>Кнопка</span>
+                            </button>
+                        </li>
+                    </ul>
                 </div>
             </nav>
             <main class="fp-tools-content">
@@ -1344,12 +1343,16 @@ function createMainPopup() {
                             <a href="https://github.com/XaviersDev/FunPay-Tools" target="_blank" class="btn btn-default" style="font-size:12px;padding:8px 12px;justify-content:flex-start;"><span class="material-icons" style="font-size:16px;margin-right:8px;">code</span>Оригинальный репозиторий GitHub</a>
                             <a href="https://funpay.tools" target="_blank" class="btn btn-default" style="font-size:12px;padding:8px 12px;justify-content:flex-start;"><span class="material-icons" style="font-size:16px;margin-right:8px;">language</span>Официальный сайт funpay.tools</a>
                         </div>
+                        </div>
                     </div>
                 </div>
             </main>
         </div>
         <div class="fp-tools-footer">
             <button id="saveSettings" class="btn">Сохранить</button>
+        </div>
+        <div class="fpt-popup-outer-disclaimer">
+            <span>Используя расширение Foxen, вы автоматически соглашаетесь с <a href="https://t.me/FoxenFF" target="_blank" rel="noopener">Условиями использования</a> и <a href="https://t.me/FoxenFF" target="_blank" rel="noopener">Политикой конфиденциальности</a>.</span>
         </div>
     `;
     try {
@@ -1361,6 +1364,7 @@ function createMainPopup() {
     } catch (_) {}
     setupNavSearch(toolsPopup);
     setupAccentPicker(toolsPopup);
+    setupSidebarToggle(toolsPopup);
     fptInjectMenuThemeCSS();
     try { fptApplyMenuTheme(toolsPopup); } catch (_) {}
     return toolsPopup;
@@ -1887,52 +1891,61 @@ async function loadLastActivePage() {
 }
 
 function makePopupInteractive(popupEl) {
-    const header = popupEl.querySelector('.fp-tools-header h2');
+    const header = popupEl.querySelector('.fp-tools-header');
     if (!header) return;
 
     let isDragging = false;
     let offset = { x: 0, y: 0 };
-    let hasBeenDragged = false;
 
     header.addEventListener('mousedown', (e) => {
-        if (e.target !== header) return;
+        if (e.target.closest('button, input, a, .close-btn, .fpt-sidebar-toggle-btn, .fpt-accent-btn, .fp-tools-social-btn')) return;
+        
         isDragging = true;
-        if (!hasBeenDragged) {
-            const rect = popupEl.getBoundingClientRect();
-            popupEl.style.left = `${rect.left}px`;
-            popupEl.style.top = `${rect.top}px`;
-            popupEl.classList.add('no-transform');
-            hasBeenDragged = true;
-        }
-        offset.x = e.clientX - popupEl.offsetLeft;
-        offset.y = e.clientY - popupEl.offsetTop;
+        const rect = popupEl.getBoundingClientRect();
+        
+        popupEl.style.setProperty('left', `${rect.left}px`, 'important');
+        popupEl.style.setProperty('top', `${rect.top}px`, 'important');
+        popupEl.classList.add('no-transform');
+
+        offset.x = e.clientX - rect.left;
+        offset.y = e.clientY - rect.top;
+
         popupEl.style.transition = 'none';
         document.body.style.userSelect = 'none';
     });
 
     window.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            let left = e.clientX - offset.x;
-            let top = e.clientY - offset.y;
-            const winWidth = window.innerWidth;
-            const winHeight = window.innerHeight;
-            const popupWidth = popupEl.offsetWidth;
-            const popupHeight = popupEl.offsetHeight;
-            left = Math.max(0, Math.min(left, winWidth - popupWidth));
-            top = Math.max(0, Math.min(top, winHeight - popupHeight));
-            popupEl.style.left = `${left}px`;
-            popupEl.style.top = `${top}px`;
-        }
+        if (!isDragging) return;
+
+        let left = e.clientX - offset.x;
+        let top = e.clientY - offset.y;
+
+        const winWidth = window.innerWidth;
+        const winHeight = window.innerHeight;
+        const popupWidth = popupEl.offsetWidth;
+        const popupHeight = popupEl.offsetHeight;
+
+        left = Math.max(0, Math.min(left, winWidth - popupWidth));
+        top = Math.max(0, Math.min(top, winHeight - popupHeight));
+
+        popupEl.style.setProperty('left', `${left}px`, 'important');
+        popupEl.style.setProperty('top', `${top}px`, 'important');
     });
 
     window.addEventListener('mouseup', async () => {
         if (isDragging) {
             isDragging = false;
             document.body.style.userSelect = '';
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ 
-                fpToolsPopupPosition: { top: popupEl.style.top, left: popupEl.style.left },
-                fpToolsPopupDragged: true 
-            });
+            popupEl.style.transition = '';
+            try {
+                const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                if (storage && storage.local) {
+                    await storage.local.set({ 
+                        fpToolsPopupPosition: { top: popupEl.style.top, left: popupEl.style.left },
+                        fpToolsPopupDragged: true 
+                    });
+                }
+            } catch (_) {}
         }
     });
 
@@ -2235,6 +2248,69 @@ function setupAccentPicker(toolsPopup) {
     });
 }
 
+function setupSidebarToggle(toolsPopup) {
+    const toggleBtn = toolsPopup.querySelector('#fptSidebarToggleBtn');
+    const nav = toolsPopup.querySelector('.fp-tools-nav');
+    if (!toggleBtn) return;
+
+    let overlay = toolsPopup.querySelector('.fpt-sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'fpt-sidebar-overlay';
+        toolsPopup.appendChild(overlay);
+        overlay.addEventListener('click', () => {
+            toolsPopup.classList.remove('fpt-mobile-menu-open');
+        });
+    }
+
+    toolsPopup.querySelectorAll('.fp-tools-nav li[data-page]').forEach(li => {
+        if (!li.getAttribute('data-page-title')) {
+            const spanText = (li.querySelector('span:last-child')?.textContent || '').trim();
+            if (spanText) li.setAttribute('data-page-title', spanText);
+        }
+    });
+
+    const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+    if (storage && storage.local) {
+        storage.local.get('fptSidebarCollapsed').then((res) => {
+            if (res && res.fptSidebarCollapsed) {
+                toolsPopup.classList.add('fpt-sidebar-collapsed');
+                const icon = toggleBtn.querySelector('.material-symbols-rounded');
+                if (icon) icon.textContent = 'menu';
+            }
+        }).catch(() => {});
+    }
+
+    toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isMobile = window.innerWidth <= 768 || toolsPopup.offsetWidth <= 768;
+        if (isMobile) {
+            toolsPopup.classList.toggle('fpt-mobile-menu-open');
+        } else {
+            const isCollapsed = toolsPopup.classList.toggle('fpt-sidebar-collapsed');
+            const icon = toggleBtn.querySelector('.material-symbols-rounded');
+            if (icon) {
+                icon.textContent = isCollapsed ? 'menu' : 'menu_open';
+            }
+            try {
+                if (storage && storage.local) {
+                    storage.local.set({ fptSidebarCollapsed: isCollapsed });
+                }
+            } catch (_) {}
+        }
+    });
+
+    if (nav) {
+        nav.addEventListener('click', (e) => {
+            if (e.target.closest('li[data-page]')) {
+                if (window.innerWidth <= 768 || toolsPopup.offsetWidth <= 768) {
+                    toolsPopup.classList.remove('fpt-mobile-menu-open');
+                }
+            }
+        });
+    }
+}
+
 function setupNavSearch(toolsPopup) {
     const input = toolsPopup.querySelector('#fptNavSearch');
     const clearBtn = toolsPopup.querySelector('#fptNavSearchClear');
@@ -2397,4 +2473,4 @@ function setupNavSearch(toolsPopup) {
         if (e.target.closest('#fptNavSearch') || e.target.closest('#fptNavSearchResults')) return;
         hideResults(false);
     });
-}
+}

@@ -12,7 +12,7 @@
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
-    background: #0b0e17 !important;
+    background: #141518 !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 18px !important;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75) !important;
@@ -56,7 +56,7 @@
     align-items: center !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     flex-shrink: 0 !important;
-    background: #0e121e !important;
+    background: #191a1e !important;
     padding: 12px 20px !important;
 }
 
@@ -80,26 +80,35 @@
     background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     color: #94a3b8 !important;
-    font-size: 20px !important;
-    width: 34px !important;
-    height: 34px !important;
+    font-size: 18px !important;
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    padding: 0 !important;
     border-radius: 50% !important;
-    cursor: pointer;
+    aspect-ratio: 1 / 1 !important;
+    cursor: pointer !important;
     transition: all 0.2s ease !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    box-sizing: border-box !important;
 }
 
 .fp-tools-popup .close-btn:hover {
     background: rgba(255, 255, 255, 0.12) !important;
     color: #ffffff !important;
+    border-color: var(--fpt-accent-border, rgba(192, 38, 211, 0.4)) !important;
     transform: scale(1.05) !important;
 }
 
 .fp-tools-popup .close-btn::after {
     content: '×';
     display: block;
+    line-height: 1;
     transform: translateY(-1px);
 }
 
@@ -111,14 +120,14 @@
     min-height: 0 !important;
     overflow: hidden !important;
     position: relative !important;
-    background: #0b0e17 !important;
+    background: #141518 !important;
 }
 
 .fp-tools-nav {
     width: 250px !important;
     flex-shrink: 0 !important;
     padding: 16px 10px !important;
-    background: #0e111a !important;
+    background: #16171a !important;
     border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
     display: flex !important;
     flex-direction: column !important;
@@ -362,7 +371,7 @@
     flex-grow: 1 !important;
     padding: 24px 28px !important;
     overflow-y: auto !important;
-    background: #0b0e17 !important;
+    background: #141518 !important;
 }
 
 .fpt-page-header {
@@ -397,7 +406,7 @@
 
 /* Dashboard Cards & File Info */
 .fpt-dashboard-card {
-    background: #131926;
+    background: #191a1e;
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 14px;
     padding: 20px;
@@ -1025,11 +1034,12 @@ details[open].fpt-guide-card .fpt-guide-chevron {
     padding: 2px 7px !important;
 }
 
-/* Modern Elegant Radio Options (.fp-tools-radio-option) */
+/* Premium Elegant Radio Options (.fp-tools-radio-option) */
 .fp-tools-radio-group {
     display: flex !important;
+    flex-wrap: wrap !important;
     width: 100% !important;
-    gap: 6px !important;
+    gap: 8px !important;
     margin: 6px 0 !important;
     box-sizing: border-box !important;
 }
@@ -1039,19 +1049,19 @@ details[open].fpt-guide-card .fpt-guide-chevron {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 6px !important;
-    padding: 16px 50px !important;
-    border-radius: 7px !important;
+    gap: 8px !important;
+    padding: 8px 18px !important;
+    border-radius: 9px !important;
     background: rgba(255, 255, 255, 0.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.09) !important;
     color: #94a3b8 !important;
     cursor: pointer !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     font-weight: 500 !important;
-    transition: all 0.15s ease !important;
+    transition: all 0.18s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     margin: 0 !important;
-    min-height: 28px !important;
-    height: 28px !important;
+    min-height: 36px !important;
+    height: 36px !important;
     box-sizing: border-box !important;
     user-select: none !important;
     text-align: center !important;
@@ -1059,28 +1069,20 @@ details[open].fpt-guide-card .fpt-guide-chevron {
 
 .fp-tools-radio-option:hover {
     background: rgba(255, 255, 255, 0.08) !important;
-    border-color: rgba(255, 255, 255, 0.16) !important;
-    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #f8fafc !important;
 }
 
 .fp-tools-radio-option:has(input:checked),
 .fp-tools-radio-option.active {
-    background: linear-gradient(135deg, var(--fpt-accent-soft, rgba(192, 38, 211, 0.22)), rgba(255, 255, 255, 0.04)) !important;
+    background: linear-gradient(135deg, var(--fpt-accent-soft, rgba(192, 38, 211, 0.2)), rgba(255, 255, 255, 0.03)) !important;
     border-color: var(--fpt-accent, #C026D3) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 10px var(--fpt-accent-soft, rgba(192, 38, 211, 0.25)), inset 0 0 0 1px var(--fpt-accent, #C026D3) !important;
+    box-shadow: 0 2px 10px var(--fpt-accent-soft, rgba(192, 38, 211, 0.25)), inset 0 0 0 1px var(--fpt-accent-border, rgba(192, 38, 211, 0.4)) !important;
 }
 
 .fp-tools-radio-option input[type="radio"] {
-    display: inline-block !important;
-    appearance: auto !important;
-    -webkit-appearance: radio !important;
-    width: 13px !important;
-    height: 13px !important;
-    accent-color: var(--fpt-accent, #C026D3) !important;
-    margin: 0 !important;
-    cursor: pointer !important;
-    flex-shrink: 0 !important;
+    display: none !important;
 }
 
 .fp-tools-radio-option span {
@@ -1090,9 +1092,494 @@ details[open].fpt-guide-card .fpt-guide-chevron {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     font-weight: 500 !important;
     color: inherit !important;
     line-height: 1.2 !important;
     white-space: nowrap !important;
+}
+
+/* Sidebar Toggle Button */
+.fpt-sidebar-toggle-btn {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #94a3b8 !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 8px !important;
+    transition: all 0.18s ease !important;
+    flex-shrink: 0 !important;
+}
+
+.fpt-sidebar-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    border-color: var(--fpt-accent-border, rgba(192, 38, 211, 0.4)) !important;
+}
+
+.fpt-sidebar-toggle-btn .material-symbols-rounded {
+    font-size: 20px !important;
+}
+
+/* Sidebar Smooth Transition Base */
+.fp-tools-nav {
+    transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1), padding 0.28s ease, min-width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, border-color 0.22s ease !important;
+    opacity: 1 !important;
+}
+
+/* Desktop Collapsed Sidebar State (.fpt-sidebar-collapsed) — Fully Hidden */
+.fp-tools-popup.fpt-sidebar-collapsed .fp-tools-nav {
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-right: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+}
+
+/* Mobile & Responsive Drawer Adaptation */
+.fpt-sidebar-overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.fp-tools-popup.fpt-mobile-menu-open .fpt-sidebar-overlay {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+@media screen and (max-width: 768px) {
+    .fp-tools-popup {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    .fp-tools-header {
+        padding: 8px 12px !important;
+    }
+
+    .fp-tools-header h2 {
+        font-size: 16px !important;
+    }
+
+    .fpt-fork-badge {
+        display: none !important;
+    }
+
+    .fp-tools-nav {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 250px !important;
+        max-width: 80vw !important;
+        z-index: 999 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+        box-shadow: 6px 0 24px rgba(0, 0, 0, 0.6) !important;
+        background: #0e121e !important;
+    }
+
+    .fp-tools-popup.fpt-mobile-menu-open .fp-tools-nav {
+        transform: translateX(0) !important;
+    }
+
+    .fp-tools-content {
+        padding: 12px 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .fpt-section-card {
+        padding: 12px !important;
+        border-radius: 12px !important;
+    }
+
+    .review-templates-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .fpt-vars-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .fpt-toggle-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+
+    .fp-tools-radio-group {
+        flex-direction: column !important;
+    }
+
+    .fp-tools-radio-option {
+        width: 100% !important;
+    }
+
+    .fpt-btn-accent,
+    .btn {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .template-input,
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+
+/* Fix for Custom Sound Duration Spinner (.fpt-sec-spin) */
+.fp-tools-popup .fpt-sec-spin {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    margin: 0 4px !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid var(--fpt-accent-border, rgba(192, 38, 211, 0.35)) !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    line-height: 1 !important;
+    transition: border-color 0.15s ease !important;
+}
+
+.fp-tools-popup .fpt-sec-spin:focus-within {
+    border-color: var(--fpt-accent, #C026D3) !important;
+    box-shadow: 0 0 8px var(--fpt-accent-soft, rgba(192, 38, 211, 0.25)) !important;
+}
+
+.fp-tools-popup .fpt-sec-spin input,
+.fp-tools-popup .fpt-sec-spin input[type="text"] {
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    border: none !important;
+    background: transparent !important;
+    text-align: center !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--fpt-accent, #C026D3) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 24px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: textfield !important;
+    appearance: none !important;
+}
+
+.fp-tools-popup .fpt-sec-spin-btns {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 18px !important;
+    height: 24px !important;
+    flex-shrink: 0 !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.fp-tools-popup .fpt-sec-spin-btns button {
+    flex: 1 1 50% !important;
+    height: 12px !important;
+    min-height: 12px !important;
+    max-height: 12px !important;
+    width: 17px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    font-size: 8px !important;
+    line-height: 12px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.12s ease !important;
+    box-shadow: none !important;
+}
+
+.fp-tools-popup .fpt-sec-spin-btns button:hover {
+    color: var(--fpt-accent, #C026D3) !important;
+    background: var(--fpt-accent-soft, rgba(192, 38, 211, 0.25)) !important;
+}
+
+.fp-tools-popup .fpt-sec-spin-btns button:active {
+    background: var(--fpt-accent-soft, rgba(192, 38, 211, 0.4)) !important;
+}
+
+.fp-tools-popup .fpt-sec-spin-btns button:first-child {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebar Footer Vertical Stack (Sidebar Style) */
+.fpt-sidebar-footer {
+    padding: 10px 8px 8px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    margin-top: auto !important;
+}
+
+.fpt-footer-nav-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    list-style: none !important;
+}
+
+.fpt-footer-nav-list li {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Sidebar Footer Buttons (Fixed Border & No Blue Shadow) */
+.fp-tools-popup .fpt-footer-nav-item,
+.fp-tools-nav .fpt-footer-nav-item,
+.fp-tools-nav .fpt-footer-nav-list li a,
+.fp-tools-nav .fpt-footer-nav-list li button {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 9px 12px !important;
+    width: 100% !important;
+    border-radius: 9px !important;
+    color: #94a3b8 !important;
+    text-decoration: none !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    box-sizing: border-box !important;
+    user-select: none !important;
+    text-align: left !important;
+}
+
+.fp-tools-popup .fpt-footer-nav-item .nav-list-icon,
+.fp-tools-nav .fpt-footer-nav-item .nav-list-icon {
+    font-size: 20px !important;
+    color: #94a3b8 !important;
+    transition: color 0.15s ease !important;
+}
+
+.fp-tools-popup .fpt-footer-nav-item:hover,
+.fp-tools-nav .fpt-footer-nav-item:hover {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+.fp-tools-popup .fpt-footer-nav-item:hover .nav-list-icon,
+.fp-tools-nav .fpt-footer-nav-item:hover .nav-list-icon {
+    color: #ffffff !important;
+}
+
+.fp-tools-popup .fpt-footer-btn-tg:hover,
+.fp-tools-nav .fpt-footer-btn-tg:hover {
+    background: rgba(36, 161, 222, 0.12) !important;
+    border-color: rgba(36, 161, 222, 0.35) !important;
+    color: #38bdf8 !important;
+    box-shadow: none !important;
+}
+
+.fp-tools-popup .fpt-footer-btn-tg:hover .nav-list-icon,
+.fp-tools-nav .fpt-footer-btn-tg:hover .nav-list-icon {
+    color: #38bdf8 !important;
+}
+
+.fp-tools-header {
+    border-top-left-radius: 18px !important;
+    border-top-right-radius: 18px !important;
+}
+
+.fp-tools-footer {
+    padding: 12px 20px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: #191a1e !important;
+    text-align: right !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    border-bottom-left-radius: 18px !important;
+    border-bottom-right-radius: 18px !important;
+}
+
+.fp-tools-popup {
+    resize: none !important;
+    overflow: visible !important;
+}
+
+/* External Floating Disclaimer Banner below main popup (.fpt-popup-outer-disclaimer) */
+.fpt-popup-outer-disclaimer {
+    position: absolute !important;
+    top: calc(100% + 12px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    padding: 10px 18px !important;
+    background: #191a1e !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    text-align: center !important;
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+    color: #94a3b8 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+    user-select: none !important;
+    pointer-events: auto !important;
+    box-sizing: border-box !important;
+    z-index: 10001 !important;
+}
+
+.fpt-popup-outer-disclaimer a {
+    color: #9e9fa0 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 2px !important;
+    transition: color 0.15s ease !important;
+}
+
+.fpt-popup-outer-disclaimer a:hover {
+    color: var(--fpt-accent, #C026D3) !important;
+}
+
+/* News Refresh Icon Rotation Fix */
+.fpt-news-refresh-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+.fpt-news-refresh-btn.fpt-spin {
+    animation: none !important;
+    transform: none !important;
+}
+
+.fpt-news-refresh-btn .material-symbols-rounded {
+    display: inline-block !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    transform-origin: center center !important;
+}
+
+.fpt-news-refresh-btn.fpt-spin .material-symbols-rounded {
+    animation: fpt-news-spin 0.6s linear infinite !important;
+}
+
+/* News Collapsible Accordion Cards */
+.fpt-news-card,
+.fpt-news-card-header,
+.fpt-news-title-row,
+.fpt-news-title,
+.fpt-news-expandable-body,
+.fpt-news-body {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.fpt-news-card {
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 12px !important;
+    padding: 14px 16px !important;
+    margin-bottom: 12px !important;
+    cursor: pointer !important;
+    transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
+    user-select: none !important;
+}
+
+.fpt-news-card:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.fpt-news-card-header {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+}
+
+.fpt-news-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+}
+
+.fpt-news-title {
+    margin: 0 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #f8fafc !important;
+    line-height: 1.35 !important;
+}
+
+.fpt-news-expand-icon {
+    font-size: 20px !important;
+    color: #94a3b8 !important;
+    transition: transform 0.22s ease, color 0.18s ease !important;
+    flex-shrink: 0 !important;
+}
+
+.fpt-news-card.fpt-news-expanded {
+    border-color: var(--fpt-accent-border, rgba(192, 38, 211, 0.4)) !important;
+    background: transparent !important;
+}
+
+.fpt-news-card.fpt-news-expanded .fpt-news-expand-icon {
+    transform: rotate(180deg) !important;
+    color: var(--fpt-accent, #C026D3) !important;
+}
+
+.fpt-news-expandable-body {
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    user-select: text !important;
 }

@@ -315,8 +315,8 @@ async function loadSavedSettings() {
     
     const toolsPopup = document.querySelector('.fp-tools-popup');
     if (settings.fpToolsPopupDragged && settings.fpToolsPopupPosition) {
-        toolsPopup.style.left = settings.fpToolsPopupPosition.left;
-        toolsPopup.style.top = settings.fpToolsPopupPosition.top;
+        toolsPopup.style.setProperty('left', settings.fpToolsPopupPosition.left, 'important');
+        toolsPopup.style.setProperty('top', settings.fpToolsPopupPosition.top, 'important');
         toolsPopup.classList.add('no-transform');
     }
     if (settings.fpToolsPopupSize) {
