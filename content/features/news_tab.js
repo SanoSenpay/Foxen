@@ -101,29 +101,27 @@
   }
 
   async function loadNewsData(forceRefresh) {
-    if (!forceRefresh && _newsCache) return _newsCache;
+    const NOW = Date.now();
+    const stored = await storageGet(['fptNewsCache', 'fptNewsCacheTime']);
 
-    // 1. Try local storage cache first for instant load
-    const stored = await storageGet(['fptNewsCache']);
-    if (!forceRefresh && stored.fptNewsCache && Array.isArray(stored.fptNewsCache.posts)) {
+    const isCacheFresh = stored.fptNewsCacheTime && (NOW - stored.fptNewsCacheTime < 5 * 60 * 1000);
+
+    if (!forceRefresh && isCacheFresh && stored.fptNewsCache && Array.isArray(stored.fptNewsCache.posts)) {
       _newsCache = stored.fptNewsCache;
-      // Fetch fresh from GitHub in background
-      fetchNews().then(fresh => {
-        if (fresh && Array.isArray(fresh.posts)) {
-          _newsCache = fresh;
-          storageSet({ fptNewsCache: fresh });
-          renderNewsList();
-          checkUnreadNews();
-        }
-      }).catch(() => {});
       return _newsCache;
     }
 
-    // 2. Fetch news from GitHub
+    // Fetch fresh from GitHub / Worker
     const data = await fetchNews();
     if (data && Array.isArray(data.posts)) {
       _newsCache = data;
-      await storageSet({ fptNewsCache: data });
+      await storageSet({ fptNewsCache: data, fptNewsCacheTime: NOW });
+      return _newsCache;
+    }
+
+    // Fallback to stored cache if network fetch failed
+    if (stored.fptNewsCache && Array.isArray(stored.fptNewsCache.posts)) {
+      _newsCache = stored.fptNewsCache;
       return _newsCache;
     }
 
