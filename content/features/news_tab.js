@@ -62,12 +62,12 @@
     return html;
   }
 
-  const REMOTE_GITHUB_NEWS_URL = 'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/news.json';
+  const REMOTE_GITHUB_NEWS_URL = 'https://raw.githubusercontent.com/SanoSenpay/Foxen/main/content/news.json';
   const REMOTE_WORKER_NEWS_URL = 'https://foxen-profiles.sanosenpay.workers.dev/news';
 
   async function fetchNews() {
     const urls = [
-      REMOTE_GITHUB_NEWS_URL,
+      `${REMOTE_GITHUB_NEWS_URL}?t=${Date.now()}`,
       REMOTE_WORKER_NEWS_URL
     ];
 

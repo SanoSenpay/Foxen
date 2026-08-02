@@ -82,7 +82,7 @@ export default {
       // --- Публичный эндпоинт: Динамические новости и чейнджлог ---
       if (request.method === "GET" && (url.pathname === "/news" || url.pathname === "/news.json")) {
         try {
-          const ghRes = await fetch("https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/news.json", {
+          const ghRes = await fetch("https://raw.githubusercontent.com/SanoSenpay/Foxen/main/content/news.json", {
             cf: { cacheTtl: 300, cacheEverything: true }
           });
           if (ghRes.ok) {
