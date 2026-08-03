@@ -1,13 +1,13 @@
 /* css/live_styler.css */
 
 /* --- Режим Редактора --- */
-body.fp-tools-magic-stick-active * {
+body.foxen-magic-stick-active * {
     cursor: crosshair !important;
 }
-body.fp-tools-magic-stick-active #ms-panel *,
-body.fp-tools-magic-stick-active #ms-exit-btn *,
-body.fp-tools-magic-stick-active #ms-my-styles-modal *,
-body.fp-tools-magic-stick-active #ms-selector-modal * {
+body.foxen-magic-stick-active #ms-panel *,
+body.foxen-magic-stick-active #ms-exit-btn *,
+body.foxen-magic-stick-active #ms-my-styles-modal *,
+body.foxen-magic-stick-active #ms-selector-modal * {
     cursor: default !important;
 }
 

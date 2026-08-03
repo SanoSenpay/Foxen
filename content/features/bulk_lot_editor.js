@@ -3,7 +3,7 @@
 // Активируется кнопкой "Массово изменить" в разделе Лоты
 
 function initBulkLotEditor() {
-    const page = document.querySelector('.fp-tools-page-content[data-page="lot_io"]');
+    const page = document.querySelector('.foxen-page-content[data-page="lot_io"]');
     if (!page || page.dataset.bulkEditorInit) return;
     page.dataset.bulkEditorInit = 'true';
 
@@ -52,16 +52,16 @@ async function openBulkEditor() {
 
     const overlay = document.createElement('div');
     overlay.id = 'fp-bulk-editor-overlay';
-    overlay.className = 'fp-tools-modal-overlay';
+    overlay.className = 'foxen-modal-overlay';
     overlay.style.display = 'flex';
 
     overlay.innerHTML = `
-        <div class="fp-tools-modal-content" style="max-width:720px;width:95%;max-height:90vh;display:flex;flex-direction:column;background:#13141a;color:#d8dae8;border:1px solid #22253a;border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,0.6);">
-            <div class="fp-tools-modal-header" style="padding:16px 20px;border-bottom:1px solid #1e2030;background:#13141a;border-radius:10px 10px 0 0;">
+        <div class="foxen-modal-content" style="max-width:720px;width:95%;max-height:90vh;display:flex;flex-direction:column;background:#13141a;color:#d8dae8;border:1px solid #22253a;border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,0.6);">
+            <div class="foxen-modal-header" style="padding:16px 20px;border-bottom:1px solid #1e2030;background:#13141a;border-radius:10px 10px 0 0;">
                 <h3 style="margin:0;font-size:15px;color:#e8eaf0;">Массовое редактирование лотов</h3>
-                <button class="fp-tools-modal-close" style="background:none;border:none;color:#9099b8;font-size:24px;cursor:pointer;line-height:1;">×</button>
+                <button class="foxen-modal-close" style="background:none;border:none;color:#9099b8;font-size:24px;cursor:pointer;line-height:1;">×</button>
             </div>
-            <div class="fp-tools-modal-body" style="overflow-y:auto;padding:16px 20px;flex:1;background:#13141a;">
+            <div class="foxen-modal-body" style="overflow-y:auto;padding:16px 20px;flex:1;background:#13141a;">
                 <p class="template-info">Изменяются только заполненные поля. Переменные: <code>{current}</code> - текущее значение поля, <code>{lotname}</code> - название лота. Изменения применяются к русской версии полей.</p>
 
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
@@ -147,17 +147,17 @@ async function openBulkEditor() {
                     <div id="fp-bulk-log" style="font-size:11px;color:#6b7194;margin-top:8px;max-height:90px;overflow-y:auto;font-family:monospace;line-height:1.5;"></div>
                 </div>
             </div>
-            <div class="fp-tools-modal-footer" style="padding:14px 20px;display:flex;gap:10px;background:#13141a;border-top:1px solid #1e2030;border-radius:0 0 10px 10px;">
+            <div class="foxen-modal-footer" style="padding:14px 20px;display:flex;gap:10px;background:#13141a;border-top:1px solid #1e2030;border-radius:0 0 10px 10px;">
                 <button id="fp-bulk-apply-btn" class="btn" style="flex:1;">Применить изменения</button>
                 <button id="fp-bulk-activate-btn" class="btn btn-default" style="flex:0 0 auto;" title="Активировать выбранные лоты">Активировать</button>
-                <button class="fp-tools-modal-close btn btn-default">Отмена</button>
+                <button class="foxen-modal-close btn btn-default">Отмена</button>
             </div>
         </div>
     `;
 
     document.body.appendChild(overlay);
 
-    overlay.querySelectorAll('.fp-tools-modal-close').forEach(b =>
+    overlay.querySelectorAll('.foxen-modal-close').forEach(b =>
         b.addEventListener('click', () => overlay.remove())
     );
     overlay.addEventListener('click', (e) => {

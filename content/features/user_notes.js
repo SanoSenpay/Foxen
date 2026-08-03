@@ -5,7 +5,7 @@
 
 let userStatuses = {};               // { userId: { name, color } }
 let pinnedChats = {};                // { userId: timestampWhenPinned }
-let fpToolsCustomLabels = [
+let foxenCustomLabels = [
     { id: 'default-1', name: 'Мошенник',  color: '#f44336' },
     { id: 'default-2', name: 'Постоянный', color: '#4caf50' }
 ];
@@ -25,7 +25,7 @@ function getContrastColor(hexColor) {
 
 // Берёт фон/текст у самой страницы, чтобы окна совпадали с темой FunPay
 // (в т.ч. кастомной или светлой). Ищет ближайший непрозрачный фон.
-function fptPageSurface() {
+function fxnPageSurface() {
     const candidates = [
         document.querySelector('.chat-contacts'),
         document.querySelector('.chat'),
@@ -43,21 +43,21 @@ function fptPageSurface() {
     if (!color) color = getComputedStyle(document.body).color || '#e0e0e0';
     return { bg, color };
 }
-function fptApplyThemeSurface(el) {
+function fxnApplyThemeSurface(el) {
     if (!el) return;
-    const { bg, color } = fptPageSurface();
+    const { bg, color } = fxnPageSurface();
     el.style.backgroundColor = bg;
     el.style.color = color;
 }
 
 async function saveUserStatuses() {
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsUserStatuses: userStatuses });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenUserStatuses: userStatuses });
 }
 async function savePinnedChats() {
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPinnedChats: pinnedChats });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenPinnedChats: pinnedChats });
 }
 async function saveLabels() {
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomLabels });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomLabels });
 }
 
 /* ------------------------------------------------------------------ */
@@ -84,9 +84,9 @@ function paintStatusElement(statusElement, statusObject) {
 function setUserStatus(userId, statusObject) {
     if (!userId) return;
     document.querySelectorAll(`.contact-item[data-id="${userId}"]`).forEach(contactItem => {
-        let statusElement = contactItem.querySelector('.fp-tools-user-status');
+        let statusElement = contactItem.querySelector('.foxen-user-status');
         if (!statusElement) {
-            statusElement = createElement('span', { class: 'fp-tools-user-status' });
+            statusElement = createElement('span', { class: 'foxen-user-status' });
             const userNameElement = contactItem.querySelector('.media-user-name');
             if (userNameElement) userNameElement.prepend(statusElement);
         }
@@ -104,9 +104,9 @@ function applyAllUserStatuses() {
         const userId = item.dataset.id;
         const status = userStatuses[userId];
         if (!userId || !status) return;
-        let statusElement = item.querySelector('.fp-tools-user-status');
+        let statusElement = item.querySelector('.foxen-user-status');
         if (!statusElement) {
-            statusElement = createElement('span', { class: 'fp-tools-user-status' });
+            statusElement = createElement('span', { class: 'foxen-user-status' });
             const userNameElement = item.querySelector('.media-user-name');
             if (userNameElement) userNameElement.prepend(statusElement);
         }
@@ -139,13 +139,13 @@ function applyPinnedChats() {
     items.forEach(item => {
         const userId = item.dataset.id;
         const pinned = isPinned(userId);
-        item.classList.toggle('fp-tools-pinned', pinned);
+        item.classList.toggle('foxen-pinned', pinned);
 
-        let pinIcon = item.querySelector('.fp-tools-pin-icon');
+        let pinIcon = item.querySelector('.foxen-pin-icon');
         if (pinned) {
             if (!pinIcon) {
                 pinIcon = createElement('span', {
-                    class: 'fp-tools-pin-icon material-icons',
+                    class: 'foxen-pin-icon material-icons',
                     title: 'Закреплено'
                 });
                 pinIcon.textContent = 'push_pin';
@@ -184,7 +184,7 @@ function closePopover() {
 
 function onDocClickClosePopover(e) {
     if (activePopover && !activePopover.contains(e.target) &&
-        !e.target.classList.contains('fp-tools-chat-dots')) {
+        !e.target.classList.contains('foxen-chat-dots')) {
         closePopover();
     }
 }
@@ -194,24 +194,24 @@ function openChatPopover(contactItem, anchorBtn) {
     const userId = contactItem.dataset.id;
     if (!userId) return;
 
-    const pop = createElement('div', { class: 'fp-tools-chat-popover' });
+    const pop = createElement('div', { class: 'foxen-chat-popover' });
 
     // --- Раздел: метки ---
-    const labelsHeader = createElement('div', { class: 'fp-tools-pop-header' });
+    const labelsHeader = createElement('div', { class: 'foxen-pop-header' });
     labelsHeader.textContent = 'Метка';
     pop.appendChild(labelsHeader);
 
-    fpToolsCustomLabels.forEach(label => {
-        const row = createElement('div', { class: 'fp-tools-pop-item' });
-        const dot = createElement('span', { class: 'fp-tools-pop-dot' });
+    foxenCustomLabels.forEach(label => {
+        const row = createElement('div', { class: 'foxen-pop-item' });
+        const dot = createElement('span', { class: 'foxen-pop-dot' });
         dot.style.backgroundColor = label.color;
-        const txt = createElement('span', { class: 'fp-tools-pop-text' });
+        const txt = createElement('span', { class: 'foxen-pop-text' });
         txt.textContent = label.name;
         row.appendChild(dot);
         row.appendChild(txt);
         const cur = userStatuses[userId];
         if (cur && cur.name === label.name && cur.color === label.color) {
-            const check = createElement('span', { class: 'fp-tools-pop-check material-icons' });
+            const check = createElement('span', { class: 'foxen-pop-check material-icons' });
             check.textContent = 'check';
             row.appendChild(check);
         }
@@ -225,10 +225,10 @@ function openChatPopover(contactItem, anchorBtn) {
     });
 
     if (userStatuses[userId]) {
-        const removeRow = createElement('div', { class: 'fp-tools-pop-item fp-tools-pop-muted' });
-        const ic = createElement('span', { class: 'fp-tools-pop-icon material-icons' });
+        const removeRow = createElement('div', { class: 'foxen-pop-item foxen-pop-muted' });
+        const ic = createElement('span', { class: 'foxen-pop-icon material-icons' });
         ic.textContent = 'label_off';
-        const t = createElement('span', { class: 'fp-tools-pop-text' });
+        const t = createElement('span', { class: 'foxen-pop-text' });
         t.textContent = 'Убрать метку';
         removeRow.appendChild(ic);
         removeRow.appendChild(t);
@@ -241,10 +241,10 @@ function openChatPopover(contactItem, anchorBtn) {
     }
 
     // Управление метками
-    const manageRow = createElement('div', { class: 'fp-tools-pop-item fp-tools-pop-muted' });
-    const mIc = createElement('span', { class: 'fp-tools-pop-icon material-icons' });
+    const manageRow = createElement('div', { class: 'foxen-pop-item foxen-pop-muted' });
+    const mIc = createElement('span', { class: 'foxen-pop-icon material-icons' });
     mIc.textContent = 'settings';
-    const mT = createElement('span', { class: 'fp-tools-pop-text' });
+    const mT = createElement('span', { class: 'foxen-pop-text' });
     mT.textContent = 'Управление метками';
     manageRow.appendChild(mIc);
     manageRow.appendChild(mT);
@@ -255,13 +255,13 @@ function openChatPopover(contactItem, anchorBtn) {
     });
     pop.appendChild(manageRow);
 
-    pop.appendChild(createElement('div', { class: 'fp-tools-pop-divider' }));
+    pop.appendChild(createElement('div', { class: 'foxen-pop-divider' }));
 
     // --- Раздел: закрепление ---
-    const pinRow = createElement('div', { class: 'fp-tools-pop-item' });
-    const pIc = createElement('span', { class: 'fp-tools-pop-icon material-icons' });
+    const pinRow = createElement('div', { class: 'foxen-pop-item' });
+    const pIc = createElement('span', { class: 'foxen-pop-icon material-icons' });
     pIc.textContent = 'push_pin';
-    const pT = createElement('span', { class: 'fp-tools-pop-text' });
+    const pT = createElement('span', { class: 'foxen-pop-text' });
     pT.textContent = isPinned(userId) ? 'Открепить чат' : 'Закрепить чат';
     pinRow.appendChild(pIc);
     pinRow.appendChild(pT);
@@ -273,7 +273,7 @@ function openChatPopover(contactItem, anchorBtn) {
     pop.appendChild(pinRow);
 
     document.body.appendChild(pop);
-    fptApplyThemeSurface(pop);
+    fxnApplyThemeSurface(pop);
     activePopover = pop;
 
     // Позиционирование возле кнопки
@@ -296,9 +296,9 @@ function openChatPopover(contactItem, anchorBtn) {
 
 // Вешает кнопку-троеточие на контакт.
 function ensureDotsButton(contactItem) {
-    if (contactItem.querySelector('.fp-tools-chat-dots')) return;
+    if (contactItem.querySelector('.foxen-chat-dots')) return;
     const btn = createElement('button', {
-        class: 'fp-tools-chat-dots material-icons',
+        class: 'foxen-chat-dots material-icons',
         type: 'button',
         title: 'Действия'
     });
@@ -321,43 +321,43 @@ function applyDotsButtons() {
 /* ------------------------------------------------------------------ */
 
 function openLabelManager() {
-    document.querySelector('.fp-tools-label-overlay')?.remove();
+    document.querySelector('.foxen-label-overlay')?.remove();
 
-    const overlay = createElement('div', { class: 'fp-tools-label-overlay' });
-    const modal = createElement('div', { class: 'fp-tools-label-modal' });
+    const overlay = createElement('div', { class: 'foxen-label-overlay' });
+    const modal = createElement('div', { class: 'foxen-label-modal' });
 
-    const head = createElement('div', { class: 'fp-tools-label-head' });
+    const head = createElement('div', { class: 'foxen-label-head' });
     const title = createElement('h3', {});
     title.textContent = 'Управление метками';
-    const closeBtn = createElement('button', { class: 'fp-tools-label-close material-icons', type: 'button' });
+    const closeBtn = createElement('button', { class: 'foxen-label-close material-icons', type: 'button' });
     closeBtn.textContent = 'close';
     head.appendChild(title);
     head.appendChild(closeBtn);
     modal.appendChild(head);
 
-    const hint = createElement('div', { class: 'fp-tools-label-hint' });
+    const hint = createElement('div', { class: 'foxen-label-hint' });
     hint.textContent = 'Здесь создаются и редактируются метки. Чтобы повесить метку на чат - наведите на него в списке и нажмите ⋮.';
     modal.appendChild(hint);
 
-    const listWrap = createElement('div', { class: 'fp-tools-label-list' });
+    const listWrap = createElement('div', { class: 'foxen-label-list' });
     modal.appendChild(listWrap);
 
-    const addBtn = createElement('button', { class: 'fp-tools-label-add', type: 'button' });
+    const addBtn = createElement('button', { class: 'foxen-label-add', type: 'button' });
     addBtn.textContent = '+ Добавить метку';
     modal.appendChild(addBtn);
 
     const renderRows = () => {
         listWrap.innerHTML = '';
-        if (!fpToolsCustomLabels.length) {
-            const empty = createElement('div', { class: 'fp-tools-label-empty' });
+        if (!foxenCustomLabels.length) {
+            const empty = createElement('div', { class: 'foxen-label-empty' });
             empty.textContent = 'Меток пока нет. Добавьте первую.';
             listWrap.appendChild(empty);
         }
-        fpToolsCustomLabels.forEach(label => {
-            const row = createElement('div', { class: 'fp-tools-label-row' });
+        foxenCustomLabels.forEach(label => {
+            const row = createElement('div', { class: 'foxen-label-row' });
 
             const color = createElement('input', {
-                type: 'color', value: label.color, class: 'fp-tools-label-color'
+                type: 'color', value: label.color, class: 'foxen-label-color'
             });
             color.addEventListener('input', () => {
                 label.color = color.value;
@@ -366,7 +366,7 @@ function openLabelManager() {
             });
 
             const name = createElement('input', {
-                type: 'text', value: label.name, class: 'fp-tools-label-name',
+                type: 'text', value: label.name, class: 'foxen-label-name',
                 placeholder: 'Название метки'
             });
             const commitName = () => {
@@ -379,10 +379,10 @@ function openLabelManager() {
             name.addEventListener('blur', commitName);
             name.addEventListener('keydown', (e) => { if (e.key === 'Enter') name.blur(); });
 
-            const del = createElement('button', { class: 'fp-tools-label-del material-icons', type: 'button', title: 'Удалить' });
+            const del = createElement('button', { class: 'foxen-label-del material-icons', type: 'button', title: 'Удалить' });
             del.textContent = 'delete';
             del.addEventListener('click', () => {
-                fpToolsCustomLabels = fpToolsCustomLabels.filter(l => l.id !== label.id);
+                foxenCustomLabels = foxenCustomLabels.filter(l => l.id !== label.id);
                 saveLabels();
                 renderRows();
             });
@@ -395,10 +395,10 @@ function openLabelManager() {
     };
 
     addBtn.addEventListener('click', () => {
-        fpToolsCustomLabels.push({ id: Date.now().toString(), name: 'Новая метка', color: '#ff9800' });
+        foxenCustomLabels.push({ id: Date.now().toString(), name: 'Новая метка', color: '#ff9800' });
         saveLabels();
         renderRows();
-        const inputs = listWrap.querySelectorAll('.fp-tools-label-name');
+        const inputs = listWrap.querySelectorAll('.foxen-label-name');
         const last = inputs[inputs.length - 1];
         if (last) { last.focus(); last.select(); }
     });
@@ -410,7 +410,7 @@ function openLabelManager() {
     renderRows();
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-    fptApplyThemeSurface(modal);
+    fxnApplyThemeSurface(modal);
 }
 
 /* ------------------------------------------------------------------ */
@@ -421,8 +421,8 @@ function openLabelManager() {
 function buildChatHeaderMenu() {
     const observer = new MutationObserver(() => {
         const chatMenu = document.querySelector('.chat-header .dropdown-menu');
-        if (chatMenu && !chatMenu.dataset.fpToolsStatusMenu) {
-            chatMenu.dataset.fpToolsStatusMenu = 'true';
+        if (chatMenu && !chatMenu.dataset.foxenStatusMenu) {
+            chatMenu.dataset.foxenStatusMenu = 'true';
             renderHeaderMenu(chatMenu);
         }
     });
@@ -430,18 +430,18 @@ function buildChatHeaderMenu() {
 }
 
 function renderHeaderMenu(chatMenu) {
-    chatMenu.querySelectorAll('.fp-tools-status-item, .divider.fp-tools-divider').forEach(el => el.remove());
+    chatMenu.querySelectorAll('.foxen-status-item, .divider.foxen-divider').forEach(el => el.remove());
 
     const getUserId = () => document.querySelector('.contact-item.active')?.dataset.id;
 
-    chatMenu.insertAdjacentHTML('beforeend', '<li class="divider fp-tools-divider"></li>');
+    chatMenu.insertAdjacentHTML('beforeend', '<li class="divider foxen-divider"></li>');
 
-    fpToolsCustomLabels.forEach(label => {
-        const li = createElement('li', { class: 'fp-tools-status-item' });
+    foxenCustomLabels.forEach(label => {
+        const li = createElement('li', { class: 'foxen-status-item' });
         const a = createElement('a', { href: '#' });
-        const dot = createElement('span', { class: 'fp-tools-status-circle' });
+        const dot = createElement('span', { class: 'foxen-status-circle' });
         dot.style.backgroundColor = label.color;
-        const span = createElement('span', { class: 'fp-tools-status-name' });
+        const span = createElement('span', { class: 'foxen-status-name' });
         span.textContent = label.name;
         a.appendChild(dot);
         a.appendChild(span);
@@ -453,7 +453,7 @@ function renderHeaderMenu(chatMenu) {
         chatMenu.appendChild(li);
     });
 
-    const removeLi = createElement('li', { class: 'fp-tools-status-item' });
+    const removeLi = createElement('li', { class: 'foxen-status-item' });
     const removeA = createElement('a', { href: '#' });
     removeA.textContent = 'Убрать метку';
     removeA.addEventListener('click', (e) => {
@@ -464,7 +464,7 @@ function renderHeaderMenu(chatMenu) {
     removeLi.appendChild(removeA);
     chatMenu.appendChild(removeLi);
 
-    const pinLi = createElement('li', { class: 'fp-tools-status-item' });
+    const pinLi = createElement('li', { class: 'foxen-status-item' });
     const pinA = createElement('a', { href: '#' });
     const syncPinText = () => { pinA.textContent = isPinned(getUserId()) ? '📌 Открепить чат' : '📌 Закрепить чат'; };
     syncPinText();
@@ -486,12 +486,12 @@ function renderHeaderMenu(chatMenu) {
     syncDynamicItems();
 
     const toggleBtn = chatMenu.closest('.dropdown')?.querySelector('[data-toggle="dropdown"]');
-    if (toggleBtn && !toggleBtn.dataset.fptSyncBound) {
-        toggleBtn.dataset.fptSyncBound = '1';
+    if (toggleBtn && !toggleBtn.dataset.fxnSyncBound) {
+        toggleBtn.dataset.fxnSyncBound = '1';
         toggleBtn.addEventListener('click', () => setTimeout(syncDynamicItems, 0));
     }
 
-    const manageLi = createElement('li', { class: 'fp-tools-status-item' });
+    const manageLi = createElement('li', { class: 'foxen-status-item' });
     const manageA = createElement('a', { href: '#' });
     manageA.textContent = '⚙️ Управление метками';
     manageA.addEventListener('click', (e) => {
@@ -508,11 +508,11 @@ function renderHeaderMenu(chatMenu) {
 
 async function initializeUserNotes() {
     const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
-        'fpToolsUserStatuses', 'fpToolsPinnedChats', 'fpToolsCustomLabels'
+        'foxenUserStatuses', 'foxenPinnedChats', 'foxenCustomLabels'
     ]);
-    userStatuses = data.fpToolsUserStatuses || {};
-    pinnedChats  = data.fpToolsPinnedChats || {};
-    if (Array.isArray(data.fpToolsCustomLabels)) fpToolsCustomLabels = data.fpToolsCustomLabels;
+    userStatuses = data.foxenUserStatuses || {};
+    pinnedChats  = data.foxenPinnedChats || {};
+    if (Array.isArray(data.foxenCustomLabels)) foxenCustomLabels = data.foxenCustomLabels;
 
     applyAllUserStatuses();
     applyDotsButtons();

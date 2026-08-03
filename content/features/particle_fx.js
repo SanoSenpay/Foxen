@@ -48,23 +48,23 @@
                 chrome.storage.onChanged.addListener((changes, area) => {
                     if (area !== 'local') return;
                     let shouldReinit = false;
-                    if (changes.fpToolsParticleEnabled !== undefined) {
-                        this.enabled = changes.fpToolsParticleEnabled.newValue === true;
+                    if (changes.foxenParticleEnabled !== undefined) {
+                        this.enabled = changes.foxenParticleEnabled.newValue === true;
                         shouldReinit = true;
                     }
-                    if (changes.fpToolsParticlePreset !== undefined) {
-                        this.preset = changes.fpToolsParticlePreset.newValue || 'snow';
+                    if (changes.foxenParticlePreset !== undefined) {
+                        this.preset = changes.foxenParticlePreset.newValue || 'snow';
                         shouldReinit = true;
                     }
-                    if (changes.fpToolsParticleCount !== undefined) {
-                        this.count = Number(changes.fpToolsParticleCount.newValue) || 40;
+                    if (changes.foxenParticleCount !== undefined) {
+                        this.count = Number(changes.foxenParticleCount.newValue) || 40;
                         shouldReinit = true;
                     }
-                    if (changes.fpToolsParticleSpeed !== undefined) {
-                        this.speed = Number(changes.fpToolsParticleSpeed.newValue) || 1.0;
+                    if (changes.foxenParticleSpeed !== undefined) {
+                        this.speed = Number(changes.foxenParticleSpeed.newValue) || 1.0;
                     }
-                    if (changes.fpToolsParticleScale !== undefined) {
-                        this.scale = Number(changes.fpToolsParticleScale.newValue) || 1.0;
+                    if (changes.foxenParticleScale !== undefined) {
+                        this.scale = Number(changes.foxenParticleScale.newValue) || 1.0;
                     }
 
                     if (shouldReinit) {
@@ -77,18 +77,18 @@
         async loadSettings() {
             try {
                 const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
-                    'fpToolsParticleEnabled',
-                    'fpToolsParticlePreset',
-                    'fpToolsParticleCount',
-                    'fpToolsParticleSpeed',
-                    'fpToolsParticleScale'
+                    'foxenParticleEnabled',
+                    'foxenParticlePreset',
+                    'foxenParticleCount',
+                    'foxenParticleSpeed',
+                    'foxenParticleScale'
                 ]);
 
-                this.enabled = st.fpToolsParticleEnabled === true;
-                this.preset = st.fpToolsParticlePreset || 'snow';
-                this.count = Number(st.fpToolsParticleCount) || 40;
-                this.speed = Number(st.fpToolsParticleSpeed) || 1.0;
-                this.scale = Number(st.fpToolsParticleScale) || 1.0;
+                this.enabled = st.foxenParticleEnabled === true;
+                this.preset = st.foxenParticlePreset || 'snow';
+                this.count = Number(st.foxenParticleCount) || 40;
+                this.speed = Number(st.foxenParticleSpeed) || 1.0;
+                this.scale = Number(st.foxenParticleScale) || 1.0;
 
                 this.applyState();
             } catch (_) {}
@@ -108,7 +108,7 @@
         ensureCanvas() {
             if (this.canvas) return;
             this.canvas = document.createElement('canvas');
-            this.canvas.id = 'fpt-fullpage-particles-canvas';
+            this.canvas.id = 'fxn-fullpage-particles-canvas';
             Object.assign(this.canvas.style, {
                 position: 'fixed',
                 top: '0',

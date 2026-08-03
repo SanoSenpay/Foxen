@@ -427,14 +427,14 @@ function auditShowResults(recs) {
         ${section('📝 Названия и описания', recs.titles, '#FF6B6B')}
         ${section('💰 Цены', recs.pricing, '#ff9800')}
         ${section('🔍 Видимость в поиске', recs.visibility, '#C026D3')}
-        ${section('💬 Клиентский сервис', recs.service, '#4caf82')}
-        <button onclick="document.getElementById('fp-audit-start-btn').click()" style="margin-top:10px;background:#1e2030;border:1px solid #22253a;border-radius:6px;padding:8px 16px;color:#9099b8;cursor:pointer;font-size:13px;font-family:inherit;">Начать заново</button>
+        <button id="fp-audit-restart-btn" style="margin-top:10px;background:#1e2030;border:1px solid #22253a;border-radius:6px;padding:8px 16px;color:#9099b8;cursor:pointer;font-size:13px;font-family:inherit;">Начать заново</button>
     `;
+    el.querySelector('#fp-audit-restart-btn')?.addEventListener('click', () => document.getElementById('fp-audit-start-btn')?.click());
 }
 
 // ── Main init ────────────────────────────────────────────────────────────────
 function initializeAILotAudit() {
-    const page = document.querySelector('.fp-tools-page-content[data-page="ai_audit"]');
+    const page = document.querySelector('.foxen-page-content[data-page="ai_audit"]');
     if (!page || page.dataset.initialized) return;
     page.dataset.initialized = 'true';
 

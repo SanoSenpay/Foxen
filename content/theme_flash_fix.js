@@ -1,9 +1,9 @@
 // content/theme_flash_fix.js
 
 (async () => {
-    const HIDE_STYLE_ID = 'fp-tools-flash-hide-style';
-    const THEME_STYLE_ID = 'fp-tools-custom-theme';
-    const FONT_STYLE_ID = 'fp-tools-google-fonts';
+    const HIDE_STYLE_ID = 'foxen-flash-hide-style';
+    const THEME_STYLE_ID = 'foxen-custom-theme';
+    const FONT_STYLE_ID = 'foxen-google-fonts';
 
     // 3.0: выставляем класс темы как можно раньше (document_start), чтобы окна
     // статистики/аналитики/системные алерты сразу рисовались в правильном режиме
@@ -12,8 +12,8 @@
     try {
         const tData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('enableCustomTheme');
         const on = tData.enableCustomTheme !== false; // по умолчанию включена
-        document.documentElement.classList.toggle('fpt-custom-theme-on', on);
-        document.documentElement.classList.toggle('fpt-custom-theme-off', !on);
+        document.documentElement.classList.toggle('fxn-custom-theme-on', on);
+        document.documentElement.classList.toggle('fxn-custom-theme-off', !on);
     } catch (_) { /* storage not ready - applyCustomTheme выставит позже */ }
 
     const hideStyle = document.createElement('style');
@@ -29,7 +29,7 @@
         const balData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('hideBalance');
         if (balData.hideBalance === true) {
             const balStyle = document.createElement('style');
-            balStyle.id = 'fp-tools-balance-prehide';
+            balStyle.id = 'foxen-balance-prehide';
             // make the digits invisible but keep layout; JS will swap in "?" then unmask
             balStyle.textContent = `
                 .badge-balance, .balances-value {
@@ -47,44 +47,44 @@
     // map here. Hiding via CSS at document_start means disabled buttons/blocks never
     // flash into view before the content scripts get a chance to run.
     try {
-        const dfData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
-        const disabled = Array.isArray(dfData.fpToolsDisabledFeatures) ? dfData.fpToolsDisabledFeatures : [];
+        const dfData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDisabledFeatures');
+        const disabled = Array.isArray(dfData.foxenDisabledFeatures) ? dfData.foxenDisabledFeatures : [];
         if (disabled.length) {
             const SELECTOR_MAP = {
                 rmthub_seller_search: '#fp-rmthub-form',
                 chat_ai_rewrite_btn: '#aiModeToggleBtn',
                 chat_char_counter: '#fp-chat-char-count',
-                profanity_warning: '#fpToolsProfanityWarning',
-                chat_read_all_btn: '#fp-tools-read-all-btn',
-                chat_filter_marked_btn: '#fp-tools-filter-marked-btn',
+                profanity_warning: '#foxenProfanityWarning',
+                chat_read_all_btn: '#foxen-read-all-btn',
+                chat_filter_marked_btn: '#foxen-filter-marked-btn',
                 chat_menu_buyer_history: '#fp-buyer-hist-menu-btn',
                 chat_menu_translate: '#fp-translate-menu-btn',
                 chat_menu_export: '#fp-export-chat-menu-btn',
                 chat_menu_blacklist: '#fp-blacklist-menu-btn',
-                chat_image_generator_btn: '#fpToolsGenerateImageBtn, .generate-btn-container',
-                lot_ai_gen_btn: '#fp-tools-ai-gen-btn-wrapper',
-                lot_font_controls: '.fp-tools-font-controls, .fp-tools-symbols-panel',
-                lot_keyboard_btn: '#fpToolsKeyboardToggleBtn',
-                lot_translate_btn: '#fp-tools-translate-btn',
+                chat_image_generator_btn: '#foxenGenerateImageBtn, .generate-btn-container',
+                lot_ai_gen_btn: '#foxen-ai-gen-btn-wrapper',
+                lot_font_controls: '.foxen-font-controls, .foxen-symbols-panel',
+                lot_keyboard_btn: '#foxenKeyboardToggleBtn',
+                lot_translate_btn: '#foxen-translate-btn',
                 lot_exact_price_btn: '.set-exact-price',
-                lot_paste_bar: '#fp-tools-paste-bar',
-                lot_clone_btn: '.fp-tools-clone-btn',
-                lot_import_btn: '.fp-tools-import-btn',
-                lot_public_clone_btn: '#fp-tools-public-clone-btn',
+                lot_paste_bar: '#foxen-paste-bar',
+                lot_clone_btn: '.foxen-clone-btn',
+                lot_import_btn: '.foxen-import-btn',
+                lot_public_clone_btn: '#foxen-public-clone-btn',
                 lot_search_bar: '#fp-lot-search-bar',
-                lot_select_btn: '#fp-tools-select-lots-btn',
-                lot_reactivate_btn: '#fp-tools-reactivate-lots-btn',
-                lot_pinned_container: '#fp-tools-pinned-lots-container',
+                lot_select_btn: '#foxen-select-lots-btn',
+                lot_reactivate_btn: '#foxen-reactivate-lots-btn',
+                lot_pinned_container: '#foxen-pinned-lots-container',
                 market_analytics_btn: '#fpTools-market-analytics-btn-wrapper',
                 sales_stats_expand: '#fpTools-stats-extra, #fpTools-stats-expand-btn',
-                notes_add_status_btn: '#fp-tools-add-status-btn'
+                notes_add_status_btn: '#foxen-add-status-btn'
             };
             const selectors = disabled
                 .map(id => SELECTOR_MAP[id])
                 .filter(Boolean);
             if (selectors.length) {
                 const offStyle = document.createElement('style');
-                offStyle.id = 'fp-tools-disabled-features';
+                offStyle.id = 'foxen-disabled-features';
                 offStyle.textContent = selectors.join(', ') +
                     ' { display: none !important; }';
                 document.documentElement.appendChild(offStyle);
@@ -225,10 +225,10 @@
 
 
     try {
-        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'fpToolsTheme']);
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'foxenTheme']);
         if (data.enableCustomTheme === false) return;
         
-        const settings = { ...DEFAULT_THEME, ...(data.fpToolsTheme || {}) };
+        const settings = { ...DEFAULT_THEME, ...(data.foxenTheme || {}) };
 
         manageFontImports(settings);
 

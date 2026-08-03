@@ -1,6 +1,6 @@
 // background/autobump.js
 
-export const BUMP_ALARM_NAME = 'fpToolsAutoBump';
+export const BUMP_ALARM_NAME = 'foxenAutoBump';
 
 async function logToConsole(message) {
     const timestamp = new Date().toLocaleTimeString();
@@ -146,7 +146,7 @@ export async function runBumpCycle() {
     _isBumpCycleRunning = true;
     const summary = { raised: 0, errors: 0, skipped: 0 };
     try {
-        const { fpToolsSelectiveBumpEnabled, fpToolsSelectedBumpCategories, fpToolsBumpOnlyAutoDelivery } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsSelectiveBumpEnabled', 'fpToolsSelectedBumpCategories', 'fpToolsBumpOnlyAutoDelivery']);
+        const { foxenSelectiveBumpEnabled, foxenSelectedBumpCategories, foxenBumpOnlyAutoDelivery } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenSelectiveBumpEnabled', 'foxenSelectedBumpCategories', 'foxenBumpOnlyAutoDelivery']);
 
         const auth = await getAuthDetails();
         const userUrl = `https://funpay.com/users/${auth.userId}/`;
@@ -157,16 +157,16 @@ export async function runBumpCycle() {
         let categories = await parseHtmlViaOffscreen(userPageHtml, 'parseUserCategories');
         
         // Фильтр по автовыдаче
-        if (fpToolsBumpOnlyAutoDelivery) {
+        if (foxenBumpOnlyAutoDelivery) {
             await logToConsole(`Режим "Только автовыдача" активен. Фильтрация...`);
             categories = categories.filter(cat => cat.hasAutoDelivery);
         }
 
         // Фильтр по выборочным категориям
-        if (fpToolsSelectiveBumpEnabled && fpToolsSelectedBumpCategories && fpToolsSelectedBumpCategories.length > 0) {
-            await logToConsole(`Режим выборочного поднятия активен. Выбрано категорий: ${fpToolsSelectedBumpCategories.length}.`);
-            categories = categories.filter(cat => fpToolsSelectedBumpCategories.includes(cat.id));
-        } else if (fpToolsSelectiveBumpEnabled) {
+        if (foxenSelectiveBumpEnabled && foxenSelectedBumpCategories && foxenSelectedBumpCategories.length > 0) {
+            await logToConsole(`Режим выборочного поднятия активен. Выбрано категорий: ${foxenSelectedBumpCategories.length}.`);
+            categories = categories.filter(cat => foxenSelectedBumpCategories.includes(cat.id));
+        } else if (foxenSelectiveBumpEnabled) {
             await logToConsole("Выборочное поднятие включено, но категории не выбраны. Ничего не будет поднято.");
             return summary;
         }
@@ -222,7 +222,7 @@ export async function runBumpCycle() {
         throw error;
     } finally {
         _isBumpCycleRunning = false;
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsLastAutoBumpTime: Date.now() });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenLastAutoBumpTime: Date.now() });
     }
 }
 
@@ -235,9 +235,9 @@ export async function startAutoBump(cooldownMinutes) {
     }
 
     await extApi.storage.local.set({ 
-        fpToolsBumpInterval: interval,
-        fpToolsAutoBumpRunning: true,
-        fpToolsLastAutoBumpTime: 0 // Сбрасываем время для немедленного запуска
+        foxenBumpInterval: interval,
+        foxenAutoBumpRunning: true,
+        foxenLastAutoBumpTime: 0 // Сбрасываем время для немедленного запуска
     });
     // Сохраняем будильник как запасной вариант (fallback)
     await extApi.alarms.create(BUMP_ALARM_NAME, { delayInMinutes: 1, periodInMinutes: interval });
@@ -246,27 +246,27 @@ export async function startAutoBump(cooldownMinutes) {
 
 export async function stopAutoBump() {
     const extApi = typeof browser !== 'undefined' ? browser : chrome;
-    await extApi.storage.local.set({ fpToolsAutoBumpRunning: false });
+    await extApi.storage.local.set({ foxenAutoBumpRunning: false });
     await extApi.alarms.clear(BUMP_ALARM_NAME);
 }
 
 // Прослушивание пингов со страницы для стабильного интервала (как в AutoRaise.js)
 (typeof browser !== 'undefined' ? browser : chrome).runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === 'fptAutobumpPing') {
+    if (message.action === 'fxnAutobumpPing') {
         handleAutobumpPing();
     }
 });
 
 async function handleAutobumpPing() {
     const extApi = typeof browser !== 'undefined' ? browser : chrome;
-    const { fpToolsAutoBumpRunning, fpToolsBumpInterval, fpToolsLastAutoBumpTime } = await extApi.storage.local.get([
-        'fpToolsAutoBumpRunning', 'fpToolsBumpInterval', 'fpToolsLastAutoBumpTime'
+    const { foxenAutoBumpRunning, foxenBumpInterval, foxenLastAutoBumpTime } = await extApi.storage.local.get([
+        'foxenAutoBumpRunning', 'foxenBumpInterval', 'foxenLastAutoBumpTime'
     ]);
     
-    if (!fpToolsAutoBumpRunning) return;
+    if (!foxenAutoBumpRunning) return;
     
-    const intervalMs = (fpToolsBumpInterval || 15) * 60 * 1000;
-    const last = fpToolsLastAutoBumpTime || 0;
+    const intervalMs = (foxenBumpInterval || 15) * 60 * 1000;
+    const last = foxenLastAutoBumpTime || 0;
     const diff = intervalMs - (Date.now() - last);
     
     // Если время вышло и цикл ещё не запущен, стартуем его

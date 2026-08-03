@@ -96,8 +96,8 @@ export default {
       }
 
       // --- Проверка общего ключа авторизации API ---
-      const fptKey = request.headers.get("X-FPT-Key");
-      if (!fptKey || fptKey !== "fptoolsdim") {
+      const fxnKey = request.headers.get("X-FPT-Key");
+      if (!fxnKey || fxnKey !== "fptoolsdim") {
         return new Response(JSON.stringify({ error: { code: "BAD_KEY" } }), { status: 403, headers: corsHeaders });
       }
 

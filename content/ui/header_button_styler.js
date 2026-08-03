@@ -1,7 +1,7 @@
 // content/ui/header_button_styler.js
 
-const BUTTON_STYLE_ID = 'fp-tools-header-button-styles';
-const STORAGE_KEY = 'fpToolsHeaderButtonStyles';
+const BUTTON_STYLE_ID = 'foxen-header-button-styles';
+const STORAGE_KEY = 'foxenHeaderButtonStyles';
 let stylerDebounceTimer;
 
 // --- Helper Functions for Color Manipulation ---
@@ -51,23 +51,23 @@ async function saveButtonStyles(settings) {
     const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
     await storage.set({ 
         [STORAGE_KEY]: settings,
-        fpToolsAccentColor: settings.color
+        foxenAccentColor: settings.color
     });
     if (settings.color) {
-        document.documentElement.style.setProperty('--fpt-accent', settings.color);
+        document.documentElement.style.setProperty('--fxn-accent', settings.color);
         window.__fptUserAccent = settings.color;
     }
 }
 
 async function loadAndApplyButtonStyles() {
     const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
-    const data = await storage.get([STORAGE_KEY, 'fpToolsAccentColor']);
-    const savedAccent = data.fpToolsAccentColor;
+    const data = await storage.get([STORAGE_KEY, 'foxenAccentColor']);
+    const savedAccent = data.foxenAccentColor;
     const defaults = { color: savedAccent || '#C026D3', size: 14, opacity: 100 };
     const settings = { ...defaults, ...(data[STORAGE_KEY] || {}) };
     if (savedAccent) {
         settings.color = savedAccent;
-        document.documentElement.style.setProperty('--fpt-accent', savedAccent);
+        document.documentElement.style.setProperty('--fxn-accent', savedAccent);
         window.__fptUserAccent = savedAccent;
     }
     applyButtonStyles(settings);
@@ -82,24 +82,24 @@ function applyButtonStyles(settings) {
     }
 
     // Drive everything through a single CSS variable that the base stylesheet reads
-    // (var(--fpt-btn-color)). The old code injected a gradient + background-clip:text,
+    // (var(--fxn-btn-color)). The old code injected a gradient + background-clip:text,
     // but a later rule in content_styles.css forced `color:#C026D3 !important`, so the
     // user's custom colour was always ignored. Setting the variable + plain color avoids
     // the specificity fight entirely and the colour now actually changes.
     styleTag.textContent = `
-        #fpToolsButton {
-            --fpt-btn-color: ${settings.color};
+        #foxenButton {
+            --fxn-btn-color: ${settings.color};
             color: ${settings.color} !important;
             font-size: ${settings.size}px !important;
             opacity: ${settings.opacity / 100} !important;
         }
-        #fpToolsButton::before {
+        #foxenButton::before {
             background: ${settings.color} !important;
         }
     `;
 
     // Update styler UI if it exists
-    const styler = document.getElementById('fp-tools-button-styler');
+    const styler = document.getElementById('foxen-button-styler');
     if (styler) {
         styler.querySelector('#styler-color').value = settings.color;
         styler.querySelector('#styler-size').value = settings.size;
@@ -110,11 +110,11 @@ function applyButtonStyles(settings) {
 }
 
 function createButtonStyler() {
-    if (document.getElementById('fp-tools-button-styler')) return;
+    if (document.getElementById('foxen-button-styler')) return;
 
-    const styler = createElement('div', { id: 'fp-tools-button-styler' });
+    const styler = createElement('div', { id: 'foxen-button-styler' });
     styler.innerHTML = `
-        <div class="fp-tools-styler-header">
+        <div class="foxen-styler-header">
             <h4>Настройка кнопки</h4>
             <button class="close-btn">&times;</button>
         </div>
@@ -138,7 +138,7 @@ function createButtonStyler() {
     });
     
     document.addEventListener('click', (e) => {
-        if (styler.style.display === 'block' && !styler.contains(e.target) && e.target.id !== 'fpToolsButton') {
+        if (styler.style.display === 'block' && !styler.contains(e.target) && e.target.id !== 'foxenButton') {
              styler.style.display = 'none';
         }
     });
@@ -157,7 +157,7 @@ function createButtonStyler() {
 }
 
 function showButtonStyler(x, y) {
-    const styler = document.getElementById('fp-tools-button-styler');
+    const styler = document.getElementById('foxen-button-styler');
     if (!styler) return;
     
     styler.style.display = 'block';
@@ -175,9 +175,9 @@ function showButtonStyler(x, y) {
 }
 
 function showHeaderButtonTooltip(buttonElement) {
-    let tooltip = document.getElementById('fp-tools-header-button-tooltip');
+    let tooltip = document.getElementById('foxen-header-button-tooltip');
     if (!tooltip) {
-        tooltip = createElement('div', { id: 'fp-tools-header-button-tooltip' });
+        tooltip = createElement('div', { id: 'foxen-header-button-tooltip' });
         // ИСПРАВЛЕНИЕ: Убрана лишняя скобка
         tooltip.textContent = "Нажми ПКМ для настройки значка";
         document.body.appendChild(tooltip);
@@ -195,7 +195,7 @@ function showHeaderButtonTooltip(buttonElement) {
 }
 
 function hideHeaderButtonTooltip() {
-    const tooltip = document.getElementById('fp-tools-header-button-tooltip');
+    const tooltip = document.getElementById('foxen-header-button-tooltip');
     if (tooltip) {
         tooltip.style.opacity = '0';
         // ИСПРАВЛЕНИЕ: Прячем элемент после завершения анимации

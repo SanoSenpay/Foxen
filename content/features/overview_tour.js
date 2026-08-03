@@ -200,13 +200,13 @@ async function loadGoogleIcons() {
 async function startTour() {
     await loadGoogleIcons();
 
-    let overlay = document.getElementById('fp-tools-tour-overlay');
+    let overlay = document.getElementById('foxen-tour-overlay');
     if (!overlay) {
         overlay = createTourOverlay();
         document.body.appendChild(overlay);
     }
 
-    document.querySelector('.fp-tools-popup').classList.remove('active');
+    document.querySelector('.foxen-popup').classList.remove('active');
     overlay.classList.add('active');
     toggleFullscreen(true);
     playTourMusic();
@@ -217,7 +217,7 @@ async function startTour() {
 }
 
 function nextScene() {
-    const overlay = document.getElementById('fp-tools-tour-overlay');
+    const overlay = document.getElementById('foxen-tour-overlay');
     if (!overlay) return;
 
     const scenes = overlay.querySelectorAll('.tour-scene');
@@ -244,7 +244,7 @@ function nextScene() {
 }
 
 function endTour() {
-    const overlay = document.getElementById('fp-tools-tour-overlay');
+    const overlay = document.getElementById('foxen-tour-overlay');
     if (overlay) {
         overlay.classList.remove('active');
     }
@@ -261,7 +261,7 @@ function escapeHandler(e) {
 }
 
 function createTourOverlay() {
-    const overlay = createElement('div', { id: 'fp-tools-tour-overlay' });
+    const overlay = createElement('div', { id: 'foxen-tour-overlay' });
     let scenesHTML = SCENES.map((scene, index) => `
         <div class="tour-scene" data-index="${index}">
             <div class="tour-content-wrapper">

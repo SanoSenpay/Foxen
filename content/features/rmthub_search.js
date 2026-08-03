@@ -193,7 +193,7 @@
         drop.innerHTML = `
         <div class="rmth-card">
             <div class="rmth-head">
-                <img class="rmth-ava" src="${esc(ava)}" onerror="this.src='${DEF_AVA}'" alt="">
+                <img class="rmth-ava" src="${esc(ava)}" alt="">
                 <div class="rmth-uinfo">
                     <div class="rmth-name">${esc(uname)}${banned ? '<span class="rmth-banned">БАН</span>' : ''}</div>
                     <div class="rmth-uid">#${esc(uid)}</div>
@@ -214,6 +214,7 @@
             </div>
             <span class="rmth-credit">Данные: RMTHub.com</span>
         </div>`;
+        drop.querySelector('.rmth-ava')?.addEventListener('error', function() { this.src = DEF_AVA; });
         openDrop(drop);
     }
 

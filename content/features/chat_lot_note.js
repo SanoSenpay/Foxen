@@ -22,25 +22,25 @@
         if (!window.FPTNotes) return;
         const offerId = offerIdFromPanel(panel);
 
-        const existing = panel.querySelector('.fpt-chat-note-btn');
+        const existing = panel.querySelector('.fxn-chat-note-btn');
         if (existing && existing.dataset.offer === String(offerId)) return;
 
         // СИНХРОННО помечаем панель ДО await, иначе параллельные вызовы наплодят дубли.
         const stamp = String(offerId || '');
-        if (panel.dataset.fptNoteStamp === stamp) return;
-        panel.dataset.fptNoteStamp = stamp;
+        if (panel.dataset.fxnNoteStamp === stamp) return;
+        panel.dataset.fxnNoteStamp = stamp;
 
         if (existing) existing.remove();
         if (!offerId) return;
 
         const note = await window.FPTNotes.get(offerId);
-        if (panel.dataset.fptNoteStamp !== stamp) return;
-        if (panel.querySelector('.fpt-chat-note-btn')) return;
+        if (panel.dataset.fxnNoteStamp !== stamp) return;
+        if (panel.querySelector('.fxn-chat-note-btn')) return;
         if (!note) return; // кнопка только если заметка есть
 
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'fpt-chat-note-btn';
+        btn.className = 'fxn-chat-note-btn';
         btn.dataset.offer = String(offerId);
         btn.textContent = 'заметка';
         btn.style.cssText = [
@@ -73,13 +73,13 @@
         const root = document.getElementById('content') || document.body;
         const obs = new MutationObserver((mutations) => {
             const onlyOurs = mutations.length && mutations.every(m =>
-                Array.from(m.addedNodes).every(n => n.nodeType === 1 && n.classList && n.classList.contains('fpt-chat-note-btn')));
+                Array.from(m.addedNodes).every(n => n.nodeType === 1 && n.classList && n.classList.contains('fxn-chat-note-btn')));
             if (onlyOurs) return;
             scan();
         });
         obs.observe(root, { childList: true, subtree: true });
-        document.addEventListener('fpt-notes-changed', () => {
-            document.querySelectorAll('.param-item.chat-panel[data-type="c-p-u"]').forEach(p => { delete p.dataset.fptNoteStamp; });
+        document.addEventListener('fxn-notes-changed', () => {
+            document.querySelectorAll('.param-item.chat-panel[data-type="c-p-u"]').forEach(p => { delete p.dataset.fxnNoteStamp; });
             scan();
         });
     }

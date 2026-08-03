@@ -8,15 +8,15 @@
   const VERIFY_PRICE = '1000';
   const DESCRIPTION_MAX = 600;
   const MAX_LINES = 4;
-  const ROOT = 'fpt-pd';
-  const ROW = 'fpt-pd-row';
-  const CARD = 'fpt-profile-card';
-  const META = 'fpt-profile-meta';
-  const IDENTITY = 'fpt-profile-identity';
-  const TEXT = 'fpt-pd-text';
-  const EDIT = 'fpt-pd-edit';
-  const SESSION_KEY = 'fptProfileSession';
-  const CACHE_KEY = 'fptProfileDescrCache';
+  const ROOT = 'fxn-pd';
+  const ROW = 'fxn-pd-row';
+  const CARD = 'fxn-profile-card';
+  const META = 'fxn-profile-meta';
+  const IDENTITY = 'fxn-profile-identity';
+  const TEXT = 'fxn-pd-text';
+  const EDIT = 'fxn-pd-edit';
+  const SESSION_KEY = 'fxnProfileSession';
+  const CACHE_KEY = 'fxnProfileDescrCache';
   const CLIENT_CACHE_TTL = 60 * 60 * 1000;
   const PROFILE_RE = /^\/users\/(\d+)\/?$/;
 
@@ -112,7 +112,7 @@
   async function proxiedFetch(url, options = {}) {
     if (!url.startsWith(SERVER)) return fetch(url, options);
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ action: 'fptFetchProxy', url, options }, (res) => {
+      chrome.runtime.sendMessage({ action: 'fxnFetchProxy', url, options }, (res) => {
         if (!res || chrome.runtime.lastError) return reject(new Error('Proxy connection error'));
         if (res.error) return reject(new Error(res.error));
         resolve({
@@ -173,32 +173,14 @@
   }
 
   let _catalog = null;
-  const CATALOG_CACHE_KEY = 'fptBannersCatalogCache';
+  const CATALOG_CACHE_KEY = 'fxnBannersCatalogCache';
   const CATALOG_CACHE_TTL = 30 * 60 * 1000; // 30 минут
 
   /**
    * Загрузка свежего каталога баннеров с удаленного сервера
    */
   async function fetchServerCatalog() {
-    try {
-      const r = await proxiedFetch(SERVER + '/banners/catalog', {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { 'X-FPT-Key': SHARED_KEY }
-      });
-      if (r.ok) {
-        const data = await r.json();
-        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
-          _catalog = data;
-          await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
-          return _catalog;
-        }
-      }
-    } catch (e) {
-      console.warn('[FPT PD] Ошибка загрузки каталога с бэкенда:', e);
-    }
-
-    // Запасной вариант: прямое чтение с GitHub Raw
+    // 1. Попытка загрузки актуального каталога с GitHub Raw
     const ghUrls = [
       'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners-catalog.json',
       'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/banners-catalog.json',
@@ -217,6 +199,23 @@
         }
       } catch (_) {}
     }
+
+    // 2. Воркер в качестве резерва (при наличии развернутого эндпоинта)
+    try {
+      const r = await proxiedFetch(SERVER + '/banners/catalog', {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'X-FPT-Key': SHARED_KEY }
+      });
+      if (r.ok) {
+        const data = await r.json();
+        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
+          _catalog = data;
+          await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
+          return _catalog;
+        }
+      }
+    } catch (_) {}
 
     return null;
   }
@@ -257,7 +256,7 @@
       _catalog = await r.json();
       return _catalog;
     } catch (e) {
-      console.error('[FPT PD] Ошибка загрузки резервного каталога:', e);
+      console.error('[Foxen PD] Ошибка загрузки резервного каталога:', e);
       return { version: 1, categories: [], banners: [] };
     }
   }
@@ -354,7 +353,7 @@
     });
     if (!saveRes.ok) throw new Error('FUNPAY_SAVE_' + saveRes.status);
     const json = await saveRes.json().catch(() => ({}));
-    console.log('[FPT PD] offerSave response:', json);
+    console.log('[Foxen PD] offerSave response:', json);
     if (json && json.error) {
       const e = typeof json.error === 'string' ? json.error : JSON.stringify(json.error);
       throw new Error('FUNPAY_SAVE_ERROR: ' + e);
@@ -387,7 +386,7 @@
     try {
       await attemptDelete(token);
     } catch (e) {
-      console.warn('[FPT PD] Ошибка при удалении лота:', e.message, 'Пробуем получить свежий CSRF токен...');
+      console.warn('[Foxen PD] Ошибка при удалении лота:', e.message, 'Пробуем получить свежий CSRF токен...');
       try {
         const pageRes = await fetch(location.origin + '/lots/offerEdit?node=' + VERIFY_NODE_ID);
         if (pageRes.ok) {
@@ -398,14 +397,14 @@
               const d = JSON.parse(raw);
               const freshToken = Array.isArray(d) ? d[0]['csrf-token'] : d['csrf-token'];
               if (freshToken) {
-                 console.log('[FPT PD] Свежий CSRF получен, пробуем удалить...');
+                 console.log('[Foxen PD] Свежий CSRF получен, пробуем удалить...');
                  await attemptDelete(freshToken);
                  return;
               }
            }
         }
       } catch (e2) {
-        console.error('[FPT PD] Ошибка получения свежего CSRF токена:', e2.message);
+        console.error('[Foxen PD] Ошибка получения свежего CSRF токена:', e2.message);
       }
       throw e;
     }
@@ -427,119 +426,119 @@
   }
 
   async function runVerification(id) {
-    const lastVerify = Number((await storageGet(['fptLastVerifyAt']))['fptLastVerifyAt'] || 0);
+    const lastVerify = Number((await storageGet(['fxnLastVerifyAt']))['fxnLastVerifyAt'] || 0);
     if (lastVerify && Date.now() - lastVerify < 60 * 1000) {
       const e = new Error('VERIFY_COOLDOWN');
       e.retryInSec = Math.ceil((60 * 1000 - (Date.now() - lastVerify)) / 1000);
       throw e;
     }
-    await storageSet({ fptLastVerifyAt: Date.now() });
+    await storageSet({ fxnLastVerifyAt: Date.now() });
 
     const start = await serverLinkStart(id);
     let offerId = null;
     try {
       offerId = await createVerificationLot(start.code);
-      console.log('[FPT PD] lot created, offerId=', offerId, '- ждём проверку сервером…');
+      console.log('[Foxen PD] lot created, offerId=', offerId, '- ждём проверку сервером…');
       const conf = await pollConfirm(id, offerId, 90000);
-      console.log('[FPT PD] confirmed by server');
+      console.log('[Foxen PD] confirmed by server');
       const session = { token: conf.session, funpayUserId: id, funpayUsername: conf.funpayUsername };
       await saveSession(session);
       return session;
     } finally {
       if (offerId !== null) {
-        deleteVerificationLot(offerId).catch(e => console.error('[FPT PD] Ошибка при удалении проверочного лота:', e));
+        deleteVerificationLot(offerId).catch(e => console.error('[Foxen PD] Ошибка при удалении проверочного лота:', e));
       }
     }
   }
 
   function injectStyles() {
-    if (document.getElementById('fpt-pd-styles')) return;
+    if (document.getElementById('fxn-pd-styles')) return;
     const s = document.createElement('style');
-    s.id = 'fpt-pd-styles';
+    s.id = 'fxn-pd-styles';
     s.textContent =
       '.' + CARD + '{background:rgba(18,18,18,0.4);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:16px;overflow:hidden;margin-bottom:24px;box-shadow:0 12px 40px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.06);position:relative;}' +
-      '.' + CARD + ' .profile.fpt-profile-body{padding:80px 28px 32px;text-align:center;background:transparent;position:relative;}' +
+      '.' + CARD + ' .profile.fxn-profile-body{padding:80px 28px 32px;text-align:center;background:transparent;position:relative;}' +
       '.' + CARD + ' .profile > h1.mb40{display:none !important;}' +
       '.' + IDENTITY + '{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}' +
-      '.fpt-profile-name{font-size:26px;font-weight:700;color:#fff;line-height:1.2;}' +
-      '.fpt-profile-status{font-size:14px;font-weight:500;color:#888;line-height:1.2;}' +
-      '.fpt-profile-status.fpt-online{color:#22c55e;}' +
+      '.fxn-profile-name{font-size:26px;font-weight:700;color:#fff;line-height:1.2;}' +
+      '.fxn-profile-status{font-size:14px;font-weight:500;color:#888;line-height:1.2;}' +
+      '.fxn-profile-status.fxn-online{color:#22c55e;}' +
       '.' + IDENTITY + ' .user-badges{margin:0;}' +
-      '.fpt-profile-rating{display:inline-flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:24px;cursor:pointer;position:relative;z-index:20;}' +
-      '.fpt-stars-wrapper{position:relative;display:inline-flex;}' +
-      '.fpt-stars-bg, .fpt-stars-fg{display:flex;gap:4px;}' +
-      '.fpt-stars-bg{color:#d1d5db;}' +
-      '.fpt-stars-fg{color:#fbbf24;position:absolute;top:0;left:0;overflow:hidden;width:var(--rating-pct);}' +
-      '.fpt-stars-wrapper svg{width:22px;height:22px;flex-shrink:0;}' +
-      '.fpt-profile-rating .fpt-count{color:rgba(255,255,255,0.6);font-size:14px;font-weight:500;transition:color 0.2s;margin:0;}' +
-      '.fpt-profile-rating:hover .fpt-count{color:#fff;}' +
+      '.fxn-profile-rating{display:inline-flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:24px;cursor:pointer;position:relative;z-index:20;}' +
+      '.fxn-stars-wrapper{position:relative;display:inline-flex;}' +
+      '.fxn-stars-bg, .fxn-stars-fg{display:flex;gap:4px;}' +
+      '.fxn-stars-bg{color:#d1d5db;}' +
+      '.fxn-stars-fg{color:#fbbf24;position:absolute;top:0;left:0;overflow:hidden;width:var(--rating-pct);}' +
+      '.fxn-stars-wrapper svg{width:22px;height:22px;flex-shrink:0;}' +
+      '.fxn-profile-rating .fxn-count{color:rgba(255,255,255,0.6);font-size:14px;font-weight:500;transition:color 0.2s;margin:0;}' +
+      '.fxn-profile-rating:hover .fxn-count{color:#fff;}' +
       '.' + META + '{display:flex;justify-content:center;align-items:flex-start;gap:40px;flex-wrap:wrap;max-width:760px;margin:0 auto;text-align:center;}' +
       '.' + META + ' .profile-header-cols{display:block;flex:1 1 50%;min-width:200px;max-width:320px;text-align:center;}' +
       '.' + META + ' .param-item{margin:0;}' +
-      '.' + META + ' .param-item h5,.fpt-profile-meta .' + ROOT + ' h5{margin:0 0 8px;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#888;font-weight:600;}' +
+      '.' + META + ' .param-item h5,.fxn-profile-meta .' + ROOT + ' h5{margin:0 0 8px;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#888;font-weight:600;}' +
       '.' + META + ' .param-item h5.text-bold{font-weight:600;}' +
-      '.' + META + ' .param-item .text-nowrap,.fpt-profile-meta .' + ROOT + ' .' + TEXT + '{color:#fff;font-size:14px;line-height:1.5;}' +
+      '.' + META + ' .param-item .text-nowrap,.fxn-profile-meta .' + ROOT + ' .' + TEXT + '{color:#fff;font-size:14px;line-height:1.5;}' +
       '.' + META + ' .param-item .text-nowrap{font-weight:400;}' +
       '.' + ROW + '{display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;}' +
       '.' + ROW + ' > .profile-header-cols{flex:0 0 auto;}' +
       '.' + ROOT + '{flex:1 1 50%;min-width:200px;max-width:320px;text-align:center;}' +
-      '.' + ROOT + ' h5.fpt-pd-h{font-weight:600;}' +
+      '.' + ROOT + ' h5.fxn-pd-h{font-weight:600;}' +
       '.' + TEXT + '{white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:' + MAX_LINES + ';line-clamp:' + MAX_LINES + ';overflow:hidden;}' +
-      '.' + EDIT + '{border:0;background:transparent;color:var(--fpt-pd-primary,#f59e0b);cursor:pointer;font-size:12px;font-weight:600;padding:0;margin-top:6px;}' +
-      '.' + EDIT + ':hover{color:var(--fpt-pd-primary-hover,var(--fpt-pd-primary,#f59e0b));text-decoration:underline;}' +
+      '.' + EDIT + '{border:0;background:transparent;color:var(--fxn-pd-primary,#f59e0b);cursor:pointer;font-size:12px;font-weight:600;padding:0;margin-top:6px;}' +
+      '.' + EDIT + ':hover{color:var(--fxn-pd-primary-hover,var(--fxn-pd-primary,#f59e0b));text-decoration:underline;}' +
       '.' + ROOT + ' textarea{width:100%;max-width:520px;box-sizing:border-box;resize:none;margin-top:4px;padding:6px 8px;border:1px solid rgba(127,127,127,.35);border-radius:4px;background:transparent;color:inherit;font-family:inherit;font-size:13px;line-height:1.45;}' +
-      '.' + ROOT + ' .fpt-pd-actions{display:flex;gap:8px;align-items:center;max-width:520px;margin-top:8px;}' +
-      '.' + ROOT + ' .fpt-pd-counter{margin-left:auto;font-size:11px;opacity:.6;}' +
+      '.' + ROOT + ' .fxn-pd-actions{display:flex;gap:8px;align-items:center;max-width:520px;margin-top:8px;}' +
+      '.' + ROOT + ' .fxn-pd-counter{margin-left:auto;font-size:11px;opacity:.6;}' +
       '.' + ROOT + ' .btn{min-width:90px;}' +
-      '.fpt-pd-dots{display:inline-block;line-height:1;}' +
-      '.fpt-pd-dots > span{display:inline-block;width:5px;height:5px;margin:0 2px;border-radius:50%;background:currentColor;opacity:.35;animation:fpt-pd-bounce 1.2s infinite ease-in-out;}' +
-      '.fpt-pd-dots > span:nth-child(2){animation-delay:.15s;}' +
-      '.fpt-pd-dots > span:nth-child(3){animation-delay:.3s;}' +
-      '@keyframes fpt-pd-bounce{0%,80%,100%{opacity:.25;transform:translateY(0);}40%{opacity:.9;transform:translateY(-4px);}}' +
-      '.' + CARD + ' .profile-cover.fpt-cover-host{position:relative !important;overflow:visible !important;min-height:350px !important;height:350px !important;border-radius:0 !important;background:#0d1321 !important;}' +
+      '.fxn-pd-dots{display:inline-block;line-height:1;}' +
+      '.fxn-pd-dots > span{display:inline-block;width:5px;height:5px;margin:0 2px;border-radius:50%;background:currentColor;opacity:.35;animation:fxn-pd-bounce 1.2s infinite ease-in-out;}' +
+      '.fxn-pd-dots > span:nth-child(2){animation-delay:.15s;}' +
+      '.fxn-pd-dots > span:nth-child(3){animation-delay:.3s;}' +
+      '@keyframes fxn-pd-bounce{0%,80%,100%{opacity:.25;transform:translateY(0);}40%{opacity:.9;transform:translateY(-4px);}}' +
+      '.' + CARD + ' .profile-cover.fxn-cover-host{position:relative !important;overflow:visible !important;min-height:350px !important;height:350px !important;border-radius:0 !important;background:#0d1321 !important;}' +
       '.' + CARD + ' .profile-cover{position:relative !important;overflow:visible !important;min-height:350px !important;height:350px !important;background:#0d1321 !important;}' +
-      '.' + CARD + ' .profile-cover.fpt-cover-host .profile-cover-container{display:none !important;}' +
-      '.' + CARD + ' .profile-cover:not(.fpt-cover-host) .profile-cover-container{position:absolute !important;inset:0 !important;height:350px !important;overflow:hidden !important;}' +
-      '.' + CARD + ' .profile-cover:not(.fpt-cover-host) .profile-cover-img{height:350px !important;background-size:cover !important;background-position:center 25% !important;}' +
-      '.' + CARD + ' .profile-cover-img.fpt-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:350px !important;overflow:hidden !important;border-radius:0 !important;z-index:0 !important;}' +
-      '.' + CARD + ' .fpt-cover-host,' + '.' + CARD + ' .fpt-cover-host .profile-cover-img,' + '.' + CARD + ' .profile-cover-img.fpt-cover,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-pic,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gtop,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gbottom,' + '.' + CARD + ' .profile-cover-img.fpt-cover .fpt-cover-gdark{transform:none !important;filter:none !important;opacity:1 !important;}' +
-      '.container.profile-header:not(.' + CARD + ') .fpt-cover-host{position:relative !important;overflow:hidden !important;min-height:350px !important;border-radius:0 0 40px 40px !important;background:#0d1321 !important;}' +
-      '.container.profile-header:not(.' + CARD + ') .profile-cover-img.fpt-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;overflow:hidden !important;border-radius:0 0 40px 40px !important;z-index:0 !important;}' +
-      '.fpt-cover-pic{position:absolute !important;inset:0 !important;background-size:cover !important;background-position:center 25% !important;background-repeat:no-repeat !important;z-index:0 !important;}' +
-      '.fpt-cover-gtop{position:absolute !important;inset:0 !important;background:linear-gradient(180deg,rgba(13,19,33,.15) 0%,transparent 25%,transparent 100%) !important;z-index:1 !important;pointer-events:none;}' +
-      '.fpt-cover-gbottom{display:none !important;}' +
-      '.fpt-cover-gdark{display:none !important;}' +
+      '.' + CARD + ' .profile-cover.fxn-cover-host .profile-cover-container{display:none !important;}' +
+      '.' + CARD + ' .profile-cover:not(.fxn-cover-host) .profile-cover-container{position:absolute !important;inset:0 !important;height:350px !important;overflow:hidden !important;}' +
+      '.' + CARD + ' .profile-cover:not(.fxn-cover-host) .profile-cover-img{height:350px !important;background-size:cover !important;background-position:center center !important;}' +
+      '.' + CARD + ' .profile-cover-img.fxn-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:350px !important;overflow:hidden !important;border-radius:0 !important;z-index:0 !important;}' +
+      '.' + CARD + ' .fxn-cover-host,' + '.' + CARD + ' .fxn-cover-host .profile-cover-img,' + '.' + CARD + ' .profile-cover-img.fxn-cover,' + '.' + CARD + ' .profile-cover-img.fxn-cover .fxn-cover-pic,' + '.' + CARD + ' .profile-cover-img.fxn-cover .fxn-cover-gtop,' + '.' + CARD + ' .profile-cover-img.fxn-cover .fxn-cover-gbottom,' + '.' + CARD + ' .profile-cover-img.fxn-cover .fxn-cover-gdark{transform:none !important;filter:none !important;opacity:1 !important;}' +
+      '.container.profile-header:not(.' + CARD + ') .fxn-cover-host{position:relative !important;overflow:hidden !important;min-height:350px !important;border-radius:0 0 40px 40px !important;background:#0d1321 !important;}' +
+      '.container.profile-header:not(.' + CARD + ') .profile-cover-img.fxn-cover{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;overflow:hidden !important;border-radius:0 0 40px 40px !important;z-index:0 !important;}' +
+      '.fxn-cover-pic{position:absolute !important;inset:0 !important;background-size:cover !important;background-position:center center !important;background-repeat:no-repeat !important;z-index:0 !important;}' +
+      '.fxn-cover-gtop{position:absolute !important;inset:0 !important;background:linear-gradient(180deg,rgba(13,19,33,.15) 0%,transparent 25%,transparent 100%) !important;z-index:1 !important;pointer-events:none;}' +
+      '.fxn-cover-gbottom{display:none !important;}' +
+      '.fxn-cover-gdark{display:none !important;}' +
       '.' + CARD + ' .avatar{position:absolute !important;bottom:-25px !important;left:50% !important;transform:translate(-50%,50%) !important;margin:0 !important;z-index:10 !important;}' +
       '.' + CARD + ' .avatar-photo{border:1.5px solid rgba(255,255,255,0.15);box-shadow:0 8px 24px rgba(0,0,0,0.5);}' +
-      '.container.profile-header:not(.' + CARD + ') .fpt-cover-host .avatar,.container.profile-header:not(.' + CARD + ') .profile-cover-img.fpt-cover .avatar{position:relative !important;z-index:10 !important;margin-top:60px !important;transform:none !important;}' +
-      '.fpt-banner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);opacity:0;transition:opacity .18s ease,background .18s ease;cursor:pointer;z-index:5;}' +
-      '.profile-cover-img.fpt-cover:hover .fpt-banner-overlay{opacity:1;background:rgba(0,0,0,.45);}' +
-      '.fpt-banner-pencil{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;}' +
-      '.fpt-banner-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);transition:background .4s ease;}' +
-      '.fpt-banner-modal.fpt-preview-mode{background:rgba(0,0,0,.12);}' +
-      '.fpt-banner-box{background:#fff;color:#1a1a1a;width:min(620px,94vw);border-radius:14px;padding:30px 30px 26px;box-shadow:0 20px 60px rgba(0,0,0,.45);transition:transform .55s cubic-bezier(.22,1,.36,1),box-shadow .4s ease;will-change:transform;}' +
-      '.fpt-preview-mode .fpt-banner-box{transform:translateY(24vh);box-shadow:0 28px 70px rgba(0,0,0,.5);}' +
-      '.fpt-banner-box h5{margin:0 0 18px;font-size:20px;font-weight:700;color:#1a1a1a;}' +
-      '.fpt-banner-input{width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #d5d7db;border-radius:9px;background:#fff;color:#1a1a1a;font-size:15px;outline:none;transition:border-color .15s ease;}' +
-      '.fpt-banner-input:focus{border-color:var(--fpt-pd-primary,#f59e0b);}' +
-      '.fpt-banner-input::placeholder{color:#9aa0a6;}' +
-      '.fpt-banner-hint{font-size:13px;color:#6b7280;margin-top:14px;line-height:1.5;min-height:20px;}' +
-      '.fpt-banner-hint.fpt-bad{color:#dc2626;}' +
-      '.fpt-banner-help{margin-top:14px;padding:14px 16px;background:#f4f6f8;border-radius:10px;border:1px solid #e6e9ee;}' +
-      '.fpt-help-title{font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;}' +
-      '.fpt-help-step{font-size:12.5px;color:#4b5563;line-height:1.55;margin-bottom:4px;}' +
-      '.fpt-help-note{font-size:12px;color:#9ca3af;line-height:1.5;margin-top:8px;}' +
-      '.fpt-banner-help b{color:#111827;}' +
-      '.fpt-banner-actions{display:flex;gap:10px;margin-top:28px;}' +
-      '.fpt-banner-actions .btn{min-width:120px;padding:10px 18px;font-size:14px;}' +
-      '.fpt-banner-actions .btn[disabled]{opacity:.6;cursor:default;}' +
-      '.fpt-btn-dots{display:inline-block;}' +
-      '.fpt-btn-dots > i{display:inline-block;width:5px;height:5px;margin:0 1.5px;border-radius:50%;background:currentColor;opacity:.4;animation:fpt-pd-bounce 1.2s infinite ease-in-out;}' +
-      '.fpt-btn-dots > i:nth-child(2){animation-delay:.15s;}' +
-      '.fpt-btn-dots > i:nth-child(3){animation-delay:.3s;}' +
-      '.fpt-banner-vignette{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;transition:opacity .35s ease;box-shadow:inset 0 0 120px 30px rgba(0,0,0,.28);display:flex;align-items:flex-end;justify-content:center;}' +
-      '.fpt-banner-vignette.show{opacity:1;}' +
-      '.fpt-banner-vignette span{margin-bottom:26px;background:rgba(0,0,0,.45);color:#fff;font-size:12px;padding:6px 12px;border-radius:20px;}';
+      '.container.profile-header:not(.' + CARD + ') .fxn-cover-host .avatar,.container.profile-header:not(.' + CARD + ') .profile-cover-img.fxn-cover .avatar{position:relative !important;z-index:10 !important;margin-top:60px !important;transform:none !important;}' +
+      '.fxn-banner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);opacity:0;transition:opacity .18s ease,background .18s ease;cursor:pointer;z-index:5;}' +
+      '.profile-cover-img.fxn-cover:hover .fxn-banner-overlay{opacity:1;background:rgba(0,0,0,.45);}' +
+      '.fxn-banner-pencil{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;}' +
+      '.fxn-banner-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);transition:background .4s ease;}' +
+      '.fxn-banner-modal.fxn-preview-mode{background:rgba(0,0,0,.12);}' +
+      '.fxn-banner-box{background:#fff;color:#1a1a1a;width:min(620px,94vw);border-radius:14px;padding:30px 30px 26px;box-shadow:0 20px 60px rgba(0,0,0,.45);transition:transform .55s cubic-bezier(.22,1,.36,1),box-shadow .4s ease;will-change:transform;}' +
+      '.fxn-preview-mode .fxn-banner-box{transform:translateY(24vh);box-shadow:0 28px 70px rgba(0,0,0,.5);}' +
+      '.fxn-banner-box h5{margin:0 0 18px;font-size:20px;font-weight:700;color:#1a1a1a;}' +
+      '.fxn-banner-input{width:100%;box-sizing:border-box;padding:14px 16px;border:1.5px solid #d5d7db;border-radius:9px;background:#fff;color:#1a1a1a;font-size:15px;outline:none;transition:border-color .15s ease;}' +
+      '.fxn-banner-input:focus{border-color:var(--fxn-pd-primary,#f59e0b);}' +
+      '.fxn-banner-input::placeholder{color:#9aa0a6;}' +
+      '.fxn-banner-hint{font-size:13px;color:#6b7280;margin-top:14px;line-height:1.5;min-height:20px;}' +
+      '.fxn-banner-hint.fxn-bad{color:#dc2626;}' +
+      '.fxn-banner-help{margin-top:14px;padding:14px 16px;background:#f4f6f8;border-radius:10px;border:1px solid #e6e9ee;}' +
+      '.fxn-help-title{font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;}' +
+      '.fxn-help-step{font-size:12.5px;color:#4b5563;line-height:1.55;margin-bottom:4px;}' +
+      '.fxn-help-note{font-size:12px;color:#9ca3af;line-height:1.5;margin-top:8px;}' +
+      '.fxn-banner-help b{color:#111827;}' +
+      '.fxn-banner-actions{display:flex;gap:10px;margin-top:28px;}' +
+      '.fxn-banner-actions .btn{min-width:120px;padding:10px 18px;font-size:14px;}' +
+      '.fxn-banner-actions .btn[disabled]{opacity:.6;cursor:default;}' +
+      '.fxn-btn-dots{display:inline-block;}' +
+      '.fxn-btn-dots > i{display:inline-block;width:5px;height:5px;margin:0 1.5px;border-radius:50%;background:currentColor;opacity:.4;animation:fxn-pd-bounce 1.2s infinite ease-in-out;}' +
+      '.fxn-btn-dots > i:nth-child(2){animation-delay:.15s;}' +
+      '.fxn-btn-dots > i:nth-child(3){animation-delay:.3s;}' +
+      '.fxn-banner-vignette{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;transition:opacity .35s ease;box-shadow:inset 0 0 120px 30px rgba(0,0,0,.28);display:flex;align-items:flex-end;justify-content:center;}' +
+      '.fxn-banner-vignette.show{opacity:1;}' +
+      '.fxn-banner-vignette span{margin-bottom:26px;background:rgba(0,0,0,.45);color:#fff;font-size:12px;padding:6px 12px;border-radius:20px;}';
     document.head.appendChild(s);
   }
 
@@ -551,7 +550,7 @@
       document.body.appendChild(probe);
       const c = getComputedStyle(probe).backgroundColor;
       probe.remove();
-      if (c && c !== 'transparent' && c !== 'rgba(0, 0, 0, 0)') el.style.setProperty('--fpt-pd-primary', c);
+      if (c && c !== 'transparent' && c !== 'rgba(0, 0, 0, 0)') el.style.setProperty('--fxn-pd-primary', c);
     } catch {}
   }
 
@@ -572,7 +571,7 @@
     if (!card || !profile) return null;
 
     card.classList.add(CARD);
-    profile.classList.add('fpt-profile-body');
+    profile.classList.add('fxn-profile-body');
 
     if (!profile.querySelector('.' + IDENTITY)) {
       const h1 = profile.querySelector('h1.mb40');
@@ -583,7 +582,7 @@
         const nameSrc = h1.querySelector('.mr4') || h1.querySelector('a');
         if (nameSrc) {
           const name = document.createElement('span');
-          name.className = 'fpt-profile-name';
+          name.className = 'fxn-profile-name';
           name.textContent = nameSrc.textContent.trim();
           identity.appendChild(name);
         }
@@ -595,7 +594,7 @@
         const st = parseProfileStatus(h1, statusEl);
         if (st.text) {
           const status = document.createElement('span');
-          status.className = 'fpt-profile-status' + (st.online ? ' fpt-online' : '');
+          status.className = 'fxn-profile-status' + (st.online ? ' fxn-online' : '');
           status.textContent = st.text;
           identity.appendChild(status);
         }
@@ -605,7 +604,7 @@
     }
 
     const identity = profile.querySelector('.' + IDENTITY);
-    if (identity && !profile.querySelector('.fpt-profile-rating')) {
+    if (identity && !profile.querySelector('.fxn-profile-rating')) {
       const ratingCol = profile.querySelector('.profile-header-col-rating');
       if (ratingCol) {
         const txt = ratingCol.textContent;
@@ -622,7 +621,7 @@
         if (score || count) {
           const rBlock = document.createElement('a');
           rBlock.href = '#reviews';
-          rBlock.className = 'fpt-profile-rating';
+          rBlock.className = 'fxn-profile-rating';
           rBlock.style.textDecoration = 'none';
           rBlock.title = 'Нажмите, чтобы прочитать отзывы';
           
@@ -630,11 +629,11 @@
           const fiveStars = starSvg.repeat(5);
 
           rBlock.innerHTML = 
-            '<div class="fpt-stars-wrapper" style="--rating-pct: ' + pct + '%;">' +
-               '<div class="fpt-stars-bg">' + fiveStars + '</div>' +
-               '<div class="fpt-stars-fg">' + fiveStars + '</div>' +
+            '<div class="fxn-stars-wrapper" style="--rating-pct: ' + pct + '%;">' +
+               '<div class="fxn-stars-bg">' + fiveStars + '</div>' +
+               '<div class="fxn-stars-fg">' + fiveStars + '</div>' +
             '</div>' +
-            '<span class="fpt-count">' + count + ' отзывов</span>';
+            '<span class="fxn-count">' + count + ' отзывов</span>';
 
           identity.after(rBlock);
           ratingCol.style.display = 'none';
@@ -691,11 +690,11 @@
   function renderLoading(root) {
     root.innerHTML = '';
     const h = document.createElement('h5');
-    h.className = 'fpt-pd-h';
+    h.className = 'fxn-pd-h';
     h.textContent = 'Описание';
     root.appendChild(h);
     const dots = document.createElement('div');
-    dots.className = 'fpt-pd-dots';
+    dots.className = 'fxn-pd-dots';
     dots.innerHTML = '<span></span><span></span><span></span>';
     root.appendChild(dots);
   }
@@ -703,7 +702,7 @@
   function renderView(root, state) {
     root.innerHTML = '';
     const h = document.createElement('h5');
-    h.className = 'fpt-pd-h';
+    h.className = 'fxn-pd-h';
     h.style.display = 'flex';
     h.style.alignItems = 'center';
     h.style.justifyContent = 'center';
@@ -740,7 +739,7 @@
   function renderEditor(root, state) {
     root.innerHTML = '';
     const h = document.createElement('h5');
-    h.className = 'fpt-pd-h';
+    h.className = 'fxn-pd-h';
     h.textContent = 'Описание';
     root.appendChild(h);
     const ta = document.createElement('textarea');
@@ -750,13 +749,13 @@
     ta.placeholder = 'Расскажите о себе - это описание видят все пользователи расширения.';
     root.appendChild(ta);
     const actions = document.createElement('div');
-    actions.className = 'fpt-pd-actions';
+    actions.className = 'fxn-pd-actions';
     const save = document.createElement('button');
     save.type = 'button'; save.className = 'btn btn-primary'; save.textContent = 'Сохранить';
     const cancel = document.createElement('button');
     cancel.type = 'button'; cancel.className = 'btn btn-gray'; cancel.textContent = 'Отмена';
     const counter = document.createElement('span');
-    counter.className = 'fpt-pd-counter';
+    counter.className = 'fxn-pd-counter';
     const upd = () => { counter.textContent = ta.value.length + ' / ' + DESCRIPTION_MAX; };
     upd();
     ta.addEventListener('input', upd);
@@ -795,8 +794,8 @@
           <h5 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; letter-spacing: 0.3px;">Сохранить описание?</h5>
           <p style="margin: 0 0 24px; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.5;">Вы уверены? После сохранения вам придётся подождать 24 часа перед внесением следующего изменения.</p>
           <div style="display: flex; gap: 12px; justify-content: center;">
-            <button type="button" class="btn btn-primary fpt-confirm-yes" style="flex: 1; border-radius: 8px; font-weight: 500;">Сохранить</button>
-            <button type="button" class="btn btn-gray fpt-confirm-no" style="flex: 1; border-radius: 8px; font-weight: 500; background: rgba(255,255,255,0.1); color: #fff; border: none;">Отмена</button>
+            <button type="button" class="btn btn-primary fxn-confirm-yes" style="flex: 1; border-radius: 8px; font-weight: 500;">Сохранить</button>
+            <button type="button" class="btn btn-gray fxn-confirm-no" style="flex: 1; border-radius: 8px; font-weight: 500; background: rgba(255,255,255,0.1); color: #fff; border: none;">Отмена</button>
           </div>
         </div>
       `;
@@ -814,23 +813,23 @@
         setTimeout(() => modal.remove(), 200);
       };
 
-      modal.querySelector('.fpt-confirm-no').addEventListener('click', closeModal);
-      modal.querySelector('.fpt-confirm-yes').addEventListener('click', async () => {
+      modal.querySelector('.fxn-confirm-no').addEventListener('click', closeModal);
+      modal.querySelector('.fxn-confirm-yes').addEventListener('click', async () => {
         closeModal();
         save.disabled = true; cancel.disabled = true;
         try {
           let session = state.session || (await loadSession(state.funpayUserId));
           if (!session || session.funpayUserId !== state.funpayUserId) {
-            console.log('[FPT PD] no session, starting verification for', state.funpayUserId);
+            console.log('[Foxen PD] no session, starting verification for', state.funpayUserId);
             toast('Подтверждаем владение аккаунтом…', false);
             session = await runVerification(state.funpayUserId);
-            console.log('[FPT PD] verification OK, got session');
+            console.log('[Foxen PD] verification OK, got session');
           }
           let res;
           try { res = await serverSaveDescription(session.token, text); }
           catch (e) {
             if (e.httpStatus === 401) {
-              console.log('[FPT PD] session expired, re-verifying');
+              console.log('[Foxen PD] session expired, re-verifying');
               session = await runVerification(state.funpayUserId);
               
               // Cloudflare KV might take a moment to propagate the new session
@@ -840,7 +839,7 @@
                   break; // success
                 } catch (e2) {
                   if (e2.httpStatus === 401 && attempt < 3) {
-                    console.log('[FPT PD] KV не синхронизировался, ждём 2сек...', attempt);
+                    console.log('[Foxen PD] KV не синхронизировался, ждём 2сек...', attempt);
                     await new Promise(r => setTimeout(r, 2000));
                   } else {
                     throw e2;
@@ -850,7 +849,7 @@
             }
             else throw e;
           }
-          console.log('[FPT PD] saved:', res);
+          console.log('[Foxen PD] saved:', res);
           const newDesc = res && res.description != null ? res.description : text;
           const newUpdate = res && res.lastDescUpdate || Date.now();
           const newState = Object.assign({}, state, { description: newDesc, session, lastDescUpdate: newUpdate });
@@ -858,7 +857,7 @@
           renderView(root, newState);
           toast('Описание сохранено', false);
         } catch (e) {
-          console.error('[FPT PD] save error:', e);
+          console.error('[Foxen PD] save error:', e);
           toast(humanError(e && e.message), true);
           save.disabled = false; cancel.disabled = false;
         }
@@ -961,11 +960,11 @@
     if (!editorMount) return;
     const cover = findCover();
     if (!cover) return;
-    const img = cover.querySelector(':scope > .profile-cover-img.fpt-cover');
-    if (img && !img.querySelector('.fpt-banner-overlay')) {
+    const img = cover.querySelector(':scope > .profile-cover-img.fxn-cover');
+    if (img && !img.querySelector('.fxn-banner-overlay')) {
       const overlay = document.createElement('div');
-      overlay.className = 'fpt-banner-overlay';
-      overlay.innerHTML = '<span class="fpt-banner-pencil"><i class="fa fa-pen"></i></span>';
+      overlay.className = 'fxn-banner-overlay';
+      overlay.innerHTML = '<span class="fxn-banner-pencil"><i class="fa fa-pen"></i></span>';
       img.appendChild(overlay);
       overlay.addEventListener('click', () => openBannerCatalog(cover, editorMount.profileId, editorMount.state));
     }
@@ -973,23 +972,23 @@
 
   function buildCoverBanner(cover, url) {
     const avatar = cover.querySelector('.avatar');
-    let img = cover.querySelector(':scope > .profile-cover-img.fpt-cover');
+    let img = cover.querySelector(':scope > .profile-cover-img.fxn-cover');
     if (!img) {
       Array.from(cover.querySelectorAll(':scope > .profile-cover-img, :scope > .profile-cover-container'))
-        .forEach((el) => { if (!el.classList.contains('fpt-cover')) el.style.display = 'none'; });
+        .forEach((el) => { if (!el.classList.contains('fxn-cover')) el.style.display = 'none'; });
       img = document.createElement('div');
-      img.className = 'profile-cover-img fpt-cover';
+      img.className = 'profile-cover-img fxn-cover';
       cover.insertBefore(img, cover.firstChild);
     }
     img.innerHTML = '';
 
     const pic = document.createElement('div');
-    pic.className = 'fpt-cover-pic';
+    pic.className = 'fxn-cover-pic';
     if (url) pic.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
 
-    const gTop = document.createElement('div'); gTop.className = 'fpt-cover-gtop';
-    const gBottom = document.createElement('div'); gBottom.className = 'fpt-cover-gbottom';
-    const gDark = document.createElement('div'); gDark.className = 'fpt-cover-gdark';
+    const gTop = document.createElement('div'); gTop.className = 'fxn-cover-gtop';
+    const gBottom = document.createElement('div'); gBottom.className = 'fxn-cover-gbottom';
+    const gDark = document.createElement('div'); gDark.className = 'fxn-cover-gdark';
 
     img.appendChild(pic);
     img.appendChild(gTop);
@@ -997,8 +996,8 @@
     img.appendChild(gDark);
 
     if (avatar && avatar.parentElement !== cover) cover.appendChild(avatar);
-    cover.setAttribute('data-fpt-banner', url || '');
-    cover.classList.add('fpt-cover-host');
+    cover.setAttribute('data-fxn-banner', url || '');
+    cover.classList.add('fxn-cover-host');
     return { img, pic };
   }
 
@@ -1008,8 +1007,8 @@
       if (!activeBannerUrl) return;
       const cover = findCover();
       if (!cover) return;
-      const pic = cover.querySelector(':scope > .profile-cover-img.fpt-cover .fpt-cover-pic');
-      if (!pic || cover.getAttribute('data-fpt-banner') !== activeBannerUrl) {
+      const pic = cover.querySelector(':scope > .profile-cover-img.fxn-cover .fxn-cover-pic');
+      if (!pic || cover.getAttribute('data-fxn-banner') !== activeBannerUrl) {
         buildCoverBanner(cover, activeBannerUrl);
         reattachEditor();
       }
@@ -1023,11 +1022,11 @@
     guardBanner();
     const cover = findCover();
     if (!cover) return;
-    const pic = cover.querySelector(':scope > .profile-cover-img.fpt-cover .fpt-cover-pic');
-    if (pic && cover.getAttribute('data-fpt-banner') === url) return;
+    const pic = cover.querySelector(':scope > .profile-cover-img.fxn-cover .fxn-cover-pic');
+    if (pic && cover.getAttribute('data-fxn-banner') === url) return;
     buildCoverBanner(cover, url);
     reattachEditor();
-    console.log('[FPT PD] banner applied');
+    console.log('[Foxen PD] banner applied');
   }
 
   function mountBannerEditor(profileId, session, currentBanner) {
@@ -1038,19 +1037,19 @@
       const cover = findCover();
       if (!cover) return;
 
-      let img = cover.querySelector(':scope > .profile-cover-img.fpt-cover');
+      let img = cover.querySelector(':scope > .profile-cover-img.fxn-cover');
       if (!img) {
         const r = buildCoverBanner(cover, activeBannerUrl || '');
         img = r.img;
       }
 
-      if (!img.querySelector('.fpt-banner-overlay')) {
+      if (!img.querySelector('.fxn-banner-overlay')) {
         const overlay = document.createElement('div');
-        overlay.className = 'fpt-banner-overlay';
-        overlay.innerHTML = '<span class="fpt-banner-pencil"><i class="fa fa-pen"></i></span>';
+        overlay.className = 'fxn-banner-overlay';
+        overlay.innerHTML = '<span class="fxn-banner-pencil"><i class="fa fa-pen"></i></span>';
         img.appendChild(overlay);
         overlay.addEventListener('click', () => openBannerCatalog(cover, profileId, state));
-        console.log('[FPT PD] banner editor mounted');
+        console.log('[Foxen PD] banner editor mounted');
       }
     };
 
@@ -1065,12 +1064,12 @@
   }
 
   async function openBannerCatalog(cover, profileId, state) {
-    if (document.querySelector('.fpt-banner-catalog')) return;
+    if (document.querySelector('.fxn-banner-catalog')) return;
 
     const catalog = await loadCatalog();
 
     const modal = document.createElement('div');
-    modal.className = 'fpt-banner-catalog';
+    modal.className = 'fxn-banner-catalog';
     modal.style.position = 'fixed';
     modal.style.bottom = '0';
     modal.style.left = '0';
@@ -1089,7 +1088,7 @@
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,600&family=Inter:wght@400;500;600&display=swap');
         
-        .fpt-banner-catalog {
+        .fxn-banner-catalog {
           --black: #0a0a0b;
           --white: #ffffff;
           --ink-70: rgba(255,255,255,0.7);
@@ -1103,7 +1102,7 @@
           font-family: 'Inter', -apple-system, sans-serif;
           color: var(--white);
         }
-        .fpt-bottom-sheet {
+        .fxn-bottom-sheet {
           width: 100%; max-width: 1000px; height: 450px; max-height: 60vh;
           margin: 0 20px 20px 20px;
           background: linear-gradient(180deg, rgba(20,20,22,0.9), rgba(8,8,9,0.95));
@@ -1112,52 +1111,52 @@
           box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.15);
           display: flex; flex-direction: column; overflow: hidden;
           pointer-events: auto;
-          animation: fpt-slide-up .5s cubic-bezier(.19,1,.22,1);
+          animation: fxn-slide-up .5s cubic-bezier(.19,1,.22,1);
         }
-        @keyframes fpt-slide-up { from{ opacity:0; transform: translateY(40px);} to{ opacity:1; transform:translateY(0);} }
+        @keyframes fxn-slide-up { from{ opacity:0; transform: translateY(40px);} to{ opacity:1; transform:translateY(0);} }
 
-        .fpt-sheet-header {
+        .fxn-sheet-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
           flex-shrink: 0;
         }
-        .fpt-sheet-header-left { display: flex; align-items: center; gap: 16px; }
-        .fpt-sheet-header h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px; letter-spacing: -0.01em; margin: 0; color: #fff; }
+        .fxn-sheet-header-left { display: flex; align-items: center; gap: 16px; }
+        .fxn-sheet-header h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px; letter-spacing: -0.01em; margin: 0; color: #fff; }
         
-        .fpt-sheet-actions { display: flex; align-items: center; gap: 12px; }
-        .fpt-catalog-hint { font-size: 13px; color: #ff4d4d; margin-right: 8px; }
-        .fpt-catalog-hint-info { color: var(--ink-70); }
+        .fxn-sheet-actions { display: flex; align-items: center; gap: 12px; }
+        .fxn-catalog-hint { font-size: 13px; color: #ff4d4d; margin-right: 8px; }
+        .fxn-catalog-hint-info { color: var(--ink-70); }
 
-        .fpt-btn-ghost {
+        .fxn-btn-ghost {
           font-size: 13px; background: transparent; color: var(--ink-70);
           border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 100px; cursor: pointer;
           transition: all .2s ease;
         }
-        .fpt-btn-ghost:hover { border-color: var(--glass-border-strong); color: var(--white); }
-        .fpt-btn-primary {
+        .fxn-btn-ghost:hover { border-color: var(--glass-border-strong); color: var(--white); }
+        .fxn-btn-primary {
           font-size: 13px; background: var(--white); color: var(--black); border: none;
           padding: 8px 20px; border-radius: 100px; cursor: pointer; font-weight: 500;
           transition: transform .2s ease, opacity .2s ease;
         }
-        .fpt-btn-primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
-        .fpt-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .fxn-btn-primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+        .fxn-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .fpt-filters { display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding: 16px 24px; flex-shrink: 0; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .fpt-filters::-webkit-scrollbar { display: none; }
-        .fpt-chip {
+        .fxn-filters { display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding: 16px 24px; flex-shrink: 0; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .fxn-filters::-webkit-scrollbar { display: none; }
+        .fxn-chip {
           font-size: 13px; letter-spacing: 0.02em; padding: 6px 14px; border-radius: 100px;
           background: transparent; border: 1px solid var(--glass-border); color: var(--ink-70);
           cursor: pointer; transition: all .2s ease; white-space: nowrap;
         }
-        .fpt-chip:hover { border-color: var(--glass-border-strong); color: var(--white); }
-        .fpt-chip.active { background: var(--white); color: var(--black); border-color: var(--white); font-weight: 500; }
+        .fxn-chip:hover { border-color: var(--glass-border-strong); color: var(--white); }
+        .fxn-chip.active { background: var(--white); color: var(--black); border-color: var(--white); font-weight: 500; }
 
-        .fpt-sheet-body { padding: 20px 24px; overflow-y: auto; flex-grow: 1; }
-        .fpt-sheet-body::-webkit-scrollbar { width: 6px; }
-        .fpt-sheet-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+        .fxn-sheet-body { padding: 20px 24px; overflow-y: auto; flex-grow: 1; }
+        .fxn-sheet-body::-webkit-scrollbar { width: 6px; }
+        .fxn-sheet-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
 
-        .fpt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-        .fpt-swatch {
+        .fxn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .fxn-swatch {
           position: relative; aspect-ratio: 16 / 7; border-radius: 12px;
           border: 1.5px solid var(--glass-border); cursor: pointer; overflow: hidden;
           opacity: 0; transform: translateY(10px);
@@ -1165,48 +1164,61 @@
           transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
           background-color: #111;
         }
-        .fpt-swatch:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -10px rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.5); }
-        .fpt-swatch.selected { border-color: var(--white); box-shadow: 0 0 0 2px rgba(255,255,255,0.18); }
+        .fxn-swatch:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -10px rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.5); }
+        .fxn-swatch.selected { border-color: var(--white); box-shadow: 0 0 0 2px rgba(255,255,255,0.18); }
         @keyframes card-in { to{ opacity:1; transform:translateY(0);} }
 
-        .fpt-swatch .check {
+        .fxn-swatch .check {
           position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%;
           background: var(--white); color: var(--black);
           display: flex; align-items: center; justify-content: center;
           opacity: 0; transform: scale(0.6); transition: all .2s cubic-bezier(.34,1.56,.64,1);
         }
-        .fpt-swatch.selected .check { opacity: 1; transform: scale(1); }
-        .fpt-swatch .check svg { width: 10px; height: 10px; }
+        .fxn-swatch.selected .check { opacity: 1; transform: scale(1); }
+        .fxn-swatch .check svg { width: 10px; height: 10px; }
 
-        .fpt-swatch .label {
+        .fxn-swatch .label {
           position: absolute; left: 8px; bottom: 6px; font-size: 11px; font-weight: 500;
           color: rgba(255,255,255,0.95); background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
           padding: 4px 10px; border-radius: 100px; opacity: 0; transition: opacity .2s ease; pointer-events: none;
         }
-        .fpt-swatch:hover .label, .fpt-swatch.selected .label { opacity: 1; }
+        .fxn-swatch:hover .label, .fxn-swatch.selected .label { opacity: 1; }
 
       </style>
-      <div class="fpt-bottom-sheet" role="dialog" aria-modal="true" aria-label="Выбор баннера профиля">
-        <div class="fpt-sheet-header">
-          <div class="fpt-sheet-header-left">
+      <div class="fxn-bottom-sheet" role="dialog" aria-modal="true" aria-label="Выбор баннера профиля">
+        <div class="fxn-sheet-header">
+          <div class="fxn-sheet-header-left">
             <h1>Баннер профиля</h1>
           </div>
-          <div class="fpt-sheet-actions">
-            <span class="fpt-catalog-hint"></span>
-            <button class="fpt-btn-ghost fpt-catalog-cancel">Отмена</button>
-            <button class="fpt-btn-primary fpt-catalog-save" disabled>Сохранить баннер</button>
+          <div class="fxn-sheet-actions">
+            <span class="fxn-catalog-hint"></span>
+            <button class="fxn-btn-ghost fxn-catalog-cancel">Отмена</button>
+            <button class="fxn-btn-primary fxn-catalog-save" disabled>Сохранить баннер</button>
           </div>
         </div>
 
-        <div class="fpt-filters">
-          <button class="fpt-chip active fpt-cat-btn" data-cat="all">Все</button>
-          ${catalog.categories.map(c => `<button class="fpt-chip fpt-cat-btn" data-cat="${c}">${c}</button>`).join('')}
+        <div class="fxn-filters">
+          <button class="fxn-chip active fxn-cat-btn" data-cat="all">Все</button>
+          ${catalog.categories.map(c => `<button class="fxn-chip fxn-cat-btn" data-cat="${c}">${c}</button>`).join('')}
+          <button class="fxn-chip fxn-custom-banner-btn" style="border-color: rgba(168,85,247,0.6); color: #c084fc;">✨ Примерить свой файл/URL</button>
         </div>
 
-        <div class="fpt-sheet-body">
-          <div class="fpt-grid">
+        <div class="fxn-sheet-body">
+          <div id="fxn-custom-banner-panel" style="display:none; padding:16px; background:rgba(255,255,255,0.04); border-radius:12px; margin-bottom:16px; border:1px dashed rgba(168,85,247,0.4);">
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <input type="file" id="fxn-custom-file-input" accept="image/png,image/jpeg,image/gif,video/mp4" style="display:none;">
+              <button class="fxn-btn-ghost" id="fxn-pick-file-btn" style="border-color:#a855f7; color:#e9d5ff; padding:8px 16px;">📁 Загрузить файл с ПК</button>
+              <span style="font-size:12px; color:rgba(255,255,255,0.4);">или</span>
+              <input type="text" id="fxn-custom-url-input" placeholder="Вставьте прямую ссылку на .gif / .png / .jpg" class="fxn-banner-input" style="flex:1; min-width:220px; background:rgba(0,0,0,0.4); border-color:rgba(255,255,255,0.15); color:#fff; font-size:13px; padding:8px 14px; border-radius:8px;">
+            </div>
+            <div style="font-size:12.5px; color:#c084fc; margin-top:10px; display:flex; align-items:center; gap:6px;">
+              <span>👁 <b>Интерактивная примерка:</b> выбранное изображение сразу подставляется в вашу шапку на странице.</span>
+            </div>
+          </div>
+
+          <div class="fxn-grid">
             ${catalog.banners.map((b, i) => `
-              <div class="fpt-swatch fpt-banner-item ${state.bannerId === b.id ? 'selected' : ''}" style="animation-delay: ${i*0.02}s;" data-id="${b.id}" data-cat="${b.category}" data-url="${b.url}" data-name="${b.title}">
+              <div class="fxn-swatch fxn-banner-item ${state.bannerId === b.id ? 'selected' : ''}" style="animation-delay: ${i*0.02}s;" data-id="${b.id}" data-cat="${b.category}" data-url="${b.url}" data-name="${b.title}">
                 <div style="position: absolute; inset: 0; background-image: url('${b.url}'); background-size: cover; background-position: center; pointer-events: none;"></div>
                 <span class="label">${b.title}</span>
                 <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></span>
@@ -1223,12 +1235,12 @@
       modal.style.opacity = '1';
     });
 
-    const closeBtn = modal.querySelector('.fpt-catalog-close');
-    const cancelBtn = modal.querySelector('.fpt-catalog-cancel');
-    const saveBtn = modal.querySelector('.fpt-catalog-save');
-    const hint = modal.querySelector('.fpt-catalog-hint');
-    const catBtns = modal.querySelectorAll('.fpt-cat-btn');
-    const items = modal.querySelectorAll('.fpt-banner-item');
+    const closeBtn = modal.querySelector('.fxn-catalog-close');
+    const cancelBtn = modal.querySelector('.fxn-catalog-cancel');
+    const saveBtn = modal.querySelector('.fxn-catalog-save');
+    const hint = modal.querySelector('.fxn-catalog-hint');
+    const catBtns = modal.querySelectorAll('.fxn-cat-btn');
+    const items = modal.querySelectorAll('.fxn-banner-item');
 
     let selectedId = null;
     let selectedUrl = null;
@@ -1249,9 +1261,9 @@
     function getPic() {
       const cv = findCover();
       if (!cv) return null;
-      let img = cv.querySelector(':scope > .profile-cover-img.fpt-cover');
+      let img = cv.querySelector(':scope > .profile-cover-img.fxn-cover');
       if (!img) { const r = buildCoverBanner(cv, getBannerUrl(state.bannerId) || ''); img = r.img; }
-      return img.querySelector('.fpt-cover-pic');
+      return img.querySelector('.fxn-cover-pic');
     }
 
     function showPreview(url) {
@@ -1266,7 +1278,7 @@
 
     function clearPreview() {
       const cv = findCover();
-      const pic = cv && cv.querySelector(':scope > .profile-cover-img.fpt-cover .fpt-cover-pic');
+      const pic = cv && cv.querySelector(':scope > .profile-cover-img.fxn-cover .fxn-cover-pic');
       if (pic && pic.getAttribute('data-prevbackup') != null) {
         pic.style.backgroundImage = pic.getAttribute('data-prevbackup');
         pic.removeAttribute('data-prevbackup');
@@ -1289,6 +1301,8 @@
     catBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         catBtns.forEach(b => b.classList.remove('active'));
+        if (customBtn) customBtn.classList.remove('active');
+        if (customPanel) customPanel.style.display = 'none';
         btn.classList.add('active');
         
         const cat = btn.getAttribute('data-cat');
@@ -1299,10 +1313,47 @@
       });
     });
 
+    const customBtn = modal.querySelector('.fxn-custom-banner-btn');
+    const customPanel = modal.querySelector('#fxn-custom-banner-panel');
+    const customFileInput = modal.querySelector('#fxn-custom-file-input');
+    const pickFileBtn = modal.querySelector('#fxn-pick-file-btn');
+    const customUrlInput = modal.querySelector('#fxn-custom-url-input');
+
+    if (customBtn && customPanel) {
+      customBtn.addEventListener('click', () => {
+        catBtns.forEach(b => b.classList.remove('active'));
+        customBtn.classList.add('active');
+        items.forEach(item => item.style.display = 'none');
+        customPanel.style.display = 'block';
+      });
+    }
+
+    if (pickFileBtn && customFileInput) {
+      pickFileBtn.addEventListener('click', () => customFileInput.click());
+      customFileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          const blobUrl = URL.createObjectURL(file);
+          showPreview(blobUrl);
+          hint.innerHTML = '<span class="fxn-catalog-hint-info">👁 Примерка файла: ' + file.name + '</span>';
+        }
+      });
+    }
+
+    if (customUrlInput) {
+      customUrlInput.addEventListener('input', () => {
+        const val = customUrlInput.value.trim();
+        if (val) {
+          showPreview(val);
+          hint.innerHTML = '<span class="fxn-catalog-hint-info">👁 Примерка ссылки</span>';
+        }
+      });
+    }
+
     // Items
     items.forEach(item => {
       item.addEventListener('click', () => {
-        const warning = document.querySelector('.fpt-warning-modal');
+        const warning = document.querySelector('.fxn-warning-modal');
         if (warning) {
           warning.style.opacity = '0';
           warning.style.transform = 'translateY(10px)';
@@ -1315,17 +1366,17 @@
         selectedUrl = item.getAttribute('data-url');
         saveBtn.disabled = isOnCooldown || selectedId === state.bannerId;
         showPreview(selectedUrl);
-        hint.innerHTML = '<span class="fpt-catalog-hint-info">Выбрано: ' + item.getAttribute('data-name') + '</span>';
+        hint.innerHTML = '<span class="fxn-catalog-hint-info">Выбрано: ' + item.getAttribute('data-name') + '</span>';
       });
     });
 
     saveBtn.addEventListener('click', async () => {
       if (!selectedId) return;
 
-      if (document.querySelector('.fpt-warning-modal')) return;
+      if (document.querySelector('.fxn-warning-modal')) return;
 
       const warning = document.createElement('div');
-      warning.className = 'fpt-warning-modal';
+      warning.className = 'fxn-warning-modal';
       warning.style.width = '100%';
       warning.style.maxWidth = '1000px';
       warning.style.height = '150px';
@@ -1349,8 +1400,8 @@
         <div style="font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; margin-bottom: 8px;">Сохранить баннер?</div>
         <div style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 16px;">Новый баннер будет виден всем посетителям вашего профиля.</div>
         <div style="display: flex; gap: 12px;">
-          <button class="fpt-btn-ghost fpt-warn-cancel">Отмена</button>
-          <button class="fpt-btn-primary fpt-warn-confirm">Да, сохранить</button>
+          <button class="fxn-btn-ghost fxn-warn-cancel">Отмена</button>
+          <button class="fxn-btn-primary fxn-warn-confirm">Да, сохранить</button>
         </div>
       `;
 
@@ -1361,8 +1412,8 @@
         warning.style.transform = 'translateY(0)';
       });
 
-      const wCancel = warning.querySelector('.fpt-warn-cancel');
-      const wConfirm = warning.querySelector('.fpt-warn-confirm');
+      const wCancel = warning.querySelector('.fxn-warn-cancel');
+      const wConfirm = warning.querySelector('.fxn-warn-confirm');
 
       wCancel.addEventListener('click', () => {
         warning.style.opacity = '0';
@@ -1375,7 +1426,7 @@
         setTimeout(() => warning.remove(), 300);
 
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span class="fpt-btn-dots"><i></i><i></i><i></i></span>';
+        saveBtn.innerHTML = '<span class="fxn-btn-dots"><i></i><i></i><i></i></span>';
         
         try {
           let session = state.session || (await loadSession(profileId));
@@ -1391,7 +1442,7 @@
             res = await serverSaveBanner(session.token, selectedId);
           } catch (e) {
             if (e.httpStatus === 401) {
-              console.log('[FPT PD] Banner session expired, re-verifying...');
+              console.log('[Foxen PD] Banner session expired, re-verifying...');
               hint.textContent = 'Подтверждаем владение аккаунтом...';
               session = await runVerification(profileId);
               state.session = session;
@@ -1424,7 +1475,7 @@
           toast('Баннер успешно обновлён', false);
           closeModal();
         } catch (e) {
-          console.error('[FPT PD] banner save failed:', e);
+          console.error('[Foxen PD] banner save failed:', e);
           hint.textContent = humanError(e && e.message);
           saveBtn.disabled = false;
           saveBtn.innerHTML = 'Сохранить';
@@ -1437,8 +1488,8 @@
 
   async function isProfileDisabled() {
     try {
-      const data = await storageGet(['fpToolsDisabledFeatures']);
-      const list = Array.isArray(data.fpToolsDisabledFeatures) ? data.fpToolsDisabledFeatures : [];
+      const data = await storageGet(['foxenDisabledFeatures']);
+      const list = Array.isArray(data.foxenDisabledFeatures) ? data.foxenDisabledFeatures : [];
       return list.includes('profile_descriptions');
     } catch {
       return false;
@@ -1457,24 +1508,24 @@
 
     const cover = findCover();
     if (cover) {
-      cover.classList.remove('fpt-cover-host');
-      cover.removeAttribute('data-fpt-banner');
+      cover.classList.remove('fxn-cover-host');
+      cover.removeAttribute('data-fxn-banner');
 
-      const customCoverImg = cover.querySelector(':scope > .profile-cover-img.fpt-cover');
+      const customCoverImg = cover.querySelector(':scope > .profile-cover-img.fxn-cover');
       if (customCoverImg) customCoverImg.remove();
 
-      const overlay = cover.querySelector('.fpt-banner-overlay');
+      const overlay = cover.querySelector('.fxn-banner-overlay');
       if (overlay) overlay.remove();
 
       Array.from(cover.querySelectorAll(':scope > .profile-cover-img, :scope > .profile-cover-container'))
         .forEach((el) => {
-          if (!el.classList.contains('fpt-cover')) el.style.display = '';
+          if (!el.classList.contains('fxn-cover')) el.style.display = '';
         });
     }
 
-    document.querySelector('.fpt-banner-catalog')?.remove();
-    document.querySelector('.fpt-banner-vignette')?.remove();
-    document.querySelector('.fpt-banner-modal')?.remove();
+    document.querySelector('.fxn-banner-catalog')?.remove();
+    document.querySelector('.fxn-banner-vignette')?.remove();
+    document.querySelector('.fxn-banner-modal')?.remove();
 
     const card = document.querySelector('.container.profile-header');
     const profile = card && card.querySelector(':scope > .profile');
@@ -1484,12 +1535,12 @@
     }
 
     if (profile) {
-      profile.classList.remove('fpt-profile-body');
+      profile.classList.remove('fxn-profile-body');
 
       const identity = profile.querySelector('.' + IDENTITY);
       if (identity) identity.remove();
 
-      const rBlock = profile.querySelector('.fpt-profile-rating');
+      const rBlock = profile.querySelector('.fxn-profile-rating');
       if (rBlock) rBlock.remove();
 
       const ratingCol = profile.querySelector('.profile-header-col-rating');
@@ -1509,7 +1560,7 @@
     const pdRoot = document.querySelector('.' + ROOT);
     if (pdRoot) pdRoot.remove();
 
-    const styles = document.getElementById('fpt-pd-styles');
+    const styles = document.getElementById('fxn-pd-styles');
     if (styles) styles.remove();
   }
 
@@ -1527,11 +1578,11 @@
       return;
     }
 
-    console.log('[FPT PD] mount() start, waiting for anchor…');
+    console.log('[Foxen PD] mount() start, waiting for anchor…');
     const anchor = (await waitFor('.profile-header-cols', 10000))
       || document.querySelector('.profile-header')
       || document.querySelector('.profile-data-container');
-    console.log('[FPT PD] anchor found:', !!anchor, anchor && anchor.className);
+    console.log('[Foxen PD] anchor found:', !!anchor, anchor && anchor.className);
     if (!anchor) return;
     if (profileIdFromUrl() !== profileId) return;
     if (document.querySelector('.' + ROOT)) {
@@ -1544,11 +1595,11 @@
     mounted = true;
     const root = buildRoot(anchor);
     renderLoading(root);
-    console.log('[FPT PD] mounted, profileId=', profileId);
+    console.log('[Foxen PD] mounted, profileId=', profileId);
 
     const myId = getMyUserId();
     const isOwn = myId !== null && myId === profileId;
-    console.log('[FPT PD] myId=', myId, 'isOwn=', isOwn);
+    console.log('[Foxen PD] myId=', myId, 'isOwn=', isOwn);
 
     // Preload catalog early
     await loadCatalog();
@@ -1558,20 +1609,20 @@
     let lastDescUpdate = 0;
     let lastBannerUpdate = 0;
     const cached = await cacheRead(profileId);
-    console.log('[FPT PD] cache:', cached);
+    console.log('[Foxen PD] cache:', cached);
     if (cached) { 
       description = cached.description; 
       bannerId = cached.bannerId; 
       lastDescUpdate = cached.lastDescUpdate || 0;
       lastBannerUpdate = cached.lastBannerUpdate || 0;
     } else {
-      console.log('[FPT PD] fetching from server…');
+      console.log('[Foxen PD] fetching from server…');
       const prof = await withTimeout(serverGetProfile(profileId), 8000, { description: null, bannerId: null, lastDescUpdate: 0, lastBannerUpdate: 0 });
       description = prof.description;
       bannerId = prof.bannerId;
       lastDescUpdate = prof.lastDescUpdate || 0;
       lastBannerUpdate = prof.lastBannerUpdate || 0;
-      console.log('[FPT PD] server profile:', prof);
+      console.log('[Foxen PD] server profile:', prof);
       await cacheWrite(profileId, prof);
     }
 
@@ -1583,12 +1634,12 @@
     if (isOwn) mountBannerEditor(profileId, session, bannerId);
 
     if (!description && !isOwn) {
-      console.log('[FPT PD] empty + not own → removing block');
+      console.log('[Foxen PD] empty + not own → removing block');
       ensureProfileLayout(null);
       root.remove();
       return;
     }
-    console.log('[FPT PD] rendering view, isOwn=', isOwn);
+    console.log('[Foxen PD] rendering view, isOwn=', isOwn);
     renderView(root, { funpayUserId: profileId, isOwn, description, bannerId, lastBannerUpdate, session, lastDescUpdate });
   }
 
@@ -1611,7 +1662,7 @@
         if (await isProfileDisabled()) { unmount(); return; }
         const cover = findCover();
         if (cover) {
-          cover.classList.add('fpt-cover-host');
+          cover.classList.add('fxn-cover-host');
           applyBanner(bannerUrl);
           ensureProfileLayout(null);
           return;
@@ -1623,7 +1674,7 @@
   }
 
   function boot() {
-    console.log('[FPT PD] feature loaded, path=', location.pathname);
+    console.log('[Foxen PD] feature loaded, path=', location.pathname);
     earlyBanner();
     mount();
     let lastPath = location.pathname;
@@ -1634,9 +1685,9 @@
     const storageApi = (typeof browser !== 'undefined' && browser.storage) ? browser.storage : (typeof chrome !== 'undefined' && chrome.storage ? chrome.storage : null);
     if (storageApi && storageApi.onChanged) {
       storageApi.onChanged.addListener((changes, area) => {
-        if (area !== 'local' || !changes.fpToolsDisabledFeatures) return;
-        const disabled = Array.isArray(changes.fpToolsDisabledFeatures.newValue)
-          ? changes.fpToolsDisabledFeatures.newValue : [];
+        if (area !== 'local' || !changes.foxenDisabledFeatures) return;
+        const disabled = Array.isArray(changes.foxenDisabledFeatures.newValue)
+          ? changes.foxenDisabledFeatures.newValue : [];
         if (disabled.includes('profile_descriptions')) {
           unmount();
         } else {

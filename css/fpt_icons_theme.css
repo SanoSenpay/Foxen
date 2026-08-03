@@ -31,13 +31,13 @@
 }
 
 /* Keyframe Animations */
-@keyframes fptAuroraPulse {
+@keyframes fxnAuroraPulse {
     0% { background-position: 0% 0%, 100% 100%; }
     50% { background-position: 50% 100%, 0% 0%; }
     100% { background-position: 0% 0%, 100% 100%; }
 }
 
-@keyframes fptPageEnter {
+@keyframes fxnPageEnter {
     from {
         opacity: 0;
         transform: translateY(6px) scale(0.99);
@@ -49,13 +49,13 @@
 }
 
 /* ---------- 2. Floating Popup Glass Window ---------- */
-.fp-tools-popup {
+.foxen-popup {
     background: var(--fptm-bg, #0b0c10);
     background-image: 
         radial-gradient(circle at 10% 0%, var(--fptm-accent-soft, rgba(192, 38, 211, 0.12)), transparent 45%),
         radial-gradient(circle at 90% 100%, rgba(255, 255, 255, 0.03), transparent 45%);
     background-size: 200% 200%;
-    animation: fptAuroraPulse 18s ease infinite;
+    animation: fxnAuroraPulse 18s ease infinite;
     border: 1px solid var(--fptm-border, rgba(255, 255, 255, 0.08)) !important;
     border-radius: 18px !important;
     box-shadow: 
@@ -70,19 +70,19 @@
 }
 
 /* Smooth Tab Switching Animation */
-.fp-tools-page-content.active {
+.foxen-page-content.active {
     display: block !important;
-    animation: fptPageEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    animation: fxnPageEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 /* ---------- 3. Header Redesign ---------- */
-.fp-tools-header {
+.foxen-header {
     background: var(--fptm-head, rgba(14, 15, 22, 0.85)) !important;
     border-bottom: 1px solid var(--fptm-border, rgba(255, 255, 255, 0.07)) !important;
     padding: 14px 22px !important;
     position: relative;
 }
-.fp-tools-header::after {
+.foxen-header::after {
     content: '';
     position: absolute;
     left: 0; right: 0; bottom: -1px;
@@ -95,7 +95,7 @@
     pointer-events: none;
 }
 
-.fp-tools-site-link {
+.foxen-site-link {
     font-size: 20px !important;
     font-weight: 800 !important;
     letter-spacing: -0.02em !important;
@@ -104,12 +104,12 @@
     text-decoration: none !important;
     transition: opacity 0.2s ease !important;
 }
-.fp-tools-site-link:hover {
+.foxen-site-link:hover {
     opacity: 0.9 !important;
 }
 
 /* Compact FPT Credit Pill Badge */
-.fpt-fork-badge {
+.fxn-fork-badge {
     display: inline-flex !important;
     align-items: center !important;
     gap: 5px !important;
@@ -127,13 +127,13 @@
     transition: all 0.2s ease !important;
     align-self: center !important;
 }
-.fpt-fork-badge:hover {
+.fxn-fork-badge:hover {
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.15)) !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.4)) !important;
     color: var(--fptm-text, #ffffff) !important;
     box-shadow: 0 0 10px var(--fptm-accent-soft, rgba(192, 38, 211, 0.2)) !important;
 }
-.fpt-fork-dot {
+.fxn-fork-dot {
     width: 6px !important;
     height: 6px !important;
     border-radius: 50% !important;
@@ -142,14 +142,14 @@
     flex-shrink: 0 !important;
 }
 
-.fp-tools-title-wrap {
+.foxen-title-wrap {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 /* Header Actions Toolbar */
-.fp-tools-header-actions {
+.foxen-header-actions {
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
@@ -158,7 +158,7 @@
 }
 
 /* Redesigned Glass Pill Accent Color Picker Button */
-.fp-tools-popup .fpt-accent-btn {
+.foxen-popup .fxn-accent-btn {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -175,14 +175,14 @@
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
     box-shadow: none !important;
 }
-.fp-tools-popup .fpt-accent-btn:hover {
+.foxen-popup .fxn-accent-btn:hover {
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.15)) !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.4)) !important;
     color: var(--fptm-text, #ffffff) !important;
     transform: none !important;
     box-shadow: 0 4px 12px var(--fptm-accent-soft, rgba(192, 38, 211, 0.2)) !important;
 }
-.fpt-accent-preview-dot {
+.fxn-accent-preview-dot {
     width: 9px !important;
     height: 9px !important;
     border-radius: 50% !important;
@@ -190,7 +190,7 @@
     box-shadow: 0 0 8px var(--fptm-accent, #C026D3) !important;
     flex-shrink: 0 !important;
 }
-.fpt-accent-input {
+.fxn-accent-input {
     position: absolute !important;
     inset: 0 !important;
     opacity: 0 !important;
@@ -200,14 +200,14 @@
 }
 
 /* Header Social Media Buttons */
-.fp-tools-social {
+.foxen-social {
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
     margin-right: auto !important;
     padding-left: 10px !important;
 }
-.fp-tools-social-btn {
+.foxen-social-btn {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -220,7 +220,7 @@
     transition: background 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease !important;
     transform: none !important;
 }
-.fp-tools-social-ico {
+.foxen-social-ico {
     width: 18px !important;
     height: 18px !important;
     max-width: 18px !important;
@@ -230,33 +230,33 @@
 }
 
 /* Telegram Brand Glow */
-.fp-tools-social-btn[data-social="telegram"]:hover,
-.fp-tools-social-btn[title="Telegram"]:hover {
+.foxen-social-btn[data-social="telegram"]:hover,
+.foxen-social-btn[title="Telegram"]:hover {
     background: rgba(42, 171, 238, 0.16) !important;
     box-shadow: 0 0 14px rgba(42, 171, 238, 0.35) !important;
     opacity: 1 !important;
     transform: none !important;
 }
-.fp-tools-social-btn[data-social="telegram"]:hover .fp-tools-social-ico,
-.fp-tools-social-btn[title="Telegram"]:hover .fp-tools-social-ico {
+.foxen-social-btn[data-social="telegram"]:hover .foxen-social-ico,
+.foxen-social-btn[title="Telegram"]:hover .foxen-social-ico {
     filter: drop-shadow(0 0 5px rgba(42, 171, 238, 0.7)) !important;
 }
 
 /* Discord Brand Glow */
-.fp-tools-social-btn[data-social="discord"]:hover,
-.fp-tools-social-btn[title="Discord"]:hover {
+.foxen-social-btn[data-social="discord"]:hover,
+.foxen-social-btn[title="Discord"]:hover {
     background: rgba(88, 101, 242, 0.16) !important;
     box-shadow: 0 0 14px rgba(88, 101, 242, 0.35) !important;
     opacity: 1 !important;
     transform: none !important;
 }
-.fp-tools-social-btn[data-social="discord"]:hover .fp-tools-social-ico,
-.fp-tools-social-btn[title="Discord"]:hover .fp-tools-social-ico {
+.foxen-social-btn[data-social="discord"]:hover .foxen-social-ico,
+.foxen-social-btn[title="Discord"]:hover .foxen-social-ico {
     filter: drop-shadow(0 0 5px rgba(88, 101, 242, 0.7)) !important;
 }
 
 /* Close Button */
-.fp-tools-popup .close-btn {
+.foxen-popup .close-btn {
     width: 32px !important;
     height: 32px !important;
     border-radius: 50% !important;
@@ -270,14 +270,14 @@
     cursor: pointer !important;
     transition: all 0.2s ease !important;
 }
-.fp-tools-popup .close-btn:hover {
+.foxen-popup .close-btn:hover {
     background: rgba(255, 255, 255, 0.1) !important;
     color: #ffffff !important;
     transform: scale(1.06) !important;
 }
 
 /* ---------- 4. Sidebar Navigation Grid ---------- */
-.fp-tools-nav {
+.foxen-nav {
     width: 230px !important;
     padding: 16px 12px !important;
     border-right: 1px solid var(--fptm-border, rgba(255, 255, 255, 0.07)) !important;
@@ -285,11 +285,11 @@
 }
 
 /* Search Box in Sidebar */
-.fpt-nav-search {
+.fxn-nav-search {
     position: relative;
     margin-bottom: 14px;
 }
-.fpt-nav-search-input {
+.fxn-nav-search-input {
     width: 100% !important;
     box-sizing: border-box !important;
     background: rgba(0, 0, 0, 0.25) !important;
@@ -300,12 +300,12 @@
     font-size: 12px !important;
     transition: all 0.2s ease !important;
 }
-.fpt-nav-search-input:focus {
+.fxn-nav-search-input:focus {
     outline: none !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.5)) !important;
     box-shadow: 0 0 0 3px var(--fptm-accent-soft, rgba(192, 38, 211, 0.15)) !important;
 }
-.fpt-nav-search-clear {
+.fxn-nav-search-clear {
     position: absolute !important;
     right: 10px !important;
     top: 50% !important;
@@ -317,14 +317,14 @@
     cursor: pointer !important;
     padding: 2px !important;
 }
-.fpt-nav-search-clear:hover {
+.fxn-nav-search-clear:hover {
     color: var(--fptm-text, #ffffff) !important;
 }
 
 /* Nav Grid List - Vertical List (1 per line) */
-.fp-tools-nav ul,
-.fpt-nav-group ul,
-.fpt-nav-vertical-list {
+.foxen-nav ul,
+.fxn-nav-group ul,
+.fxn-nav-vertical-list {
     display: flex !important;
     flex-direction: column !important;
     grid-template-columns: none !important;
@@ -336,7 +336,7 @@
 }
 
 /* Category Dividers */
-.fp-tools-nav li.fp-nav-divider {
+.foxen-nav li.fp-nav-divider {
     font-size: 10px !important;
     font-weight: 700 !important;
     letter-spacing: 0.12em !important;
@@ -348,12 +348,12 @@
 }
 
 /* Nav Row Buttons - Full Width Single Line */
-.fp-tools-nav li[data-page] {
+.foxen-nav li[data-page] {
     width: 100% !important;
     margin-bottom: 2px !important;
 }
 
-.fp-tools-nav li[data-page] a {
+.foxen-nav li[data-page] a {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -374,14 +374,14 @@
     overflow: hidden !important;
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease !important;
 }
-.fp-tools-nav li[data-page] a > span:last-child {
+.foxen-nav li[data-page] a > span:last-child {
     font-size: 13px !important;
     font-weight: 500 !important;
     line-height: 1.3 !important;
     transition: color 0.2s ease !important;
 }
-.fp-tools-nav .nav-icon,
-.fp-tools-nav .nav-list-icon {
+.foxen-nav .nav-icon,
+.foxen-nav .nav-list-icon {
     font-size: 20px !important;
     margin-bottom: 0 !important;
     color: var(--fptm-muted, #9aa0b8) !important;
@@ -389,39 +389,39 @@
 }
 
 /* Hover Card State */
-.fp-tools-nav li[data-page] a:hover {
+.foxen-nav li[data-page] a:hover {
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.14)) !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.4)) !important;
     color: var(--fptm-text, #ffffff) !important;
     box-shadow: 0 4px 16px var(--fptm-accent-soft, rgba(192, 38, 211, 0.2)) !important;
     transform: none !important;
 }
-.fp-tools-nav li[data-page] a:hover .nav-icon,
-.fp-tools-nav li[data-page] a:hover .nav-list-icon {
+.foxen-nav li[data-page] a:hover .nav-icon,
+.foxen-nav li[data-page] a:hover .nav-list-icon {
     color: var(--fptm-accent, #C026D3) !important;
     transform: none !important;
     filter: drop-shadow(0 0 8px var(--fptm-accent-soft, rgba(192, 38, 211, 0.6))) !important;
 }
 
 /* Active Card State */
-.fp-tools-nav li[data-page].active a {
+.foxen-nav li[data-page].active a {
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.18)) !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.5)) !important;
     color: var(--fptm-text, #ffffff) !important;
     font-weight: 600 !important;
     box-shadow: 0 4px 16px var(--fptm-accent-soft, rgba(192, 38, 211, 0.28)) !important;
 }
-.fp-tools-nav li[data-page].active a .nav-icon {
+.foxen-nav li[data-page].active a .nav-icon {
     color: var(--fptm-accent, #C026D3) !important;
     filter: drop-shadow(0 0 10px var(--fptm-accent-soft, rgba(192, 38, 211, 0.7))) !important;
 }
 
 /* Wide Nav Item - Single Line Horizontal Row Item */
-.fp-tools-nav li[data-page].fpt-nav-wide {
+.foxen-nav li[data-page].fxn-nav-wide {
     grid-column: 1 / -1 !important;
     width: 100% !important;
 }
-.fp-tools-nav li[data-page].fpt-nav-wide a {
+.foxen-nav li[data-page].fxn-nav-wide a {
     flex-direction: row !important;
     justify-content: flex-start !important;
     align-items: center !important;
@@ -432,12 +432,12 @@
 }
 
 /* ---------- 5. Content Area Layout ---------- */
-.fp-tools-content {
+.foxen-content {
     background: var(--fptm-bg, #0b0c10) !important;
     padding: 24px 28px !important;
 }
 
-.fp-tools-page-content h3 {
+.foxen-page-content h3 {
     font-size: 20px !important;
     font-weight: 700 !important;
     letter-spacing: -0.01em !important;
@@ -447,11 +447,11 @@
     padding-bottom: 10px !important;
     border-bottom: 1px solid var(--fptm-border, rgba(255, 255, 255, 0.07)) !important;
 }
-.fp-tools-page-content h3:first-child {
+.foxen-page-content h3:first-child {
     margin-top: 0 !important;
 }
 
-.fp-tools-page-content h4 {
+.foxen-page-content h4 {
     font-size: 15px !important;
     font-weight: 600 !important;
     color: var(--fptm-text, #e7e8ec) !important;
@@ -460,11 +460,11 @@
 }
 
 /* ---------- 6. Cards, Groups, and Container Panels ---------- */
-.fp-tools-popup .setting-group,
-.fp-tools-popup .feature-item,
-.fp-tools-popup .template-container,
-.fp-tools-popup .fpt-smart-bump-card,
-.fp-tools-popup .overview-container {
+.foxen-popup .setting-group,
+.foxen-popup .feature-item,
+.foxen-popup .template-container,
+.foxen-popup .fxn-smart-bump-card,
+.foxen-popup .overview-container {
     background: rgba(255, 255, 255, 0.02) !important;
     border: 1px solid rgba(255, 255, 255, 0.06) !important;
     border-radius: 14px !important;
@@ -472,15 +472,15 @@
     margin-bottom: 12px !important;
     transition: all 0.2s ease !important;
 }
-.fp-tools-popup .setting-group:hover,
-.fp-tools-popup .feature-item:hover,
-.fp-tools-popup .template-container:hover {
+.foxen-popup .setting-group:hover,
+.foxen-popup .feature-item:hover,
+.foxen-popup .template-container:hover {
     border-color: rgba(255, 255, 255, 0.12) !important;
     background: rgba(255, 255, 255, 0.035) !important;
 }
 
 /* Checkbox Labels Inline Row */
-.fp-tools-popup .checkbox-label-inline {
+.foxen-popup .checkbox-label-inline {
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
@@ -491,17 +491,17 @@
     margin-bottom: 8px !important;
     transition: all 0.2s ease !important;
 }
-.fp-tools-popup .checkbox-label-inline:hover {
+.foxen-popup .checkbox-label-inline:hover {
     background: rgba(255, 255, 255, 0.04) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* ---------- 7. Form Controls & Inputs ---------- */
-.fp-tools-popup input[type="text"],
-.fp-tools-popup input[type="number"],
-.fp-tools-popup input[type="password"],
-.fp-tools-popup textarea,
-.fp-tools-popup select {
+.foxen-popup input[type="text"],
+.foxen-popup input[type="number"],
+.foxen-popup input[type="password"],
+.foxen-popup textarea,
+.foxen-popup select {
     background: rgba(0, 0, 0, 0.3) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 10px !important;
@@ -510,11 +510,11 @@
     font-size: 13px !important;
     transition: all 0.2s ease !important;
 }
-.fp-tools-popup input[type="text"]:focus,
-.fp-tools-popup input[type="number"]:focus,
-.fp-tools-popup input[type="password"]:focus,
-.fp-tools-popup textarea:focus,
-.fp-tools-popup select:focus {
+.foxen-popup input[type="text"]:focus,
+.foxen-popup input[type="number"]:focus,
+.foxen-popup input[type="password"]:focus,
+.foxen-popup textarea:focus,
+.foxen-popup select:focus {
     outline: none !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.6)) !important;
     box-shadow: 0 0 0 3px var(--fptm-accent-soft, rgba(192, 38, 211, 0.18)) !important;
@@ -522,7 +522,7 @@
 }
 
 /* Range Sliders */
-.fp-tools-popup input[type="range"] {
+.foxen-popup input[type="range"] {
     -webkit-appearance: none !important;
     appearance: none !important;
     height: 6px !important;
@@ -531,7 +531,7 @@
     outline: none !important;
     padding: 0 !important;
 }
-.fp-tools-popup input[type="range"]::-webkit-slider-thumb {
+.foxen-popup input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none !important;
     appearance: none !important;
     width: 18px !important;
@@ -542,26 +542,26 @@
     box-shadow: 0 0 10px var(--fptm-accent-soft, rgba(192, 38, 211, 0.5)) !important;
     transition: transform 0.15s ease !important;
 }
-.fp-tools-popup input[type="range"]::-webkit-slider-thumb:hover {
+.foxen-popup input[type="range"]::-webkit-slider-thumb:hover {
     transform: scale(1.2) !important;
 }
 
 /* Custom Neumorphic Toggle Switch */
-.fp-tools-popup .switch,
-.fp-tools-popup .fp-tools-chat-toggle {
+.foxen-popup .switch,
+.foxen-popup .foxen-chat-toggle {
     position: relative;
     display: inline-block;
     width: 44px;
     height: 24px;
 }
-.fp-tools-popup .switch input,
-.fp-tools-popup .fp-tools-chat-toggle input {
+.foxen-popup .switch input,
+.foxen-popup .foxen-chat-toggle input {
     opacity: 0;
     width: 0;
     height: 0;
 }
-.fp-tools-popup .slider,
-.fp-tools-popup .fp-tools-chat-toggle-slider {
+.foxen-popup .slider,
+.foxen-popup .foxen-chat-toggle-slider {
     position: absolute;
     cursor: pointer;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -570,8 +570,8 @@
     border-radius: 24px;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.fp-tools-popup .slider::before,
-.fp-tools-popup .fp-tools-chat-toggle-slider::before {
+.foxen-popup .slider::before,
+.foxen-popup .foxen-chat-toggle-slider::before {
     position: absolute;
     content: "";
     height: 18px;
@@ -583,20 +583,20 @@
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
-.fp-tools-popup input:checked + .slider,
-.fp-tools-popup input:checked + .fp-tools-chat-toggle-slider {
+.foxen-popup input:checked + .slider,
+.foxen-popup input:checked + .foxen-chat-toggle-slider {
     background: var(--fptm-accent, #C026D3) !important;
     border-color: var(--fptm-accent, #C026D3) !important;
     box-shadow: 0 0 12px var(--fptm-accent-soft, rgba(192, 38, 211, 0.4)) !important;
 }
-.fp-tools-popup input:checked + .slider::before,
-.fp-tools-popup input:checked + .fp-tools-chat-toggle-slider::before {
+.foxen-popup input:checked + .slider::before,
+.foxen-popup input:checked + .foxen-chat-toggle-slider::before {
     transform: translateX(20px);
     background: var(--fptm-on-accent, #ffffff);
 }
 
 /* Checkboxes Minimal Redesign */
-.fp-tools-popup input[type="checkbox"] {
+.foxen-popup input[type="checkbox"] {
     -webkit-appearance: none !important;
     appearance: none !important;
     width: 18px !important;
@@ -609,16 +609,16 @@
     transition: all 0.18s ease !important;
     flex-shrink: 0 !important;
 }
-.fp-tools-popup input[type="checkbox"]:hover {
+.foxen-popup input[type="checkbox"]:hover {
     border-color: var(--fptm-accent, #C026D3) !important;
     background: rgba(255, 255, 255, 0.08) !important;
 }
-.fp-tools-popup input[type="checkbox"]:checked {
+.foxen-popup input[type="checkbox"]:checked {
     background: var(--fptm-accent, #C026D3) !important;
     border-color: var(--fptm-accent, #C026D3) !important;
     box-shadow: 0 0 10px var(--fptm-accent-soft, rgba(192, 38, 211, 0.4)) !important;
 }
-.fp-tools-popup input[type="checkbox"]::after {
+.foxen-popup input[type="checkbox"]::after {
     content: '' !important;
     position: absolute !important;
     top: 45% !important;
@@ -631,12 +631,12 @@
     opacity: 0 !important;
     transition: opacity 0.12s ease !important;
 }
-.fp-tools-popup input[type="checkbox"]:checked::after {
+.foxen-popup input[type="checkbox"]:checked::after {
     opacity: 1 !important;
 }
 
 /* ---------- 8. Buttons ---------- */
-.fp-tools-popup .btn {
+.foxen-popup .btn {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -652,28 +652,28 @@
     box-shadow: 0 4px 14px var(--fptm-accent-soft, rgba(192, 38, 211, 0.3)) !important;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
-.fp-tools-popup .btn:hover {
+.foxen-popup .btn:hover {
     transform: translateY(-1px) !important;
     box-shadow: 0 6px 20px var(--fptm-accent-soft, rgba(192, 38, 211, 0.45)) !important;
     opacity: 0.95 !important;
 }
 
-.fp-tools-popup .btn-default {
+.foxen-popup .btn-default {
     background: rgba(255, 255, 255, 0.05) !important;
     color: var(--fptm-text, #ffffff) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: none !important;
 }
-.fp-tools-popup .btn-default:hover {
+.foxen-popup .btn-default:hover {
     background: rgba(255, 255, 255, 0.09) !important;
     border-color: rgba(255, 255, 255, 0.18) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* ---------- 9. Variable Badges & Code Chips ---------- */
-.fp-tools-popup .variable-code,
-.fp-tools-popup .variables-list code,
-.fp-tools-popup .template-info code {
+.foxen-popup .variable-code,
+.foxen-popup .variables-list code,
+.foxen-popup .template-info code {
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.15)) !important;
     border: 1px solid var(--fptm-accent-border, rgba(192, 38, 211, 0.35)) !important;
     color: var(--fptm-accent, #E9A8FF) !important;
@@ -684,8 +684,8 @@
     font-weight: 500 !important;
 }
 
-.fp-tools-popup .fpt-badge,
-.fp-tools-popup .badge {
+.foxen-popup .fxn-badge,
+.foxen-popup .badge {
     display: inline-flex !important;
     align-items: center !important;
     gap: 4px !important;
@@ -701,26 +701,26 @@
 }
 
 /* ---------- 10. Smooth Custom Scrollbars ---------- */
-.fp-tools-nav::-webkit-scrollbar,
-.fp-tools-content::-webkit-scrollbar {
+.foxen-nav::-webkit-scrollbar,
+.foxen-content::-webkit-scrollbar {
     width: 5px !important;
 }
-.fp-tools-nav::-webkit-scrollbar-track,
-.fp-tools-content::-webkit-scrollbar-track {
+.foxen-nav::-webkit-scrollbar-track,
+.foxen-content::-webkit-scrollbar-track {
     background: transparent !important;
 }
-.fp-tools-nav::-webkit-scrollbar-thumb,
-.fp-tools-content::-webkit-scrollbar-thumb {
+.foxen-nav::-webkit-scrollbar-thumb,
+.foxen-content::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.12) !important;
     border-radius: 4px !important;
 }
-.fp-tools-nav::-webkit-scrollbar-thumb:hover,
-.fp-tools-content::-webkit-scrollbar-thumb:hover {
+.foxen-nav::-webkit-scrollbar-thumb:hover,
+.foxen-content::-webkit-scrollbar-thumb:hover {
     background: var(--fptm-accent-border, rgba(192, 38, 211, 0.5)) !important;
 }
 
 /* ---------- 11. "Что тебе нужно" (Needs Tab) Custom System ---------- */
-.fp-tools-popup .fpt-needs-group-title {
+.foxen-popup .fxn-needs-group-title {
     font-size: 11px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
@@ -731,7 +731,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
-.fp-tools-popup .fpt-needs-item {
+.foxen-popup .fxn-needs-item {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -743,12 +743,12 @@
     margin-bottom: 8px !important;
     transition: all 0.2s ease !important;
 }
-.fp-tools-popup .fpt-needs-item:hover {
+.foxen-popup .fxn-needs-item:hover {
     background: rgba(255, 255, 255, 0.035) !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-.fp-tools-popup .fpt-needs-check {
+.foxen-popup .fxn-needs-check {
     display: flex !important;
     align-items: flex-start !important;
     gap: 12px !important;
@@ -757,26 +757,26 @@
     margin: 0 !important;
 }
 
-.fp-tools-popup .fpt-needs-item-text {
+.foxen-popup .fxn-needs-item-text {
     display: flex !important;
     flex-direction: column !important;
     gap: 3px !important;
 }
 
-.fp-tools-popup .fpt-needs-item-label {
+.foxen-popup .fxn-needs-item-label {
     font-size: 13.5px !important;
     font-weight: 600 !important;
     color: var(--fptm-text, #ffffff) !important;
     line-height: 1.35 !important;
 }
 
-.fp-tools-popup .fpt-needs-item-desc {
+.foxen-popup .fxn-needs-item-desc {
     font-size: 11.5px !important;
     color: var(--fptm-muted, #8a8a96) !important;
     line-height: 1.4 !important;
 }
 
-.fp-tools-popup .fpt-needs-preview-btn {
+.foxen-popup .fxn-needs-preview-btn {
     flex: 0 0 auto !important;
     background: rgba(255, 255, 255, 0.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -793,22 +793,22 @@
     box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
-.fp-tools-popup .fpt-needs-preview-btn:hover {
+.foxen-popup .fxn-needs-preview-btn:hover {
     color: var(--fptm-text, #ffffff) !important;
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.15)) !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.4)) !important;
     transform: translateY(-1px) !important;
 }
-.fp-tools-popup .fpt-needs-preview-btn .material-symbols-rounded {
+.foxen-popup .fxn-needs-preview-btn .material-symbols-rounded {
     font-size: 18px !important;
 }
-.fp-tools-popup .fpt-needs-preview-btn.fpt-needs-preview-open {
+.foxen-popup .fxn-needs-preview-btn.fxn-needs-preview-open {
     color: var(--fptm-accent, #C026D3) !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.5)) !important;
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.2)) !important;
 }
 
-.fp-tools-popup .fpt-needs-preview-row {
+.foxen-popup .fxn-needs-preview-row {
     display: flex !important;
     align-items: center !important;
     gap: 14px !important;
@@ -817,20 +817,20 @@
     background: rgba(0, 0, 0, 0.3) !important;
     border: 1px dashed var(--fptm-accent-border, rgba(192, 38, 211, 0.35)) !important;
     border-radius: 10px !important;
-    animation: fptPvIn 0.16s ease-out !important;
+    animation: fxnPvIn 0.16s ease-out !important;
 }
-@keyframes fptPvIn {
+@keyframes fxnPvIn {
     from { opacity: 0; transform: translateY(-4px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-.fp-tools-popup .fpt-needs-preview-caption {
+.foxen-popup .fxn-needs-preview-caption {
     font-size: 11px !important;
     color: var(--fptm-muted, #7a7e8f) !important;
     flex: 0 0 auto !important;
 }
 
-.fp-tools-popup .fpt-pv-stage {
+.foxen-popup .fxn-pv-stage {
     flex: 1 1 auto !important;
     display: flex !important;
     align-items: center !important;
@@ -841,52 +841,52 @@
     border-radius: 8px !important;
     border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
-.fp-tools-popup .fpt-pv-none {
+.foxen-popup .fxn-pv-none {
     color: var(--fptm-muted, #7a7e8f) !important;
     font-size: 12px !important;
 }
 
-.fp-tools-popup .fpt-needs-footer {
+.foxen-popup .fxn-needs-footer {
     display: flex !important;
     align-items: center !important;
     gap: 14px !important;
     margin-top: 12px !important;
 }
-.fp-tools-popup .fpt-needs-status {
+.foxen-popup .fxn-needs-status {
     font-size: 12px !important;
     color: var(--fptm-muted, #8a8a96) !important;
 }
-.fp-tools-popup .fpt-needs-autosave-note {
+.foxen-popup .fxn-needs-autosave-note {
     display: inline-flex !important;
     align-items: center !important;
     gap: 5px !important;
     font-size: 11.5px !important;
     color: var(--fptm-muted, #7a7e8f) !important;
 }
-.fp-tools-popup .fpt-needs-autosave-note .material-symbols-rounded {
+.foxen-popup .fxn-needs-autosave-note .material-symbols-rounded {
     font-size: 14px !important;
     color: var(--fptm-accent, #C026D3) !important;
 }
 
-.fp-tools-popup .fpt-needs-locked { opacity: 0.85 !important; }
-.fp-tools-popup .fpt-needs-lock {
+.foxen-popup .fxn-needs-locked { opacity: 0.85 !important; }
+.foxen-popup .fxn-needs-lock {
     width: 19px !important; height: 19px !important; flex: 0 0 19px !important;
     display: inline-flex !important; align-items: center !important; justify-content: center !important;
     border: 1.5px solid rgba(255, 255, 255, 0.15) !important; border-radius: 5px !important;
     color: var(--fptm-muted, #7a7e8f) !important;
     margin-top: 1px !important;
 }
-.fp-tools-popup .fpt-needs-lock .material-symbols-rounded { font-size: 13px !important; }
+.foxen-popup .fxn-needs-lock .material-symbols-rounded { font-size: 13px !important; }
 
 /* ---------- 12. Full-Page Particle Preset Grid ---------- */
-.fpt-particle-presets-grid {
+.fxn-particle-presets-grid {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 8px !important;
     margin-top: 6px !important;
 }
 
-.fpt-particle-preset-card {
+.fxn-particle-preset-card {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -901,25 +901,25 @@
     transition: all 0.2s ease !important;
 }
 
-.fpt-particle-preset-card:hover {
+.fxn-particle-preset-card:hover {
     background: rgba(255, 255, 255, 0.05) !important;
     border-color: rgba(255, 255, 255, 0.14) !important;
     color: var(--fptm-text, #ffffff) !important;
 }
 
-.fpt-particle-preset-card.active {
+.fxn-particle-preset-card.active {
     background: var(--fptm-accent-soft, rgba(192, 38, 211, 0.16)) !important;
     border-color: var(--fptm-accent-border, rgba(192, 38, 211, 0.45)) !important;
     color: var(--fptm-text, #ffffff) !important;
     box-shadow: 0 4px 14px var(--fptm-accent-soft, rgba(192, 38, 211, 0.25)) !important;
 }
 
-.fpt-pp-emoji {
+.fxn-pp-emoji {
     font-size: 20px !important;
     line-height: 1 !important;
 }
 
-.fpt-pp-title {
+.fxn-pp-title {
     font-size: 11px !important;
     font-weight: 600 !important;
 }

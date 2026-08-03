@@ -13,11 +13,11 @@ function markOutgoing(text) {
     return BOT_MARKER + t;
 }
 function isBotMarked(text) {
-    return typeof text === 'string' && (text.startsWith(BOT_MARKER) || text.startsWith(OLD_BOT_MARKER));
+    return typeof text === 'string' && (text.includes(BOT_MARKER) || text.includes(OLD_BOT_MARKER));
 }
 
 
-async function fetchWithRetry(url, options, { retries = 4, baseDelay = 800 } = {}) {
+async function fetchWithRetry(url, options, { retries = 4, baseDelay = 800, timeoutMs = 15000 } = {}) {
     let lastErr;
     // Блокировка отправки ручных заголовков Cookie и передача куки сессии (golden_key / PHPSESSID)
     const _opts = (options && typeof options === 'object') ? { ...options } : {};
@@ -26,8 +26,11 @@ async function fetchWithRetry(url, options, { retries = 4, baseDelay = 800 } = {
     }
     options = _opts;
     for (let attempt = 0; attempt <= retries; attempt++) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
         try {
-            const res = await fetch(url, options);
+            const res = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timer);
             // Retry on rate-limit / server errors; return everything else to caller.
             if (res.status === 429 || res.status >= 500) {
                 lastErr = new Error(`HTTP ${res.status}`);
@@ -35,6 +38,7 @@ async function fetchWithRetry(url, options, { retries = 4, baseDelay = 800 } = {
                 return res;
             }
         } catch (e) {
+            clearTimeout(timer);
             lastErr = e;
         }
         if (attempt < retries) {
@@ -46,16 +50,15 @@ async function fetchWithRetry(url, options, { retries = 4, baseDelay = 800 } = {
 }
 
 const RX = {
-
-    ORDER_PURCHASED:    /(оплатил заказ|has paid for order) #([A-Z0-9]{8})/i,
-    ORDER_CONFIRMED:    /(подтвердил успешное выполнение заказа|has confirmed that order) #([A-Z0-9]{8})/i,
-    NEW_FEEDBACK:       /(написал отзыв к заказу|has given feedback to the order) #([A-Z0-9]{8})/i,
-    FEEDBACK_CHANGED:   /(изменил отзыв к заказу|has edited their feedback to the order) #([A-Z0-9]{8})/i,
-    FEEDBACK_DELETED:   /(удалил отзыв к заказу|has deleted their feedback to the order)/i,
-    ORDER_REOPENED:     /(заказ #([A-Z0-9]{8}) открыт повторно|order #([A-Z0-9]{8}) reopened)/i,
-    REFUND:             /(вернул деньги покупателю|returned the money to the buyer|refund)/i,
-    PARTIAL_REFUND:     /(часть средств по заказу .+ возвращена|part of the funds for order)/i,
-    DEAR_VENDORS:       /(уважаемые продавцы|dear vendors|dear sellers)/i,
+    ORDER_PURCHASED:    /(?:оплатил|оплачен|оформил|оплата|paid|purchased).+?#([A-Z0-9]{8})|#([A-Z0-9]{8}).+?(?:оплатил|оплачен|оформил|оплата|paid|purchased)/i,
+    ORDER_CONFIRMED:    /(?:подтвердил|подтвержден|завершен|confirmed|completed).+?#([A-Z0-9]{8})|#([A-Z0-9]{8}).+?(?:подтвердил|подтвержден|завершен|confirmed|completed)/i,
+    NEW_FEEDBACK:       /(?:написал|оставил|добавил)\s+отзыв|left\s+a?\s*feedback|left\s+a?\s*review|gave\s+a?\s*feedback/i,
+    FEEDBACK_CHANGED:   /(?:изменил|обновил)\s+отзыв|edited\s+a?\s*feedback|updated\s+a?\s*review/i,
+    FEEDBACK_DELETED:   /(?:удалил)\s+отзыв|deleted\s+a?\s*feedback/i,
+    ORDER_REOPENED:     /(?:открыт\s+повторно|reopened)/i,
+    REFUND:             /(?:вернул\s+деньги|возврат|returned\s+money|refund)/i,
+    PARTIAL_REFUND:     /(?:часть\s+средств|partial\s+refund)/i,
+    DEAR_VENDORS:       /(?:уважаемые\s+продавцы|dear\s+vendors|dear\s+sellers)/i,
     ORDER_ID:           /#([A-Z0-9]{8})/,
 };
 
@@ -73,27 +76,41 @@ function getMessageType(text) {
     return 'NON_SYSTEM';
 }
 
+const RESERVED_VERBS = new Set([
+    'оплатил', 'подтвердил', 'написал', 'изменил', 'оставил', 'добавил', 'обновил', 'удалил', 'вернул', 'оплачен', 'оформил', 'подтвержден',
+    'has', 'paid', 'confirmed', 'given', 'left', 'edited', 'updated', 'deleted', 'returned'
+]);
+
 /**
  * Извлечение имени покупателя из текста системного сообщения о заказе (RU/EN).
  */
 function extractOrderBuyer(text) {
     if (!text) return null;
-    // Парсинг русского формата ("Покупатель ИМЯ")
-    let m = text.match(/Покупатель\s+([^\s,.]+)/i);
-    if (m) return m[1];
-    // Парсинг английского формата ("Buyer ИМЯ")
-    m = text.match(/Buyer\s+([^\s,.]+)/i);
-    if (m) return m[1];
-    // Парсинг имени в английском сообщении об отзыве
-    m = text.match(/^([^\s,.]+)\s+has\s+(?:given|edited|deleted)/i);
-    if (m) return m[1];
-    // Парсинг имени при возврате средств (RU)
-    m = text.match(/покупателю\s+([^\s,.]+)/i);
-    if (m) return m[1];
-    // Парсинг имени при возврате средств (EN)
-    m = text.match(/to\s+buyer\s+([^\s,.]+)/i);
-    if (m) return m[1];
-    return null;
+    let buyer = null;
+    // Парсинг русского формата ("Покупатель ИМЯ" или "Пользователь ИМЯ")
+    let m = text.match(/(?:Покупатель|Пользователь)\s+([^\s,.]+)/i);
+    if (m && !RESERVED_VERBS.has(m[1].toLowerCase())) buyer = m[1];
+    if (!buyer) {
+        // Парсинг английского формата ("Buyer ИМЯ" или "User ИМЯ")
+        m = text.match(/(?:Buyer|User)\s+([^\s,.]+)/i);
+        if (m && !RESERVED_VERBS.has(m[1].toLowerCase())) buyer = m[1];
+    }
+    if (!buyer) {
+        // Парсинг имени в английском сообщении об отзыве или оплате
+        m = text.match(/^([^\s,.]+)\s+has\s+(?:given|edited|deleted|left|paid|confirmed)/i);
+        if (m && !RESERVED_VERBS.has(m[1].toLowerCase())) buyer = m[1];
+    }
+    if (!buyer) {
+        // Парсинг имени при возврате средств (RU)
+        m = text.match(/покупателю\s+([^\s,.]+)/i);
+        if (m && !RESERVED_VERBS.has(m[1].toLowerCase())) buyer = m[1];
+    }
+    if (!buyer) {
+        // Парсинг имени при возврате средств (EN)
+        m = text.match(/to\s+buyer\s+([^\s,.]+)/i);
+        if (m && !RESERVED_VERBS.has(m[1].toLowerCase())) buyer = m[1];
+    }
+    return buyer;
 }
 
 function cleanName(n) {
@@ -374,14 +391,14 @@ function applyVariables(template, vars = {}) {
 }
 
 async function atomicUpdate(updater) {
-    const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-    updater(fpToolsAutoReplies);
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
+    const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+    updater(foxenAutoReplies);
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
 }
 
 async function isBlacklisted(username, feature) {
-    const { fpToolsBlacklist = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsBlacklist');
-    const entry = fpToolsBlacklist.find(e => e.username.toLowerCase() === username?.toLowerCase());
+    const { foxenBlacklist = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenBlacklist');
+    const entry = foxenBlacklist.find(e => e.username.toLowerCase() === username?.toLowerCase());
     if (!entry) return false;
     if (feature === 'delivery'     && entry.blockDelivery)     return true;
     if (feature === 'response'     && entry.blockResponse)     return true;
@@ -444,37 +461,38 @@ async function handleGreeting(msg, auth, settings) {
 }
 
 async function handleKeywords(msg, auth, settings) {
-    if (!settings.keywordsEnabled || !settings.keywords?.length) return;
+    if (!settings.keywordsEnabled || !settings.keywords?.length) {
+        return;
+    }
     if (getMessageType(msg.messageText) !== 'NON_SYSTEM') return;
     if (await isBlacklisted(msg.buyerName, 'response')) return;
 
-    // Если чат инициирован нами, не реагируем на ключевые слова
-    const selfInitiated = settings.selfInitiatedChats || [];
-    if (selfInitiated.includes(msg.chatId)) {
-        console.log(`Foxen AR: пропуск ключевых слов — чат ${msg.chatId} инициирован нами.`);
-        return;
-    }
-
-    // 3.0: strip zero-width identifier chars and collapse whitespace before matching.
-    // Bug fix: exact-match ("точно") commands failed because incoming messages can carry
-    // invisible zero-width chars (FunPay/identifier signatures) or trailing whitespace, so
-    // `lower === kw` never matched even when the message WAS the command. "contains" survived
-    // by accident. Now both modes compare against a cleaned string.
     const clean = msg.messageText
         .replace(/[\u200B\u200C\u200D\uFEFF\u2060]/g, '')  // zero-width chars
         .replace(/\s+/g, ' ')
         .trim()
         .toLowerCase();
 
+    const cleanNoPunct = clean.replace(/[!?,.:;()\-–—"']/g, '').trim();
+
+    console.log(`Foxen AR: проверка ключевых слов для чата ${msg.chatId} ("${clean}"):`, settings.keywords.map(r => r.keyword));
+
     for (const rule of settings.keywords) {
+        if (!rule.keyword) continue;
         const kw = rule.keyword
             .replace(/[\u200B\u200C\u200D\uFEFF\u2060]/g, '')
             .replace(/\s+/g, ' ')
             .trim()
             .toLowerCase();
         if (!kw) continue;
-        const matches = rule.matchMode === 'contains' ? clean.includes(kw) : clean === kw;
+        const kwNoPunct = kw.replace(/[!?,.:;()\-–—"']/g, '').trim();
+
+        const matches = (rule.matchMode === 'contains')
+            ? (clean.includes(kw) || cleanNoPunct.includes(kwNoPunct))
+            : (clean === kw || cleanNoPunct === kwNoPunct);
+
         if (matches) {
+            console.log(`Foxen AR: совпадение по ключевому слову "${kw}" в чате ${msg.chatId}`);
             const text = applyVariables(rule.response, { buyerName: msg.buyerName });
             try {
                 await sendReplyContent(msg.chatId, text, auth, rule.images, rule.sendOrder);
@@ -704,8 +722,8 @@ async function handleAutoDelivery(msg, auth, settings) {
         const chatId = msg.chatId || buyerChatId;
 
         
-        const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
-        const deliveryConfig = lotId ? fpToolsAutoDeliveryLots[String(lotId)] : null;
+        const { foxenAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoDeliveryLots');
+        const deliveryConfig = lotId ? foxenAutoDeliveryLots[String(lotId)] : null;
 
         let deliveryText = '';
         let deliveryMode = 'secrets'; 
@@ -752,14 +770,14 @@ async function notifyDearVendors(msg) {
     const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: 'https://funpay.com/*' });
     tabs.forEach(tab => {
         chrome.tabs.sendMessage(tab.id, {
-            action: 'fpToolsDearVendors',
+            action: 'foxenDearVendors',
             chatId: msg.chatId,
             buyerName: msg.buyerName
         }).catch(() => {});
     });
 }
 
-const RUNNER_TAG_KEY = 'fpToolsAutoResponderTag';
+const RUNNER_TAG_KEY = 'foxenAutoResponderTag';
 let __arCycleRunning = false;
 
 export async function runAutoResponderCycle() {
@@ -773,16 +791,16 @@ export async function runAutoResponderCycle() {
 }
 
 async function _runAutoResponderCycleInner() {
-    const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
+    const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
 
     const anyEnabled =
-        fpToolsAutoReplies.greetingEnabled      ||
-        fpToolsAutoReplies.keywordsEnabled      ||
-        fpToolsAutoReplies.autoReviewEnabled    ||
-        fpToolsAutoReplies.bonusForReviewEnabled||
-        fpToolsAutoReplies.newOrderReplyEnabled ||
-        fpToolsAutoReplies.orderConfirmReplyEnabled ||
-        fpToolsAutoReplies.autoDeliveryEnabled;
+        foxenAutoReplies.greetingEnabled      ||
+        foxenAutoReplies.keywordsEnabled      ||
+        foxenAutoReplies.autoReviewEnabled    ||
+        foxenAutoReplies.bonusForReviewEnabled||
+        foxenAutoReplies.newOrderReplyEnabled ||
+        foxenAutoReplies.orderConfirmReplyEnabled ||
+        foxenAutoReplies.autoDeliveryEnabled;
 
     if (!anyEnabled) return;
 
@@ -790,19 +808,16 @@ async function _runAutoResponderCycleInner() {
     if (!auth.golden_key || !auth.csrf_token || !auth.userId) return;
 
     try {
-        // Foxen 2.8.2: Use server-provided tags to enable true long-polling instead of 
-        // hammering the server with random tags every 3 seconds.
-        if (!globalThis._fptRunnerTags) {
-            globalThis._fptRunnerTags = {
-                chat: randomTag(),
-                order: randomTag()
-            };
-        }
+        // Foxen 3.3.1: Generate fresh random tags for chat_bookmarks and orders_counters
+        // on every poll. Reusing server tags causes FunPay long-polling to conflict with open tabs
+        // on funpay.com, leading to data: false and missed auto-responses.
+        const chatReqTag = randomTag();
+        const orderReqTag = randomTag();
 
         const runnerPayload = {
             objects: JSON.stringify([
-                { type: 'chat_bookmarks',  id: auth.userId, tag: globalThis._fptRunnerTags.chat,   data: false },
-                { type: 'orders_counters', id: auth.userId, tag: globalThis._fptRunnerTags.order, data: false }
+                { type: 'chat_bookmarks',  id: auth.userId, tag: chatReqTag,  data: false },
+                { type: 'orders_counters', id: auth.userId, tag: orderReqTag, data: false }
             ]),
             request: false,
             csrf_token: auth.csrf_token
@@ -818,21 +833,18 @@ async function _runAutoResponderCycleInner() {
             method: 'POST',
             headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', 'x-requested-with': 'XMLHttpRequest', cookie: pollingCookieStr },
             body: new URLSearchParams(runnerPayload)
-        }, { retries: 2, baseDelay: 600 });
+        }, { retries: 2, baseDelay: 600, timeoutMs: 12000 });
 
         if (!res.ok) throw new Error(`Runner HTTP ${res.status}`);
         const data = await res.json();
         
         const chatObj = data.objects?.find(o => o.type === 'chat_bookmarks');
         const orderObj = data.objects?.find(o => o.type === 'orders_counters');
-        
-        if (chatObj?.tag) globalThis._fptRunnerTags.chat = chatObj.tag;
-        if (orderObj?.tag) globalThis._fptRunnerTags.order = orderObj.tag;
 
         if (!chatObj || !chatObj.data?.html) return;
 
         const chats = await parseViaOffscreen(chatObj.data.html, 'parseChatList');
-        const { fpToolsAutoReplies: fresh = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
+        const { foxenAutoReplies: fresh = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
 
         const lastSeen = fresh.lastSeenMsgIds || {};
         const isFirstRun = !fresh.autoResponderSeeded;
@@ -859,15 +871,6 @@ async function _runAutoResponderCycleInner() {
             // Пропускаем чаты, где последнее сообщение отправлено нами
             if (chat.lastByMe) {
                 if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
-                // Фиксируем чаты, инициированные нами (написали первыми)
-                if (!(fresh.selfInitiatedChats || []).includes(chat.chatId)) {
-                    await atomicUpdate(s => {
-                        const arr = s.selfInitiatedChats || [];
-                        if (!arr.includes(chat.chatId)) arr.push(chat.chatId);
-                        if (arr.length > 500) arr.splice(0, arr.length - 500);
-                        s.selfInitiatedChats = arr;
-                    });
-                }
                 continue;
             }
 
@@ -879,6 +882,7 @@ async function _runAutoResponderCycleInner() {
             if (isFirstRun) continue; 
             const lastText = (fresh.lastHandledText || {})[chat.chatId];
             const isSameText = lastText != null && lastText === chat.messageText;
+            if (isSameText) continue;
 
             const msgType = getMessageType(chat.messageText);
             const msg = {
@@ -954,12 +958,7 @@ async function _runAutoResponderCycleInner() {
                 } else {
                     await handleReview(msg, auth, fresh);
                 }
-            } else if (msgType === 'NON_SYSTEM' && !isSameText) {
-                // Пропускаем обычные сообщения, если в чате нет непрочитанных
-                if (!chat.isUnread) {
-                    if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
-                    continue;
-                }
+            } else if (msgType === 'NON_SYSTEM') {
                 await handleGreeting(msg, auth, fresh);
                 await handleKeywords(msg, auth, fresh);
             }
@@ -1003,13 +1002,18 @@ async function _runAutoResponderCycleInner() {
 
 export async function resetAutoResponderState() {
     await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(RUNNER_TAG_KEY);
-    // also clear per-chat tracking so re-enabling re-seeds cleanly
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies').then(({ fpToolsAutoReplies = {} }) => {
-        delete fpToolsAutoReplies.lastSeenMsgIds;
-        delete fpToolsAutoReplies.lastHandledText;
-        delete fpToolsAutoReplies.autoResponderSeeded;
-        // Сброс истории чатов, инициированных пользователем
-        delete fpToolsAutoReplies.selfInitiatedChats;
-        return chrome.storage.local.set({ fpToolsAutoReplies });
-    });
+    const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+    if (
+        !foxenAutoReplies.lastSeenMsgIds &&
+        !foxenAutoReplies.lastHandledText &&
+        !foxenAutoReplies.autoResponderSeeded &&
+        !foxenAutoReplies.selfInitiatedChats
+    ) {
+        return;
+    }
+    delete foxenAutoReplies.lastSeenMsgIds;
+    delete foxenAutoReplies.lastHandledText;
+    delete foxenAutoReplies.autoResponderSeeded;
+    delete foxenAutoReplies.selfInitiatedChats;
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
 }

@@ -26,7 +26,7 @@
     }
 
     // --- 2. Draft saving per chat ---
-    const DRAFT_KEY = 'fpToolsChatDrafts';
+    const DRAFT_KEY = 'foxenChatDrafts';
     let _drafts = {};
 
     async function loadDrafts() {

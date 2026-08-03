@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     // ─── Quick stats ─────────────────────────────────────────────────
-    chrome.storage.local.get(['fpToolsAutoReplies', 'autoBumpEnabled'], (data) => {
-        const autoReplies = data.fpToolsAutoReplies || {};
+    chrome.storage.local.get(['foxenAutoReplies', 'autoBumpEnabled'], (data) => {
+        const autoReplies = data.foxenAutoReplies || {};
         const anyAR = autoReplies.greetingEnabled
             || autoReplies.keywordsEnabled
             || autoReplies.autoReviewEnabled
@@ -87,10 +87,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     // Auto-show changelog once for new version
-    chrome.storage.local.get('fpToolsLastSeenVersion', ({ fpToolsLastSeenVersion }) => {
-        if (fpToolsLastSeenVersion !== version) {
+    chrome.storage.local.get('foxenLastSeenVersion', ({ foxenLastSeenVersion }) => {
+        if (foxenLastSeenVersion !== version) {
             if (changelogPanel) changelogPanel.style.display = 'block';
-            chrome.storage.local.set({ fpToolsLastSeenVersion: version });
+            chrome.storage.local.set({ foxenLastSeenVersion: version });
         }
     });
 });

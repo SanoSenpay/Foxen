@@ -16,8 +16,8 @@ function getCurrentBalance() {
 }
 
 async function loadPiggyBanks() {
-    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPiggyBanks');
-    piggyBanks = data.fpToolsPiggyBanks || [];
+    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenPiggyBanks');
+    piggyBanks = data.foxenPiggyBanks || [];
     currentBalance = getCurrentBalance();
     // Обновляем текущую сумму для всех копилок, так как она общая
     piggyBanks.forEach(pb => {
@@ -28,7 +28,7 @@ async function loadPiggyBanks() {
 async function savePiggyBanks() {
     // Сохраняем только структуру, а не текущий баланс
     const banksToSave = piggyBanks.map(({ id, name, goalAmount, isMain }) => ({ id, name, goalAmount, isMain }));
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPiggyBanks: banksToSave });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenPiggyBanks: banksToSave });
     
     // Перезагружаем и рендерим все заново, чтобы обеспечить консистентность
     await loadPiggyBanks();
@@ -40,12 +40,12 @@ function renderNavbarIcon() {
     const financeLink = document.querySelector('.menu-item-balance');
     if (!financeLink) return;
 
-    let piggyBankLi = document.getElementById('fp-tools-piggy-bank-icon-li');
+    let piggyBankLi = document.getElementById('foxen-piggy-bank-icon-li');
     if (piggyBankLi) piggyBankLi.remove();
     
     if (piggyBanks.length === 0) return;
 
-    piggyBankLi = createElement('li', { id: 'fp-tools-piggy-bank-icon-li', class: 'dropdown' });
+    piggyBankLi = createElement('li', { id: 'foxen-piggy-bank-icon-li', class: 'dropdown' });
 
     let dropdownContent = '';
     piggyBanks.forEach(pb => {
@@ -71,7 +71,7 @@ function renderNavbarIcon() {
     
     piggyBankLi.innerHTML = `
         <a>🐷</a>
-        <div class="fp-tools-piggy-bank-dropdown">
+        <div class="foxen-piggy-bank-dropdown">
             ${dropdownContent}
             <div class="pb-dropdown-footer">
                 <a href="#" id="manage-piggy-banks-link">Управлять копилками</a>
@@ -83,8 +83,8 @@ function renderNavbarIcon() {
 
     document.getElementById('manage-piggy-banks-link').addEventListener('click', (e) => {
         e.preventDefault();
-        document.querySelector('.fp-tools-nav li[data-page="piggy_banks"] a')?.click();
-        document.querySelector('.fp-tools-popup')?.classList.add('active');
+        document.querySelector('.foxen-nav li[data-page="piggy_banks"] a')?.click();
+        document.querySelector('.foxen-popup')?.classList.add('active');
     });
 }
 

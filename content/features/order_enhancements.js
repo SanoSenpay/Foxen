@@ -3,11 +3,11 @@
 
 // ── 1. Unconfirmed balance display ──────────────────────────────────────────
 async function initUnconfirmedBalance() {
-    const { fpToolsShowUnconfirmed } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsShowUnconfirmed']);
-    if (fpToolsShowUnconfirmed === false) return;
+    const { foxenShowUnconfirmed } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenShowUnconfirmed']);
+    if (foxenShowUnconfirmed === false) return;
 
     // Find the sales statistics block added by misc.js
-    const statsBlock = document.getElementById('fp-tools-sales-stats-block');
+    const statsBlock = document.getElementById('foxen-sales-stats-block');
     if (!statsBlock) return;
 
     // Calculate from stored data
@@ -48,8 +48,8 @@ function initSalesFilter() {
     if (document.getElementById('fp-sales-filter')) return;
 
     // Wait for the Foxen stats block to appear
-    const statsBlock = document.getElementById('fp-tools-sales-block') ||
-                       document.querySelector('.fp-tools-sales, [id*="sales"]');
+    const statsBlock = document.getElementById('foxen-sales-block') ||
+                       document.querySelector('.foxen-sales, [id*="sales"]');
     if (!statsBlock) return;
 
     const bar = document.createElement('div');
@@ -152,8 +152,8 @@ function initReviewRequestButtons() {
                     return;
                 }
 
-                const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-                const template = fpToolsAutoReplies.reviewRequestTemplate ||
+                const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+                const template = foxenAutoReplies.reviewRequestTemplate ||
                     `Привет! Буду рад, если оставите отзыв на наш заказ #${orderId} 🙏 Это займёт 10 секунд и очень поможет!`;
 
                 if (!confirm(`Отправить покупателю:\n"${template}"`)) return;

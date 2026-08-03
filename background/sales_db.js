@@ -8,7 +8,7 @@
  *
  * Экспортирует глобальный объект FPTSalesDB со следующим API:
  *   await FPTSalesDB.putOrders(arrayOfOrders)   — добавить/обновить заказы (ключ orderId)
- *   await FPTSalesDB.getAllAsMap()              — { orderId: order, ... } (как старый fpToolsSalesData)
+ *   await FPTSalesDB.getAllAsMap()              — { orderId: order, ... } (как старый foxenSalesData)
  *   await FPTSalesDB.getAllAsArray()            — [order, ...]
  *   await FPTSalesDB.count()                    — число заказов
  *   await FPTSalesDB.getMeta(key)               — служебное значение (firstOrderId/lastOrderId/lastUpdate)
@@ -19,25 +19,38 @@
 (function (root) {
     'use strict';
 
-    const DB_NAME = 'fpt-sales-db';
+    const DB_NAME = 'fxn-sales-db';
     const DB_VERSION = 1;
     const STORE_ORDERS = 'orders';
     const STORE_META = 'meta';
 
     let _dbPromise = null;
+    let _migrationAttempted = false;
 
     function openDB() {
         if (_dbPromise) return _dbPromise;
         _dbPromise = new Promise((resolve, reject) => {
-            const req = indexedDB.open(DB_NAME, DB_VERSION);
+            let req;
+            try {
+                req = indexedDB.open(DB_NAME, DB_VERSION);
+            } catch (err) {
+                _dbPromise = null;
+                reject(err);
+                return;
+            }
             req.onupgradeneeded = () => {
-                const db = req.result;
-                if (!db.objectStoreNames.contains(STORE_ORDERS)) {
-                    const os = db.createObjectStore(STORE_ORDERS, { keyPath: 'orderId' });
-                    os.createIndex('orderDate', 'orderDate', { unique: false });
-                }
-                if (!db.objectStoreNames.contains(STORE_META)) {
-                    db.createObjectStore(STORE_META, { keyPath: 'k' });
+                try {
+                    const db = req.result;
+                    if (!db.objectStoreNames.contains(STORE_ORDERS)) {
+                        const os = db.createObjectStore(STORE_ORDERS, { keyPath: 'orderId' });
+                        os.createIndex('orderDate', 'orderDate', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains(STORE_META)) {
+                        db.createObjectStore(STORE_META, { keyPath: 'k' });
+                    }
+                } catch (err) {
+                    _dbPromise = null;
+                    reject(err);
                 }
             };
             req.onsuccess = () => {
@@ -46,9 +59,16 @@
                 db.onclose = () => { _dbPromise = null; };
                 resolve(db);
             };
-            req.onerror = () => { _dbPromise = null; reject(req.error); };
-            req.onblocked = () => { _dbPromise = null; reject(new Error('IndexedDB open blocked')); };
+            req.onerror = (ev) => {
+                _dbPromise = null;
+                reject((req && req.error) || (ev && ev.target && ev.target.error) || new Error('IndexedDB open error'));
+            };
+            req.onblocked = () => {
+                _dbPromise = null;
+                reject(new Error('IndexedDB open blocked'));
+            };
         });
+        _dbPromise.catch(() => { _dbPromise = null; });
         return _dbPromise;
     }
 
@@ -62,22 +82,33 @@
 
     async function putOrders(orders) {
         if (!orders || !orders.length) return;
-        const db = await openDB();
-        const tx = db.transaction(STORE_ORDERS, 'readwrite');
-        const store = tx.objectStore(STORE_ORDERS);
-        for (const o of orders) {
-            if (o && typeof o.orderId === 'string') store.put(o);
+        try {
+            const db = await openDB();
+            const tx = db.transaction(STORE_ORDERS, 'readwrite');
+            const store = tx.objectStore(STORE_ORDERS);
+            for (const o of orders) {
+                if (o && typeof o.orderId === 'string') store.put(o);
+            }
+            await txDone(tx);
+        } catch (e) {
+            console.warn('Foxen: putOrders error:', e && e.message);
         }
-        await txDone(tx);
     }
 
     async function getAllAsArray() {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const req = db.transaction(STORE_ORDERS, 'readonly').objectStore(STORE_ORDERS).getAll();
-            req.onsuccess = () => resolve(req.result || []);
-            req.onerror = () => reject(req.error);
-        });
+        try {
+            const db = await openDB();
+            return await new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_ORDERS, 'readonly');
+                const req = tx.objectStore(STORE_ORDERS).getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error || new Error('getAll error'));
+                tx.onerror = () => reject(tx.error || new Error('tx error'));
+            });
+        } catch (e) {
+            console.warn('Foxen: getAllAsArray error:', e && e.message);
+            return [];
+        }
     }
 
     async function getAllAsMap() {
@@ -88,66 +119,92 @@
     }
 
     async function count() {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const req = db.transaction(STORE_ORDERS, 'readonly').objectStore(STORE_ORDERS).count();
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
-        });
+        try {
+            const db = await openDB();
+            return await new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_ORDERS, 'readonly');
+                const req = tx.objectStore(STORE_ORDERS).count();
+                req.onsuccess = () => resolve(req.result || 0);
+                req.onerror = () => reject(req.error || new Error('count error'));
+                tx.onerror = () => reject(tx.error || new Error('tx error'));
+            });
+        } catch (e) {
+            console.warn('Foxen: count error:', e && e.message);
+            return 0;
+        }
     }
 
     async function getMeta(key) {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const req = db.transaction(STORE_META, 'readonly').objectStore(STORE_META).get(key);
-            req.onsuccess = () => resolve(req.result ? req.result.v : null);
-            req.onerror = () => reject(req.error);
-        });
+        try {
+            const db = await openDB();
+            return await new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_META, 'readonly');
+                const req = tx.objectStore(STORE_META).get(key);
+                req.onsuccess = () => resolve(req.result ? req.result.v : null);
+                req.onerror = () => reject(req.error || new Error('getMeta error'));
+                tx.onerror = () => reject(tx.error || new Error('tx error'));
+            });
+        } catch (e) {
+            console.warn('Foxen: getMeta error:', e && e.message);
+            return null;
+        }
     }
 
     async function setMeta(key, value) {
-        const db = await openDB();
-        const tx = db.transaction(STORE_META, 'readwrite');
-        tx.objectStore(STORE_META).put({ k: key, v: value });
-        await txDone(tx);
+        try {
+            const db = await openDB();
+            const tx = db.transaction(STORE_META, 'readwrite');
+            tx.objectStore(STORE_META).put({ k: key, v: value });
+            await txDone(tx);
+        } catch (e) {
+            console.warn('Foxen: setMeta error:', e && e.message);
+        }
     }
 
     async function clearAll() {
-        const db = await openDB();
-        const tx = db.transaction([STORE_ORDERS, STORE_META], 'readwrite');
-        tx.objectStore(STORE_ORDERS).clear();
-        tx.objectStore(STORE_META).clear();
-        await txDone(tx);
+        try {
+            const db = await openDB();
+            const tx = db.transaction([STORE_ORDERS, STORE_META], 'readwrite');
+            tx.objectStore(STORE_ORDERS).clear();
+            tx.objectStore(STORE_META).clear();
+            await txDone(tx);
+        } catch (e) {
+            console.warn('Foxen: clearAll error:', e && e.message);
+        }
     }
 
     // Однократный перенос старых данных из chrome.storage.local в IndexedDB.
     // Возвращает число перенесённых заказов. Если в IndexedDB уже что-то есть
     // или мигрировать нечего — возвращает 0 и ничего не трогает.
     async function migrateFromLocalStorage() {
+        if (_migrationAttempted) return 0;
+        _migrationAttempted = true;
+
         try {
-            const already = await count();
             const flag = await getMeta('migratedFromLocal');
             if (flag) return 0;
+
+            const already = await count();
             if (already > 0) { await setMeta('migratedFromLocal', true); return 0; }
 
             const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
-                'fpToolsSalesData', 'fpToolsFirstOrderId', 'fpToolsLastOrderId', 'fpToolsSalesLastUpdate'
+                'foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId', 'foxenSalesLastUpdate'
             ]);
-            const old = data.fpToolsSalesData;
+            const old = data.foxenSalesData;
             if (!old || typeof old !== 'object') { await setMeta('migratedFromLocal', true); return 0; }
 
             const orders = Object.values(old).filter(o => o && typeof o.orderId === 'string');
             if (orders.length) await putOrders(orders);
 
-            if (data.fpToolsFirstOrderId) await setMeta('firstOrderId', data.fpToolsFirstOrderId);
-            if (data.fpToolsLastOrderId) await setMeta('lastOrderId', data.fpToolsLastOrderId);
-            if (data.fpToolsSalesLastUpdate) await setMeta('lastUpdate', data.fpToolsSalesLastUpdate);
+            if (data.foxenFirstOrderId) await setMeta('firstOrderId', data.foxenFirstOrderId);
+            if (data.foxenLastOrderId) await setMeta('lastOrderId', data.foxenLastOrderId);
+            if (data.foxenSalesLastUpdate) await setMeta('lastUpdate', data.foxenSalesLastUpdate);
             await setMeta('migratedFromLocal', true);
 
             // Освобождаем квоту: убираем гигантский объект из storage.local.
             // Оставляем lastUpdate как маленькое значение для обратной совместимости UI.
             try {
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['fpToolsSalesData', 'fpToolsFirstOrderId', 'fpToolsLastOrderId']);
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId']);
             } catch (_) {}
 
             console.log(`Foxen: перенесено ${orders.length} заказов из storage.local в IndexedDB. Квота освобождена.`);
@@ -169,6 +226,7 @@
         migrateFromLocalStorage,
     };
 
+    root.FXNSalesDB = api;
     root.FPTSalesDB = api;
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : this);

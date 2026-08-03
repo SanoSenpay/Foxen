@@ -2,22 +2,22 @@
 // Handles the "AI Provider / API Key" settings page
 
 async function initializeAISettings() {
-    const page = document.querySelector('.fp-tools-page-content[data-page="ai_settings"]');
+    const page = document.querySelector('.foxen-page-content[data-page="ai_settings"]');
     if (!page || page.dataset.initialized) return;
     page.dataset.initialized = 'true';
 
     const storage = typeof browser !== 'undefined' ? browser : chrome;
 
     // Elements
-    const providerBtns  = page.querySelectorAll('.fpt-ai-provider-btn');
-    const apiKeyInput   = page.getElementById ? page.getElementById('fptAIApiKey') : document.getElementById('fptAIApiKey');
-    const modelInput    = document.getElementById('fptAIModel');
-    const toggleKeyBtn  = document.getElementById('fptAIToggleKey');
-    const testBtn       = document.getElementById('fptAITestBtn');
-    const testStatus    = document.getElementById('fptAITestStatus');
-    const clearBtn      = document.getElementById('fptAIClearBtn');
-    const modelHint     = document.getElementById('fptAIModelHint');
-    const activeLabel   = document.getElementById('fptAIActiveLabel');
+    const providerBtns  = page.querySelectorAll('.fxn-ai-provider-btn');
+    const apiKeyInput   = page.getElementById ? page.getElementById('fxnAIApiKey') : document.getElementById('fxnAIApiKey');
+    const modelInput    = document.getElementById('fxnAIModel');
+    const toggleKeyBtn  = document.getElementById('fxnAIToggleKey');
+    const testBtn       = document.getElementById('fxnAITestBtn');
+    const testStatus    = document.getElementById('fxnAITestStatus');
+    const clearBtn      = document.getElementById('fxnAIClearBtn');
+    const modelHint     = document.getElementById('fxnAIModelHint');
+    const activeLabel   = document.getElementById('fxnAIActiveLabel');
 
     // Default models per provider
     const DEFAULT_MODELS = {
@@ -35,16 +35,16 @@ async function initializeAISettings() {
     let currentProvider = '';
 
     // Load saved settings
-    const { fpToolsAIProvider = {} } = await storage.storage.local.get('fpToolsAIProvider');
-    currentProvider = fpToolsAIProvider.provider || '';
-    if (apiKeyInput)  apiKeyInput.value  = fpToolsAIProvider.apiKey  || '';
-    if (modelInput)   modelInput.value   = fpToolsAIProvider.model   || '';
+    const { foxenAIProvider = {} } = await storage.storage.local.get('foxenAIProvider');
+    currentProvider = foxenAIProvider.provider || '';
+    if (apiKeyInput)  apiKeyInput.value  = foxenAIProvider.apiKey  || '';
+    if (modelInput)   modelInput.value   = foxenAIProvider.model   || '';
 
     // Highlight active provider button
     function selectProvider(p) {
         currentProvider = p;
         providerBtns.forEach(b => {
-            b.classList.toggle('fpt-ai-provider-btn--active', b.dataset.provider === p);
+            b.classList.toggle('fxn-ai-provider-btn--active', b.dataset.provider === p);
         });
         if (modelHint) {
             modelHint.textContent = MODEL_HINTS[p] || '';
@@ -81,7 +81,7 @@ async function initializeAISettings() {
     // Auto-save on any change
     function save() {
         storage.storage.local.set({
-            fpToolsAIProvider: {
+            foxenAIProvider: {
                 provider: currentProvider,
                 apiKey:   apiKeyInput  ? apiKeyInput.value.trim()  : '',
                 model:    modelInput   ? modelInput.value.trim()   : ''
@@ -99,11 +99,11 @@ async function initializeAISettings() {
             currentProvider = '';
             if (apiKeyInput) apiKeyInput.value = '';
             if (modelInput)  modelInput.value  = '';
-            providerBtns.forEach(b => b.classList.remove('fpt-ai-provider-btn--active'));
+            providerBtns.forEach(b => b.classList.remove('fxn-ai-provider-btn--active'));
             if (modelHint) modelHint.textContent = '';
-            await storage.storage.local.set({ fpToolsAIProvider: {} });
+            await storage.storage.local.set({ foxenAIProvider: {} });
             updateActiveLabel();
-            if (testStatus) { testStatus.textContent = ''; testStatus.className = 'fpt-ai-test-status'; }
+            if (testStatus) { testStatus.textContent = ''; testStatus.className = 'fxn-ai-test-status'; }
         });
     }
 
@@ -136,7 +136,7 @@ async function initializeAISettings() {
     function setStatus(msg, type) {
         if (!testStatus) return;
         testStatus.textContent = msg;
-        testStatus.className = 'fpt-ai-test-status fpt-ai-test-status--' + type;
+        testStatus.className = 'fxn-ai-test-status fxn-ai-test-status--' + type;
     }
 
     function updateActiveLabel() {

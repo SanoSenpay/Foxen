@@ -37,12 +37,12 @@ class MagicStickStyler {
         if (magicStickBtn) {
             magicStickBtn.addEventListener('click', () => {
                 this.toggle();
-                const popup = document.querySelector('.fp-tools-popup');
+                const popup = document.querySelector('.foxen-popup');
                 if (popup) popup.classList.remove('active');
             });
         }
         
-        if (sessionStorage.getItem('fpToolsMagicStickActive') === 'true') {
+        if (sessionStorage.getItem('foxenMagicStickActive') === 'true') {
             this.activate();
         }
     }
@@ -53,7 +53,7 @@ class MagicStickStyler {
 
     activate() {
         this.isActive = true;
-        document.body.classList.add('fp-tools-magic-stick-active');
+        document.body.classList.add('foxen-magic-stick-active');
         this.ui.exitBtn.style.display = 'flex';
         document.addEventListener('mousemove', this.throttledMouseMove);
         document.addEventListener('click', this.bound.handleClick, true);
@@ -62,8 +62,8 @@ class MagicStickStyler {
 
     deactivate() {
         this.isActive = false;
-        sessionStorage.removeItem('fpToolsMagicStickActive');
-        document.body.classList.remove('fp-tools-magic-stick-active');
+        sessionStorage.removeItem('foxenMagicStickActive');
+        document.body.classList.remove('foxen-magic-stick-active');
         this.ui.highlightEl.style.display = 'none';
         this.ui.panelEl.style.display = 'none';
         this.ui.exitBtn.style.display = 'none';
@@ -105,7 +105,7 @@ class MagicStickStyler {
         if (!this.isActive || this.isStylerUI(e.target)) return;
 
         if (this.isClickThroughActive) {
-            sessionStorage.setItem('fpToolsMagicStickActive', 'true');
+            sessionStorage.setItem('foxenMagicStickActive', 'true');
             this.isClickThroughActive = false;
             document.getElementById('ms-continue-click-btn').classList.remove('active');
             return;
@@ -248,14 +248,14 @@ class MagicStickStyler {
     }
 
     async saveStylesToStorage() {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsLiveStyles: this.savedStyles });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenLiveStyles: this.savedStyles });
         this.injectPersistentStyles();
         showNotification('Стили сохранены!', false);
     }
     
     async loadStyles() {
-        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsLiveStyles');
-        this.savedStyles = data.fpToolsLiveStyles || {};
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenLiveStyles');
+        this.savedStyles = data.foxenLiveStyles || {};
     }
     
     showMyStyles() {
@@ -380,15 +380,15 @@ class MagicStickStyler {
         this.ui.selectorModal = container.querySelector('#ms-selector-modal');
         
         this.ui.dynamicStyleTag = document.createElement('style');
-        this.ui.dynamicStyleTag.id = 'fp-tools-magic-stick-dynamic-styles';
+        this.ui.dynamicStyleTag.id = 'foxen-magic-stick-dynamic-styles';
         document.head.appendChild(this.ui.dynamicStyleTag);
         
         // FIX 2.8.4 (№9): если ранняя инъекция уже создала тег персистентных стилей,
         // переиспользуем его, а не плодим дубликат с тем же id.
-        this.ui.persistentStyleTag = document.getElementById('fp-tools-magic-stick-persistent-styles');
+        this.ui.persistentStyleTag = document.getElementById('foxen-magic-stick-persistent-styles');
         if (!this.ui.persistentStyleTag) {
             this.ui.persistentStyleTag = document.createElement('style');
-            this.ui.persistentStyleTag.id = 'fp-tools-magic-stick-persistent-styles';
+            this.ui.persistentStyleTag.id = 'foxen-magic-stick-persistent-styles';
             document.head.appendChild(this.ui.persistentStyleTag);
         }
         
@@ -625,9 +625,9 @@ class MagicStickStyler {
 }
 
 function initializeMagicStickStyler() {
-    if (!window.fpToolsMagicStickInstance) {
-        window.fpToolsMagicStickInstance = new MagicStickStyler();
-        window.fpToolsMagicStickInstance.init();
+    if (!window.foxenMagicStickInstance) {
+        window.foxenMagicStickInstance = new MagicStickStyler();
+        window.foxenMagicStickInstance.init();
     }
 }
 
@@ -637,8 +637,8 @@ function initializeMagicStickStyler() {
 // сохранённые стили СРАЗУ при загрузке страницы - независимо от меню и без UI.
 async function injectMagicStickStylesEarly() {
     try {
-        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsLiveStyles');
-        const savedStyles = data.fpToolsLiveStyles || {};
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenLiveStyles');
+        const savedStyles = data.foxenLiveStyles || {};
         if (!savedStyles || !Object.keys(savedStyles).length) return;
 
         let cssText = '';
@@ -652,10 +652,10 @@ async function injectMagicStickStylesEarly() {
 
         // Тот же id, что использует редактор - когда меню откроется и редактор
         // проинициализируется, он просто переиспользует/обновит этот же тег.
-        let styleEl = document.getElementById('fp-tools-magic-stick-persistent-styles');
+        let styleEl = document.getElementById('foxen-magic-stick-persistent-styles');
         if (!styleEl) {
             styleEl = document.createElement('style');
-            styleEl.id = 'fp-tools-magic-stick-persistent-styles';
+            styleEl.id = 'foxen-magic-stick-persistent-styles';
             (document.head || document.documentElement).appendChild(styleEl);
         }
         styleEl.textContent = cssText;

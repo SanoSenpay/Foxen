@@ -51,69 +51,69 @@
 
     // --- Вёрстка контейнера каталога ------------------------------------------
     function ensureStyles() {
-        if (document.getElementById('fpt-theme-gallery-styles')) return;
+        if (document.getElementById('fxn-theme-gallery-styles')) return;
         const css = `
-        #fpt-theme-gallery { margin: 14px 0 12px; }
-        #fpt-theme-gallery .fptg-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-        #fpt-theme-gallery .fptg-title { font-size:15px; font-weight:600; display:flex; align-items:center; gap:6px; color:#fff; }
-        #fpt-theme-gallery .fptg-counter { font-size:12px; opacity:.6; }
-        #fpt-theme-gallery .fptg-card {
+        #fxn-theme-gallery { margin: 14px 0 12px; }
+        #fxn-theme-gallery .fptg-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        #fxn-theme-gallery .fptg-title { font-size:15px; font-weight:600; display:flex; align-items:center; gap:6px; color:#fff; }
+        #fxn-theme-gallery .fptg-counter { font-size:12px; opacity:.6; }
+        #fxn-theme-gallery .fptg-card {
             position:relative; border-radius:12px; overflow:hidden;
             background:rgba(20,22,35,0.6); border:1px solid rgba(255,255,255,.05);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        #fpt-theme-gallery .fptg-preview-container {
+        #fxn-theme-gallery .fptg-preview-container {
             position:relative; width:100%; aspect-ratio:16/9; background:#0e0f16;
         }
-        #fpt-theme-gallery .fptg-preview {
+        #fxn-theme-gallery .fptg-preview {
             width:100%; height:100%; object-fit:cover; display:block;
         }
-        #fpt-theme-gallery .fptg-preview-empty {
+        #fxn-theme-gallery .fptg-preview-empty {
             width:100%; height:100%; display:flex; align-items:center; justify-content:center;
             color:#5a5f7a; font-size:13px;
         }
-        #fpt-theme-gallery .fptg-arrow { 
+        #fxn-theme-gallery .fptg-arrow { 
             position:absolute; top:50%; transform:translateY(-50%);
             background:rgba(0,0,0,.6); border:none; color:#fff; font-size:24px;
             width:32px; height:32px; border-radius:50%; cursor:pointer; z-index:2;
             display:flex; align-items:center; justify-content:center; line-height:1;
             transition: background 0.2s, transform 0.1s; user-select:none;
         }
-        #fpt-theme-gallery .fptg-arrow:hover { background:rgba(0,0,0,.9); transform:translateY(-50%) scale(1.05); }
-        #fpt-theme-gallery .fptg-arrow:active { transform:translateY(-50%) scale(0.95); }
-        #fpt-theme-gallery .fptg-arrow[disabled] { opacity:.2; pointer-events:none; }
-        #fpt-theme-gallery .fptg-prev-btn { left:8px; }
-        #fpt-theme-gallery .fptg-next-btn { right:8px; }
-        #fpt-theme-gallery .fptg-meta { padding:14px; display:flex; flex-direction:column; gap:4px; }
-        #fpt-theme-gallery .fptg-name { font-size:16px; font-weight:600; margin:0; color:#fff; }
-        #fpt-theme-gallery .fptg-desc { font-size:13px; color:#b4b8cc; margin:0; line-height:1.4; }
-        #fpt-theme-gallery .fptg-author { font-size:12px; color:#7a7e8f; margin-bottom:12px; }
-        #fpt-theme-gallery .fptg-apply { 
+        #fxn-theme-gallery .fptg-arrow:hover { background:rgba(0,0,0,.9); transform:translateY(-50%) scale(1.05); }
+        #fxn-theme-gallery .fptg-arrow:active { transform:translateY(-50%) scale(0.95); }
+        #fxn-theme-gallery .fptg-arrow[disabled] { opacity:.2; pointer-events:none; }
+        #fxn-theme-gallery .fptg-prev-btn { left:8px; }
+        #fxn-theme-gallery .fptg-next-btn { right:8px; }
+        #fxn-theme-gallery .fptg-meta { padding:14px; display:flex; flex-direction:column; gap:4px; }
+        #fxn-theme-gallery .fptg-name { font-size:16px; font-weight:600; margin:0; color:#fff; }
+        #fxn-theme-gallery .fptg-desc { font-size:13px; color:#b4b8cc; margin:0; line-height:1.4; }
+        #fxn-theme-gallery .fptg-author { font-size:12px; color:#7a7e8f; margin-bottom:12px; }
+        #fxn-theme-gallery .fptg-apply { 
             width:100%; display:flex; align-items:center; justify-content:center; gap:8px; 
             padding:10px; font-size:14px; font-weight:600; border-radius:8px; border:none; cursor:pointer;
             background: linear-gradient(135deg, #a855f7, #d946ef); color:#fff; transition: opacity 0.2s, transform 0.1s;
         }
-        #fpt-theme-gallery .fptg-apply:hover { opacity: 0.9; transform: translateY(-1px); }
-        #fpt-theme-gallery .fptg-apply:active { transform: translateY(1px); }
-        #fpt-theme-gallery .fptg-apply[disabled] { opacity:.5; pointer-events:none; cursor:not-allowed; }
-        #fpt-theme-gallery .fptg-state { font-size:13px; opacity:.7; padding:20px; text-align:center; }
+        #fxn-theme-gallery .fptg-apply:hover { opacity: 0.9; transform: translateY(-1px); }
+        #fxn-theme-gallery .fptg-apply:active { transform: translateY(1px); }
+        #fxn-theme-gallery .fptg-apply[disabled] { opacity:.5; pointer-events:none; cursor:not-allowed; }
+        #fxn-theme-gallery .fptg-state { font-size:13px; opacity:.7; padding:20px; text-align:center; }
         `;
         const tag = document.createElement('style');
-        tag.id = 'fpt-theme-gallery-styles';
+        tag.id = 'fxn-theme-gallery-styles';
         tag.textContent = css;
         document.head.appendChild(tag);
     }
 
     // Находит вкладку «Кастомизация» и вставляет туда контейнер каталога.
     function mountContainer() {
-        if (document.getElementById('fpt-theme-gallery')) return true;
+        if (document.getElementById('fxn-theme-gallery')) return true;
         
         const mountTarget = document.getElementById('foxen-theme-gallery-mount');
         const grid = document.querySelector('.theme-actions-grid');
         if (!mountTarget && !grid) return false;
 
         ensureStyles();
-        const box = createElement('div', { id: 'fpt-theme-gallery' });
+        const box = createElement('div', { id: 'fxn-theme-gallery' });
         box.innerHTML = `
             <div class="fptg-head">
                 <div class="fptg-title"><span class="material-icons" style="font-size:18px;">palette</span>Готовые темы</div>
@@ -301,7 +301,7 @@
                 throw new Error('неверный формат темы');
             }
 
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: theme });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: theme });
             // Применяем теми же функциями, что использует ручной импорт.
             if (typeof applyCustomTheme === 'function') await applyCustomTheme();
             if (typeof applyHeaderPosition === 'function') await applyHeaderPosition();

@@ -6,7 +6,7 @@
 //   разворачивается в заданный текст-ответ.
 //
 // Хранилище: chrome.storage.local
-//   fpToolsSlashCommands = {
+//   foxenSlashCommands = {
 //       enabled: bool,
 //       expandKey: 'tab' | 'enter' | 'both',   // чем разворачивать
 //       autocomplete: bool,                      // показывать ли выпадающую подсказку
@@ -24,7 +24,7 @@
 (function () {
     'use strict';
 
-    const STORE_KEY = 'fpToolsSlashCommands';
+    const STORE_KEY = 'foxenSlashCommands';
 
     const DEFAULTS = {
         enabled: true,
@@ -128,22 +128,22 @@
     let dropIndex = -1;
 
     function ensureStyles() {
-        if (document.getElementById('fpt-slash-styles')) return;
+        if (document.getElementById('fxn-slash-styles')) return;
         const s = document.createElement('style');
-        s.id = 'fpt-slash-styles';
+        s.id = 'fxn-slash-styles';
         s.textContent = `
-        .fpt-slash-dropdown{position:absolute;z-index:100000;min-width:240px;max-width:380px;max-height:260px;overflow-y:auto;
-            background:var(--fpt-bg-alpha, rgba(15, 15, 20, 0.75)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border:1px solid var(--fpt-border,rgba(255,255,255,0.1));border-radius:10px;
-            box-shadow:0 8px 32px var(--fpt-shadow,rgba(0,0,0,0.4));
+        .fxn-slash-dropdown{position:absolute;z-index:100000;min-width:240px;max-width:380px;max-height:260px;overflow-y:auto;
+            background:var(--fxn-bg-alpha, rgba(15, 15, 20, 0.75)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border:1px solid var(--fxn-border,rgba(255,255,255,0.1));border-radius:10px;
+            box-shadow:0 8px 32px var(--fxn-shadow,rgba(0,0,0,0.4));
             padding:6px;font-family:Inter,'Segoe UI',sans-serif;}
-        .fpt-slash-item{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:7px;cursor:pointer;}
-        .fpt-slash-item .fpt-slash-trig{font-size:13px;font-weight:700;color:var(--fpt-accent,#C026D3);}
-        .fpt-slash-item .fpt-slash-resp{font-size:11px;color:var(--fpt-text-muted,#888);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .fpt-slash-item.active,.fpt-slash-item:hover{background:var(--fpt-accent-soft,rgba(192,38,211,0.12));}
-        .fpt-slash-hint{font-size:10px;color:var(--fpt-text-muted,#999);padding:4px 10px 2px;border-top:1px solid var(--fpt-border,rgba(0,0,0,0.1));margin-top:4px;}
-        .fpt-slash-dropdown::-webkit-scrollbar{width:6px;}
-        .fpt-slash-dropdown::-webkit-scrollbar-thumb{background:var(--fpt-border,#ccc);border-radius:6px;}
+        .fxn-slash-item{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:7px;cursor:pointer;}
+        .fxn-slash-item .fxn-slash-trig{font-size:13px;font-weight:700;color:var(--fxn-accent,#C026D3);}
+        .fxn-slash-item .fxn-slash-resp{font-size:11px;color:var(--fxn-text-muted,#888);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .fxn-slash-item.active,.fxn-slash-item:hover{background:var(--fxn-accent-soft,rgba(192,38,211,0.12));}
+        .fxn-slash-hint{font-size:10px;color:var(--fxn-text-muted,#999);padding:4px 10px 2px;border-top:1px solid var(--fxn-border,rgba(0,0,0,0.1));margin-top:4px;}
+        .fxn-slash-dropdown::-webkit-scrollbar{width:6px;}
+        .fxn-slash-dropdown::-webkit-scrollbar-thumb{background:var(--fxn-border,#ccc);border-radius:6px;}
         `;
         (document.head || document.documentElement).appendChild(s);
     }
@@ -170,7 +170,7 @@
         ensureStyles();
         if (!dropdownEl) {
             dropdownEl = document.createElement('div');
-            dropdownEl.className = 'fpt-slash-dropdown';
+            dropdownEl.className = 'fxn-slash-dropdown';
             document.body.appendChild(dropdownEl);
         }
         activeInput = input;
@@ -181,13 +181,13 @@
             : cfg.expandKey === 'tab' ? 'Tab' : 'Tab / Enter';
 
         dropdownEl.innerHTML = matches.map((c, i) => `
-            <div class="fpt-slash-item ${i === 0 ? 'active' : ''}" data-i="${i}">
-                <span class="fpt-slash-trig">${escapeHtml(c.trigger)}</span>
-                <span class="fpt-slash-resp">${escapeHtml((c.response || '').replace(/\s+/g, ' ').slice(0, 90))}</span>
+            <div class="fxn-slash-item ${i === 0 ? 'active' : ''}" data-i="${i}">
+                <span class="fxn-slash-trig">${escapeHtml(c.trigger)}</span>
+                <span class="fxn-slash-resp">${escapeHtml((c.response || '').replace(/\s+/g, ' ').slice(0, 90))}</span>
             </div>
-        `).join('') + `<div class="fpt-slash-hint">${keyHint} - вставить - ↑↓ выбрать - Esc закрыть</div>`;
+        `).join('') + `<div class="fxn-slash-hint">${keyHint} - вставить - ↑↓ выбрать - Esc закрыть</div>`;
 
-        dropdownEl.querySelectorAll('.fpt-slash-item').forEach(item => {
+        dropdownEl.querySelectorAll('.fxn-slash-item').forEach(item => {
             item.addEventListener('mousedown', (e) => {
                 e.preventDefault(); // не терять фокус поля
                 const i = parseInt(item.dataset.i, 10);
@@ -207,10 +207,10 @@
     function setDropIndex(i) {
         if (!dropdownEl || !dropItems.length) return;
         dropIndex = (i + dropItems.length) % dropItems.length;
-        dropdownEl.querySelectorAll('.fpt-slash-item').forEach(el => {
+        dropdownEl.querySelectorAll('.fxn-slash-item').forEach(el => {
             el.classList.toggle('active', parseInt(el.dataset.i, 10) === dropIndex);
         });
-        const activeEl = dropdownEl.querySelector('.fpt-slash-item.active');
+        const activeEl = dropdownEl.querySelector('.fxn-slash-item.active');
         if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
     }
 
@@ -363,5 +363,5 @@
     }
 
     // expose for settings page reload
-    window.fptReloadSlashCommands = loadCfg;
+    window.fxnReloadSlashCommands = loadCfg;
 })();

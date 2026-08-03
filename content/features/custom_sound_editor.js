@@ -1,15 +1,15 @@
 // content/features/custom_sound_editor.js
 // Загрузка своей мелодии для уведомлений + обрезка до 5 секунд (перетаскиваемое
 // выделение по волне, прослушивание, сохранение). Сохранённый отрезок кодируется
-// в WAV (data URL) и хранится в chrome.storage.local.fpToolsCustomSoundData.
+// в WAV (data URL) и хранится в chrome.storage.local.foxenCustomSoundData.
 
 (function () {
     'use strict';
 
     const MAX_CLIP = 5;
     let clipSeconds = 5;        // 1..5, по умолчанию 5
-    const STORE_DATA = 'fpToolsCustomSoundData'; // data:audio/wav;base64,...
-    const STORE_META = 'fpToolsCustomSoundMeta'; // { length }
+    const STORE_DATA = 'foxenCustomSoundData'; // data:audio/wav;base64,...
+    const STORE_META = 'foxenCustomSoundMeta'; // { length }
 
     let audioCtx = null;
     let decodedBuffer = null;   // AudioBuffer всего загруженного файла
@@ -33,9 +33,9 @@
 
     // ── waveform ────────────────────────────────────────────────────────────────
     function drawWave() {
-        const canvas = $('fptWaveCanvas');
+        const canvas = $('fxnWaveCanvas');
         if (!canvas || !decodedBuffer) return;
-        const wrap = $('fptWaveWrap');
+        const wrap = $('fxnWaveWrap');
         const dpr = window.devicePixelRatio || 1;
         const w = wrap.clientWidth, h = wrap.clientHeight;
         canvas.width = Math.max(1, Math.floor(w * dpr));
@@ -65,11 +65,11 @@
     }
 
     function updateSelectionUI() {
-        const wrap = $('fptWaveWrap');
-        const sel = $('fptWaveSel');
-        const hL = $('fptWaveSelHandleL');
-        const hR = $('fptWaveSelHandleR');
-        const rangeEl = $('fptCustomSoundRange');
+        const wrap = $('fxnWaveWrap');
+        const sel = $('fxnWaveSel');
+        const hL = $('fxnWaveSelHandleL');
+        const hR = $('fxnWaveSelHandleR');
+        const rangeEl = $('fxnCustomSoundRange');
         if (!wrap || !sel || !decodedBuffer) return;
 
         const dur = decodedBuffer.duration;
@@ -90,7 +90,7 @@
 
     // ── drag selection ──────────────────────────────────────────────────────────
     function bindDrag() {
-        const wrap = $('fptWaveWrap');
+        const wrap = $('fxnWaveWrap');
         if (!wrap || wrap.dataset.dragBound) return;
         wrap.dataset.dragBound = '1';
 
@@ -132,7 +132,7 @@
     function stopPreview() {
         if (previewSource) { try { previewSource.stop(); } catch (_) {} previewSource = null; }
         if (playRAF) { cancelAnimationFrame(playRAF); playRAF = null; }
-        const ph = $('fptWavePlayhead');
+        const ph = $('fxnWavePlayhead');
         if (ph) ph.style.display = 'none';
     }
 
@@ -156,8 +156,8 @@
         src.start(0, selStart, clip);
 
         // playhead animation
-        const wrap = $('fptWaveWrap');
-        const ph = $('fptWavePlayhead');
+        const wrap = $('fxnWaveWrap');
+        const ph = $('fxnWavePlayhead');
         const startedAt = ctx.currentTime;
         if (ph && wrap) {
             ph.style.display = 'block';
@@ -232,9 +232,9 @@
 
     // ── file load ─────────────────────────────────────────────────────────────────
     async function handleFile(file) {
-        const nameEl = $('fptCustomSoundFileName');
+        const nameEl = $('fxnCustomSoundFileName');
         if (nameEl) nameEl.textContent = file.name;
-        const editor = $('fptCustomSoundEditor');
+        const editor = $('fxnCustomSoundEditor');
 
         try {
             const arrBuf = await file.arrayBuffer();
@@ -253,7 +253,7 @@
 
     async function saveClip() {
         if (!decodedBuffer) return;
-        const saveBtn = $('fptCustomSoundSaveBtn');
+        const saveBtn = $('fxnCustomSoundSaveBtn');
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Сохраняю…'; }
         try {
             const dataUrl = sliceToWav();
@@ -266,8 +266,8 @@
             // отметить радио «Своя мелодия»
             const radio = document.querySelector('input[name="notificationSound"][value="custom"]');
             if (radio) radio.checked = true;
-            const savedEl = $('fptCustomSoundSaved');
-            const lenEl = $('fptCustomSoundSavedLen');
+            const savedEl = $('fxnCustomSoundSaved');
+            const lenEl = $('fxnCustomSoundSavedLen');
             if (lenEl) lenEl.textContent = clip.toFixed(1);
             if (savedEl) savedEl.style.display = 'block';
             if (typeof showNotification === 'function') showNotification('Своя мелодия сохранена!');
@@ -280,7 +280,7 @@
 
     // ── visibility toggle (radio = custom) ────────────────────────────────────────
     async function syncCustomBlockVisibility() {
-        const block = $('fptCustomSoundBlock');
+        const block = $('fxnCustomSoundBlock');
         if (!block) return;
         const selected = document.querySelector('input[name="notificationSound"]:checked');
         const isCustom = selected && selected.value === 'custom';
@@ -288,9 +288,9 @@
 
         // показать «сохранено», если уже есть сохранённый клип
         const { [STORE_META]: meta, [STORE_DATA]: data } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([STORE_META, STORE_DATA]);
-        const savedEl = $('fptCustomSoundSaved');
-        const lenEl = $('fptCustomSoundSavedLen');
-        const nameEl = $('fptCustomSoundFileName');
+        const savedEl = $('fxnCustomSoundSaved');
+        const lenEl = $('fxnCustomSoundSavedLen');
+        const nameEl = $('fxnCustomSoundFileName');
         if (savedEl) savedEl.style.display = (isCustom && data) ? 'block' : 'none';
         if (lenEl && meta && meta.length) lenEl.textContent = Number(meta.length).toFixed(1);
         // Если клип уже сохранён ранее - показываем это, а не «Файл не выбран».
@@ -298,7 +298,7 @@
             if (data) {
                 const len = (meta && meta.length) ? Number(meta.length).toFixed(1) : '5.0';
                 nameEl.textContent = `Установлена своя мелодия (${len} сек). Выберите файл, чтобы заменить.`;
-                nameEl.style.color = 'var(--fpt-text,#cfd2dc)';
+                nameEl.style.color = 'var(--fxn-text,#cfd2dc)';
             } else {
                 nameEl.textContent = 'Файл не выбран';
                 nameEl.style.color = '';
@@ -308,7 +308,7 @@
 
     // публичная инициализация - вызывается при построении попапа
     function initializeCustomSoundEditor() {
-        const block = $('fptCustomSoundBlock');
+        const block = $('fxnCustomSoundBlock');
         if (!block || block.dataset.init) {
             syncCustomBlockVisibility();
             return;
@@ -320,26 +320,26 @@
             r.addEventListener('change', syncCustomBlockVisibility);
         });
 
-        const uploadBtn = $('fptCustomSoundUploadBtn');
-        const input = $('fptCustomSoundInput');
+        const uploadBtn = $('fxnCustomSoundUploadBtn');
+        const input = $('fxnCustomSoundInput');
         uploadBtn && uploadBtn.addEventListener('click', () => input && input.click());
         input && input.addEventListener('change', (e) => {
             const f = e.target.files && e.target.files[0];
             if (f) handleFile(f);
         });
 
-        $('fptCustomSoundPreviewBtn') && $('fptCustomSoundPreviewBtn').addEventListener('click', previewSelection);
-        $('fptCustomSoundSaveBtn') && $('fptCustomSoundSaveBtn').addEventListener('click', saveClip);
+        $('fxnCustomSoundPreviewBtn') && $('fxnCustomSoundPreviewBtn').addEventListener('click', previewSelection);
+        $('fxnCustomSoundSaveBtn') && $('fxnCustomSoundSaveBtn').addEventListener('click', saveClip);
 
         // крутилка длительности (1..5 сек)
-        const secInput = $('fptClipSeconds');
+        const secInput = $('fxnClipSeconds');
         const setSeconds = (v) => {
             clipSeconds = Math.max(1, Math.min(MAX_CLIP, v));
             if (secInput) secInput.value = String(clipSeconds);
             if (decodedBuffer) updateSelectionUI();
         };
-        $('fptClipSecUp') && $('fptClipSecUp').addEventListener('click', () => setSeconds(clipSeconds + 1));
-        $('fptClipSecDown') && $('fptClipSecDown').addEventListener('click', () => setSeconds(clipSeconds - 1));
+        $('fxnClipSecUp') && $('fxnClipSecUp').addEventListener('click', () => setSeconds(clipSeconds + 1));
+        $('fxnClipSecDown') && $('fxnClipSecDown').addEventListener('click', () => setSeconds(clipSeconds - 1));
         // ручной ввод: можно кликнуть и вписать свою цифру; >MAX_CLIP заменяется на MAX_CLIP
         if (secInput) {
             secInput.addEventListener('input', () => {
@@ -362,7 +362,7 @@
             });
         }
         // колесо мыши над крутилкой
-        const spin = secInput && secInput.closest('.fpt-sec-spin');
+        const spin = secInput && secInput.closest('.fxn-sec-spin');
         spin && spin.addEventListener('wheel', (e) => { e.preventDefault(); setSeconds(clipSeconds + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
 
         window.addEventListener('resize', () => { if (decodedBuffer) { drawWave(); updateSelectionUI(); } });

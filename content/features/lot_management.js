@@ -37,11 +37,11 @@ function waitForProfileContainer(timeout = 8000) {
 }
 
 async function displayPinnedLotsOnLoad() {
-    const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
-    if (fpToolsPinnedLots.length === 0) return;
+    const { foxenPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenPinnedLots');
+    if (foxenPinnedLots.length === 0) return;
 
     // Don't re-insert if already there
-    if ($('#fp-tools-pinned-lots-container').length) return;
+    if ($('#foxen-pinned-lots-container').length) return;
 
     // Wait for FunPay to render the profile container (it arrives after their own JS runs)
     const profileDataContainerEl = await waitForProfileContainer();
@@ -49,7 +49,7 @@ async function displayPinnedLotsOnLoad() {
     const profileDataContainer = $(profileDataContainerEl);
 
     let pinnedLotsHtml = '';
-    fpToolsPinnedLots.forEach(lotData => {
+    foxenPinnedLots.forEach(lotData => {
         if (!lotData.html) return;
         const $lot = $(lotData.html);
         if (!$lot.length) return;
@@ -61,10 +61,10 @@ async function displayPinnedLotsOnLoad() {
     if (!pinnedLotsHtml) return;
 
     const pinnedContainer = $(`
-        <div class="offer" id="fp-tools-pinned-lots-container">
+        <div class="offer" id="foxen-pinned-lots-container">
             <div class="offer-list-title" style="display: flex; align-items: center; gap: 10px;">
                 <h3>Закрепленные лоты</h3>
-                <button id="fp-tools-edit-pinned-lots-btn" class="btn btn-default btn-xs" title="Выбрать закрепленные" style="padding: 2px 8px; font-size: 14px; line-height: 1;">✏️</button>
+                <button id="foxen-edit-pinned-lots-btn" class="btn btn-default btn-xs" title="Выбрать закрепленные" style="padding: 2px 8px; font-size: 14px; line-height: 1;">✏️</button>
             </div>
             <div class="tc showcase-table tc-b-main">
                 ${pinnedLotsHtml}
@@ -105,7 +105,7 @@ function initializeLotManagement() {
         // Страница активируется на: своём профиле, категории-trade, ИЛИ чужом профиле.
         const isProfileSalesPage = isOwnProfile || isForeignProfile;
         if (!isProfileSalesPage && !isCategoryTradePage) return;
-        if (document.getElementById('fp-tools-select-lots-btn')) return;
+        if (document.getElementById('foxen-select-lots-btn')) return;
 
         const isForeignClone = isForeignProfile;
         window.__fptForeignClone = isForeignClone;
@@ -114,13 +114,13 @@ function initializeLotManagement() {
             displayPinnedLotsOnLoad();
         }
 
-        const selectBtn = $('<button type="button" class="fp-header-action-btn" id="fp-tools-select-lots-btn">Выбрать</button>');
-        const reactivateBtn = $('<button type="button" class="fp-header-action-btn" id="fp-tools-reactivate-lots-btn">Включить лоты</button>');
+        const selectBtn = $('<button type="button" class="fp-header-action-btn" id="foxen-select-lots-btn">Выбрать</button>');
+        const reactivateBtn = $('<button type="button" class="fp-header-action-btn" id="foxen-reactivate-lots-btn">Включить лоты</button>');
 
         const controlsContainer = $(`
-            <div id="fp-tools-selection-controls">
-                <button type="button" class="fp-header-action-btn" id="fp-tools-select-all-btn">Выбрать все</button>
-                <button type="button" class="fp-header-action-btn" id="fp-tools-cancel-selection">Отмена</button>
+            <div id="foxen-selection-controls">
+                <button type="button" class="fp-header-action-btn" id="foxen-select-all-btn">Выбрать все</button>
+                <button type="button" class="fp-header-action-btn" id="foxen-cancel-selection">Отмена</button>
             </div>
         `);
 
@@ -128,7 +128,7 @@ function initializeLotManagement() {
             const offersHeader = $(Array.from(document.querySelectorAll('h5.mb10.text-bold')).find(h => h.textContent.trim() === 'Предложения' || h.textContent.trim() === 'Отзывы'));
             if (offersHeader.length) {
                 selectBtn.removeClass('btn-block');
-                controlsContainer.addClass('fp-tools-selection-controls-profile');
+                controlsContainer.addClass('foxen-selection-controls-profile');
                 // На профилях кнопку «Включить лоты» не показываем — только «Выбрать».
                 offersHeader.append(selectBtn, controlsContainer.hide());
             }
@@ -139,14 +139,14 @@ function initializeLotManagement() {
                 const controlsRow = raiseButtonWrapper.parent();
                 controlsRow.addClass('fp-original-controls');
                 
-                const fpToolsControls = $('<div class="row row-10 fp-tools-offer-controls"></div>');
+                const foxenControls = $('<div class="row row-10 foxen-offer-controls"></div>');
                 const selectBtnWrapper = $('<div class="col-sm-6 mb10"></div>').append(selectBtn);
                 const reactivateBtnWrapper = $('<div class="col-sm-6 mb10"></div>').append(reactivateBtn);
                 
-                fpToolsControls.append(selectBtnWrapper, reactivateBtnWrapper);
-                controlsRow.before(fpToolsControls);
+                foxenControls.append(selectBtnWrapper, reactivateBtnWrapper);
+                controlsRow.before(foxenControls);
                 
-                controlsContainer.addClass('fp-tools-selection-controls-category').hide();
+                controlsContainer.addClass('foxen-selection-controls-category').hide();
                 controlsRow.parent().append(controlsContainer);
             }
         }
@@ -159,7 +159,7 @@ function initializeLotManagement() {
                 $(this).addClass('active');
                 reactivateBtn.hide();
             } else {
-                 $('.fp-tools-offer-controls, .fp-original-controls').hide();
+                 $('.foxen-offer-controls, .fp-original-controls').hide();
             }
             controlsContainer.addClass('active');
             toggleSelectionMode(true);
@@ -167,37 +167,37 @@ function initializeLotManagement() {
         
         reactivateBtn.on('click', showReactivationPopup);
 
-        controlsContainer.find('#fp-tools-cancel-selection').on('click', function() {
+        controlsContainer.find('#foxen-cancel-selection').on('click', function() {
             controlsContainer.removeClass('active').hide();
             if(isProfileSalesPage) {
                 selectBtn.removeClass('active').show();
                 reactivateBtn.show();
             } else {
-                $('.fp-tools-offer-controls, .fp-original-controls').show();
+                $('.foxen-offer-controls, .fp-original-controls').show();
             }
             toggleSelectionMode(false);
             $('.actions').hide();
         });
 
-        controlsContainer.find('#fp-tools-select-all-btn').on('click', function() {
+        controlsContainer.find('#foxen-select-all-btn').on('click', function() {
             const total = $('.tc-item .lot-box input').length;
             const checked = $('.tc-item .lot-box input:checked').length;
             const shouldCheck = checked < total;
             $('.lot-box input').prop('checked', shouldCheck).trigger('change');
         });
 
-        $(document).on('click', '#fp-tools-edit-pinned-lots-btn', function() {
-            if (!$('#fp-tools-selection-controls').is(':visible')) {
-                $('#fp-tools-select-lots-btn').click();
+        $(document).on('click', '#foxen-edit-pinned-lots-btn', function() {
+            if (!$('#foxen-selection-controls').is(':visible')) {
+                $('#foxen-select-lots-btn').click();
             }
             $('.lot-box input').prop('checked', false);
-            $('#fp-tools-pinned-lots-container .lot-box input').prop('checked', true).trigger('change');
+            $('#foxen-pinned-lots-container .lot-box input').prop('checked', true).trigger('change');
         });
 
         // [ИСПРАВЛЕНО] Добавляем CSS для корректного отображения чекбокса категории и стиля кнопок выбора
-        if (!$('style[data-fp-tools-category-selector]').length) {
+        if (!$('style[data-foxen-category-selector]').length) {
             $('head').append(`
-                <style data-fp-tools-category-selector>
+                <style data-foxen-category-selector>
                     .offer-list-title-container .offer-list-title {
                         display: flex;
                         align-items: center;
@@ -206,14 +206,14 @@ function initializeLotManagement() {
                     .offer-list-title-container .offer-list-title h3 {
                         margin: 0;
                     }
-                    .fp-tools-category-selector {
+                    .foxen-category-selector {
                         margin-right: 15px;
                 </style>
             `);
         }
 
         // Обработчик для чекбоксов категорий
-        $(document).on('change', '.fp-tools-category-selector input', function() {
+        $(document).on('change', '.foxen-category-selector input', function() {
             const isChecked = $(this).prop('checked');
             $(this).closest('.offer').find('.tc-item .lot-box input').prop('checked', isChecked).trigger('change');
         });
@@ -230,9 +230,9 @@ function toggleSelectionMode(enable) {
         
         // Добавление чекбоксов для категорий
         $('.offer-list-title').each(function() {
-            if ($(this).find('.fp-tools-category-selector').length === 0) {
+            if ($(this).find('.foxen-category-selector').length === 0) {
                 const categoryCheckbox = $(`
-                    <label class="lot-box fp-tools-category-selector">
+                    <label class="lot-box foxen-category-selector">
                         <input type="checkbox" hidden />
                         <span class="lot-mark"></span>
                     </label>
@@ -249,7 +249,7 @@ function toggleSelectionMode(enable) {
         });
     } else {
         $('.lot-box input:checked').prop('checked', false).trigger('change');
-        $('.action-lots-header-cell, .action-lots-checkbox-cell, .fp-tools-category-selector').remove();
+        $('.action-lots-header-cell, .action-lots-checkbox-cell, .foxen-category-selector').remove();
     }
 }
 
@@ -257,8 +257,8 @@ async function updatePinButtonsState() {
     $('.action-lot.pin-lot, .action-lot.unpin-lot').hide();
     return;
 
-    const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
-    const pinnedIds = new Set(fpToolsPinnedLots.map(l => l.offerId));
+    const { foxenPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenPinnedLots');
+    const pinnedIds = new Set(foxenPinnedLots.map(l => l.offerId));
 
     let arePinnedCount = 0;
     let areNotPinnedCount = 0;
@@ -290,7 +290,7 @@ async function updatePinButtonsState() {
 
 // Копирование ОДНОГО чужого лота к себе (тот же конвейер, что и одиночное
 // клонирование): cloneGetSource (читает лот + подбирает поля категории) → cloneCreateLot.
-async function fptCloneOneForeign(offerId) {
+async function fxnCloneOneForeign(offerId) {
     const src = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'cloneGetSource', offerId });
     if (!src || !src.success) throw new Error(src?.error || 'не удалось прочитать лот');
     if (src.source?.isChips) throw new Error('лот из раздела валюты — пропущен');
@@ -379,7 +379,7 @@ function setupActionProcessing() {
         // [ИСПРАВЛЕНО] Считаем только чекбоксы лотов для общего счетчика
         const totalLots = $('.tc-item .lot-box input').length;
         const checkedLots = $('.tc-item .lot-box input:checked').length;
-        const selectAllBtn = $('#fp-tools-select-all-btn');
+        const selectAllBtn = $('#foxen-select-all-btn');
 
         $('.actions').css('display', checkedLots > 0 ? 'flex' : 'none');
         updateActivateDeactivateCounts();
@@ -398,7 +398,7 @@ function setupActionProcessing() {
         // [ИСПРАВЛЕНО] Логика синхронизации чекбокса категории
         const $offer = $(this).closest('.offer');
         if ($offer.length > 0) {
-            const $categoryCheckbox = $offer.find('.fp-tools-category-selector input');
+            const $categoryCheckbox = $offer.find('.foxen-category-selector input');
             // Считаем только лоты внутри данной категории
             const totalInCategory = $offer.find('.tc-item .lot-box input').length;
             const checkedInCategory = $offer.find('.tc-item .lot-box input:checked').length;
@@ -414,7 +414,7 @@ function setupActionProcessing() {
     });
     
     $(document).on('click', 'a.tc-item', function(e) {
-        if (!$('#fp-tools-selection-controls').is(':visible')) {
+        if (!$('#foxen-selection-controls').is(':visible')) {
             return;
         }
         if (e.target.tagName === 'A' && e.target.closest('a.tc-item') !== e.target || $(e.target).closest('.lot-box').length > 0) {
@@ -482,8 +482,8 @@ function setupActionProcessing() {
         if (selectedCheckboxes.length === 0) return;
     
         toggleActions(true);
-        let { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
-        const pinnedOfferIds = new Set(fpToolsPinnedLots.map(l => l.offerId));
+        let { foxenPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenPinnedLots');
+        const pinnedOfferIds = new Set(foxenPinnedLots.map(l => l.offerId));
         let changesMade = 0;
     
         for (const checkbox of selectedCheckboxes) {
@@ -510,7 +510,7 @@ function setupActionProcessing() {
                             .append(priceElement.clone())
                             .prop('outerHTML');
 
-                        fpToolsPinnedLots.push({
+                        foxenPinnedLots.push({
                             offerId: offerId,
                             nodeId: nodeId,
                             gameName: gameName,
@@ -521,24 +521,24 @@ function setupActionProcessing() {
                     }
                 }
             } else { 
-                const initialLength = fpToolsPinnedLots.length;
-                fpToolsPinnedLots = fpToolsPinnedLots.filter(l => l.offerId !== offerId);
-                if (fpToolsPinnedLots.length < initialLength) {
+                const initialLength = foxenPinnedLots.length;
+                foxenPinnedLots = foxenPinnedLots.filter(l => l.offerId !== offerId);
+                if (foxenPinnedLots.length < initialLength) {
                     changesMade++;
                 }
             }
         }
     
         if (changesMade > 0) {
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPinnedLots });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenPinnedLots });
             
             // Remove old container and rebuild
-            $('#fp-tools-pinned-lots-container').remove();
+            $('#foxen-pinned-lots-container').remove();
             await displayPinnedLotsOnLoad();
 
             // Re-attach checkbox cells to newly inserted pinned lots
-            if ($('#fp-tools-selection-controls').is(':visible')) {
-                $('#fp-tools-pinned-lots-container .tc-item').each(function() {
+            if ($('#foxen-selection-controls').is(':visible')) {
+                $('#foxen-pinned-lots-container .tc-item').each(function() {
                     if ($(this).find('.action-lots-checkbox-cell').length === 0) {
                         const checkboxCell = $('<div class="action-lots-checkbox-cell"><label class="lot-box"><input type="checkbox" hidden /><span class="lot-mark"></span></label></div>');
                         $(this).prepend(checkboxCell);
@@ -593,9 +593,9 @@ function setupActionProcessing() {
                 if (categoryLink.length > 0) {
                     const nodeIdMatch = categoryLink.attr('href').match(/\/(?:lots|chips)\/(\d+)/);
                     nodeId = nodeIdMatch ? nodeIdMatch[1] : null;
-                } else if ($offerBlock.attr('id') === 'fp-tools-pinned-lots-container') {
-                    const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
-                    const pinnedLot = fpToolsPinnedLots.find(l => l.offerId === offerId);
+                } else if ($offerBlock.attr('id') === 'foxen-pinned-lots-container') {
+                    const { foxenPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenPinnedLots');
+                    const pinnedLot = foxenPinnedLots.find(l => l.offerId === offerId);
                     nodeId = pinnedLot ? pinnedLot.nodeId : null;
                 }
             } else {
@@ -659,18 +659,18 @@ function setupActionProcessing() {
                         $clone.hide().insertAfter($lotLink).fadeIn(300);
                     } else if (actionType === 'deactivate') {
                         $lotLink.css('opacity', '0.5').addClass('warning');
-                        const { fpToolsDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDeactivatedLots');
-                        if (!fpToolsDeactivatedLots.some(lot => lot.offerId === offerId)) {
-                            fpToolsDeactivatedLots.push({ offerId, nodeId, name: lotName, deactivatedAt: Date.now() });
-                            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDeactivatedLots });
+                        const { foxenDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDeactivatedLots');
+                        if (!foxenDeactivatedLots.some(lot => lot.offerId === offerId)) {
+                            foxenDeactivatedLots.push({ offerId, nodeId, name: lotName, deactivatedAt: Date.now() });
+                            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenDeactivatedLots });
                         }
                     } else if (actionType === 'activate') {
                         // включили лот - обновляем строку и убираем его из списка отключённых
                         $lotLink.css('opacity', '1').removeClass('warning');
-                        const { fpToolsDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDeactivatedLots');
-                        const filtered = fpToolsDeactivatedLots.filter(lot => String(lot.offerId) !== String(offerId));
-                        if (filtered.length !== fpToolsDeactivatedLots.length) {
-                            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDeactivatedLots: filtered });
+                        const { foxenDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDeactivatedLots');
+                        const filtered = foxenDeactivatedLots.filter(lot => String(lot.offerId) !== String(offerId));
+                        if (filtered.length !== foxenDeactivatedLots.length) {
+                            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenDeactivatedLots: filtered });
                         }
                     }
                     if (actionType !== 'delete') $(checkbox).prop('checked', false).trigger('change');
@@ -740,9 +740,9 @@ function setupActionProcessing() {
                  if (categoryLink.length > 0) {
                     const nodeIdMatch = categoryLink.attr('href').match(/\/(?:lots|chips)\/(\d+)/);
                     nodeId = nodeIdMatch ? nodeIdMatch[1] : null;
-                } else if ($offerBlock.attr('id') === 'fp-tools-pinned-lots-container') {
-                    const { fpToolsPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsPinnedLots');
-                    const pinnedLot = fpToolsPinnedLots.find(l => l.offerId === offerId);
+                } else if ($offerBlock.attr('id') === 'foxen-pinned-lots-container') {
+                    const { foxenPinnedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenPinnedLots');
+                    const pinnedLot = foxenPinnedLots.find(l => l.offerId === offerId);
                     nodeId = pinnedLot ? pinnedLot.nodeId : null;
                 }
             } else {
@@ -849,9 +849,9 @@ async function reactivateLot(offerId, nodeId, button) {
         const result = await response.json();
 
         if (result && (result.error === 0 || result.error === false)) {
-            const { fpToolsDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDeactivatedLots');
-            const updatedList = fpToolsDeactivatedLots.filter(lot => String(lot.offerId) !== String(offerId));
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDeactivatedLots: updatedList });
+            const { foxenDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDeactivatedLots');
+            const updatedList = foxenDeactivatedLots.filter(lot => String(lot.offerId) !== String(offerId));
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenDeactivatedLots: updatedList });
 
             // если этот лот виден на странице - обновляем его строку (снимаем неактивный вид)
             document.querySelectorAll(`a.tc-item[data-offer="${offerId}"], .tc-item[data-offer="${offerId}"]`).forEach(el => {
@@ -1030,7 +1030,7 @@ function computeNewPrice(current, mode, value, round, min, max) {
 }
 
 async function showReactivationPopup() {
-    let { fpToolsDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDeactivatedLots');
+    let { foxenDeactivatedLots = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDeactivatedLots');
 
     // FIX 2.8.8 (№6): синхронизация со статусом на странице. Если лот, который мы
     // когда-то отключали через расширение, сейчас ВИДЕН на странице и АКТИВЕН
@@ -1041,10 +1041,10 @@ async function showReactivationPopup() {
         const oid = el.getAttribute('data-offer');
         if (oid && !el.classList.contains('warning')) activeOnPage.add(String(oid));
     });
-    const cleaned = fpToolsDeactivatedLots.filter(l => !(l && activeOnPage.has(String(l.offerId))));
-    if (cleaned.length !== fpToolsDeactivatedLots.length) {
-        fpToolsDeactivatedLots = cleaned;
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDeactivatedLots: cleaned });
+    const cleaned = foxenDeactivatedLots.filter(l => !(l && activeOnPage.has(String(l.offerId))));
+    if (cleaned.length !== foxenDeactivatedLots.length) {
+        foxenDeactivatedLots = cleaned;
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenDeactivatedLots: cleaned });
     }
 
     const list = $('.fp-reactivate-list');
@@ -1053,7 +1053,7 @@ async function showReactivationPopup() {
     // Собираем: отключённые через расширение + все неактивные (.warning) на странице.
     const merged = new Map(); // offerId -> { offerId, nodeId, name, deactivatedAt }
 
-    fpToolsDeactivatedLots.forEach(lot => {
+    foxenDeactivatedLots.forEach(lot => {
         if (lot && lot.offerId != null) merged.set(String(lot.offerId), { ...lot });
     });
 

@@ -19,7 +19,7 @@
     const FOXEN_SIGNATURE = '\u200C\u200D\u200B';
 
     const foxenUsers = new Set();
-    const fptUsers   = new Set();
+    const fxnUsers   = new Set();
 
     let currentChatUserId = null;
     let lastSeenAuthorId  = null;
@@ -27,11 +27,11 @@
 
     // ── Inject Badge Styles ──────────────────────────────────────────────────
     function addIdentifierStyles() {
-        if (document.getElementById('fpt-identifier-styles')) return;
+        if (document.getElementById('fxn-identifier-styles')) return;
         const s = document.createElement('style');
-        s.id = 'fpt-identifier-styles';
+        s.id = 'fxn-identifier-styles';
         s.textContent = `
-            .fpt-status-badge-wrap {
+            .fxn-status-badge-wrap {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
@@ -39,7 +39,7 @@
                 vertical-align: middle;
                 user-select: none;
             }
-            .fpt-badge-foxen {
+            .fxn-badge-foxen {
                 display: inline-flex;
                 align-items: center;
                 gap: 4px;
@@ -48,7 +48,7 @@
                 font-weight: 600;
                 opacity: 0.9;
             }
-            .fpt-badge-foxen::before {
+            .fxn-badge-foxen::before {
                 content: '';
                 display: inline-block;
                 width: 5px;
@@ -57,7 +57,7 @@
                 background: #d946ef;
                 box-shadow: 0 0 6px rgba(217, 70, 239, 0.7);
             }
-            .fpt-badge-fpt {
+            .fxn-badge-fpt {
                 display: inline-flex;
                 align-items: center;
                 gap: 4px;
@@ -66,7 +66,7 @@
                 font-weight: 600;
                 opacity: 0.9;
             }
-            .fpt-badge-fpt::before {
+            .fxn-badge-fpt::before {
                 content: '';
                 display: inline-block;
                 width: 5px;
@@ -98,36 +98,36 @@
         currentChatUserId = userId;
 
         if (!userId) {
-            statusEl.querySelector('.fpt-status-badge-wrap')?.remove();
+            statusEl.querySelector('.fxn-status-badge-wrap')?.remove();
             lastRenderedBadgeKey = '';
             return;
         }
 
         const isFoxen = foxenUsers.has(userId);
-        const isFPT   = fptUsers.has(userId);
+        const isFPT   = fxnUsers.has(userId);
         const badgeKey = `${userId}:${isFoxen}:${isFPT}`;
 
-        if (badgeKey === lastRenderedBadgeKey && statusEl.querySelector('.fpt-status-badge-wrap')) {
+        if (badgeKey === lastRenderedBadgeKey && statusEl.querySelector('.fxn-status-badge-wrap')) {
             return;
         }
         lastRenderedBadgeKey = badgeKey;
 
-        statusEl.querySelector('.fpt-status-badge-wrap')?.remove();
+        statusEl.querySelector('.fxn-status-badge-wrap')?.remove();
 
         if (isFoxen) {
             const wrap = document.createElement('span');
-            wrap.className = 'fpt-status-badge-wrap';
+            wrap.className = 'fxn-status-badge-wrap';
             const bFoxen = document.createElement('span');
-            bFoxen.className = 'fpt-badge-foxen';
+            bFoxen.className = 'fxn-badge-foxen';
             bFoxen.textContent = 'Foxen';
             bFoxen.title = 'Пользователь расширения Foxen';
             wrap.appendChild(bFoxen);
             statusEl.appendChild(wrap);
         } else if (isFPT) {
             const wrap = document.createElement('span');
-            wrap.className = 'fpt-status-badge-wrap';
+            wrap.className = 'fxn-status-badge-wrap';
             const bFPT = document.createElement('span');
-            bFPT.className = 'fpt-badge-fpt';
+            bFPT.className = 'fxn-badge-fpt';
             bFPT.textContent = 'FunPay Tools';
             bFPT.title = 'Пользователь расширения FunPay Tools';
             wrap.appendChild(bFPT);
@@ -137,8 +137,8 @@
 
     // ── Message Scanning Logic (With Message-Level Badges) ────────────────────
     function processMessage(node) {
-        if (node.classList.contains('fpt-scanned-msg')) return;
-        node.classList.add('fpt-scanned-msg');
+        if (node.classList.contains('fxn-scanned-msg')) return;
+        node.classList.add('fxn-scanned-msg');
 
         let authorId = null;
         if (node.classList.contains('chat-msg-with-head')) {
@@ -161,23 +161,23 @@
         if (hasFoxen || hasFPT) {
             if (authorId) {
                 if (hasFoxen) foxenUsers.add(authorId);
-                if (hasFPT) fptUsers.add(authorId);
+                if (hasFPT) fxnUsers.add(authorId);
             }
 
             // Inline badge on message author header
             const headAuthor = node.querySelector('.chat-msg-author');
-            if (headAuthor && !headAuthor.querySelector('.fpt-status-badge-wrap')) {
+            if (headAuthor && !headAuthor.querySelector('.fxn-status-badge-wrap')) {
                 const wrap = document.createElement('span');
-                wrap.className = 'fpt-status-badge-wrap';
+                wrap.className = 'fxn-status-badge-wrap';
 
                 if (hasFoxen) {
                     const bFoxen = document.createElement('span');
-                    bFoxen.className = 'fpt-badge-foxen';
+                    bFoxen.className = 'fxn-badge-foxen';
                     bFoxen.textContent = 'Foxen';
                     wrap.appendChild(bFoxen);
                 } else if (hasFPT) {
                     const bFPT = document.createElement('span');
-                    bFPT.className = 'fpt-badge-fpt';
+                    bFPT.className = 'fxn-badge-fpt';
                     bFPT.textContent = 'FunPay Tools';
                     wrap.appendChild(bFPT);
                 }
@@ -260,7 +260,7 @@
                 lastRenderedBadgeKey = '';
             }
 
-            document.querySelectorAll('.chat-msg-item:not(.fpt-scanned-msg)').forEach(processMessage);
+            document.querySelectorAll('.chat-msg-item:not(.fxn-scanned-msg)').forEach(processMessage);
             updateHeaderStatus();
         };
 
@@ -283,7 +283,7 @@
             for (const m of mutations) {
                 for (const node of m.addedNodes) {
                     if (node.nodeType === 1) {
-                        if (node.classList && node.classList.contains('fpt-status-badge-wrap')) continue;
+                        if (node.classList && node.classList.contains('fxn-status-badge-wrap')) continue;
 
                         if (node.classList && node.classList.contains('chat-msg-item')) {
                             shouldScan = true;
@@ -308,8 +308,8 @@
     // ── Boot ────────────────────────────────────────────────────────────────
     async function boot() {
         try {
-            const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsIdentifierEnabled');
-            if (st.fpToolsIdentifierEnabled === false) return;
+            const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenIdentifierEnabled');
+            if (st.foxenIdentifierEnabled === false) return;
         } catch (_) {}
 
         addIdentifierStyles();

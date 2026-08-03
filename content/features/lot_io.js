@@ -1,14 +1,14 @@
 // content/features/lot_io.js
 
-const IMPORT_PROCESS_KEY = 'fpToolsLotImportProcess'; // <-- ДОБАВЛЕНА ЭТА СТРОКА
+const IMPORT_PROCESS_KEY = 'foxenLotImportProcess'; // <-- ДОБАВЛЕНА ЭТА СТРОКА
 
 // --- Функции для управления UI прогресс-бара экспорта ---
 
 function createExportProgressBar() {
     // Удаляем старый бар, если он вдруг остался
-    document.getElementById('fp-tools-export-progress-bar')?.remove();
+    document.getElementById('foxen-export-progress-bar')?.remove();
 
-    const bar = createElement('div', { id: 'fp-tools-export-progress-bar' });
+    const bar = createElement('div', { id: 'foxen-export-progress-bar' });
     bar.innerHTML = `
         <div class="progress-bar-fill"></div>
         <div class="progress-bar-text">Подготовка к экспорту...</div>
@@ -22,7 +22,7 @@ function createExportProgressBar() {
 }
 
 function updateExportProgressBar(current, total, lotTitle) {
-    const bar = document.getElementById('fp-tools-export-progress-bar');
+    const bar = document.getElementById('foxen-export-progress-bar');
     if (!bar) return;
 
     const fill = bar.querySelector('.progress-bar-fill');
@@ -34,7 +34,7 @@ function updateExportProgressBar(current, total, lotTitle) {
 }
 
 function removeExportProgressBar() {
-    const bar = document.getElementById('fp-tools-export-progress-bar');
+    const bar = document.getElementById('foxen-export-progress-bar');
     if (!bar) return;
     
     // Анимация исчезновения
@@ -46,7 +46,7 @@ function removeExportProgressBar() {
 
 function initializeLotIO() {
     // Проверяем, был ли уже инициализирован
-    const page = document.querySelector('.fp-tools-page-content[data-page="lot_io"]');
+    const page = document.querySelector('.foxen-page-content[data-page="lot_io"]');
     if (!page || page.dataset.initialized) return;
 
     const exportBtn = document.getElementById('lot-io-export-btn');
@@ -120,7 +120,7 @@ async function showExportModal() {
         listContainer.innerHTML = `<div class="fp-import-empty">Ошибка загрузки категорий: ${error.message}</div>`;
     }
 
-    modal.querySelector('.fp-tools-modal-close').onclick = () => modal.style.display = 'none';
+    modal.querySelector('.foxen-modal-close').onclick = () => modal.style.display = 'none';
 }
 
 async function startExportProcess(allCategories, selectedCategoryIds) {

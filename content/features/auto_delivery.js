@@ -15,9 +15,9 @@ async function initializeAutoDeliveryManager() {
     placeholder.innerHTML = `
         <div class="ad-controls-wrapper">
             <button type="button" id="ad-open-manager-btn" class="btn btn-primary">Управлять товарами</button>
-            <label id="ad-legacy-mode-toggle" class="fp-tools-chat-toggle fp-tooltip-host" data-fp-tooltip="Включить стандартный режим автовыдачи">
+            <label id="ad-legacy-mode-toggle" class="foxen-chat-toggle fp-tooltip-host" data-fp-tooltip="Включить стандартный режим автовыдачи">
                 <input type="checkbox" id="ad-legacy-mode-checkbox">
-                <span class="fp-tools-chat-toggle-slider">
+                <span class="foxen-chat-toggle-slider">
                     <span class="material-icons">edit_document</span>
                 </span>
             </label>
@@ -39,7 +39,7 @@ async function initializeAutoDeliveryManager() {
     // --- 3. Привязываем обработчик к переключателю ---
     toggle.addEventListener('change', async (e) => {
         const isLegacy = e.target.checked;
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsLegacyADModeEnabled: isLegacy });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenLegacyADModeEnabled: isLegacy });
 
         if (isLegacy) {
             openBtn.style.display = 'none';
@@ -56,9 +56,9 @@ async function initializeAutoDeliveryManager() {
     });
     
     // --- 4. Проверяем сохраненный режим и настраиваем UI ---
-    const { fpToolsLegacyADModeEnabled } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsLegacyADModeEnabled');
+    const { foxenLegacyADModeEnabled } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenLegacyADModeEnabled');
 
-    if (fpToolsLegacyADModeEnabled) {
+    if (foxenLegacyADModeEnabled) {
         // РЕЖИМ СТАНДАРТНОЙ АВТОВЫДАЧИ
         secretsTextarea.style.display = 'block';
         openBtn.style.display = 'none';
@@ -181,8 +181,8 @@ async function initializeAutoDeliveryManager() {
 // Вспомогательная функция, вынесена наружу
 function createAdvancedManagerModal() {
     // Создаем модальные окна, только если их еще нет
-    if (!document.getElementById('fp-tools-ad-manager-popup')) {
-        const managerPopup = createElement('div', { id: 'fp-tools-ad-manager-popup' });
+    if (!document.getElementById('foxen-ad-manager-popup')) {
+        const managerPopup = createElement('div', { id: 'foxen-ad-manager-popup' });
         managerPopup.innerHTML = `
             <div class="ad-manager-popup-header">
                 <h3>Менеджер товаров</h3>
@@ -204,13 +204,13 @@ function createAdvancedManagerModal() {
             </div>`;
         document.body.appendChild(managerPopup);
 
-        const massAddPopup = createElement('div', { id: 'ad-mass-add-popup', class: 'fp-tools-ad-popup' });
+        const massAddPopup = createElement('div', { id: 'ad-mass-add-popup', class: 'foxen-ad-popup' });
         massAddPopup.innerHTML = `<h4>Массовое добавление</h4><p style="font-size: 14px; color: #ccc; margin-top: -10px; margin-bottom: 15px;">Вставьте список товаров, каждый с новой строки.</p><textarea id="ad-mass-add-textarea" class="template-input" placeholder="Товар 1\nТовар 2\nТовар 3..."></textarea><div class="popup-actions"><button type="button" id="ad-mass-add-cancel" class="btn btn-default">Отмена</button><button type="button" id="ad-mass-add-confirm" class="btn">Добавить</button></div>`;
         document.body.appendChild(massAddPopup);
 
-        const duplicatePopup = createElement('div', { id: 'ad-duplicate-popup', class: 'fp-tools-ad-popup' });
+        const duplicatePopup = createElement('div', { id: 'ad-duplicate-popup', class: 'foxen-ad-popup' });
         duplicatePopup.innerHTML = `<h4>Дублирование товара</h4><p style="font-size: 14px; color: #ccc; margin-top: -10px; margin-bottom: 15px;">Введите текст товара (можно многострочный) и количество копий.</p><textarea id="ad-duplicate-textarea" class="template-input" placeholder="Текст товара..."></textarea><input type="number" id="ad-duplicate-amount" class="template-input" placeholder="Количество" min="1" value="10"><div class="popup-actions"><button type="button" id="ad-duplicate-cancel" class="btn btn-default">Отмена</button><button type="button" id="ad-duplicate-confirm" class="btn">Создать</button></div>`;
         document.body.appendChild(duplicatePopup);
     }
-    return document.getElementById('fp-tools-ad-manager-popup');
+    return document.getElementById('foxen-ad-manager-popup');
 }

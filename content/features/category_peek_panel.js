@@ -4,7 +4,7 @@
 //   • до 30 свежих лотов из той же категории (скролл внутри панели)
 //   • если у категории есть чат - последние сообщения из него
 //
-// Цвета берём из живой палитры расширения (--fpt-*), как меню копирования/импорта
+// Цвета берём из живой палитры расширения (--fxn-*), как меню копирования/импорта
 // (а не фиксированные). Парсинг категории и чата - по реальной разметке FunPay
 // (.tc-item для лотов, .chat-msg-item для чата).
 //
@@ -23,8 +23,8 @@
 
     async function isFeatureEnabled() {
         try {
-            const { fpToolsDisabledFeatures = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
-            return !Array.isArray(fpToolsDisabledFeatures) || !fpToolsDisabledFeatures.includes(FEATURE_ID);
+            const { foxenDisabledFeatures = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDisabledFeatures');
+            return !Array.isArray(foxenDisabledFeatures) || !foxenDisabledFeatures.includes(FEATURE_ID);
         } catch (_) { return true; }
     }
 
@@ -46,71 +46,71 @@
     }
 
     function ensureStyles() {
-        if (document.getElementById('fpt-peek-styles')) return;
+        if (document.getElementById('fxn-peek-styles')) return;
         const s = document.createElement('style');
-        s.id = 'fpt-peek-styles';
+        s.id = 'fxn-peek-styles';
         s.textContent = `
-        .fpt-peek-panel{
-            --pk-bg: var(--fpt-bg, #13141a);
-            --pk-surface: var(--fpt-surface, #1a1c26);
-            --pk-surface2: var(--fpt-surface-2, #20222e);
-            --pk-border: var(--fpt-border, #22253a);
-            --pk-text: var(--fpt-text, #d8dae8);
-            --pk-muted: var(--fpt-text-muted, #9099b8);
-            --pk-accent: var(--fpt-accent, #C026D3);
-            --pk-shadow: var(--fpt-shadow, rgba(0,0,0,0.5));
+        .fxn-peek-panel{
+            --pk-bg: var(--fxn-bg, #13141a);
+            --pk-surface: var(--fxn-surface, #1a1c26);
+            --pk-surface2: var(--fxn-surface-2, #20222e);
+            --pk-border: var(--fxn-border, #22253a);
+            --pk-text: var(--fxn-text, #d8dae8);
+            --pk-muted: var(--fxn-text-muted, #9099b8);
+            --pk-accent: var(--fxn-accent, #C026D3);
+            --pk-shadow: var(--fxn-shadow, rgba(0,0,0,0.5));
             position:fixed; top:0; right:0; height:100vh; width:340px; max-width:92vw;
             background:var(--pk-bg); border-left:1px solid var(--pk-border);
             box-shadow:-4px 0 16px var(--pk-shadow); z-index:99998;
             display:flex; flex-direction:column; font-family:Inter,'Segoe UI',sans-serif;
             transform:translateX(102%); transition:transform .25s ease;
         }
-        .fpt-peek-panel.open{ transform:translateX(0); }
-        .fpt-peek-head{ display:flex; align-items:center; justify-content:space-between;
+        .fxn-peek-panel.open{ transform:translateX(0); }
+        .fxn-peek-head{ display:flex; align-items:center; justify-content:space-between;
             padding:14px 16px; border-bottom:1px solid var(--pk-border); flex-shrink:0; }
-        .fpt-peek-head h3{ margin:0; font-size:14px; color:var(--pk-text); font-weight:700; }
-        .fpt-peek-close{ background:none; border:none; color:var(--pk-muted); font-size:22px; cursor:pointer; line-height:1; }
-        .fpt-peek-close:hover{ color:var(--pk-text); }
-        .fpt-peek-body{ flex:1; overflow-y:auto; padding:12px 14px; }
-        .fpt-peek-section-title{ font-size:11px; text-transform:uppercase; letter-spacing:.6px;
+        .fxn-peek-head h3{ margin:0; font-size:14px; color:var(--pk-text); font-weight:700; }
+        .fxn-peek-close{ background:none; border:none; color:var(--pk-muted); font-size:22px; cursor:pointer; line-height:1; }
+        .fxn-peek-close:hover{ color:var(--pk-text); }
+        .fxn-peek-body{ flex:1; overflow-y:auto; padding:12px 14px; }
+        .fxn-peek-section-title{ font-size:11px; text-transform:uppercase; letter-spacing:.6px;
             color:var(--pk-muted); font-weight:700; margin:4px 0 8px; display:flex; align-items:center; gap:6px; }
         /* список лотов: без ограничения видимых - весь скролл внутри панели */
-        .fpt-peek-lots{ display:flex; flex-direction:column; gap:8px;
+        .fxn-peek-lots{ display:flex; flex-direction:column; gap:8px;
             padding-right:4px; margin-bottom:18px; }
-        .fpt-peek-lot{ display:block; text-decoration:none; background:var(--pk-surface);
+        .fxn-peek-lot{ display:block; text-decoration:none; background:var(--pk-surface);
             border:1px solid var(--pk-border); border-radius:9px; padding:9px 11px; transition:border-color .15s, background .15s; }
-        .fpt-peek-lot:hover{ border-color:var(--pk-accent); background:var(--pk-surface2); }
-        .fpt-peek-lot-top{ display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
-        .fpt-peek-lot-title{ font-size:12.5px; color:var(--pk-text); line-height:1.35; flex:1;
+        .fxn-peek-lot:hover{ border-color:var(--pk-accent); background:var(--pk-surface2); }
+        .fxn-peek-lot-top{ display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+        .fxn-peek-lot-title{ font-size:12.5px; color:var(--pk-text); line-height:1.35; flex:1;
             display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-        .fpt-peek-lot-price{ font-size:12px; font-weight:700; color:var(--pk-accent); white-space:nowrap; }
-        .fpt-peek-lot-seller-row{ display:flex; align-items:center; gap:6px; margin-top:7px; font-size:11px; color:var(--pk-muted); }
-        .fpt-peek-av{ width:18px; height:18px; border-radius:50%; background-size:cover; background-position:center;
+        .fxn-peek-lot-price{ font-size:12px; font-weight:700; color:var(--pk-accent); white-space:nowrap; }
+        .fxn-peek-lot-seller-row{ display:flex; align-items:center; gap:6px; margin-top:7px; font-size:11px; color:var(--pk-muted); }
+        .fxn-peek-av{ width:18px; height:18px; border-radius:50%; background-size:cover; background-position:center;
             background-color:var(--pk-surface2); flex-shrink:0; position:relative;
             box-shadow:inset 0 0 0 1px var(--pk-border); }
-        .fpt-peek-av.on::after{ content:''; position:absolute; right:-1px; bottom:-1px; width:7px; height:7px;
+        .fxn-peek-av.on::after{ content:''; position:absolute; right:-1px; bottom:-1px; width:7px; height:7px;
             border-radius:50%; background:#4caf50; box-shadow:0 0 0 2px var(--pk-bg); }
-        .fpt-peek-lot-seller{ color:var(--pk-text); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; }
-        .fpt-peek-stars{ color:#f4c84a; font-size:10px; letter-spacing:-1px; flex-shrink:0; }
-        .fpt-peek-reviews{ color:var(--pk-muted); font-size:10px; flex-shrink:0; }
-        .fpt-peek-lot-server{ margin-top:5px; font-size:10px; color:var(--pk-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .fxn-peek-lot-seller{ color:var(--pk-text); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; }
+        .fxn-peek-stars{ color:#f4c84a; font-size:10px; letter-spacing:-1px; flex-shrink:0; }
+        .fxn-peek-reviews{ color:var(--pk-muted); font-size:10px; flex-shrink:0; }
+        .fxn-peek-lot-server{ margin-top:5px; font-size:10px; color:var(--pk-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         /* чат */
-        .fpt-peek-chat{ display:flex; flex-direction:column; gap:8px; }
-        .fpt-peek-msg{ background:var(--pk-surface); border:1px solid var(--pk-border); border-radius:9px; padding:8px 10px; }
-        .fpt-peek-msg-head{ display:flex; justify-content:space-between; gap:8px; margin-bottom:3px; }
-        .fpt-peek-msg-author{ font-size:11.5px; font-weight:700; color:var(--pk-accent);
+        .fxn-peek-chat{ display:flex; flex-direction:column; gap:8px; }
+        .fxn-peek-msg{ background:var(--pk-surface); border:1px solid var(--pk-border); border-radius:9px; padding:8px 10px; }
+        .fxn-peek-msg-head{ display:flex; justify-content:space-between; gap:8px; margin-bottom:3px; }
+        .fxn-peek-msg-author{ font-size:11.5px; font-weight:700; color:var(--pk-accent);
             text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .fpt-peek-msg-author:hover{ text-decoration:underline; }
-        .fpt-peek-msg-time{ font-size:10px; color:var(--pk-muted); white-space:nowrap; flex-shrink:0; }
-        .fpt-peek-msg-text{ font-size:12px; color:var(--pk-text); line-height:1.4; white-space:pre-wrap; word-break:break-word; }
-        .fpt-peek-empty{ font-size:12px; color:var(--pk-muted); text-align:center; padding:14px 0; }
-        .fpt-peek-loader{ font-size:12px; color:var(--pk-muted); text-align:center; padding:18px 0; }
-        .fpt-peek-refresh{ background:none; border:1px solid var(--pk-border); color:var(--pk-muted);
+        .fxn-peek-msg-author:hover{ text-decoration:underline; }
+        .fxn-peek-msg-time{ font-size:10px; color:var(--pk-muted); white-space:nowrap; flex-shrink:0; }
+        .fxn-peek-msg-text{ font-size:12px; color:var(--pk-text); line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+        .fxn-peek-empty{ font-size:12px; color:var(--pk-muted); text-align:center; padding:14px 0; }
+        .fxn-peek-loader{ font-size:12px; color:var(--pk-muted); text-align:center; padding:18px 0; }
+        .fxn-peek-refresh{ background:none; border:1px solid var(--pk-border); color:var(--pk-muted);
             border-radius:6px; cursor:pointer; font-size:11px; padding:2px 8px; }
-        .fpt-peek-refresh:hover{ color:var(--pk-text); border-color:var(--pk-accent); }
-        .fpt-peek-body::-webkit-scrollbar,.fpt-peek-lots::-webkit-scrollbar{ width:6px; }
-        .fpt-peek-body::-webkit-scrollbar-thumb,.fpt-peek-lots::-webkit-scrollbar-thumb{ background:var(--pk-border); border-radius:6px; }
-        .fpt-peek-toggle-btn{ }
+        .fxn-peek-refresh:hover{ color:var(--pk-text); border-color:var(--pk-accent); }
+        .fxn-peek-body::-webkit-scrollbar,.fxn-peek-lots::-webkit-scrollbar{ width:6px; }
+        .fxn-peek-body::-webkit-scrollbar-thumb,.fxn-peek-lots::-webkit-scrollbar-thumb{ background:var(--pk-border); border-radius:6px; }
+        .fxn-peek-toggle-btn{ }
         `;
         (document.head || document.documentElement).appendChild(s);
     }
@@ -204,71 +204,71 @@
         ensureStyles();
         if (panelEl) return panelEl;
         panelEl = document.createElement('div');
-        panelEl.className = 'fpt-peek-panel';
+        panelEl.className = 'fxn-peek-panel';
         panelEl.innerHTML = `
-            <div class="fpt-peek-head">
+            <div class="fxn-peek-head">
                 <h3>Категория · свежее</h3>
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <button class="fpt-peek-refresh" id="fpt-peek-refresh">Обновить</button>
-                    <button class="fpt-peek-close" id="fpt-peek-close">×</button>
+                    <button class="fxn-peek-refresh" id="fxn-peek-refresh">Обновить</button>
+                    <button class="fxn-peek-close" id="fxn-peek-close">×</button>
                 </div>
             </div>
-            <div class="fpt-peek-body" id="fpt-peek-body">
-                <div class="fpt-peek-loader">Загрузка…</div>
+            <div class="fxn-peek-body" id="fxn-peek-body">
+                <div class="fxn-peek-loader">Загрузка…</div>
             </div>
         `;
         document.body.appendChild(panelEl);
-        panelEl.querySelector('#fpt-peek-close').addEventListener('click', closePanel);
-        panelEl.querySelector('#fpt-peek-refresh').addEventListener('click', () => loadAndRender(node, true));
+        panelEl.querySelector('#fxn-peek-close').addEventListener('click', closePanel);
+        panelEl.querySelector('#fxn-peek-refresh').addEventListener('click', () => loadAndRender(node, true));
         return panelEl;
     }
 
     function renderContent(data) {
-        const body = panelEl && panelEl.querySelector('#fpt-peek-body');
+        const body = panelEl && panelEl.querySelector('#fxn-peek-body');
         if (!body) return;
 
         const lotsHtml = (data.lots && data.lots.length)
-            ? `<div class="fpt-peek-lots">` + data.lots.map(l => {
-                const stars = l.rating ? `<span class="fpt-peek-stars" title="${l.rating}/5">${'★'.repeat(l.rating)}${'☆'.repeat(5 - l.rating)}</span>` : '';
-                const reviews = l.reviews ? `<span class="fpt-peek-reviews">${escapeHtml(l.reviews)}</span>` : '';
+            ? `<div class="fxn-peek-lots">` + data.lots.map(l => {
+                const stars = l.rating ? `<span class="fxn-peek-stars" title="${l.rating}/5">${'★'.repeat(l.rating)}${'☆'.repeat(5 - l.rating)}</span>` : '';
+                const reviews = l.reviews ? `<span class="fxn-peek-reviews">${escapeHtml(l.reviews)}</span>` : '';
                 const av = l.avatar
-                    ? `<span class="fpt-peek-av${l.online ? ' on' : ''}" style="background-image:url('${escapeHtml(l.avatar)}')"></span>`
-                    : `<span class="fpt-peek-av${l.online ? ' on' : ''}"></span>`;
+                    ? `<span class="fxn-peek-av${l.online ? ' on' : ''}" style="background-image:url('${escapeHtml(l.avatar)}')"></span>`
+                    : `<span class="fxn-peek-av${l.online ? ' on' : ''}"></span>`;
                 return `
-                <a class="fpt-peek-lot" href="${escapeHtml(l.href)}" target="_blank" rel="noopener">
-                    <div class="fpt-peek-lot-top">
-                        <div class="fpt-peek-lot-title">${escapeHtml(l.title)}</div>
-                        ${l.price ? `<div class="fpt-peek-lot-price">${escapeHtml(l.price)}</div>` : ''}
+                <a class="fxn-peek-lot" href="${escapeHtml(l.href)}" target="_blank" rel="noopener">
+                    <div class="fxn-peek-lot-top">
+                        <div class="fxn-peek-lot-title">${escapeHtml(l.title)}</div>
+                        ${l.price ? `<div class="fxn-peek-lot-price">${escapeHtml(l.price)}</div>` : ''}
                     </div>
-                    <div class="fpt-peek-lot-seller-row">
+                    <div class="fxn-peek-lot-seller-row">
                         ${av}
-                        <span class="fpt-peek-lot-seller">${escapeHtml(l.sellerName || '-')}</span>
+                        <span class="fxn-peek-lot-seller">${escapeHtml(l.sellerName || '-')}</span>
                         ${stars}${reviews}
                     </div>
-                    ${l.serverName ? `<div class="fpt-peek-lot-server">${escapeHtml(l.serverName)}</div>` : ''}
+                    ${l.serverName ? `<div class="fxn-peek-lot-server">${escapeHtml(l.serverName)}</div>` : ''}
                 </a>`;
             }).join('') + `</div>`
-            : `<div class="fpt-peek-empty">Свежих лотов не найдено.</div>`;
+            : `<div class="fxn-peek-empty">Свежих лотов не найдено.</div>`;
 
         const chatHtml = (data.chat && data.chat.length)
-            ? `<div class="fpt-peek-chat">` + data.chat.map(m => `
-                <div class="fpt-peek-msg">
-                    <div class="fpt-peek-msg-head">
+            ? `<div class="fxn-peek-chat">` + data.chat.map(m => `
+                <div class="fxn-peek-msg">
+                    <div class="fxn-peek-msg-head">
                         ${m.authorHref
-                            ? `<a class="fpt-peek-msg-author" href="${escapeHtml(m.authorHref)}" target="_blank" rel="noopener">${escapeHtml(m.author || 'Аноним')}</a>`
-                            : `<span class="fpt-peek-msg-author">${escapeHtml(m.author || 'Аноним')}</span>`}
-                        <span class="fpt-peek-msg-time">${escapeHtml(m.time)}</span>
+                            ? `<a class="fxn-peek-msg-author" href="${escapeHtml(m.authorHref)}" target="_blank" rel="noopener">${escapeHtml(m.author || 'Аноним')}</a>`
+                            : `<span class="fxn-peek-msg-author">${escapeHtml(m.author || 'Аноним')}</span>`}
+                        <span class="fxn-peek-msg-time">${escapeHtml(m.time)}</span>
                     </div>
-                    <div class="fpt-peek-msg-text">${escapeHtml(m.text)}</div>
+                    <div class="fxn-peek-msg-text">${escapeHtml(m.text)}</div>
                 </div>`).join('') + `</div>`
             : '';
 
         const chatSection = chatHtml
-            ? `<div class="fpt-peek-section-title"><span class="material-symbols-rounded" style="font-size:15px;">forum</span> Чат категории</div>${chatHtml}`
+            ? `<div class="fxn-peek-section-title"><span class="material-symbols-rounded" style="font-size:15px;">forum</span> Чат категории</div>${chatHtml}`
             : '';
 
         body.innerHTML = `
-            <div class="fpt-peek-section-title"><span class="material-symbols-rounded" style="font-size:15px;">inventory_2</span> 30 свежих лотов</div>
+            <div class="fxn-peek-section-title"><span class="material-symbols-rounded" style="font-size:15px;">inventory_2</span> 30 свежих лотов</div>
             ${lotsHtml}
             ${chatSection}
         `;
@@ -277,7 +277,7 @@
     const _cache = new Map(); // node -> { ts, data }
 
     async function loadAndRender(node, force) {
-        const body = panelEl && panelEl.querySelector('#fpt-peek-body');
+        const body = panelEl && panelEl.querySelector('#fxn-peek-body');
         if (!body) return;
 
         if (!force && _cache.has(node) && (Date.now() - _cache.get(node).ts < 60 * 1000)) {
@@ -285,7 +285,7 @@
             return;
         }
 
-        body.innerHTML = `<div class="fpt-peek-loader">Загрузка…</div>`;
+        body.innerHTML = `<div class="fxn-peek-loader">Загрузка…</div>`;
         try {
             // Контент-скрипт на funpay.com - запрос same-origin, куки идут автоматически.
             const resp = await fetch(`https://funpay.com/lots/${node}/`, { credentials: 'include' });
@@ -295,7 +295,7 @@
             _cache.set(node, { ts: Date.now(), data });
             renderContent(data);
         } catch (e) {
-            body.innerHTML = `<div class="fpt-peek-empty">Не удалось загрузить категорию.<br>${escapeHtml(e.message)}</div>`;
+            body.innerHTML = `<div class="fxn-peek-empty">Не удалось загрузить категорию.<br>${escapeHtml(e.message)}</div>`;
         }
     }
 
@@ -324,18 +324,18 @@
         // ждём появления контейнера действий (его создаёт lot_cloning); если нет -
         // создаём свой рядом с заголовком.
         const place = () => {
-            if (document.getElementById('fpt-peek-toggle')) return true;
-            let container = document.querySelector('.fp-tools-lot-edit-actions-container');
+            if (document.getElementById('fxn-peek-toggle')) return true;
+            let container = document.querySelector('.foxen-lot-edit-actions-container');
             if (!container) {
                 const header = Array.from(document.querySelectorAll('h1.page-header'))
                     .find(h => /предложени/i.test(h.textContent)) || document.querySelector('h1.page-header');
                 if (!header) return false;
                 container = document.createElement('div');
-                container.className = 'fp-tools-lot-edit-actions-container';
+                container.className = 'foxen-lot-edit-actions-container';
                 header.parentNode.insertBefore(container, header.nextSibling);
             }
-            const btn = createElementSafe('button', 'btn btn-default fpt-peek-toggle-btn', 'Свежее в категории');
-            btn.id = 'fpt-peek-toggle';
+            const btn = createElementSafe('button', 'btn btn-default fxn-peek-toggle-btn', 'Свежее в категории');
+            btn.id = 'fxn-peek-toggle';
             btn.addEventListener('click', (e) => { e.preventDefault(); togglePanel(node); });
             container.appendChild(btn);
             return true;

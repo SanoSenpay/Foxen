@@ -214,8 +214,8 @@ async function _loadTickets() {
 function _openNewTicketPanel() {
     const panel = document.getElementById('fp-new-ticket-panel');
     if (!panel) return;
-    // Move panel to fp-tools-body so it covers the full popup content, not just the page div
-    const body = document.querySelector('.fp-tools-body');
+    // Move panel to foxen-body so it covers the full popup content, not just the page div
+    const body = document.querySelector('.foxen-body');
     if (body && panel.parentElement !== body) body.appendChild(panel);
     panel.style.display = 'flex';
     _loadCategoriesForForm();
@@ -577,7 +577,7 @@ async function _openTicket(ticketId) {
     _currentTicketId = ticketId;
 
     const panel = document.getElementById('fp-ticket-detail-panel');
-    const body = document.querySelector('.fp-tools-body');
+    const body = document.querySelector('.foxen-body');
     if (body && panel && panel.parentElement !== body) body.appendChild(panel);
     if (!panel) return;
     panel.style.display = 'flex';

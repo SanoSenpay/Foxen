@@ -4,8 +4,8 @@
 // отдельной базы покупок (FPTPurchasesDB) и лейблами «потрачено / продавец».
 //
 // Как это работает: блок статистики (getStatsBlockHTML, displaySalesStats,
-// initSalesModes, sales_chart) читает источник данных через window.fptOrdersDB
-// и подписи/действия через window.fptStatsCfg. Здесь мы выставляем оба значения
+// initSalesModes, sales_chart) читает источник данных через window.fxnOrdersDB
+// и подписи/действия через window.fxnStatsCfg. Здесь мы выставляем оба значения
 // в «режим покупок» ДО того, как content_script вызовет initializeSalesStatistics().
 
 (function () {
@@ -22,13 +22,13 @@
     if (!isPurchasesIndex()) return;
 
     // Переключаем общий статистический UI в режим покупок.
-    window.fptOrdersDB = (typeof FPTPurchasesDB !== 'undefined') ? FPTPurchasesDB : window.FPTPurchasesDB;
-    window.fptStatsCfg = {
+    window.fxnOrdersDB = (typeof FPTPurchasesDB !== 'undefined') ? FPTPurchasesDB : window.FPTPurchasesDB;
+    window.fxnStatsCfg = {
         updateAction: 'updatePurchases',
         resetAction: 'resetPurchasesStorage',
-        collectingKey: 'fpToolsPurchasesCollecting',
-        lastUpdateKey: 'fpToolsPurchasesLastUpdate',
-        filterKey: 'fpToolsPurchasesFilters',
+        collectingKey: 'foxenPurchasesCollecting',
+        lastUpdateKey: 'foxenPurchasesLastUpdate',
+        filterKey: 'foxenPurchasesFilters',
         pathMatch: '/orders/',
         title: 'Статистика покупок',
         totalMoneyLabel: 'Всего потрачено',

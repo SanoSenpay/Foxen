@@ -1,6 +1,6 @@
 class CursorFX {
     constructor() {
-        this.canvas = createElement('canvas', { id: 'fp-tools-cursor-fx' });
+        this.canvas = createElement('canvas', { id: 'foxen-cursor-fx' });
         this.ctx = this.canvas.getContext('2d', { willReadFrequently: false, alpha: true });
         this.config = {};
         this.particles = [];
@@ -26,7 +26,7 @@ class CursorFX {
         });
         document.body.appendChild(this.canvas);
         
-        this.customCursor = createElement('div', { id: 'fp-tools-custom-cursor' });
+        this.customCursor = createElement('div', { id: 'foxen-custom-cursor' });
         Object.assign(this.customCursor.style, {
             position: 'fixed',
             pointerEvents: 'none',
@@ -40,7 +40,7 @@ class CursorFX {
         });
         document.body.appendChild(this.customCursor);
 
-        this.cursorHideStyleTag = createElement('style', { id: 'fp-tools-cursor-hide-style' });
+        this.cursorHideStyleTag = createElement('style', { id: 'foxen-cursor-hide-style' });
         document.head.appendChild(this.cursorHideStyleTag);
 
         window.addEventListener('resize', this.resize.bind(this));
@@ -237,9 +237,9 @@ function setupCursorFxHandlers() {
     };
     const handler = async (e) => {
         inputs[e.target.id](e);
-        const currentSettings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCursorFx')).fpToolsCursorFx || {};
+        const currentSettings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCursorFx')).foxenCursorFx || {};
         const newSettings = { ...currentSettings, ...settingsToUpdate };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCursorFx: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCursorFx: newSettings });
         cursorFx.updateConfig(newSettings);
     };
 
@@ -258,9 +258,9 @@ function setupCursorFxHandlers() {
         const enabled = e.target.checked;
         customCursorControls.style.display = enabled ? 'block' : 'none';
         
-        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
         const newSettings = { ...settings, enabled };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
@@ -279,9 +279,9 @@ function setupCursorFxHandlers() {
             preview.style.backgroundImage = `url(${imageDataUrl})`;
             preview.textContent = '';
 
-            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
             const newSettings = { ...settings, image: imageDataUrl };
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
         };
         reader.readAsDataURL(file);
@@ -292,22 +292,22 @@ function setupCursorFxHandlers() {
         preview.style.backgroundImage = 'none';
         preview.textContent = 'Нет';
 
-        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
         const newSettings = { ...settings, image: null };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
     document.getElementById('hideSystemCursor').addEventListener('change', async (e) => {
-        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
         const newSettings = { ...settings, hideSystem: e.target.checked };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
         cursorFx.updateCustomCursor(newSettings);
     });
 
     ['customCursorSize', 'customCursorOpacity'].forEach(id => {
         document.getElementById(id).addEventListener('input', async (e) => {
-            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomCursor')).fpToolsCustomCursor || {};
+            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
             let newSettings;
 
             if (id === 'customCursorSize') {
@@ -318,7 +318,7 @@ function setupCursorFxHandlers() {
                 newSettings = { ...settings, opacity: parseInt(e.target.value, 10) };
             }
             
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsCustomCursor: newSettings });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
         });
     });

@@ -124,18 +124,19 @@ function showDearVendorsBanner() {
     banner.id = 'fp-dear-vendors-banner';
     banner.style.cssText = `
         position:fixed;top:70px;left:50%;transform:translateX(-50%);
-        background:var(--fpt-surface-2, #2a1a1a);border:1px solid #e05252;border-radius:8px;
+        background:var(--fxn-surface-2, #2a1a1a);border:1px solid #e05252;border-radius:8px;
         padding:10px 18px;z-index:9999;font-family:Inter,sans-serif;
-        font-size:13px;color:var(--fpt-text, #ff8a80);display:flex;align-items:center;gap:10px;
-        box-shadow:0 4px 16px var(--fpt-shadow, rgba(0,0,0,0.5));max-width:600px;
+        font-size:13px;color:var(--fxn-text, #ff8a80);display:flex;align-items:center;gap:10px;
+        box-shadow:0 4px 16px var(--fxn-shadow, rgba(0,0,0,0.5));max-width:600px;
     `;
-    banner.innerHTML = `<span style="font-size:18px;">⚠️</span><span><strong style="color:#e05252;">Системное сообщение FunPay</strong> - это предупреждение от администрации, не от покупателя.</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;margin-left:auto;padding:0 0 0 8px;">✕</button>`;
+    banner.innerHTML = `<span style="font-size:18px;">⚠️</span><span><strong style="color:#e05252;">Системное сообщение FunPay</strong> - это предупреждение от администрации, не от покупателя.</span><button id="fp-vendors-banner-close-btn" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;margin-left:auto;padding:0 0 0 8px;">✕</button>`;
+    banner.querySelector('#fp-vendors-banner-close-btn')?.addEventListener('click', () => banner.remove());
     document.body.appendChild(banner);
     setTimeout(() => banner?.remove(), 8000);
 }
 
 chrome.runtime.onMessage.addListener((request) => {
-    if (request.action === 'fpToolsDearVendors') showDearVendorsBanner();
+    if (request.action === 'foxenDearVendors') showDearVendorsBanner();
 });
 
 let _priceEditInit = false;
@@ -239,7 +240,7 @@ function initOfferListFilter() {
     const setActive = (btn) => {
         // нейтральный «активный» вид в стиле кнопок FunPay: лёгкая обводка-акцент,
         // без фиолетового фона/текста (раньше было #2A1830/#E9A8FF — мозолило на белой теме)
-        btn.style.borderColor = 'var(--fpt-text-muted, #8a90a0)';
+        btn.style.borderColor = 'var(--fxn-text-muted, #8a90a0)';
         btn.style.fontWeight = '800';
         btn.style.opacity = '1';
     };

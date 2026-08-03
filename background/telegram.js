@@ -7,7 +7,7 @@
 // удалённого кода (RHC), поэтому политика CWS это допускает - точно так же, как
 // уже работающие в расширении вебхуки Discord. Никакой код не подгружается извне.
 //
-// Хранилище: chrome.storage.local.fpToolsTelegram = {
+// Хранилище: chrome.storage.local.foxenTelegram = {
 //   enabled: bool,
 //   token: '<bot token>',
 //   chatId: '<resolved chat id>',     // куда слать уведомления / кого слушать
@@ -23,9 +23,9 @@
 // колбэки (deps).
 // =============================================================================
 
-const TELEGRAM_ALARM = 'fpToolsTelegramPoll';
-const TG_STORE = 'fpToolsTelegram';
-const TG_PROCESSED = 'fpToolsTelegramProcessedIds';
+const TELEGRAM_ALARM = 'foxenTelegramPoll';
+const TG_STORE = 'foxenTelegram';
+const TG_PROCESSED = 'foxenTelegramProcessedIds';
 
 let _deps = null; // { getAuth, getChatList, getOrders, runBump, getProfileInfo }
 let _polling = false;
@@ -36,6 +36,7 @@ const TG_DEFAULTS = {
     chatId: '',
     notifyMessages: true,
     notifyOrders: true,
+    notifyErrors: true,
     allowControl: true,
     pollInterval: 1,
     lastUpdateId: 0
@@ -193,7 +194,7 @@ async function telegramNotifyNewMessages(chats) {
 
     const { [TG_PROCESSED]: processedArr } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(TG_PROCESSED);
     const processed = new Set(processedArr || []);
-    const seededKey = 'fpToolsTelegramSeeded';
+    const seededKey = 'foxenTelegramSeeded';
     const { [seededKey]: seeded } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(seededKey);
     const firstRun = !seeded;
 
@@ -238,8 +239,8 @@ async function telegramNotifyNewOrders(orders) {
     // состояние, иначе при следующем успешном опросе все заказы посыплются как новые.
     if (!list.length) return;
 
-    const key = 'fpToolsTelegramProcessedOrders';
-    const seededKey = 'fpToolsTelegramOrdersSeeded';
+    const key = 'foxenTelegramProcessedOrders';
+    const seededKey = 'foxenTelegramOrdersSeeded';
     const { [key]: processedArr } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(key);
     const { [seededKey]: seeded } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(seededKey);
     const processed = new Set(processedArr || []);

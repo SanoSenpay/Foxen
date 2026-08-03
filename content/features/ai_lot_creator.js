@@ -7,18 +7,18 @@ function createAIGeneratorUI() {
         .find(h1 => h1.textContent.includes('Добавление предложения') || h1.textContent.includes('Редактирование предложения'));
 
     if (!header) return;
-    if (document.getElementById('fp-tools-ai-gen-btn')) return;
+    if (document.getElementById('foxen-ai-gen-btn')) return;
 
-    let actionsContainer = document.querySelector('.fp-tools-lot-edit-actions-container');
+    let actionsContainer = document.querySelector('.foxen-lot-edit-actions-container');
     if (!actionsContainer) {
-        actionsContainer = createElement('div', { class: 'fp-tools-lot-edit-actions-container' });
+        actionsContainer = createElement('div', { class: 'foxen-lot-edit-actions-container' });
         header.parentNode.insertBefore(actionsContainer, header.nextSibling);
     }
 
     // FIX 2.9.0: кнопка ИИ-генерации теперь - простой клон кнопки "Импорт"
     // (btn btn-default), без частиц/canvas, чтобы единообразно смотреться в ряду
     // действий лота.
-    const button = createElement('button', { class: 'btn btn-default fp-tools-ai-gen-btn', id: 'fp-tools-ai-gen-btn' }, {}, 'ИИ-генерация');
+    const button = createElement('button', { class: 'btn btn-default foxen-ai-gen-btn', id: 'foxen-ai-gen-btn' }, {}, 'ИИ-генерация');
 
     actionsContainer.appendChild(button);
 
@@ -29,14 +29,14 @@ function createAIGeneratorUI() {
 }
 
 function createModal() {
-    const modal = createElement('div', { class: 'fp-tools-ai-gen-modal', id: 'fp-tools-ai-gen-modal' });
+    const modal = createElement('div', { class: 'foxen-ai-gen-modal', id: 'foxen-ai-gen-modal' });
     modal.innerHTML = `
-        <div class="fp-tools-ai-gen-modal-content">
-            <div class="fp-tools-ai-gen-modal-header">
+        <div class="foxen-ai-gen-modal-content">
+            <div class="foxen-ai-gen-modal-header">
                 <h3>ИИ-генератор лотов</h3>
                 <button class="close-btn">&times;</button>
             </div>
-            <div class="fp-tools-ai-gen-modal-body">
+            <div class="foxen-ai-gen-modal-body">
                 <p>ИИ проанализирует ваши существующие лоты и создаст новый в похожем стиле.</p>
                 <label for="ai-prompt-title">Что продаём? (Краткая идея для заголовка)</label>
                 <input type="text" id="ai-prompt-title" placeholder="Например: Пак аватарок на тему аниме">
@@ -44,7 +44,7 @@ function createModal() {
                 <label for="ai-prompt-desc">О чём написать в описании? (Ключевые особенности)</label>
                 <textarea id="ai-prompt-desc" rows="4" placeholder="Например: 350 тысяч картинок, разделено по категориям, автовыдача, уникальные"></textarea>
 
-                <div class="fp-tools-ai-gen-options">
+                <div class="foxen-ai-gen-options">
                     <label>
                         <input type="checkbox" id="ai-gen-buyer-msg">
                         <span class="custom-checkbox"></span>
@@ -57,7 +57,7 @@ function createModal() {
                     </label>
                 </div>
             </div>
-            <div class="fp-tools-ai-gen-modal-footer">
+            <div class="foxen-ai-gen-modal-footer">
                 <button id="ai-gen-submit-btn" class="submit-btn">
                     <span class="btn-text">Сгенерировать</span>
                     <span class="btn-loader"></span>
@@ -157,7 +157,7 @@ async function handleAIGeneration() {
         
         document.querySelectorAll('.lot-field-input').forEach(el => el.dispatchEvent(new Event('input', { bubbles: true })));
 
-        document.getElementById('fp-tools-ai-gen-modal').classList.remove('active');
+        document.getElementById('foxen-ai-gen-modal').classList.remove('active');
         showNotification('Лот успешно сгенерирован!', false);
 
     } catch (error) {
@@ -171,13 +171,13 @@ async function handleAIGeneration() {
 
 function addTranslateButton() {
     const enTabLink = document.querySelector('.lot-fields-multilingual .nav-tabs li[data-locale="en"] a');
-    if (!enTabLink || document.getElementById('fp-tools-translate-btn')) {
+    if (!enTabLink || document.getElementById('foxen-translate-btn')) {
         return;
     }
 
     const translateBtn = createElement('button', {
         type: 'button',
-        id: 'fp-tools-translate-btn',
+        id: 'foxen-translate-btn',
         title: 'Перевести'
     }, {}, 'Перевод');
 

@@ -1,13 +1,13 @@
 // content/features/ui_enhancements.js
 
 // Foxen: конфиг источника статистики. По умолчанию — продажи.
-// На странице покупок (/orders/) purchases.js переопределяет window.fptStatsCfg.
-function _fptCfg() {
-    return window.fptStatsCfg || {
+// На странице покупок (/orders/) purchases.js переопределяет window.fxnStatsCfg.
+function _fxnCfg() {
+    return window.fxnStatsCfg || {
         updateAction: 'updateSales',
         resetAction: 'resetSalesStorage',
-        collectingKey: 'fpToolsSalesCollecting',
-        lastUpdateKey: 'fpToolsSalesLastUpdate',
+        collectingKey: 'foxenSalesCollecting',
+        lastUpdateKey: 'foxenSalesLastUpdate',
         pathMatch: '/orders/trade',
         title: 'Статистика продаж',
         totalMoneyLabel: 'Всего заработано',
@@ -19,9 +19,9 @@ function _fptCfg() {
 
 function getStatsBlockHTML() {
     return `
-    <div class="fp-tools-stats-container">
+    <div class="foxen-stats-container">
         <div class="fp-stats-header">
-            <h1>${_fptCfg().title}</h1>
+            <h1>${_fxnCfg().title}</h1>
             <div class="fp-stats-controls">
                 <button type="button" class="btn btn-default" id="fpTools-stats-reset">Обновить</button>
                 <button type="button" class="btn btn-default fp-stats-search-toggle" id="fpTools-stats-search-toggle" title="Поиск по заказам"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:-4px;">search</span></button>
@@ -80,14 +80,14 @@ function getStatsBlockHTML() {
             <div class="fp-stat-card stat-card-large stat-card-revenue">
                 <div class="stat-card-icon">💰</div>
                 <div class="stat-card-content">
-                    <div class="stat-card-label">${_fptCfg().totalMoneyLabel}</div>
+                    <div class="stat-card-label">${_fxnCfg().totalMoneyLabel}</div>
                     <div class="stat-card-value" id="fpTools-stats-total-revenue">0 ₽</div>
                 </div>
             </div>
             <div class="fp-stat-card">
                 <div class="stat-card-icon">📦</div>
                 <div class="stat-card-content">
-                    <div class="stat-card-label">${_fptCfg().totalOrdersLabel || "Всего заказов"}</div>
+                    <div class="stat-card-label">${_fxnCfg().totalOrdersLabel || "Всего заказов"}</div>
                     <div class="stat-card-value" id="fpTools-stats-total-orders">0</div>
                 </div>
             </div>
@@ -115,14 +115,14 @@ function getStatsBlockHTML() {
             <div class="fp-stat-card stat-card-refund">
                 <div class="stat-card-icon">↩️</div>
                 <div class="stat-card-content">
-                    <div class="stat-card-label">${_fptCfg().refundLabel || 'Возвраты'}</div>
+                    <div class="stat-card-label">${_fxnCfg().refundLabel || 'Возвраты'}</div>
                     <div class="stat-card-value" id="fpTools-stats-orders-refund">0</div>
                 </div>
             </div>
             <div class="fp-stat-card">
                 <div class="stat-card-icon">👥</div>
                 <div class="stat-card-content">
-                    <div class="stat-card-label">${_fptCfg().uniquePartyLabel}</div>
+                    <div class="stat-card-label">${_fxnCfg().uniquePartyLabel}</div>
                     <div class="stat-card-value" id="fpTools-stats-unique-customers">0</div>
                 </div>
             </div>
@@ -130,11 +130,11 @@ function getStatsBlockHTML() {
 
         <div class="fp-stats-details">
             <div class="fp-stat-detail-item">
-                <span class="detail-label">${_fptCfg().topPartyLabel}</span>
+                <span class="detail-label">${_fxnCfg().topPartyLabel}</span>
                 <span class="detail-value" id="fpTools-stats-top-customer">-</span>
             </div>
             <div class="fp-stat-detail-item">
-                <span class="detail-label">${_fptCfg().topDealLabel || "💎 Самая дорогая продажа:"}</span>
+                <span class="detail-label">${_fxnCfg().topDealLabel || "💎 Самая дорогая продажа:"}</span>
                 <span class="detail-value" id="fpTools-stats-top-sale">-</span>
             </div>
             <div class="fp-stat-detail-item">
@@ -178,9 +178,9 @@ async function calculateSalesStats(allOrders, startDate, endDate) {
 
     // Учитываем глобальные фильтры статусов (общие со статистикой/диаграммами).
     // Дефолт зависит от режима: на покупках возвраты по умолчанию выключены.
-    const _purchases = !!(window.fptStatsCfg);
+    const _purchases = !!(window.fxnStatsCfg);
     let flt = { stClosed: true, stPaid: true, stRefunded: !_purchases };
-    try { if (typeof window.fptGetStatsFilters === 'function') flt = window.fptGetStatsFilters(); } catch (_) {}
+    try { if (typeof window.fxnGetStatsFilters === 'function') flt = window.fxnGetStatsFilters(); } catch (_) {}
     const statusOk = (st) => {
         if (st === 'refunded') return flt.stRefunded !== false;
         if (st === 'paid') return flt.stPaid !== false;
@@ -256,17 +256,17 @@ function formatRevenue(revenue) {
 }
 
 // ===== Foxen: красивый оверлей загрузки статистики =====
-function _fptStatsHost() {
+function _fxnStatsHost() {
     // Контейнер, поверх которого показываем загрузку (блок карточек).
     return document.getElementById('fpTools-stats-cards');
 }
 
 function showStatsLoading(opts) {
     opts = opts || {};
-    const host = _fptStatsHost();
+    const host = _fxnStatsHost();
     if (!host) return;
     // Затеняем карточки и кладём оверлей сверху (внутри контейнера статистики).
-    const container = document.querySelector('.fp-tools-stats-container');
+    const container = document.querySelector('.foxen-stats-container');
     if (!container) return;
 
     let overlay = document.getElementById('fpTools-stats-loading');
@@ -276,7 +276,7 @@ function showStatsLoading(opts) {
         overlay.className = 'fp-stats-loading';
         overlay.innerHTML = `
             <div class="fp-stats-spinner"></div>
-            <div class="fp-stats-loading-title">${_fptCfg().loadingTitle}</div>
+            <div class="fp-stats-loading-title">${_fxnCfg().loadingTitle}</div>
             <div class="fp-stats-loading-sub">Собираем историю заказов с FunPay. Это может занять несколько секунд — не закрывайте вкладку.</div>
             <div class="fp-stats-loading-bar"></div>
             <div class="fp-stats-loading-count" id="fpTools-stats-loading-count"></div>
@@ -303,7 +303,7 @@ function updateStatsLoadingCount(count) {
 function hideStatsLoading() {
     const overlay = document.getElementById('fpTools-stats-loading');
     if (overlay) overlay.remove();
-    const host = _fptStatsHost();
+    const host = _fxnStatsHost();
     if (host) host.style.display = '';
 }
 
@@ -313,7 +313,7 @@ function _showStatsCollectError(errorMsg) {
     if (!ordersEl) return;
     ordersEl.innerHTML = `<span style="color:#f87171;font-size:12px;">⚠ Ошибка сбора: ${String(errorMsg).slice(0, 120)}</span>`;
     // Также показываем уведомление в заголовке контейнера если он есть
-    const container = document.querySelector('.fp-tools-stats-container');
+    const container = document.querySelector('.foxen-stats-container');
     if (container && !container.querySelector('.fp-stats-error-banner')) {
         const banner = document.createElement('div');
         banner.className = 'fp-stats-error-banner';
@@ -327,16 +327,16 @@ function _showStatsCollectError(errorMsg) {
 async function displaySalesStats() {
     if (!document.getElementById("fpTools-stats-period")) return;
     
-    const fpToolsSalesData = await (window.fptOrdersDB || FPTSalesDB).getAllAsMap();
-    if (!fpToolsSalesData || Object.keys(fpToolsSalesData).length === 0) {
+    const foxenSalesData = await (window.fxnOrdersDB || FPTSalesDB).getAllAsMap();
+    if (!foxenSalesData || Object.keys(foxenSalesData).length === 0) {
         // База пуста. Если прямо сейчас идёт сбор — показываем красивую загрузку
         // вместо пугающего «Нет данных».
         let collecting = false;
         let lastError = null;
         try {
-            const _ck = _fptCfg().collectingKey;
-            const errKey = _fptCfg().collectingKey === 'fpToolsSalesCollecting'
-                ? 'fpToolsSalesError' : 'fpToolsPurchasesError';
+            const _ck = _fxnCfg().collectingKey;
+            const errKey = _fxnCfg().collectingKey === 'foxenSalesCollecting'
+                ? 'foxenSalesError' : 'foxenPurchasesError';
             const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([_ck, errKey]);
             collecting = !!st[_ck];
             lastError = st[errKey] || null;
@@ -380,13 +380,13 @@ async function displaySalesStats() {
         case "365d": startDate = nowMs - 365 * oneDay; break;
     }
 
-    const stats = await calculateSalesStats(fpToolsSalesData, startDate, endDate);
+    const stats = await calculateSalesStats(foxenSalesData, startDate, endDate);
 
     document.getElementById("fpTools-stats-total-orders").textContent = stats.totalOrders || 0;
     // Подсказка: данные есть, но за выбранный период нет заказов.
     if (stats.totalOrders === 0) {
         const totalOrdersEl = document.getElementById("fpTools-stats-total-orders");
-        const totalKeys = Object.keys(fpToolsSalesData).length;
+        const totalKeys = Object.keys(foxenSalesData).length;
         if (totalKeys > 0) {
             totalOrdersEl.innerHTML = `0 <span style="font-size:11px;opacity:0.55;font-weight:400;">(в базе ${totalKeys.toLocaleString('ru-RU')} — смените период)</span>`;
         }
@@ -395,7 +395,7 @@ async function displaySalesStats() {
     document.getElementById("fpTools-stats-average-sale-price").innerHTML = formatRevenue(stats.averageCheck);
     document.getElementById("fpTools-stats-orders-closed").textContent = stats.totalClosed;
     document.getElementById("fpTools-stats-orders-pending").textContent = stats.totalPending;
-    if (window.fptStatsCfg) {
+    if (window.fxnStatsCfg) {
         // Покупки: в карточке возвратов показываем СУММУ вернувшихся денег
         // (она не входит в «Всего потрачено»), а не просто число заказов.
         document.getElementById("fpTools-stats-orders-refund").innerHTML = formatRevenue(stats.refundedRevenue);
@@ -440,7 +440,7 @@ async function displaySalesStats() {
     // FIX 2.8.6: авто-детектор неполной/неточной статистики. Раньше про неточность
     // говорил только маленький значок в шапке, который никто не замечал. Теперь,
     // если данные похожи на неполные, показываем заметный баннер с кнопкой действия.
-    try { await _maybeShowInaccuracyBanner(fpToolsSalesData); } catch (_) {}
+    try { await _maybeShowInaccuracyBanner(foxenSalesData); } catch (_) {}
 }
 
 // Показывает баннер "данные могут быть неполными", если обнаружены признаки:
@@ -453,7 +453,7 @@ async function _maybeShowInaccuracyBanner(allOrders) {
     if (!host || !allOrders) return;
 
     // если пользователь скрыл баннер в этой сессии - не мешаем
-    if (sessionStorage.getItem('fptStatsBannerDismissed') === '1') return;
+    if (sessionStorage.getItem('fxnStatsBannerDismissed') === '1') return;
 
     const ids = Object.keys(allOrders);
     if (ids.length === 0) return;
@@ -479,15 +479,15 @@ async function _maybeShowInaccuracyBanner(allOrders) {
     const historyShallow = oldest !== Infinity && oldest > now - 31 * oneDay; // старее 31д нет
 
     if (!monthEqualsAll && !historyShallow) {
-        const ex = document.getElementById('fpt-stats-inaccuracy-banner');
+        const ex = document.getElementById('fxn-stats-inaccuracy-banner');
         if (ex) ex.remove();
         return;
     }
 
-    if (document.getElementById('fpt-stats-inaccuracy-banner')) return;
+    if (document.getElementById('fxn-stats-inaccuracy-banner')) return;
 
     const banner = document.createElement('div');
-    banner.id = 'fpt-stats-inaccuracy-banner';
+    banner.id = 'fxn-stats-inaccuracy-banner';
     // Парсинговые цвета: непрозрачный фон карточки + янтарная рамка/иконка как
     // акцент предупреждения. Текст основной - читается и на светлой, и на тёмной теме.
     banner.style.cssText = 'display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:12px 16px;background:var(--fp-bg-card, #1e1e1e);border:1px solid #f0a040;border-left:4px solid #f0a040;border-radius:10px;color:var(--fp-text-primary, #e0e0e0);font-size:13px;line-height:1.45;';
@@ -499,17 +499,17 @@ async function _maybeShowInaccuracyBanner(allOrders) {
             ${monthEqualsAll ? '"За месяц" и "за всё время" совпадают, хотя вы торгуете дольше - значит старые заказы не загружены. ' : ''}
             Нажмите "Пересобрать", чтобы дотянуть всю доступную историю.
         </div>
-        <button id="fpt-stats-banner-rebuild" class="btn btn-default" style="padding:6px 12px;flex-shrink:0;">Пересобрать</button>
-        <button id="fpt-stats-banner-x" title="Скрыть" style="background:none;border:none;color:var(--fp-text-secondary, #a0a0a0);font-size:20px;cursor:pointer;flex-shrink:0;line-height:1;">×</button>
+        <button id="fxn-stats-banner-rebuild" class="btn btn-default" style="padding:6px 12px;flex-shrink:0;">Пересобрать</button>
+        <button id="fxn-stats-banner-x" title="Скрыть" style="background:none;border:none;color:var(--fp-text-secondary, #a0a0a0);font-size:20px;cursor:pointer;flex-shrink:0;line-height:1;">×</button>
     `;
     host.prepend(banner);
 
-    banner.querySelector('#fpt-stats-banner-x').addEventListener('click', () => {
-        sessionStorage.setItem('fptStatsBannerDismissed', '1');
+    banner.querySelector('#fxn-stats-banner-x').addEventListener('click', () => {
+        sessionStorage.setItem('fxnStatsBannerDismissed', '1');
         banner.remove();
     });
-    banner.querySelector('#fpt-stats-banner-rebuild').addEventListener('click', async () => {
-        banner.querySelector('#fpt-stats-banner-rebuild').textContent = 'Сбор...';
+    banner.querySelector('#fxn-stats-banner-rebuild').addEventListener('click', async () => {
+        banner.querySelector('#fxn-stats-banner-rebuild').textContent = 'Сбор...';
         try { await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'resetSalesStorage' }); } catch (_) {}
         try { chrome.runtime.sendMessage({ action: 'updateSales' }); } catch (_) {}
     });
@@ -517,20 +517,20 @@ async function _maybeShowInaccuracyBanner(allOrders) {
 
 // Позволяет другим модулям (панель фильтров) пересчитать карточки.
 if (typeof window !== 'undefined') {
-    window.fptRefreshStatsCards = function () { try { displaySalesStats(); } catch (_) {} };
+    window.fxnRefreshStatsCards = function () { try { displaySalesStats(); } catch (_) {} };
 }
 
 // Попап "Стойте, это не точные данные!" - честно объясняет, почему сумма в Foxen
 // может отличаться от того, что пользователь видит/ожидает, и как это исправить.
 function _showStatsAccuracyPopup(lastUpd, ordersCount, updateBtn) {
-    document.getElementById('fpt-stats-accuracy-overlay')?.remove();
+    document.getElementById('fxn-stats-accuracy-overlay')?.remove();
 
     const overlay = document.createElement('div');
-    overlay.id = 'fpt-stats-accuracy-overlay';
+    overlay.id = 'fxn-stats-accuracy-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
 
     const box = document.createElement('div');
-    box.id = 'fpt-stats-accuracy-box';
+    box.id = 'fxn-stats-accuracy-box';
     // Парсинговые цвета (как окно копирования лота): свой непрозрачный фон + тёмный
     // скрим оверлея, поэтому окно нормально читается и на светлой, и на тёмной теме
     // FunPay, не сливаясь с фоном. Переменные --fp-* адаптируются к теме страницы.
@@ -559,8 +559,8 @@ function _showStatsAccuracyPopup(lastUpd, ordersCount, updateBtn) {
         </ul>
         ${infoLine}
         <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
-            <button id="fpt-acc-rebuild" class="btn btn-default" style="padding:7px 14px;">Пересобрать данные</button>
-            <button id="fpt-acc-close" class="btn" style="padding:7px 14px;background:var(--fp-accent, #1b75bb);border-color:var(--fp-accent, #1b75bb);color:#fff;">Понятно</button>
+            <button id="fxn-acc-rebuild" class="btn btn-default" style="padding:7px 14px;">Пересобрать данные</button>
+            <button id="fxn-acc-close" class="btn" style="padding:7px 14px;background:var(--fp-accent, #1b75bb);border-color:var(--fp-accent, #1b75bb);color:#fff;">Понятно</button>
         </div>
     `;
 
@@ -569,21 +569,21 @@ function _showStatsAccuracyPopup(lastUpd, ordersCount, updateBtn) {
 
     const close = () => overlay.remove();
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-    box.querySelector('#fpt-acc-close').addEventListener('click', close);
-    box.querySelector('#fpt-acc-rebuild').addEventListener('click', async () => {
+    box.querySelector('#fxn-acc-close').addEventListener('click', close);
+    box.querySelector('#fxn-acc-rebuild').addEventListener('click', async () => {
         close();
         if (updateBtn && chrome.runtime?.id) {
             updateBtn.disabled = true;
             updateBtn.textContent = "Обновление...";
             showStatsLoading({ sub: 'Пересобираем историю заказов с FunPay…' });
-            await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fptCfg().resetAction });
-            await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fptCfg().updateAction });
+            await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fxnCfg().resetAction });
+            await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fxnCfg().updateAction });
         }
     });
 }
 
 function initializeSalesStatistics() {
-    if (!window.location.pathname.includes(_fptCfg().pathMatch)) return;
+    if (!window.location.pathname.includes(_fxnCfg().pathMatch)) return;
     const ordersTable = document.querySelector('.orders-table');
     if (!ordersTable || document.getElementById('fpTools-stats-period')) return;
 
@@ -592,9 +592,9 @@ function initializeSalesStatistics() {
     ordersTable.before(statsContainer);
 
     const periodSelect = document.getElementById("fpTools-stats-period");
-    periodSelect.value = localStorage.getItem("fpToolsStatsPeriod") || "7d";
+    periodSelect.value = localStorage.getItem("foxenStatsPeriod") || "7d";
     periodSelect.addEventListener('change', () => {
-        localStorage.setItem("fpToolsStatsPeriod", periodSelect.value);
+        localStorage.setItem("foxenStatsPeriod", periodSelect.value);
         displaySalesStats();
     });
 
@@ -610,8 +610,8 @@ function initializeSalesStatistics() {
         // Сначала сбрасываем базу (быстро), затем запускаем сбор.
         // Сбор НЕ ожидаем здесь — он занимает минуты. UI разблокируется
         // автоматически через chrome.storage.onChanged когда collectingKey → false.
-        try { await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fptCfg().resetAction }); } catch (_) {}
-        try { chrome.runtime.sendMessage({ action: _fptCfg().updateAction }); } catch (_) {}
+        try { await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: _fxnCfg().resetAction }); } catch (_) {}
+        try { chrome.runtime.sendMessage({ action: _fxnCfg().updateAction }); } catch (_) {}
     });
 
     // Кнопка "почему цифры могут отличаться" - объясняет расхождения и даёт пересобрать данные.
@@ -620,10 +620,10 @@ function initializeSalesStatistics() {
         let lastUpd = '';
         let ordersCount = 0;
         try {
-            const _luk = _fptCfg().lastUpdateKey;
-            const fpToolsSalesLastUpdate = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(_luk))[_luk];
-            ordersCount = await (window.fptOrdersDB || FPTSalesDB).count();
-            if (fpToolsSalesLastUpdate) lastUpd = new Date(fpToolsSalesLastUpdate).toLocaleString();
+            const _luk = _fxnCfg().lastUpdateKey;
+            const foxenSalesLastUpdate = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(_luk))[_luk];
+            ordersCount = await (window.fxnOrdersDB || FPTSalesDB).count();
+            if (foxenSalesLastUpdate) lastUpd = new Date(foxenSalesLastUpdate).toLocaleString();
         } catch (_) {}
         _showStatsAccuracyPopup(lastUpd, ordersCount, updateBtn);
     });
@@ -634,11 +634,11 @@ function initializeSalesStatistics() {
         // не дожидаясь первого commit'а — чтобы юзер не увидел «Нет данных».
         (async () => {
             try {
-                const c = await (window.fptOrdersDB || FPTSalesDB).count();
+                const c = await (window.fxnOrdersDB || FPTSalesDB).count();
                 if (!c) showStatsLoading();
             } catch (_) {}
         })();
-        chrome.runtime.sendMessage({ action: _fptCfg().updateAction });
+        chrome.runtime.sendMessage({ action: _fxnCfg().updateAction });
     }
 
     // Несколько режимов отображения статистики (графики/диаграммы/детально/полный).
@@ -665,13 +665,13 @@ function initializeSalesStatistics() {
         if (!statsBlock) return; // И если блока статистики больше нет на странице
 
         // Пока идёт сбор — на каждом commit'е обновляем живой счётчик в оверлее.
-        if (changes[_fptCfg().lastUpdateKey]) {
+        if (changes[_fxnCfg().lastUpdateKey]) {
             (async () => {
                 try {
-                    const _ck2 = _fptCfg().collectingKey;
+                    const _ck2 = _fxnCfg().collectingKey;
                     const collecting = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(_ck2))[_ck2];
                     if (collecting && document.getElementById('fpTools-stats-loading')) {
-                        const c = await (window.fptOrdersDB || FPTSalesDB).count();
+                        const c = await (window.fxnOrdersDB || FPTSalesDB).count();
                         updateStatsLoadingCount(c);
                     }
                 } catch (_) {}
@@ -680,7 +680,7 @@ function initializeSalesStatistics() {
 
         // Флаг сбора переключился в false → процесс завершён: прячем оверлей,
         // рисуем карточки и возвращаем кнопку в исходное состояние.
-        if (changes[_fptCfg().collectingKey] && changes[_fptCfg().collectingKey].newValue === false) {
+        if (changes[_fxnCfg().collectingKey] && changes[_fxnCfg().collectingKey].newValue === false) {
             console.log("Foxen: Сбор завершён, показываем статистику.");
             hideStatsLoading();
             displaySalesStats();
@@ -692,8 +692,8 @@ function initializeSalesStatistics() {
         }
 
         // Ошибка сбора — показываем причину прямо в блоке статистики.
-        const errKey = _fptCfg().collectingKey === 'fpToolsSalesCollecting'
-            ? 'fpToolsSalesError' : 'fpToolsPurchasesError';
+        const errKey = _fxnCfg().collectingKey === 'foxenSalesCollecting'
+            ? 'foxenSalesError' : 'foxenPurchasesError';
         if (changes[errKey] && changes[errKey].newValue) {
             hideStatsLoading();
             _showStatsCollectError(changes[errKey].newValue);
@@ -711,23 +711,23 @@ function initializeHideBalance() {
     const balanceElements = document.querySelectorAll('.badge-balance, .balances-value');
     balanceElements.forEach(el => {
         // stash original once so we can restore when toggled off
-        if (el.dataset.fptOrigBalance === undefined) el.dataset.fptOrigBalance = el.textContent;
+        if (el.dataset.fxnOrigBalance === undefined) el.dataset.fxnOrigBalance = el.textContent;
         el.textContent = el.textContent.replace(/[\d.,\s]/g, '?');
     });
     // 3.0.6.2: now that the text is masked, drop the document_start pre-hide CSS so the
     // "?" masked value is shown (instead of the transparent/•••• placeholder).
-    const preHide = document.getElementById('fp-tools-balance-prehide');
+    const preHide = document.getElementById('foxen-balance-prehide');
     if (preHide) preHide.remove();
 }
 
 function restoreBalance() {
     document.querySelectorAll('.badge-balance, .balances-value').forEach(el => {
-        if (el.dataset.fptOrigBalance !== undefined) {
-            el.textContent = el.dataset.fptOrigBalance;
+        if (el.dataset.fxnOrigBalance !== undefined) {
+            el.textContent = el.dataset.fxnOrigBalance;
         }
     });
     // ensure the early mask is gone when balance hiding is turned off
-    const preHide = document.getElementById('fp-tools-balance-prehide');
+    const preHide = document.getElementById('foxen-balance-prehide');
     if (preHide) preHide.remove();
 }
 
@@ -745,7 +745,7 @@ function initializeViewPromoIcons() {
     const promoOffers = document.querySelectorAll('a.tc-item.offer-promo');
     promoOffers.forEach(offer => {
         const priceContainer = offer.querySelector('.tc-price');
-        if (!priceContainer || priceContainer.querySelector('.fp-tools-promo-icon')) return;
+        if (!priceContainer || priceContainer.querySelector('.foxen-promo-icon')) return;
         
         const iconContainer = priceContainer.querySelector('.sc-offer-icons') || document.createElement('div');
         if (!iconContainer.classList.contains('sc-offer-icons')) {
@@ -754,7 +754,7 @@ function initializeViewPromoIcons() {
         }
 
         const promoIcon = createElement('div', { 
-            class: 'promo-offer-icon fpt-promo-offer-highlight fp-tools-promo-icon',
+            class: 'promo-offer-icon fxn-promo-offer-highlight foxen-promo-icon',
             title: 'Промо-лот'
         }, { 
             marginLeft: '4px' 

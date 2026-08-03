@@ -23,7 +23,7 @@
 
 import { runAutoResponderCycle } from './autoresponder.js';
 
-export const ENGINE_HEARTBEAT_ALARM = 'fpToolsEngineHeartbeat';
+export const ENGINE_HEARTBEAT_ALARM = 'foxenEngineHeartbeat';
 const OFFSCREEN_PATH = 'offscreen/offscreen.html';
 
 const POLL_INTERVAL_MS = 3000;        // active-loop cadence while worker is awake
@@ -43,21 +43,34 @@ export function randomTag() {
 }
 
 async function anyAutomationEnabled() {
-    const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
+    const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
     return !!(
-        fpToolsAutoReplies.greetingEnabled ||
-        fpToolsAutoReplies.keywordsEnabled ||
-        fpToolsAutoReplies.autoReviewEnabled ||
-        fpToolsAutoReplies.bonusForReviewEnabled ||
-        fpToolsAutoReplies.newOrderReplyEnabled ||
-        fpToolsAutoReplies.orderConfirmReplyEnabled ||
-        fpToolsAutoReplies.autoDeliveryEnabled
+        foxenAutoReplies.greetingEnabled ||
+        foxenAutoReplies.keywordsEnabled ||
+        foxenAutoReplies.autoReviewEnabled ||
+        foxenAutoReplies.bonusForReviewEnabled ||
+        foxenAutoReplies.newOrderReplyEnabled ||
+        foxenAutoReplies.orderConfirmReplyEnabled ||
+        foxenAutoReplies.autoDeliveryEnabled
     );
 }
 
 // Layer 2 enabler: make sure the offscreen document exists so its keepalive interval runs.
 async function ensureOffscreen() {
-    return Promise.resolve();
+    try {
+        const b = typeof browser !== 'undefined' ? browser : chrome;
+        if (!b.offscreen || typeof b.offscreen.createDocument !== 'function') return;
+        if (typeof b.offscreen.hasDocument === 'function') {
+            const hasDoc = await b.offscreen.hasDocument();
+            if (hasDoc) return;
+        }
+        await b.offscreen.createDocument({
+            url: OFFSCREEN_PATH,
+            reasons: ['DOM_PARSER', 'BLOB'],
+            justification: 'Foxen engine keepalive ping and DOM parsing'
+        });
+        console.log('Foxen engine: offscreen document created.');
+    } catch (_) {}
 }
 
 // One iteration of the active loop.
@@ -118,6 +131,7 @@ export async function startEngine() {
 }
 
 export function stopEngine() {
+    if (!running && !loopTimer && !watchdogTimer) return;
     running = false;
     if (loopTimer) { clearTimeout(loopTimer); loopTimer = null; }
     if (watchdogTimer) { clearInterval(watchdogTimer); watchdogTimer = null; }

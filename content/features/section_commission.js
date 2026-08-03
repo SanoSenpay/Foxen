@@ -10,7 +10,7 @@
   const CACHE_TTL = 10 * 60 * 1000;
   const cache = new Map();
 
-  function log(...a) { try { console.log('[FPT Commission]', ...a); } catch {} }
+  function log(...a) { try { console.log('[Foxen Commission]', ...a); } catch {} }
 
   function getNodeId() {
     const m = location.pathname.match(/\/lots\/(\d+)\//);
@@ -103,11 +103,11 @@
   // --- комиссия рядом с заголовком (ванильный стиль FunPay) ---
   async function renderSectionCommission(nodeId) {
     const heading = document.querySelector('h1.page-header') || document.querySelector('.page-header') || document.querySelector('h1');
-    if (!heading || heading.querySelector('.fpt-comm')) return;
+    if (!heading || heading.querySelector('.fxn-comm')) return;
     const percent = await getPercent(nodeId);
     if (percent == null) return;
     const span = document.createElement('small');
-    span.className = 'fpt-comm text-muted';
+    span.className = 'fxn-comm text-muted';
     span.style.marginLeft = '10px';
     span.style.fontWeight = 'normal';
     span.textContent = 'Комиссия: ' + percent.toFixed(1).replace('.', ',') + '%';
@@ -125,7 +125,7 @@
 
     rows.forEach((row) => {
       const priceEl = row.querySelector('.tc-price');
-      if (!priceEl || priceEl.querySelector('.fpt-realprice')) return;
+      if (!priceEl || priceEl.querySelector('.fxn-realprice')) return;
       // берём ВИДИМУЮ цену (то, что показано юзеру), а не data-s —
       // на страницах валют/чипов data-s хранит цену за единицу с кучей знаков.
       const unit = (priceEl.querySelector('.unit')?.textContent || '').trim();
@@ -143,7 +143,7 @@
       if (!Number.isFinite(price) || price <= 0) return;
       const net = Math.round((price / divisor) * 100) / 100;
       const el = document.createElement('div');
-      el.className = 'fpt-realprice text-muted';
+      el.className = 'fxn-realprice text-muted';
       el.style.fontSize = '10px';
       el.style.lineHeight = '1.2';
       el.style.marginTop = '1px';
@@ -171,9 +171,9 @@
       // настройки: по умолчанию ОБЕ выключены
       let showComm = false, showReal = false;
       try {
-        const st = await chrome.storage.local.get(['fptShowCommission', 'fptShowRealPrices']);
-        showComm = st.fptShowCommission === true;
-        showReal = st.fptShowRealPrices === true;
+        const st = await chrome.storage.local.get(['fxnShowCommission', 'fxnShowRealPrices']);
+        showComm = st.fxnShowCommission === true;
+        showReal = st.fxnShowRealPrices === true;
       } catch {}
       if (!showComm && !showReal) return;
       if (showComm) await renderSectionCommission(nodeId);
@@ -186,9 +186,9 @@
     if (isLotsPage()) run();
     function needsRun() {
       if (!isLotsPage()) return false;
-      if (!document.querySelector('.fpt-comm')) return true;
+      if (!document.querySelector('.fxn-comm')) return true;
       const prices = document.querySelectorAll('.tc-item .tc-price');
-      for (const p of prices) { if (!p.querySelector('.fpt-realprice')) return true; }
+      for (const p of prices) { if (!p.querySelector('.fxn-realprice')) return true; }
       return false;
     }
     const obs = new MutationObserver(() => { if (needsRun()) run(); });
@@ -198,17 +198,17 @@
   }
 
   // мгновенное применение при переключении галок в настройках (без перезагрузки)
-  function removeCommission() { document.querySelectorAll('.fpt-comm').forEach(el => el.remove()); }
-  function removeRealPrices() { document.querySelectorAll('.fpt-realprice').forEach(el => el.remove()); }
+  function removeCommission() { document.querySelectorAll('.fxn-comm').forEach(el => el.remove()); }
+  function removeRealPrices() { document.querySelectorAll('.fxn-realprice').forEach(el => el.remove()); }
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
-      if (changes.fptShowCommission) {
-        if (changes.fptShowCommission.newValue === true) { if (isLotsPage()) run(); }
+      if (changes.fxnShowCommission) {
+        if (changes.fxnShowCommission.newValue === true) { if (isLotsPage()) run(); }
         else removeCommission();
       }
-      if (changes.fptShowRealPrices) {
-        if (changes.fptShowRealPrices.newValue === true) { if (isLotsPage()) run(); }
+      if (changes.fxnShowRealPrices) {
+        if (changes.fxnShowRealPrices.newValue === true) { if (isLotsPage()) run(); }
         else removeRealPrices();
       }
     });

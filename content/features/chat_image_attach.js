@@ -14,7 +14,7 @@
 //     реально показал отправленное сообщение;
 //   • порядок: СНАЧАЛА ВСЕ ФОТО → ПОТОМ ТЕКСТ-подпись.
 //
-// Отправка через существующие background-экшены 'fptSendImage' / 'fptSendChatText'.
+// Отправка через существующие background-экшены 'fxnSendImage' / 'fxnSendChatText'.
 // Стиль - нейтральный тёмный + оранжевый акцент FunPay (никакого фиолетового).
 // =============================================================================
 
@@ -156,32 +156,32 @@
     function openModal() {
         if (modalEl) return;
         modalEl = document.createElement('div');
-        modalEl.className = 'fpt-tg-overlay';
+        modalEl.className = 'fxn-tg-overlay';
         modalEl.innerHTML = `
-            <div class="fpt-tg-modal" role="dialog" aria-label="Отправка изображений">
-                <div class="fpt-tg-head">
-                    <span class="fpt-tg-title" id="fptTgTitle"></span>
-                    <button type="button" class="fpt-tg-x" title="Закрыть">
+            <div class="fxn-tg-modal" role="dialog" aria-label="Отправка изображений">
+                <div class="fxn-tg-head">
+                    <span class="fxn-tg-title" id="fxnTgTitle"></span>
+                    <button type="button" class="fxn-tg-x" title="Закрыть">
                         <span class="material-symbols-rounded">close</span>
                     </button>
                 </div>
-                <div class="fpt-tg-grid" id="fptTgGrid"></div>
-                <div class="fpt-tg-caption">
-                    <textarea class="fpt-tg-msg" id="fptTgMsg" rows="1" placeholder="Сообщение..."></textarea>
+                <div class="fxn-tg-grid" id="fxnTgGrid"></div>
+                <div class="fxn-tg-caption">
+                    <textarea class="fxn-tg-msg" id="fxnTgMsg" rows="1" placeholder="Сообщение..."></textarea>
                 </div>
-                <div class="fpt-tg-foot">
-                    <button type="button" class="fpt-tg-btn fpt-tg-add">Добавить</button>
-                    <button type="button" class="fpt-tg-btn fpt-tg-cancel">Отмена</button>
-                    <button type="button" class="fpt-tg-btn fpt-tg-send btn btn-gray">Отправить</button>
+                <div class="fxn-tg-foot">
+                    <button type="button" class="fxn-tg-btn fxn-tg-add">Добавить</button>
+                    <button type="button" class="fxn-tg-btn fxn-tg-cancel">Отмена</button>
+                    <button type="button" class="fxn-tg-btn fxn-tg-send btn btn-gray">Отправить</button>
                 </div>
             </div>`;
         document.body.appendChild(modalEl);
 
         // фон и цвет окна берём от страницы (FunPay/кастомная тема), чтобы
         // элементы не были «чёрными на белом» - поддержка любой темы.
-        applyThemeSurface(modalEl.querySelector('.fpt-tg-modal'));
+        applyThemeSurface(modalEl.querySelector('.fxn-tg-modal'));
 
-        const msg = modalEl.querySelector('#fptTgMsg');
+        const msg = modalEl.querySelector('#fxnTgMsg');
 
         // как в Telegram: то, что уже набрано в поле «Написать...», переносим в подпись
         // и очищаем исходное поле, чтобы не отправилось дважды.
@@ -200,10 +200,10 @@
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); }
         });
 
-        modalEl.querySelector('.fpt-tg-x').addEventListener('click', closeModal);
-        modalEl.querySelector('.fpt-tg-cancel').addEventListener('click', closeModal);
-        modalEl.querySelector('.fpt-tg-add').addEventListener('click', () => pickFiles(true));
-        modalEl.querySelector('.fpt-tg-send').addEventListener('click', doSend);
+        modalEl.querySelector('.fxn-tg-x').addEventListener('click', closeModal);
+        modalEl.querySelector('.fxn-tg-cancel').addEventListener('click', closeModal);
+        modalEl.querySelector('.fxn-tg-add').addEventListener('click', () => pickFiles(true));
+        modalEl.querySelector('.fxn-tg-send').addEventListener('click', doSend);
         modalEl.addEventListener('mousedown', (e) => { if (e.target === modalEl) closeModal(); });
         document.addEventListener('keydown', escClose);
 
@@ -212,7 +212,7 @@
 
     function escClose(e) {
         // не закрываем модалку, если открыт редактор (у него свой Esc)
-        if (e.key === 'Escape' && modalEl && !document.querySelector('.fpt-ed-overlay')) closeModal();
+        if (e.key === 'Escape' && modalEl && !document.querySelector('.fxn-ed-overlay')) closeModal();
     }
 
     function closeModal(opts) {
@@ -235,31 +235,31 @@
 
     function renderGrid() {
         if (!modalEl) return;
-        const grid = modalEl.querySelector('#fptTgGrid');
-        const title = modalEl.querySelector('#fptTgTitle');
+        const grid = modalEl.querySelector('#fxnTgGrid');
+        const title = modalEl.querySelector('#fxnTgTitle');
         const n = basket.length;
         title.textContent = `Выбрано ${n} ${plural(n)}`;
 
         grid.innerHTML = '';
         basket.forEach(item => {
             const cell = document.createElement('div');
-            cell.className = 'fpt-tg-cell';
+            cell.className = 'fxn-tg-cell';
             cell.innerHTML = `
                 <img src="${item.dataUrl}" alt="">
-                <button type="button" class="fpt-tg-cell-x" title="Удалить">
+                <button type="button" class="fxn-tg-cell-x" title="Удалить">
                     <span class="material-symbols-rounded">close</span>
                 </button>
-                <button type="button" class="fpt-tg-cell-menu" title="Ещё">
+                <button type="button" class="fxn-tg-cell-menu" title="Ещё">
                     <span class="material-symbols-rounded">more_vert</span>
                 </button>`;
             cell.querySelector('img').addEventListener('click', () => openViewer(item.dataUrl));
-            cell.querySelector('.fpt-tg-cell-x').addEventListener('click', (e) => {
+            cell.querySelector('.fxn-tg-cell-x').addEventListener('click', (e) => {
                 e.stopPropagation();
                 basket = basket.filter(b => b.id !== item.id);
                 if (!basket.length) { closeModal(); return; }
                 renderGrid();
             });
-            cell.querySelector('.fpt-tg-cell-menu').addEventListener('click', (e) => {
+            cell.querySelector('.fxn-tg-cell-menu').addEventListener('click', (e) => {
                 e.stopPropagation();
                 openCellMenu(e.currentTarget, item.id);
             });
@@ -271,7 +271,7 @@
     function openCellMenu(anchor, id) {
         closeCellMenu();
         const m = document.createElement('div');
-        m.className = 'fpt-tg-cellmenu';
+        m.className = 'fxn-tg-cellmenu';
         m.innerHTML = `
             <button type="button" data-act="edit"><span class="material-symbols-rounded">edit</span>Редактировать</button>
             <button type="button" data-act="replace"><span class="material-symbols-rounded">find_replace</span>Заменить</button>`;
@@ -290,17 +290,17 @@
         setTimeout(() => document.addEventListener('mousedown', cellMenuOutside), 0);
     }
     function cellMenuOutside(e) {
-        if (!e.target.closest('.fpt-tg-cellmenu')) closeCellMenu();
+        if (!e.target.closest('.fxn-tg-cellmenu')) closeCellMenu();
     }
     function closeCellMenu() {
         document.removeEventListener('mousedown', cellMenuOutside);
-        document.querySelectorAll('.fpt-tg-cellmenu').forEach(el => el.remove());
+        document.querySelectorAll('.fxn-tg-cellmenu').forEach(el => el.remove());
     }
 
     // простой просмотр одной картинки
     function openViewer(dataUrl) {
         const v = document.createElement('div');
-        v.className = 'fpt-tg-viewer';
+        v.className = 'fxn-tg-viewer';
         v.innerHTML = `<img src="${dataUrl}" alt="">`;
         v.addEventListener('click', () => { v.classList.remove('open'); setTimeout(() => v.remove(), 150); });
         document.body.appendChild(v);
@@ -314,40 +314,40 @@
         if (!item) return;
 
         const ov = document.createElement('div');
-        ov.className = 'fpt-ed-overlay';
+        ov.className = 'fxn-ed-overlay';
         ov.innerHTML = `
-            <div class="fpt-ed">
-                <div class="fpt-ed-toolbar">
-                    <div class="fpt-ed-tools">
-                        <button class="fpt-ed-tool active" data-tool="pen" title="Карандаш"><span class="material-symbols-rounded">edit</span></button>
-                        <button class="fpt-ed-tool" data-tool="eraser" title="Ластик"><span class="material-symbols-rounded">ink_eraser</span></button>
-                        <button class="fpt-ed-tool" data-tool="crop" title="Обрезка"><span class="material-symbols-rounded">crop</span></button>
+            <div class="fxn-ed">
+                <div class="fxn-ed-toolbar">
+                    <div class="fxn-ed-tools">
+                        <button class="fxn-ed-tool active" data-tool="pen" title="Карандаш"><span class="material-symbols-rounded">edit</span></button>
+                        <button class="fxn-ed-tool" data-tool="eraser" title="Ластик"><span class="material-symbols-rounded">ink_eraser</span></button>
+                        <button class="fxn-ed-tool" data-tool="crop" title="Обрезка"><span class="material-symbols-rounded">crop</span></button>
                     </div>
-                    <div class="fpt-ed-colors" id="fptEdColors"></div>
-                    <div class="fpt-ed-size">
+                    <div class="fxn-ed-colors" id="fxnEdColors"></div>
+                    <div class="fxn-ed-size">
                         <span class="material-symbols-rounded">line_weight</span>
-                        <input type="range" id="fptEdSize" min="2" max="40" value="6">
+                        <input type="range" id="fxnEdSize" min="2" max="40" value="6">
                     </div>
-                    <div class="fpt-ed-actions">
-                        <button class="fpt-ed-mini" data-act="undo" title="Отменить"><span class="material-symbols-rounded">undo</span></button>
-                        <button class="fpt-ed-apply-crop" data-act="applycrop" style="display:none">Обрезать</button>
-                        <button class="fpt-ed-cancel" data-act="cancel">Отмена</button>
-                        <button class="fpt-ed-save" data-act="save">Готово</button>
+                    <div class="fxn-ed-actions">
+                        <button class="fxn-ed-mini" data-act="undo" title="Отменить"><span class="material-symbols-rounded">undo</span></button>
+                        <button class="fxn-ed-apply-crop" data-act="applycrop" style="display:none">Обрезать</button>
+                        <button class="fxn-ed-cancel" data-act="cancel">Отмена</button>
+                        <button class="fxn-ed-save" data-act="save">Готово</button>
                     </div>
                 </div>
-                <div class="fpt-ed-stage" id="fptEdStage">
-                    <canvas id="fptEdCanvas"></canvas>
-                    <div class="fpt-ed-crop" id="fptEdCrop" style="display:none"></div>
+                <div class="fxn-ed-stage" id="fxnEdStage">
+                    <canvas id="fxnEdCanvas"></canvas>
+                    <div class="fxn-ed-crop" id="fxnEdCrop" style="display:none"></div>
                 </div>
             </div>`;
         document.body.appendChild(ov);
-        applyThemeSurface(ov.querySelector('.fpt-ed'));
+        applyThemeSurface(ov.querySelector('.fxn-ed'));
         requestAnimationFrame(() => ov.classList.add('open'));
 
-        const canvas = ov.querySelector('#fptEdCanvas');
+        const canvas = ov.querySelector('#fxnEdCanvas');
         const ctx = canvas.getContext('2d');
-        const stage = ov.querySelector('#fptEdStage');
-        const cropBox = ov.querySelector('#fptEdCrop');
+        const stage = ov.querySelector('#fxnEdStage');
+        const cropBox = ov.querySelector('#fxnEdCrop');
         const PALETTE = ['#ffffff', '#000000', '#ff3b30', '#ff9500', '#ffcc00', '#34c759', '#0a84ff', '#bf5af2'];
 
         let tool = 'pen';
@@ -358,14 +358,14 @@
         const history = [];
 
         // палитра
-        const colorsWrap = ov.querySelector('#fptEdColors');
+        const colorsWrap = ov.querySelector('#fxnEdColors');
         PALETTE.forEach((c, i) => {
             const sw = document.createElement('button');
-            sw.className = 'fpt-ed-color' + (c === color ? ' active' : '');
+            sw.className = 'fxn-ed-color' + (c === color ? ' active' : '');
             sw.style.background = c;
             sw.addEventListener('click', () => {
                 color = c;
-                colorsWrap.querySelectorAll('.fpt-ed-color').forEach(x => x.classList.remove('active'));
+                colorsWrap.querySelectorAll('.fxn-ed-color').forEach(x => x.classList.remove('active'));
                 sw.classList.add('active');
                 if (tool === 'eraser') setTool('pen');
             });
@@ -495,15 +495,15 @@
         // тулы
         function setTool(t) {
             tool = t;
-            ov.querySelectorAll('.fpt-ed-tool').forEach(x => x.classList.toggle('active', x.dataset.tool === t));
-            const applyCropBtn = ov.querySelector('.fpt-ed-apply-crop');
+            ov.querySelectorAll('.fxn-ed-tool').forEach(x => x.classList.toggle('active', x.dataset.tool === t));
+            const applyCropBtn = ov.querySelector('.fxn-ed-apply-crop');
             if (t === 'crop') { enterCrop(); applyCropBtn.style.display = ''; }
             else { exitCrop(); applyCropBtn.style.display = 'none'; }
         }
-        ov.querySelectorAll('.fpt-ed-tool').forEach(b => {
+        ov.querySelectorAll('.fxn-ed-tool').forEach(b => {
             b.addEventListener('click', () => setTool(b.dataset.tool));
         });
-        ov.querySelector('#fptEdSize').addEventListener('input', (e) => { size = +e.target.value; });
+        ov.querySelector('#fxnEdSize').addEventListener('input', (e) => { size = +e.target.value; });
 
         // ── обрезка (как в мессенджерах: 4 угла + 4 стороны + перенос) ──
         // crop хранится в координатах ОТНОСИТЕЛЬНО canvas (px на экране), а не stage,
@@ -539,14 +539,14 @@
 
         // ручки: 4 угла + 4 стороны + центральная зона переноса
         cropBox.innerHTML = `
-            <span class="fpt-ed-h fpt-ed-h-nw" data-h="nw"></span>
-            <span class="fpt-ed-h fpt-ed-h-ne" data-h="ne"></span>
-            <span class="fpt-ed-h fpt-ed-h-sw" data-h="sw"></span>
-            <span class="fpt-ed-h fpt-ed-h-se" data-h="se"></span>
-            <span class="fpt-ed-e fpt-ed-e-n" data-h="n"></span>
-            <span class="fpt-ed-e fpt-ed-e-s" data-h="s"></span>
-            <span class="fpt-ed-e fpt-ed-e-w" data-h="w"></span>
-            <span class="fpt-ed-e fpt-ed-e-e" data-h="e"></span>`;
+            <span class="fxn-ed-h fxn-ed-h-nw" data-h="nw"></span>
+            <span class="fxn-ed-h fxn-ed-h-ne" data-h="ne"></span>
+            <span class="fxn-ed-h fxn-ed-h-sw" data-h="sw"></span>
+            <span class="fxn-ed-h fxn-ed-h-se" data-h="se"></span>
+            <span class="fxn-ed-e fxn-ed-e-n" data-h="n"></span>
+            <span class="fxn-ed-e fxn-ed-e-s" data-h="s"></span>
+            <span class="fxn-ed-e fxn-ed-e-w" data-h="w"></span>
+            <span class="fxn-ed-e fxn-ed-e-e" data-h="e"></span>`;
 
         cropBox.addEventListener('mousedown', (e) => {
             const mode = e.target.dataset.h || 'move';
@@ -611,7 +611,7 @@
         }
 
         // действия тулбара
-        ov.querySelector('.fpt-ed-actions').addEventListener('click', (e) => {
+        ov.querySelector('.fxn-ed-actions').addEventListener('click', (e) => {
             const b = e.target.closest('[data-act]'); if (!b) return;
             const act = b.getAttribute('data-act');
             if (act === 'undo') undo();
@@ -697,7 +697,7 @@
 
     async function doSend() {
         if (!modalEl) return;
-        const text = (modalEl.querySelector('#fptTgMsg').value || '').trim();
+        const text = (modalEl.querySelector('#fxnTgMsg').value || '').trim();
         const imgs = basket.slice();
         if (!imgs.length) { closeModal(); return; }
 
@@ -714,13 +714,13 @@
         try {
             for (let i = 0; i < imgs.length; i++) {
                 const resp = await sendImageReliable({
-                    action: 'fptSendImage', chatId, dataUrl: imgs[i].dataUrl, chatName
+                    action: 'fxnSendImage', chatId, dataUrl: imgs[i].dataUrl, chatName
                 });
                 if (resp && resp.ok) markTileSent(group, i);
                 else { markTileError(group, i); notify('Не удалось отправить изображение: ' + ((resp && resp.error) || 'ошибка'), true); }
                 await new Promise(r => setTimeout(r, 250));
             }
-            if (text) await sendImageReliable({ action: 'fptSendChatText', chatId, text });
+            if (text) await sendImageReliable({ action: 'fxnSendChatText', chatId, text });
         } catch (e) {
             console.error('Foxen: ошибка отправки', e);
             notify('Ошибка при отправке: ' + e.message, true);
@@ -742,13 +742,13 @@
         const cols = n === 1 ? 1 : (n === 2 ? 2 : (n <= 4 ? 2 : 3));
 
         const tiles = dataUrls.map((u, idx) => `
-            <span class="fpt-pending-tile" data-i="${idx}">
+            <span class="fxn-pending-tile" data-i="${idx}">
                 <img src="${u}" alt="">
-                <span class="fpt-pending-spinner"><span class="fpt-spin"></span></span>
+                <span class="fxn-pending-spinner"><span class="fxn-spin"></span></span>
             </span>`).join('');
 
         const wrap = document.createElement('div');
-        wrap.className = 'chat-msg-item chat-msg-with-head fpt-pending-bubble';
+        wrap.className = 'chat-msg-item chat-msg-with-head fxn-pending-bubble';
         wrap.innerHTML = `
             <div class="chat-message">
                 <div class="media-user-name">
@@ -757,8 +757,8 @@
                 </div>
                 <div class="chat-msg-body">
                     <div class="chat-msg-text">
-                        <span class="fpt-pending-mosaic" style="--cols:${cols}" data-count="${n}">${tiles}</span>
-                        ${caption ? `<span class="fpt-pending-caption">${escapeText(caption)}</span>` : ''}
+                        <span class="fxn-pending-mosaic" style="--cols:${cols}" data-count="${n}">${tiles}</span>
+                        ${caption ? `<span class="fxn-pending-caption">${escapeText(caption)}</span>` : ''}
                     </div>
                 </div>
             </div>`;
@@ -770,17 +770,17 @@
         return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
     function markTileSent(group, i) {
-        const t = group && group.querySelector(`.fpt-pending-tile[data-i="${i}"] .fpt-pending-spinner`);
-        if (t) { t.classList.add('fpt-pending-tile-done'); }
+        const t = group && group.querySelector(`.fxn-pending-tile[data-i="${i}"] .fxn-pending-spinner`);
+        if (t) { t.classList.add('fxn-pending-tile-done'); }
     }
     function markTileError(group, i) {
-        const t = group && group.querySelector(`.fpt-pending-tile[data-i="${i}"] .fpt-pending-spinner`);
-        if (t) t.innerHTML = '<span class="material-symbols-rounded fpt-pending-err">error</span>';
+        const t = group && group.querySelector(`.fxn-pending-tile[data-i="${i}"] .fxn-pending-spinner`);
+        if (t) t.innerHTML = '<span class="material-symbols-rounded fxn-pending-err">error</span>';
     }
     function finishPendingGroup(group) {
         // FunPay сам дорисует настоящие сообщения; временный пузырь убираем с фейдом
         if (!group) return;
-        group.classList.add('fpt-pending-done');
+        group.classList.add('fxn-pending-done');
         setTimeout(() => group.remove(), 500);
     }
 
@@ -788,29 +788,29 @@
 
     function installButton() {
         if (!document.querySelector('.chat-form-input')) return;
-        if (document.querySelector('.fpt-attach-btn')) return;
+        if (document.querySelector('.fxn-attach-btn')) return;
         const nativeAttach = document.querySelector(
-            '.chat-form .chat-btn-image:not(.fpt-tpl-popover-btn):not(.fpt-attach-btn)'
+            '.chat-form .chat-btn-image:not(.fxn-tpl-popover-btn):not(.fxn-attach-btn)'
         );
         if (!nativeAttach) return;
 
         const ourBtn = document.createElement('button');
         ourBtn.type = 'button';
-        ourBtn.className = 'btn btn-default chat-btn-image fpt-attach-btn';
+        ourBtn.className = 'btn btn-default chat-btn-image fxn-attach-btn';
         ourBtn.title = 'Прикрепить изображения';
         ourBtn.innerHTML = `<span class="material-symbols-rounded">${BTN_ICON}</span>`;
         ourBtn.addEventListener('click', (e) => { e.preventDefault(); pickFiles(true); });
 
         nativeAttach.parentNode.insertBefore(ourBtn, nativeAttach);
-        nativeAttach.classList.add('fpt-native-attach-hidden');
+        nativeAttach.classList.add('fxn-native-attach-hidden');
     }
 
     function syncNativeVisibility() {
-        const our = document.querySelector('.fpt-attach-btn');
-        const native = document.querySelector('.chat-form .chat-btn-image:not(.fpt-attach-btn):not(.fpt-tpl-popover-btn)');
+        const our = document.querySelector('.fxn-attach-btn');
+        const native = document.querySelector('.chat-form .chat-btn-image:not(.fxn-attach-btn):not(.fxn-tpl-popover-btn)');
         if (!native) return;
         const ourHidden = our ? getComputedStyle(our).display === 'none' : true;
-        native.classList.toggle('fpt-native-attach-hidden', !ourHidden);
+        native.classList.toggle('fxn-native-attach-hidden', !ourHidden);
     }
 
     function init() { installButton(); syncNativeVisibility(); installPasteAndDrop(); }
@@ -848,10 +848,10 @@
             if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
             if (!document.querySelector('.chat-form-input')) return;
             stop(e);
-            document.body.classList.add('fpt-dnd-active');
+            document.body.classList.add('fxn-dnd-active');
         }, true));
         document.addEventListener('dragleave', (e) => {
-            if (e.relatedTarget === null) document.body.classList.remove('fpt-dnd-active');
+            if (e.relatedTarget === null) document.body.classList.remove('fxn-dnd-active');
         }, true);
         document.addEventListener('drop', (e) => {
             if (!document.querySelector('.chat-form-input')) return;
@@ -860,7 +860,7 @@
             const imgs = Array.from(dt.files).filter(f => f.type.startsWith('image/'));
             if (!imgs.length) return;
             stop(e);
-            document.body.classList.remove('fpt-dnd-active');
+            document.body.classList.remove('fxn-dnd-active');
             addFiles(imgs);
         }, true);
     }
@@ -870,7 +870,7 @@
 
     const root = document.querySelector('.js-main-chat') || document.body;
     new MutationObserver(() => {
-        if (document.querySelector('.chat-form-input') && !document.querySelector('.fpt-attach-btn')) installButton();
+        if (document.querySelector('.chat-form-input') && !document.querySelector('.fxn-attach-btn')) installButton();
         syncNativeVisibility();
     }).observe(root, { childList: true, subtree: true });
 

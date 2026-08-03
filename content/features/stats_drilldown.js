@@ -2,7 +2,7 @@
 // Делает карточки статистики кликабельными: по клику открывается модалка со
 // СПИСКОМ ВСЕХ заказов за этой цифрой (не топ-10), с суммой, статусами и
 // ссылками на FunPay. Работает и для продаж (/orders/trade), и для покупок
-// (/orders/), источник данных берётся из window.fptOrdersDB.
+// (/orders/), источник данных берётся из window.fxnOrdersDB.
 
 (function () {
     'use strict';
@@ -16,13 +16,13 @@
         ));
     }
 
-    function cfg() { return window.fptStatsCfg || null; }
-    function db() { return window.fptOrdersDB || window.FPTSalesDB; }
+    function cfg() { return window.fxnStatsCfg || null; }
+    function db() { return window.fxnOrdersDB || window.FPTSalesDB; }
 
     // Те же фильтры статусов, что и в остальных режимах.
     function statusFilters() {
         try {
-            if (typeof window.fptGetStatsFilters === 'function') return window.fptGetStatsFilters();
+            if (typeof window.fxnGetStatsFilters === 'function') return window.fxnGetStatsFilters();
         } catch (_) {}
         const purchases = !!cfg();
         return { stClosed: true, stPaid: true, stRefunded: !purchases };
@@ -84,67 +84,67 @@
         const link = o.orderId ? `https://funpay.com/orders/${o.orderId}/` : null;
         const party = esc(o.buyerUsername || '-'); // на покупках это продавец
         const inner = `
-            <div class="fpt-dd-row-top">
-                <span class="fpt-dd-row-title">${esc(o.description || o.subcategoryName || 'Заказ')}</span>
-                ${price ? `<span class="fpt-dd-row-price">${esc(price)}</span>` : ''}
+            <div class="fxn-dd-row-top">
+                <span class="fxn-dd-row-title">${esc(o.description || o.subcategoryName || 'Заказ')}</span>
+                ${price ? `<span class="fxn-dd-row-price">${esc(price)}</span>` : ''}
             </div>
-            <div class="fpt-dd-row-meta">
+            <div class="fxn-dd-row-meta">
                 <span>${party}</span>
                 <span>${esc(o.subcategoryName || '')}</span>
-                <span class="fpt-dd-st fpt-dd-st-${esc(o.orderStatus || '')}">${esc(st)}</span>
+                <span class="fxn-dd-st fxn-dd-st-${esc(o.orderStatus || '')}">${esc(st)}</span>
                 <span>${esc(dateStr)}</span>
             </div>`;
         return link
-            ? `<a class="fpt-dd-row" href="${link}" target="_blank" rel="noopener">${inner}</a>`
-            : `<div class="fpt-dd-row">${inner}</div>`;
+            ? `<a class="fxn-dd-row" href="${link}" target="_blank" rel="noopener">${inner}</a>`
+            : `<div class="fxn-dd-row">${inner}</div>`;
     }
 
     function ensureStyles() {
-        if (document.getElementById('fpt-dd-styles')) return;
+        if (document.getElementById('fxn-dd-styles')) return;
         const css = document.createElement('style');
-        css.id = 'fpt-dd-styles';
+        css.id = 'fxn-dd-styles';
         css.textContent = `
-        .fpt-dd-overlay{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;
+        .fxn-dd-overlay{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;
             justify-content:center;background:rgba(8,9,14,0.62);backdrop-filter:blur(3px);
-            animation:fptDdFade .15s ease;}
-        @keyframes fptDdFade{from{opacity:0}to{opacity:1}}
-        .fpt-dd-modal{width:min(680px,94vw);max-height:86vh;display:flex;flex-direction:column;
-            background:var(--fpt-surface,#171922);color:var(--fpt-text,#e7e9f3);
-            border:1px solid var(--fpt-border,rgba(255,255,255,0.1));border-radius:16px;
+            animation:fxnDdFade .15s ease;}
+        @keyframes fxnDdFade{from{opacity:0}to{opacity:1}}
+        .fxn-dd-modal{width:min(680px,94vw);max-height:86vh;display:flex;flex-direction:column;
+            background:var(--fxn-surface,#171922);color:var(--fxn-text,#e7e9f3);
+            border:1px solid var(--fxn-border,rgba(255,255,255,0.1));border-radius:16px;
             box-shadow:0 20px 60px rgba(0,0,0,0.5);overflow:hidden;}
-        .fpt-custom-theme-off .fpt-dd-modal{background:#fff;color:#1a1a1a;border-color:rgba(0,0,0,0.12);}
-        .fpt-dd-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
-            padding:16px 18px;border-bottom:1px solid var(--fpt-border,rgba(255,255,255,0.08));}
-        .fpt-dd-title{font-size:15px;font-weight:700;}
-        .fpt-dd-sub{font-size:12px;color:var(--fpt-text-muted,#9099b8);margin-top:2px;}
-        .fpt-dd-close{background:none;border:none;color:inherit;font-size:22px;line-height:1;
+        .fxn-custom-theme-off .fxn-dd-modal{background:#fff;color:#1a1a1a;border-color:rgba(0,0,0,0.12);}
+        .fxn-dd-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+            padding:16px 18px;border-bottom:1px solid var(--fxn-border,rgba(255,255,255,0.08));}
+        .fxn-dd-title{font-size:15px;font-weight:700;}
+        .fxn-dd-sub{font-size:12px;color:var(--fxn-text-muted,#9099b8);margin-top:2px;}
+        .fxn-dd-close{background:none;border:none;color:inherit;font-size:22px;line-height:1;
             cursor:pointer;opacity:.7;}
-        .fpt-dd-close:hover{opacity:1;}
-        .fpt-dd-tools{display:flex;gap:8px;padding:10px 18px 0;}
-        .fpt-dd-search{flex:1;padding:8px 10px;border-radius:8px;font-size:13px;
-            background:var(--fpt-surface-2,#20222e);color:var(--fpt-text,#fff);
-            border:1px solid var(--fpt-border,#22253a);}
-        .fpt-custom-theme-off .fpt-dd-search{background:#f3f3f5;color:#1a1a1a;border-color:#ddd;}
-        .fpt-dd-sort{padding:8px 10px;border-radius:8px;font-size:13px;
-            background:var(--fpt-surface-2,#20222e);color:var(--fpt-text,#fff);
-            border:1px solid var(--fpt-border,#22253a);cursor:pointer;}
-        .fpt-custom-theme-off .fpt-dd-sort{background:#f3f3f5;color:#1a1a1a;border-color:#ddd;}
-        .fpt-dd-list{padding:12px 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
-        .fpt-dd-row{display:block;text-decoration:none;background:var(--fpt-surface-2,#20222e);
-            border:1px solid var(--fpt-border,#22253a);border-radius:10px;padding:9px 11px;color:inherit;}
-        .fpt-custom-theme-off .fpt-dd-row{background:#f7f7f9;border-color:#e3e3e8;}
-        a.fpt-dd-row:hover{border-color:var(--fpt-accent,#ff6d15);}
-        .fpt-dd-row-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
-        .fpt-dd-row-title{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-        .fpt-dd-row-price{font-size:12.5px;font-weight:700;color:var(--fpt-accent,#ff6d15);white-space:nowrap;}
-        .fpt-dd-row-meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;font-size:11px;
-            color:var(--fpt-text-muted,#9099b8);}
-        .fpt-dd-st{font-weight:600;}
-        .fpt-dd-st-closed{color:#3ad07a;} .fpt-dd-st-paid{color:#4aa3ff;} .fpt-dd-st-refunded{color:#ff6b6b;}
-        .fpt-dd-empty{padding:24px;text-align:center;color:var(--fpt-text-muted,#9099b8);font-size:13px;}
+        .fxn-dd-close:hover{opacity:1;}
+        .fxn-dd-tools{display:flex;gap:8px;padding:10px 18px 0;}
+        .fxn-dd-search{flex:1;padding:8px 10px;border-radius:8px;font-size:13px;
+            background:var(--fxn-surface-2,#20222e);color:var(--fxn-text,#fff);
+            border:1px solid var(--fxn-border,#22253a);}
+        .fxn-custom-theme-off .fxn-dd-search{background:#f3f3f5;color:#1a1a1a;border-color:#ddd;}
+        .fxn-dd-sort{padding:8px 10px;border-radius:8px;font-size:13px;
+            background:var(--fxn-surface-2,#20222e);color:var(--fxn-text,#fff);
+            border:1px solid var(--fxn-border,#22253a);cursor:pointer;}
+        .fxn-custom-theme-off .fxn-dd-sort{background:#f3f3f5;color:#1a1a1a;border-color:#ddd;}
+        .fxn-dd-list{padding:12px 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+        .fxn-dd-row{display:block;text-decoration:none;background:var(--fxn-surface-2,#20222e);
+            border:1px solid var(--fxn-border,#22253a);border-radius:10px;padding:9px 11px;color:inherit;}
+        .fxn-custom-theme-off .fxn-dd-row{background:#f7f7f9;border-color:#e3e3e8;}
+        a.fxn-dd-row:hover{border-color:var(--fxn-accent,#ff6d15);}
+        .fxn-dd-row-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
+        .fxn-dd-row-title{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .fxn-dd-row-price{font-size:12.5px;font-weight:700;color:var(--fxn-accent,#ff6d15);white-space:nowrap;}
+        .fxn-dd-row-meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;font-size:11px;
+            color:var(--fxn-text-muted,#9099b8);}
+        .fxn-dd-st{font-weight:600;}
+        .fxn-dd-st-closed{color:#3ad07a;} .fxn-dd-st-paid{color:#4aa3ff;} .fxn-dd-st-refunded{color:#ff6b6b;}
+        .fxn-dd-empty{padding:24px;text-align:center;color:var(--fxn-text-muted,#9099b8);font-size:13px;}
         .fp-stat-card{cursor:pointer;transition:transform .08s ease,box-shadow .12s ease;}
         .fp-stat-card:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,0.18);}
-        .fpt-dd-hint{font-size:10px;color:var(--fpt-text-muted,#9099b8);opacity:.7;margin-top:6px;}
+        .fxn-dd-hint{font-size:10px;color:var(--fxn-text-muted,#9099b8);opacity:.7;margin-top:6px;}
         `;
         document.head.appendChild(css);
     }
@@ -169,44 +169,44 @@
         else arr.sort((a, b) => (b.orderDate || 0) - (a.orderDate || 0)); // date-desc
         container.innerHTML = arr.length
             ? arr.map(orderRow).join('')
-            : `<div class="fpt-dd-empty">Ничего не найдено.</div>`;
+            : `<div class="fxn-dd-empty">Ничего не найдено.</div>`;
     }
 
     function openModal(title, subtitle, list) {
         ensureStyles();
         _list = list;
         _titleBase = title;
-        const old = document.getElementById('fpt-dd-overlay');
+        const old = document.getElementById('fxn-dd-overlay');
         if (old) old.remove();
 
         const overlay = document.createElement('div');
-        overlay.id = 'fpt-dd-overlay';
-        overlay.className = 'fpt-dd-overlay';
+        overlay.id = 'fxn-dd-overlay';
+        overlay.className = 'fxn-dd-overlay';
         overlay.innerHTML = `
-            <div class="fpt-dd-modal" role="dialog" aria-modal="true">
-                <div class="fpt-dd-head">
+            <div class="fxn-dd-modal" role="dialog" aria-modal="true">
+                <div class="fxn-dd-head">
                     <div>
-                        <div class="fpt-dd-title">${esc(title)}</div>
-                        <div class="fpt-dd-sub">${esc(subtitle)}</div>
+                        <div class="fxn-dd-title">${esc(title)}</div>
+                        <div class="fxn-dd-sub">${esc(subtitle)}</div>
                     </div>
-                    <button class="fpt-dd-close" title="Закрыть">×</button>
+                    <button class="fxn-dd-close" title="Закрыть">×</button>
                 </div>
-                <div class="fpt-dd-tools">
-                    <input class="fpt-dd-search" type="text" placeholder="Поиск: товар, продавец, категория…" autocomplete="off">
-                    <select class="fpt-dd-sort">
+                <div class="fxn-dd-tools">
+                    <input class="fxn-dd-search" type="text" placeholder="Поиск: товар, продавец, категория…" autocomplete="off">
+                    <select class="fxn-dd-sort">
                         <option value="date-desc">Сначала новые</option>
                         <option value="date-asc">Сначала старые</option>
                         <option value="price-desc">Дороже сверху</option>
                         <option value="price-asc">Дешевле сверху</option>
                     </select>
                 </div>
-                <div class="fpt-dd-list" id="fpt-dd-list"></div>
+                <div class="fxn-dd-list" id="fxn-dd-list"></div>
             </div>`;
         document.body.appendChild(overlay);
 
-        const listEl = overlay.querySelector('#fpt-dd-list');
-        const searchEl = overlay.querySelector('.fpt-dd-search');
-        const sortEl = overlay.querySelector('.fpt-dd-sort');
+        const listEl = overlay.querySelector('#fxn-dd-list');
+        const searchEl = overlay.querySelector('.fxn-dd-search');
+        const sortEl = overlay.querySelector('.fxn-dd-sort');
         const rerender = () => renderList(listEl, _list, sortEl.value, searchEl.value.trim());
         rerender();
 
@@ -215,7 +215,7 @@
 
         const close = () => overlay.remove();
         overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-        overlay.querySelector('.fpt-dd-close').addEventListener('click', close);
+        overlay.querySelector('.fxn-dd-close').addEventListener('click', close);
         document.addEventListener('keydown', function onEsc(e) {
             if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
         });
@@ -319,7 +319,7 @@
         const tryWire = () => { try { wire(); } catch (_) {} };
         tryWire();
         const host = document.getElementById('fpTools-stats-cards')
-            || document.querySelector('.fp-tools-stats-container');
+            || document.querySelector('.foxen-stats-container');
         if (host) {
             const mo = new MutationObserver(() => tryWire());
             mo.observe(document.body, { childList: true, subtree: true });

@@ -4,23 +4,31 @@
  * Инициализирует UI для всех функций авто-ответов в настройках Foxen
  */
 async function initializeAutoReviewUI() {
-    const page = document.querySelector('.fp-tools-page-content[data-page="auto_review"]');
+    const page = document.querySelector('.foxen-page-content[data-page="auto_review"]');
     if (!page || page.dataset.initialized) return;
 
-    const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
+    const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
     
     const settings = {
-        autoReviewEnabled: fpToolsAutoReplies.autoReviewEnabled || false,
-        reviewTemplates: fpToolsAutoReplies.reviewTemplates || {},
-        greetingEnabled: fpToolsAutoReplies.greetingEnabled || false,
-        greetingText: fpToolsAutoReplies.greetingText || 'Здравствуйте! Чем могу помочь?',
-        keywordsEnabled: fpToolsAutoReplies.keywordsEnabled || false,
-        keywords: fpToolsAutoReplies.keywords || [],
-        bonusForReviewEnabled: fpToolsAutoReplies.bonusForReviewEnabled || false,
-        bonusMode: fpToolsAutoReplies.bonusMode || 'single',
-        singleBonusText: fpToolsAutoReplies.singleBonusText || '',
-        randomBonuses: fpToolsAutoReplies.randomBonuses || [],
-        bonusForReviewDelaySec: (fpToolsAutoReplies.bonusForReviewDelaySec ?? 4)
+        autoReviewEnabled: foxenAutoReplies.autoReviewEnabled || false,
+        reviewTemplates: foxenAutoReplies.reviewTemplates || {},
+        greetingEnabled: foxenAutoReplies.greetingEnabled || false,
+        greetingText: foxenAutoReplies.greetingText || 'Здравствуйте! Чем могу помочь?',
+        keywordsEnabled: foxenAutoReplies.keywordsEnabled || false,
+        keywords: foxenAutoReplies.keywords || [],
+        bonusForReviewEnabled: foxenAutoReplies.bonusForReviewEnabled || false,
+        bonusMode: foxenAutoReplies.bonusMode || 'single',
+        singleBonusText: foxenAutoReplies.singleBonusText || '',
+        randomBonuses: foxenAutoReplies.randomBonuses || [],
+        bonusForReviewDelaySec: (foxenAutoReplies.bonusForReviewDelaySec ?? 4),
+        newOrderReplyEnabled: foxenAutoReplies.newOrderReplyEnabled || false,
+        newOrderReplyText: foxenAutoReplies.newOrderReplyText || '',
+        orderConfirmReplyEnabled: foxenAutoReplies.orderConfirmReplyEnabled || false,
+        orderConfirmReplyText: foxenAutoReplies.orderConfirmReplyText || '',
+        typingDelay: foxenAutoReplies.typingDelay || false,
+        onlyNewChats: foxenAutoReplies.onlyNewChats || false,
+        ignoreSystemMessages: foxenAutoReplies.ignoreSystemMessages || false,
+        greetingCooldownDays: foxenAutoReplies.greetingCooldownDays ?? 0
     };
 
     document.getElementById('bonusForReviewEnabled').checked = settings.bonusForReviewEnabled;
@@ -49,14 +57,13 @@ async function initializeAutoReviewUI() {
     const setVal   = (id, val) => { const el = document.getElementById(id); if (el) el.value  = val || ''; };
 
     setCheck('autoReviewEnabled', settings.autoReviewEnabled);
-    for (let i = 1; i <= 5; i++) setVal(`fpt-review-${i}`, settings.reviewTemplates?.[i]);
+    for (let i = 1; i <= 5; i++) setVal(`fxn-review-${i}`, settings.reviewTemplates?.[i]);
     setCheck('greetingEnabled',       settings.greetingEnabled);
     setVal('greetingText',            settings.greetingText || 'Здравствуйте! Чем могу помочь?');
     setCheck('onlyNewChats',          settings.onlyNewChats);
     setCheck('ignoreSystemMessages',  settings.ignoreSystemMessages);
     setVal('greetingCooldownDays',    settings.greetingCooldownDays ?? 0);
     setCheck('keywordsEnabled',       settings.keywordsEnabled);
-    // 3.0: New fields
     setCheck('newOrderReplyEnabled',     settings.newOrderReplyEnabled);
     setVal('newOrderReplyText',          settings.newOrderReplyText);
     setCheck('orderConfirmReplyEnabled', settings.orderConfirmReplyEnabled);
@@ -69,26 +76,45 @@ async function initializeAutoReviewUI() {
     const saveOnChange = async () => {
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(async () => {
-            const storedData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-            const currentSettings = storedData.fpToolsAutoReplies || {};
+            const storedData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+            const currentSettings = storedData.foxenAutoReplies || {};
             
             const getChecked = id => document.getElementById(id)?.checked ?? false;
             const getVal = id => document.getElementById(id)?.value || '';
+
+            const readImgs = (id) => {
+                const el = document.getElementById(id);
+                if (!el || !el.dataset.fxnImages) return [];
+                try { return JSON.parse(el.dataset.fxnImages) || []; } catch (_) { return []; }
+            };
+            const readOrder = (id) => {
+                const el = document.getElementById(id);
+                return (el && el.dataset.fxnSendOrder === 'image_first') ? 'image_first' : 'text_first';
+            };
 
             const newSettings = {
                 ...currentSettings,
                 // Review replies
                 autoReviewEnabled: getChecked('autoReviewEnabled'),
                 reviewTemplates: {
-                    '5': getVal('fpt-review-5'),
-                    '4': getVal('fpt-review-4'),
-                    '3': getVal('fpt-review-3'),
-                    '2': getVal('fpt-review-2'),
-                    '1': getVal('fpt-review-1')
+                    '5': getVal('fxn-review-5'),
+                    '4': getVal('fxn-review-4'),
+                    '3': getVal('fxn-review-3'),
+                    '2': getVal('fxn-review-2'),
+                    '1': getVal('fxn-review-1')
+                },
+                reviewTemplateImages: {
+                    '5': readImgs('fxn-review-5'),
+                    '4': readImgs('fxn-review-4'),
+                    '3': readImgs('fxn-review-3'),
+                    '2': readImgs('fxn-review-2'),
+                    '1': readImgs('fxn-review-1')
                 },
                 // Greeting
                 greetingEnabled:       getChecked('greetingEnabled'),
                 greetingText:          getVal('greetingText'),
+                greetingImages:        readImgs('greetingText'),
+                greetingSendOrder:     readOrder('greetingText'),
                 onlyNewChats:          getChecked('onlyNewChats'),
                 ignoreSystemMessages:  getChecked('ignoreSystemMessages'),
                 greetingCooldownDays:  parseFloat(getVal('greetingCooldownDays') || '0'),
@@ -99,13 +125,18 @@ async function initializeAutoReviewUI() {
                 bonusMode:             document.querySelector('input[name="bonusMode"]:checked')?.value || 'single',
                 singleBonusText:       getVal('singleBonusText'),
                 bonusForReviewDelaySec: Math.max(0, Math.min(60, parseFloat(getVal('bonusForReviewDelaySec') || '4') || 0)),
-                // 3.0: New order / confirm replies
-                newOrderReplyEnabled:     getChecked('newOrderReplyEnabled'),
-                newOrderReplyText:        getVal('newOrderReplyText'),
-                orderConfirmReplyEnabled: getChecked('orderConfirmReplyEnabled'),
-                orderConfirmReplyText:    getVal('orderConfirmReplyText'),
+                // New order / confirm replies
+                newOrderReplyEnabled:       getChecked('newOrderReplyEnabled'),
+                newOrderReplyText:          getVal('newOrderReplyText'),
+                newOrderReplyImages:        readImgs('newOrderReplyText'),
+                newOrderReplySendOrder:     readOrder('newOrderReplyText'),
+                orderConfirmReplyEnabled:   getChecked('orderConfirmReplyEnabled'),
+                orderConfirmReplyText:      getVal('orderConfirmReplyText'),
+                orderConfirmReplyImages:    readImgs('orderConfirmReplyText'),
+                orderConfirmReplySendOrder: readOrder('orderConfirmReplyText'),
+                typingDelay:                getChecked('typingDelay')
             };
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies: newSettings });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies: newSettings });
             console.log("Foxen: Auto-reply settings saved.");
         }, 500);
     };
@@ -139,12 +170,12 @@ async function initializeAutoReviewUI() {
         const exactRadio = document.querySelector('input[name="newKeywordMatchMode"][value="exact"]');
         if (exactRadio) exactRadio.checked = true;
         addKeywordBtn.textContent = 'Добавить правило';
-        addKeywordBtn.classList.remove('fpt-editing-rule');
+        addKeywordBtn.classList.remove('fxn-editing-rule');
         // clear any attached image from the response field
         if (typeof __fptAttachments !== 'undefined') __fptAttachments.delete(kwResponse);
-        delete kwResponse.dataset.fptImages;
-        delete kwResponse.dataset.fptSendOrder;
-        if (typeof fptRenderAttachments === 'function') fptRenderAttachments(kwResponse);
+        delete kwResponse.dataset.fxnImages;
+        delete kwResponse.dataset.fxnSendOrder;
+        if (typeof fxnRenderAttachments === 'function') fxnRenderAttachments(kwResponse);
     };
 
     addKeywordBtn.addEventListener('click', async () => {
@@ -155,16 +186,16 @@ async function initializeAutoReviewUI() {
 
         // read any image attached to the response field
         let images = [];
-        if (kwResponse.dataset.fptImages) { try { images = JSON.parse(kwResponse.dataset.fptImages); } catch(_){} }
-        const sendOrder = kwResponse.dataset.fptSendOrder === 'image_first' ? 'image_first' : 'text_first';
+        if (kwResponse.dataset.fxnImages) { try { images = JSON.parse(kwResponse.dataset.fxnImages); } catch(_){} }
+        const sendOrder = kwResponse.dataset.fxnSendOrder === 'image_first' ? 'image_first' : 'text_first';
 
         if (!keyword || (!response && !images.length)) {
             showNotification('Заполните ключевое слово и ответ (текст или картинку).', true);
             return;
         }
 
-        const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-        const keywords = fpToolsAutoReplies.keywords || [];
+        const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+        const keywords = foxenAutoReplies.keywords || [];
         const rule = { keyword, response, matchMode };
         if (images.length) rule.images = images;
         if (images.length) rule.sendOrder = sendOrder;
@@ -175,9 +206,9 @@ async function initializeAutoReviewUI() {
         } else {
             keywords.push(rule);                     // add new rule
         }
-        fpToolsAutoReplies.keywords = keywords;
+        foxenAutoReplies.keywords = keywords;
 
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
         renderKeywordsList(keywords);
         resetKeywordForm();
     });
@@ -189,12 +220,12 @@ async function initializeAutoReviewUI() {
             return;
         }
         
-        const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-        const bonuses = fpToolsAutoReplies.randomBonuses || [];
+        const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+        const bonuses = foxenAutoReplies.randomBonuses || [];
         bonuses.push(bonusText);
-        fpToolsAutoReplies.randomBonuses = bonuses;
+        foxenAutoReplies.randomBonuses = bonuses;
 
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
         renderBonusesList(bonuses);
         document.getElementById('newBonusText').value = '';
     });
@@ -202,22 +233,22 @@ async function initializeAutoReviewUI() {
     document.getElementById('bonus-list-container').addEventListener('click', async (e) => {
         if (e.target.classList.contains('delete-bonus-btn')) {
             const index = parseInt(e.target.dataset.index, 10);
-            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-            const bonuses = fpToolsAutoReplies.randomBonuses || [];
+            const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+            const bonuses = foxenAutoReplies.randomBonuses || [];
             bonuses.splice(index, 1);
-            fpToolsAutoReplies.randomBonuses = bonuses;
+            foxenAutoReplies.randomBonuses = bonuses;
             
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
             renderBonusesList(bonuses);
         }
     });
 
     document.getElementById('keywords-list-container').addEventListener('click', async (e) => {
-        const editBtn = e.target.closest('.fpt-edit-keyword-btn');
+        const editBtn = e.target.closest('.fxn-edit-keyword-btn');
         if (editBtn) {
             const index = parseInt(editBtn.dataset.index, 10);
-            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-            const keywords = fpToolsAutoReplies.keywords || [];
+            const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+            const keywords = foxenAutoReplies.keywords || [];
             const rule = keywords[index];
             if (!rule) return;
 
@@ -230,21 +261,21 @@ async function initializeAutoReviewUI() {
 
             // restore attached image (if any) onto the response field
             if (typeof __fptAttachments !== 'undefined') __fptAttachments.delete(kwResponse);
-            delete kwResponse.dataset.fptImages;
-            delete kwResponse.dataset.fptSendOrder;
+            delete kwResponse.dataset.fxnImages;
+            delete kwResponse.dataset.fxnSendOrder;
             if (Array.isArray(rule.images) && rule.images.length) {
                 const arr = rule.images.map(d => ({ id: Math.random().toString(36).slice(2, 8), dataUrl: d }));
                 if (typeof __fptAttachments !== 'undefined') __fptAttachments.set(kwResponse, arr);
-                kwResponse.dataset.fptImages = JSON.stringify(rule.images);
-                if (rule.sendOrder) kwResponse.dataset.fptSendOrder = rule.sendOrder;
+                kwResponse.dataset.fxnImages = JSON.stringify(rule.images);
+                if (rule.sendOrder) kwResponse.dataset.fxnSendOrder = rule.sendOrder;
             }
-            if (typeof fptRenderAttachments === 'function') fptRenderAttachments(kwResponse);
+            if (typeof fxnRenderAttachments === 'function') fxnRenderAttachments(kwResponse);
 
             addKeywordBtn.textContent = 'Сохранить изменения';
-            addKeywordBtn.classList.add('fpt-editing-rule');
+            addKeywordBtn.classList.add('fxn-editing-rule');
             // highlight the row being edited
-            document.querySelectorAll('.keyword-item.fpt-editing').forEach(el => el.classList.remove('fpt-editing'));
-            editBtn.closest('.keyword-item')?.classList.add('fpt-editing');
+            document.querySelectorAll('.keyword-item.fxn-editing').forEach(el => el.classList.remove('fxn-editing'));
+            editBtn.closest('.keyword-item')?.classList.add('fxn-editing');
             kwInput.focus();
             kwInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             return;
@@ -253,12 +284,12 @@ async function initializeAutoReviewUI() {
         const delBtn = e.target.closest('.delete-keyword-btn');
         if (delBtn) {
             const index = parseInt(delBtn.dataset.index, 10);
-            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-            const keywords = fpToolsAutoReplies.keywords || [];
+            const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+            const keywords = foxenAutoReplies.keywords || [];
             keywords.splice(index, 1);
-            fpToolsAutoReplies.keywords = keywords;
+            foxenAutoReplies.keywords = keywords;
             
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
             renderKeywordsList(keywords);
             // if we were editing the deleted (or a shifted) rule, reset the form
             if (editingKeywordIndex === index) resetKeywordForm();
@@ -286,7 +317,7 @@ function renderKeywordsList(keywords) {
             : '<span style="font-size:10px;background:#1e2030;padding:1px 5px;border-radius:3px;color:#7a7f9a;margin-left:4px;">точно</span>';
         // show a small icon if the rule has an attached image
         const imgMarker = (Array.isArray(item.images) && item.images.length)
-            ? '<span class="material-symbols-rounded fpt-kw-img-marker" title="К правилу прикреплено изображение">image</span>'
+            ? '<span class="material-symbols-rounded fxn-kw-img-marker" title="К правилу прикреплено изображение">image</span>'
             : '';
         return `
         <div class="keyword-item" data-index="${index}">
@@ -295,8 +326,8 @@ function renderKeywordsList(keywords) {
                 <span class="keyword-arrow">→</span>
                 <span class="keyword-value">${esc(item.response)}</span>${imgMarker}
             </div>
-            <div class="fpt-kw-actions">
-                <button class="fpt-edit-keyword-btn" data-index="${index}" title="Редактировать"><span class="material-symbols-rounded">edit</span></button>
+            <div class="fxn-kw-actions">
+                <button class="fxn-edit-keyword-btn" data-index="${index}" title="Редактировать"><span class="material-symbols-rounded">edit</span></button>
                 <button class="btn btn-default delete-keyword-btn" data-index="${index}">Удалить</button>
             </div>
         </div>`;

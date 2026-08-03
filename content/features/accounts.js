@@ -1,15 +1,15 @@
 async function saveAccountsList() {
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAccounts: fpToolsAccounts });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAccounts: foxenAccounts });
     renderAccountsList();
 }
 
-const _fptAccSnapCache = {}; // key -> { ts, snapshot }
+const _fxnAccSnapCache = {}; // key -> { ts, snapshot }
 
-async function fptFetchAccountSnapshot(key) {
+async function fxnFetchAccountSnapshot(key) {
     try {
         const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getAccountSnapshot', key });
         if (res && res.ok) {
-            _fptAccSnapCache[key] = { ts: Date.now(), snapshot: res.snapshot || {} };
+            _fxnAccSnapCache[key] = { ts: Date.now(), snapshot: res.snapshot || {} };
             return res.snapshot || {};
         }
     } catch (_) {}
@@ -17,53 +17,53 @@ async function fptFetchAccountSnapshot(key) {
 }
 
 async function renderAccountsList() {
-    const listContainer = document.getElementById('fpToolsAccountsList');
+    const listContainer = document.getElementById('foxenAccountsList');
     if (!listContainer) return;
 
     const currentUsernameEl = document.querySelector('.user-link-name');
     const currentUsername = currentUsernameEl ? currentUsernameEl.textContent.trim() : null;
 
     listContainer.innerHTML = '';
-    if (fpToolsAccounts.length === 0) {
-        listContainer.innerHTML = '<p style="font-size: 14px; color: var(--fpt-text-muted,#a0a0a0);">Нет сохраненных аккаунтов.</p>';
+    if (foxenAccounts.length === 0) {
+        listContainer.innerHTML = '<p style="font-size: 14px; color: var(--fxn-text-muted,#a0a0a0);">Нет сохраненных аккаунтов.</p>';
         return;
     }
 
-    fpToolsAccounts.forEach((account, index) => {
+    foxenAccounts.forEach((account, index) => {
         const isActive = account.name === currentUsername;
-        const item = createElement('div', { class: `fpt-acc-item ${isActive ? 'active' : ''}` });
+        const item = createElement('div', { class: `fxn-acc-item ${isActive ? 'active' : ''}` });
 
         // аватар
-        const avatar = createElement('div', { class: 'fpt-acc-avatar' });
+        const avatar = createElement('div', { class: 'fxn-acc-avatar' });
         if (account.avatar) avatar.style.backgroundImage = `url('${account.avatar}')`;
         else avatar.innerHTML = '<span class="material-symbols-rounded">person</span>';
 
         // непрочитанные (бейдж поверх аватара) - только если > 0
         if (account.unread && account.unread > 0) {
-            const badge = createElement('span', { class: 'fpt-acc-unread' });
+            const badge = createElement('span', { class: 'fxn-acc-unread' });
             badge.textContent = account.unread > 99 ? '99+' : String(account.unread);
             badge.title = `Непрочитанных сообщений: ${account.unread}`;
             avatar.appendChild(badge);
         }
 
         // инфо: имя + баланс
-        const info = createElement('div', { class: 'fpt-acc-info' });
-        const nameSpan = createElement('div', { class: 'fpt-acc-name' });
+        const info = createElement('div', { class: 'fxn-acc-info' });
+        const nameSpan = createElement('div', { class: 'fxn-acc-name' });
         nameSpan.textContent = account.name;
         if (isActive) {
-            const dot = createElement('span', { class: 'fpt-acc-active-dot' });
+            const dot = createElement('span', { class: 'fxn-acc-active-dot' });
             dot.title = 'Активный аккаунт';
             nameSpan.appendChild(dot);
         }
-        const balSpan = createElement('div', { class: 'fpt-acc-balance' });
+        const balSpan = createElement('div', { class: 'fxn-acc-balance' });
         balSpan.textContent = account.balance || '-';
         info.append(nameSpan, balSpan);
 
         // действия
-        const actionsDiv = createElement('div', { class: 'fpt-acc-actions' });
+        const actionsDiv = createElement('div', { class: 'fxn-acc-actions' });
 
         // кнопка "Войти" (текстовая) - как просили вернуть
-        const switchBtn = createElement('button', { class: `fpt-acc-login-btn ${isActive ? 'active' : ''}` });
+        const switchBtn = createElement('button', { class: `fxn-acc-login-btn ${isActive ? 'active' : ''}` });
         switchBtn.textContent = isActive ? 'Активен' : 'Войти';
         switchBtn.disabled = isActive;
         switchBtn.addEventListener('click', async () => {
@@ -82,21 +82,21 @@ async function renderAccountsList() {
             }
         });
 
-        const renameBtn = createElement('button', { class: 'fpt-acc-btn fpt-acc-btn-edit', title: 'Переименовать' });
+        const renameBtn = createElement('button', { class: 'fxn-acc-btn fxn-acc-btn-edit', title: 'Переименовать' });
         renameBtn.innerHTML = '<span class="material-symbols-rounded">edit</span>';
         renameBtn.addEventListener('click', () => {
             const newName = prompt('Введите новое имя для аккаунта:', account.name);
             if (newName && newName.trim() !== '') {
-                fpToolsAccounts[index].name = newName.trim();
+                foxenAccounts[index].name = newName.trim();
                 saveAccountsList();
             }
         });
 
-        const deleteBtn = createElement('button', { class: 'fpt-acc-btn fpt-acc-btn-delete', title: 'Удалить' });
+        const deleteBtn = createElement('button', { class: 'fxn-acc-btn fxn-acc-btn-delete', title: 'Удалить' });
         deleteBtn.innerHTML = '<span class="material-symbols-rounded">delete</span>';
         deleteBtn.addEventListener('click', () => {
             if (confirm(`Вы уверены, что хотите удалить аккаунт "${account.name}"?`)) {
-                fpToolsAccounts.splice(index, 1);
+                foxenAccounts.splice(index, 1);
                 saveAccountsList();
             }
         });
@@ -111,20 +111,20 @@ async function renderAccountsList() {
 }
 
 // Автообновление аватар/баланс/непрочитанных не чаще раза в 55 минут.
-let _fptAccAutoRefreshing = false;
+let _fxnAccAutoRefreshing = false;
 async function maybeAutoRefreshAccounts() {
-    if (_fptAccAutoRefreshing) return;
+    if (_fxnAccAutoRefreshing) return;
     const STALE = 55 * 60 * 1000;
     const now = Date.now();
-    const needsUpdate = fpToolsAccounts.some(a => a.key && (!a._snapTs || (now - a._snapTs) > STALE));
+    const needsUpdate = foxenAccounts.some(a => a.key && (!a._snapTs || (now - a._snapTs) > STALE));
     if (!needsUpdate) return;
-    _fptAccAutoRefreshing = true;
+    _fxnAccAutoRefreshing = true;
     try {
         let changed = false;
-        for (const account of fpToolsAccounts) {
+        for (const account of foxenAccounts) {
             if (!account.key) continue;
             if (account._snapTs && (now - account._snapTs) <= STALE) continue;
-            const snap = await fptFetchAccountSnapshot(account.key);
+            const snap = await fxnFetchAccountSnapshot(account.key);
             if (snap) {
                 account.avatar = snap.avatar || account.avatar || '';
                 account.balance = snap.balance || account.balance || '';
@@ -133,19 +133,19 @@ async function maybeAutoRefreshAccounts() {
                 changed = true;
             }
         }
-        if (changed) await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAccounts });
+        if (changed) await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAccounts });
         if (changed) renderAccountsList();
     } finally {
-        _fptAccAutoRefreshing = false;
+        _fxnAccAutoRefreshing = false;
     }
 }
 
 // Кнопка ручного обновления данных всех аккаунтов (аватар/баланс/непрочитанные).
-async function fptRefreshAllAccounts() {
+async function fxnRefreshAllAccounts() {
     showNotification('Обновляю данные аккаунтов…');
-    for (const account of fpToolsAccounts) {
+    for (const account of foxenAccounts) {
         if (!account.key) continue;
-        const snap = await fptFetchAccountSnapshot(account.key);
+        const snap = await fxnFetchAccountSnapshot(account.key);
         if (snap) {
             account.avatar = snap.avatar || account.avatar || '';
             account.balance = snap.balance || account.balance || '';
@@ -153,7 +153,7 @@ async function fptRefreshAllAccounts() {
             account._snapTs = Date.now();
         }
     }
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAccounts });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAccounts });
     renderAccountsList();
     showNotification('Данные аккаунтов обновлены.');
 }
@@ -172,7 +172,7 @@ function setupAccountManagementHandlers() {
             return;
         }
 
-        if (fpToolsAccounts.some(acc => acc.name === currentUsername)) {
+        if (foxenAccounts.some(acc => acc.name === currentUsername)) {
             showNotification(`Аккаунт "${currentUsername}" уже добавлен.`, true);
             return;
         }
@@ -180,7 +180,7 @@ function setupAccountManagementHandlers() {
         try {
             const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getGoldenKey' });
             if (response && response.success) {
-                fpToolsAccounts.push({ name: currentUsername, key: response.key });
+                foxenAccounts.push({ name: currentUsername, key: response.key });
                 await saveAccountsList();
                 showNotification(`Аккаунт "${currentUsername}" успешно добавлен!`);
             } else {
@@ -194,12 +194,12 @@ function setupAccountManagementHandlers() {
     // Помечаем, что обработчик привязан, чтобы избежать дублирования
     addBtn.dataset.handlerAttached = 'true';
 
-    const refreshBtn = document.getElementById('fptRefreshAccountsBtn');
+    const refreshBtn = document.getElementById('fxnRefreshAccountsBtn');
     if (refreshBtn && !refreshBtn.dataset.handlerAttached) {
         refreshBtn.dataset.handlerAttached = 'true';
         refreshBtn.addEventListener('click', async () => {
             refreshBtn.disabled = true;
-            try { await fptRefreshAllAccounts(); } finally { refreshBtn.disabled = false; }
+            try { await fxnRefreshAllAccounts(); } finally { refreshBtn.disabled = false; }
         });
     }
 }

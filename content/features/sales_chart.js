@@ -6,19 +6,19 @@ function renderSalesChart(containerId) {
     if (!container) return;
 
     (async () => {
-        const fpToolsSalesData = await (window.fptOrdersDB || FPTSalesDB).getAllAsArray();
-        const { fpToolsSalesChartPeriod } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsSalesChartPeriod');
-        if (!fpToolsSalesData.length) {
-            container.innerHTML = '<p style="color:var(--fpt-text-muted);font-size:12px;text-align:center;padding:20px;">Нет данных о продажах</p>';
+        const foxenSalesData = await (window.fxnOrdersDB || FPTSalesDB).getAllAsArray();
+        const { foxenSalesChartPeriod } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenSalesChartPeriod');
+        if (!foxenSalesData.length) {
+            container.innerHTML = '<p style="color:var(--fxn-text-muted);font-size:12px;text-align:center;padding:20px;">Нет данных о продажах</p>';
             return;
         }
 
-        const period = fpToolsSalesChartPeriod || 30;
+        const period = foxenSalesChartPeriod || 30;
         const cutoff = Date.now() - period * 24 * 60 * 60 * 1000;
-        const orders = fpToolsSalesData.filter(o => o.orderDate >= cutoff && o.orderStatus === 'closed');
+        const orders = foxenSalesData.filter(o => o.orderDate >= cutoff && o.orderStatus === 'closed');
 
         if (!orders.length) {
-            container.innerHTML = '<p style="color:var(--fpt-text-muted);font-size:12px;text-align:center;padding:20px;">Нет продаж за выбранный период</p>';
+            container.innerHTML = '<p style="color:var(--fxn-text-muted);font-size:12px;text-align:center;padding:20px;">Нет продаж за выбранный период</p>';
             return;
         }
 
@@ -62,7 +62,7 @@ function renderSalesChart(containerId) {
 
             bars += `
                 <rect x="${x - barW/2}" y="${y}" width="${barW}" height="${barH}"
-                    fill="var(--fpt-accent)" rx="2" opacity="0.85">
+                    fill="var(--fxn-accent)" rx="2" opacity="0.85">
                     <title>${day}: ${Math.round(revenue)} ₽ (${count} заказ)</title>
                 </rect>
             `;
@@ -77,10 +77,10 @@ function renderSalesChart(containerId) {
                 while (_xLabelParts.length && (tx - _xLabelParts[_xLabelParts.length - 1].x) < MIN_LABEL_GAP) {
                     _xLabelParts.pop();
                 }
-                _xLabelParts.push({ x: tx, svg: `<text x="${tx}" y="${H - 4}" text-anchor="end" font-size="9" fill="var(--fpt-text-muted)">${label}</text>` });
+                _xLabelParts.push({ x: tx, svg: `<text x="${tx}" y="${H - 4}" text-anchor="end" font-size="9" fill="var(--fxn-text-muted)">${label}</text>` });
                 _lastLabelX = tx;
             } else if (x - _lastLabelX >= MIN_LABEL_GAP) {
-                _xLabelParts.push({ x, svg: `<text x="${x}" y="${H - 4}" text-anchor="middle" font-size="9" fill="var(--fpt-text-muted)">${label}</text>` });
+                _xLabelParts.push({ x, svg: `<text x="${x}" y="${H - 4}" text-anchor="middle" font-size="9" fill="var(--fxn-text-muted)">${label}</text>` });
                 _lastLabelX = x;
             }
         });
@@ -92,8 +92,8 @@ function renderSalesChart(containerId) {
             const val = Math.round((maxRevenue / ySteps) * i);
             const y   = PAD.t + chartH - (i / ySteps) * chartH;
             yLabels += `
-                <text x="${PAD.l - 4}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--fpt-text-muted)">${val >= 1000 ? Math.round(val/1000)+'к' : val}</text>
-                <line x1="${PAD.l}" y1="${y}" x2="${W - PAD.r}" y2="${y}" stroke="var(--fpt-border)" stroke-width="1"/>
+                <text x="${PAD.l - 4}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--fxn-text-muted)">${val >= 1000 ? Math.round(val/1000)+'к' : val}</text>
+                <line x1="${PAD.l}" y1="${y}" x2="${W - PAD.r}" y2="${y}" stroke="var(--fxn-border)" stroke-width="1"/>
             `;
         }
 
@@ -104,23 +104,23 @@ function renderSalesChart(containerId) {
 
         container.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
-                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--fpt-text-muted);">
-                    ${((window.fptStatsCfg && window.fptStatsCfg.chartHeading) || 'Продажи')} (последние ${period} дней)
+                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--fxn-text-muted);">
+                    ${((window.fxnStatsCfg && window.fxnStatsCfg.chartHeading) || 'Продажи')} (последние ${period} дней)
                 </span>
-                <span style="font-size:12px;color:var(--fpt-text);font-weight:600;">
+                <span style="font-size:12px;color:var(--fxn-text);font-weight:600;">
                     ${Math.round(totalRevenue).toLocaleString('ru-RU')} ₽ · ${totalCount} заказов
                 </span>
             </div>
             <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">
                 ${yLabels}
-                <line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t + chartH}" stroke="var(--fpt-border)" stroke-width="1"/>
+                <line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t + chartH}" stroke="var(--fxn-border)" stroke-width="1"/>
                 ${bars}
                 ${xLabels}
             </svg>
-            <div style="display:flex;gap:20px;margin-top:10px;font-size:11px;color:var(--fpt-text-muted);">
-                <span>Ср. чек: <strong style="color:var(--fpt-text);">${Math.round(avgRevenue)} ₽</strong></span>
-                <span>Лучший день: <strong style="color:var(--fpt-text);">${Math.round(maxRevenue)} ₽</strong></span>
-                <span>Пик: <strong style="color:var(--fpt-text);">${maxCount} заказов</strong></span>
+            <div style="display:flex;gap:20px;margin-top:10px;font-size:11px;color:var(--fxn-text-muted);">
+                <span>Ср. чек: <strong style="color:var(--fxn-text);">${Math.round(avgRevenue)} ₽</strong></span>
+                <span>Лучший день: <strong style="color:var(--fxn-text);">${Math.round(maxRevenue)} ₽</strong></span>
+                <span>Пик: <strong style="color:var(--fxn-text);">${maxCount} заказов</strong></span>
             </div>
         `;
     })();
@@ -128,13 +128,13 @@ function renderSalesChart(containerId) {
 
 function initSalesChart() {
     // Add chart container to the sales statistics section
-    const salesSection = document.querySelector('.sales-statistics, #fp-tools-sales-block');
+    const salesSection = document.querySelector('.sales-statistics, #foxen-sales-block');
     if (!salesSection || document.getElementById('fp-sales-chart-wrapper')) return;
 
     const wrapper = document.createElement('div');
     wrapper.id = 'fp-sales-chart-wrapper';
     wrapper.style.cssText = `
-        background:var(--fpt-surface);border:1px solid var(--fpt-border);border-radius:8px;
+        background:var(--fxn-surface);border:1px solid var(--fxn-border);border-radius:8px;
         padding:14px;margin-top:12px;
     `;
 
@@ -148,11 +148,11 @@ function initSalesChart() {
         btn.textContent = days === 7 ? '7 дней' : days === 14 ? '2 нед.' : days === 30 ? '30 дней' : '3 мес.';
         btn.addEventListener('click', () => {
             periodBar.querySelectorAll('button').forEach(b => { b.style.background=''; b.style.color=''; });
-            btn.style.background = 'var(--fpt-accent-soft)'; btn.style.color = 'var(--fpt-accent)';
-            chrome.storage.local.set({ fpToolsSalesChartPeriod: days });
+            btn.style.background = 'var(--fxn-accent-soft)'; btn.style.color = 'var(--fxn-accent)';
+            chrome.storage.local.set({ foxenSalesChartPeriod: days });
             renderSalesChart('fp-sales-chart-area');
         });
-        if (days === 30) { btn.style.background = 'var(--fpt-accent-soft)'; btn.style.color = 'var(--fpt-accent)'; }
+        if (days === 30) { btn.style.background = 'var(--fxn-accent-soft)'; btn.style.color = 'var(--fxn-accent)'; }
         periodBar.appendChild(btn);
     });
 

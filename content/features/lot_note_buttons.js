@@ -42,14 +42,14 @@
     function makeBtn(label) {
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'btn btn-default fp-tools-note-btn';
+        b.className = 'btn btn-default foxen-note-btn';
         b.textContent = label;
         return b;
     }
 
     function addToEditPage() {
-        const container = document.querySelector('.fp-tools-lot-edit-actions-container');
-        if (!container || container.querySelector('.fp-tools-note-btn')) return;
+        const container = document.querySelector('.foxen-lot-edit-actions-container');
+        if (!container || container.querySelector('.foxen-note-btn')) return;
         const offerId = offerIdFromEditForm();
         if (!offerId) return; // на создании нового лота (offer_id=0) заметку привязывать не к чему
         const btn = makeBtn('Заметка');
@@ -65,11 +65,11 @@
         const editLink = document.querySelector('a.btn.btn-gray.btn-block[href*="offerEdit?node="][href*="offer="], a.btn.btn-gray[href*="offerEdit"][href*="offer="]');
         if (!editLink) return;
         const host = editLink.parentElement;
-        if (!host || host.parentElement?.querySelector('.fp-tools-note-btn')) return;
+        if (!host || host.parentElement?.querySelector('.foxen-note-btn')) return;
         const offerId = offerIdFromOfferPage();
         if (!offerId) return;
         const btn = makeBtn('📝 Заметка');
-        btn.className = 'btn btn-default btn-block fp-tools-note-btn';
+        btn.className = 'btn btn-default btn-block foxen-note-btn';
         btn.style.marginTop = '8px';
         btn.addEventListener('click', () => {
             if (window.FPTNotes) window.FPTNotes.openEditor(offerId, lotTitleFromOfferPage());

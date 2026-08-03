@@ -1,4 +1,4 @@
-#fpToolsImageGeneratorModal {
+#foxenImageGeneratorModal {
     display: none;
     position: fixed;
     z-index: 10002;
@@ -14,7 +14,7 @@
 }
 @keyframes ig-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
-.fp-tools-ig-container {
+.foxen-ig-container {
     background: #282c34;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -27,7 +27,7 @@
     border: 1px solid #444;
     overflow: hidden;
 }
-.fp-tools-ig-header {
+.foxen-ig-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -35,17 +35,17 @@
     background: #1e2127;
     border-bottom: 1px solid #444;
 }
-.fp-tools-ig-header h3 { margin: 0; font-size: 18px; color: #eee; }
-.fp-tools-ig-close { background: none; border: none; font-size: 28px; color: #888; cursor: pointer; transition: color 0.2s; }
-.fp-tools-ig-close:hover { color: #fff; }
+.foxen-ig-header h3 { margin: 0; font-size: 18px; color: #eee; }
+.foxen-ig-close { background: none; border: none; font-size: 28px; color: #888; cursor: pointer; transition: color 0.2s; }
+.foxen-ig-close:hover { color: #fff; }
 
-.fp-tools-ig-body {
+.foxen-ig-body {
     display: flex;
     flex-grow: 1;
     overflow: hidden;
 }
 
-.fp-tools-ig-preview {
+.foxen-ig-preview {
     flex-grow: 1;
     padding: 20px;
     display: flex;
@@ -53,14 +53,14 @@
     align-items: center;
     background: #21252b;
 }
-#fpToolsImageCanvas {
+#foxenImageCanvas {
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
     border-radius: 8px;
     max-width: 100%;
     max-height: 100%;
 }
 
-.fp-tools-ig-controls {
+.foxen-ig-controls {
     width: 320px;
     flex-shrink: 0;
     background: #1e2127;
@@ -68,11 +68,11 @@
     display: flex;
     flex-direction: column;
 }
-.fp-tools-ig-tabs {
+.foxen-ig-tabs {
     display: flex;
     border-bottom: 1px solid #444;
 }
-.fp-tools-ig-tab {
+.foxen-ig-tab {
     flex-grow: 1;
     padding: 12px;
     background: none;
@@ -83,27 +83,27 @@
     border-bottom: 3px solid transparent;
     font-size: 13px;
 }
-.fp-tools-ig-tab:hover { background: #282c34; color: #fff; }
-.fp-tools-ig-tab.active { color: #E879F9; border-bottom-color: #E879F9; }
-.fp-tools-ig-panels {
+.foxen-ig-tab:hover { background: #282c34; color: #fff; }
+.foxen-ig-tab.active { color: #E879F9; border-bottom-color: #E879F9; }
+.foxen-ig-panels {
     padding: 20px;
     overflow-y: auto;
     flex-grow: 1;
 }
-.fp-tools-ig-panel { display: none; }
-.fp-tools-ig-panel.active { display: block; }
-.fp-tools-ig-panel label { display: block; margin-top: 15px; margin-bottom: 8px; color: #ccc; font-size: 13px; }
-.fp-tools-ig-input { width: 100%; box-sizing: border-box; background: #282c34; border: 1px solid #555; border-radius: 6px; padding: 10px; color: #fff; }
-.fp-tools-ig-inline-controls { display: flex; align-items: center; gap: 10px; }
-.fp-tools-ig-inline-controls input[type="color"] { flex-shrink: 0; width: 40px; height: 40px; padding: 2px; border-radius: 6px; }
-.fp-tools-ig-inline-controls input[type="range"] { flex-grow: 1; }
-.fp-tools-ig-small-text { font-size: 12px; color: #888; margin-top: 8px; }
-.fp-tools-ig-small-text a { color: #E879F9; }
-.fp-tools-ig-theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.fp-tools-ig-theme-item { width: 100%; padding-bottom: 100%; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
-.fp-tools-ig-theme-item:hover { border-color: #E879F9; }
+.foxen-ig-panel { display: none; }
+.foxen-ig-panel.active { display: block; }
+.foxen-ig-panel label { display: block; margin-top: 15px; margin-bottom: 8px; color: #ccc; font-size: 13px; }
+.foxen-ig-input { width: 100%; box-sizing: border-box; background: #282c34; border: 1px solid #555; border-radius: 6px; padding: 10px; color: #fff; }
+.foxen-ig-inline-controls { display: flex; align-items: center; gap: 10px; }
+.foxen-ig-inline-controls input[type="color"] { flex-shrink: 0; width: 40px; height: 40px; padding: 2px; border-radius: 6px; }
+.foxen-ig-inline-controls input[type="range"] { flex-grow: 1; }
+.foxen-ig-small-text { font-size: 12px; color: #888; margin-top: 8px; }
+.foxen-ig-small-text a { color: #E879F9; }
+.foxen-ig-theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.foxen-ig-theme-item { width: 100%; padding-bottom: 100%; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
+.foxen-ig-theme-item:hover { border-color: #E879F9; }
 
-.fp-tools-ig-symbols-panel {
+.foxen-ig-symbols-panel {
     display: none;
     grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
     gap: 8px;
@@ -114,7 +114,7 @@
     max-height: 200px;
     overflow-y: auto;
 }
-.fp-tools-ig-symbol-char {
+.foxen-ig-symbol-char {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -125,18 +125,18 @@
     font-size: 16px;
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
-.fp-tools-ig-symbol-char:hover {
+.foxen-ig-symbol-char:hover {
     background-color: rgba(255, 255, 255, 0.2);
     transform: scale(1.1);
 }
 
-.fp-tools-ig-footer {
+.foxen-ig-footer {
     padding: 15px 25px;
     border-top: 1px solid #444;
     text-align: right;
     background: #1e2127;
 }
-.fp-tools-ig-btn-primary {
+.foxen-ig-btn-primary {
     background: linear-gradient(45deg, #E879F9, #92FE9D);
     color: white;
     border: none;
@@ -146,24 +146,24 @@
     cursor: pointer;
     transition: all 0.3s ease;
 }
-.fp-tools-ig-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(232, 121, 249, 0.3); }
-.fp-tools-ig-panels::-webkit-scrollbar { width: 6px; }
-.fp-tools-ig-panels::-webkit-scrollbar-track { background: #282c34; }
-.fp-tools-ig-panels::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+.foxen-ig-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(232, 121, 249, 0.3); }
+.foxen-ig-panels::-webkit-scrollbar { width: 6px; }
+.foxen-ig-panels::-webkit-scrollbar-track { background: #282c34; }
+.foxen-ig-panels::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
 .generate-btn-container {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 10px;
 }
 
-.fp-tools-ig-ai-generator {
+.foxen-ig-ai-generator {
     margin-top: auto;
     padding: 20px;
     background: rgba(0,0,0,0.2);
     border-top: 1px solid #444;
 }
 
-.fp-tools-ig-ai-header {
+.foxen-ig-ai-header {
     display: flex;
     align-items: center;
     gap: 8px;

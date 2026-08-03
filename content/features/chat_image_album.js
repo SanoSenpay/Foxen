@@ -23,7 +23,7 @@
 (function () {
     'use strict';
 
-    const GROUP_ATTR = 'data-fpt-album-built';
+    const GROUP_ATTR = 'data-fxn-album-built';
 
     // ───────────────────────── определение картинок ─────────────────────────
 
@@ -76,8 +76,8 @@
             // они не участвуют в новой группировке (иначе мозаика пересобиралась бы),
             // но прерывают текущую серию, как обычное сообщение.
             // временные пузыри отправки (оптимистичные) - игнорируем как барьер
-            if (item.classList.contains('fpt-pending-bubble') ||
-                item.classList.contains('fpt-album-merged') ||
+            if (item.classList.contains('fxn-pending-bubble') ||
+                item.classList.contains('fxn-album-merged') ||
                 item.getAttribute(GROUP_ATTR) === '1') {
                 flush();
                 continue;
@@ -126,7 +126,7 @@
 
         const n = photos.length;
         const grid = document.createElement('div');
-        grid.className = 'fpt-album-mosaic';
+        grid.className = 'fxn-album-mosaic';
         grid.setAttribute('data-count', String(n));
         // раскладка: 1 ряд для 2, 2x2 для 3-4, иначе сетка по 3 в ряд
         const cols = n === 2 ? 2 : (n <= 4 ? 2 : 3);
@@ -134,7 +134,7 @@
 
         photos.forEach((p, idx) => {
             const cell = document.createElement('div');
-            cell.className = 'fpt-album-tile';
+            cell.className = 'fxn-album-tile';
             const im = document.createElement('img');
             im.src = p.thumb;
             im.alt = '';
@@ -152,7 +152,7 @@
         // остальные сообщения серии прячем - их картинки теперь в мозаике
         for (let i = 1; i < run.length; i++) {
             run[i].item.setAttribute(GROUP_ATTR, 'merged');
-            run[i].item.classList.add('fpt-album-merged');
+            run[i].item.classList.add('fxn-album-merged');
         }
     }
 
@@ -166,33 +166,33 @@
         lbState = { photos, index, scale: 1, rot: 0, tx: 0, ty: 0, dragging: false, sx: 0, sy: 0 };
 
         lb = document.createElement('div');
-        lb.className = 'fpt-lb-overlay';
+        lb.className = 'fxn-lb-overlay';
         lb.innerHTML = `
-            <div class="fpt-lb-stage">
-                <img class="fpt-lb-img" alt="" draggable="false">
+            <div class="fxn-lb-stage">
+                <img class="fxn-lb-img" alt="" draggable="false">
             </div>
-            <button class="fpt-lb-btn fpt-lb-close" title="Закрыть (Esc)"><span class="material-symbols-rounded">close</span></button>
-            <button class="fpt-lb-btn fpt-lb-prev" title="Назад (←)"><span class="material-symbols-rounded">chevron_left</span></button>
-            <button class="fpt-lb-btn fpt-lb-next" title="Вперёд (→)"><span class="material-symbols-rounded">chevron_right</span></button>
-            <div class="fpt-lb-toolbar">
-                <button class="fpt-lb-btn" data-act="zoomout" title="Уменьшить (−)"><span class="material-symbols-rounded">remove</span></button>
-                <span class="fpt-lb-counter"></span>
-                <button class="fpt-lb-btn" data-act="zoomin" title="Увеличить (+)"><span class="material-symbols-rounded">add</span></button>
-                <button class="fpt-lb-btn" data-act="rotate" title="Повернуть (R)"><span class="material-symbols-rounded">rotate_right</span></button>
-                <button class="fpt-lb-btn" data-act="reset" title="Сброс (0)"><span class="material-symbols-rounded">crop_free</span></button>
+            <button class="fxn-lb-btn fxn-lb-close" title="Закрыть (Esc)"><span class="material-symbols-rounded">close</span></button>
+            <button class="fxn-lb-btn fxn-lb-prev" title="Назад (←)"><span class="material-symbols-rounded">chevron_left</span></button>
+            <button class="fxn-lb-btn fxn-lb-next" title="Вперёд (→)"><span class="material-symbols-rounded">chevron_right</span></button>
+            <div class="fxn-lb-toolbar">
+                <button class="fxn-lb-btn" data-act="zoomout" title="Уменьшить (−)"><span class="material-symbols-rounded">remove</span></button>
+                <span class="fxn-lb-counter"></span>
+                <button class="fxn-lb-btn" data-act="zoomin" title="Увеличить (+)"><span class="material-symbols-rounded">add</span></button>
+                <button class="fxn-lb-btn" data-act="rotate" title="Повернуть (R)"><span class="material-symbols-rounded">rotate_right</span></button>
+                <button class="fxn-lb-btn" data-act="reset" title="Сброс (0)"><span class="material-symbols-rounded">crop_free</span></button>
             </div>`;
         document.body.appendChild(lb);
 
-        const stage = lb.querySelector('.fpt-lb-stage');
-        const img = lb.querySelector('.fpt-lb-img');
+        const stage = lb.querySelector('.fxn-lb-stage');
+        const img = lb.querySelector('.fxn-lb-img');
 
         // навигация
-        lb.querySelector('.fpt-lb-prev').addEventListener('click', (e) => { e.stopPropagation(); go(-1); });
-        lb.querySelector('.fpt-lb-next').addEventListener('click', (e) => { e.stopPropagation(); go(1); });
-        lb.querySelector('.fpt-lb-close').addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
+        lb.querySelector('.fxn-lb-prev').addEventListener('click', (e) => { e.stopPropagation(); go(-1); });
+        lb.querySelector('.fxn-lb-next').addEventListener('click', (e) => { e.stopPropagation(); go(1); });
+        lb.querySelector('.fxn-lb-close').addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
 
         // тулбар
-        lb.querySelector('.fpt-lb-toolbar').addEventListener('click', (e) => {
+        lb.querySelector('.fxn-lb-toolbar').addEventListener('click', (e) => {
             const b = e.target.closest('[data-act]'); if (!b) return;
             e.stopPropagation();
             const act = b.getAttribute('data-act');
@@ -253,7 +253,7 @@
     function onDragEnd() {
         if (!lbState) return;
         lbState.dragging = false;
-        const img = lb && lb.querySelector('.fpt-lb-img');
+        const img = lb && lb.querySelector('.fxn-lb-img');
         if (img) img.classList.remove('grabbing');
     }
 
@@ -281,18 +281,18 @@
     function render() {
         if (!lb || !lbState) return;
         const p = lbState.photos[lbState.index];
-        const img = lb.querySelector('.fpt-lb-img');
+        const img = lb.querySelector('.fxn-lb-img');
         img.src = p.full || p.thumb;
-        lb.querySelector('.fpt-lb-counter').textContent = `${lbState.index + 1} / ${lbState.photos.length}`;
+        lb.querySelector('.fxn-lb-counter').textContent = `${lbState.index + 1} / ${lbState.photos.length}`;
         const multi = lbState.photos.length > 1;
-        lb.querySelector('.fpt-lb-prev').style.display = multi ? '' : 'none';
-        lb.querySelector('.fpt-lb-next').style.display = multi ? '' : 'none';
+        lb.querySelector('.fxn-lb-prev').style.display = multi ? '' : 'none';
+        lb.querySelector('.fxn-lb-next').style.display = multi ? '' : 'none';
         applyTransform();
     }
 
     function applyTransform() {
         if (!lb) return;
-        const img = lb.querySelector('.fpt-lb-img');
+        const img = lb.querySelector('.fxn-lb-img');
         img.style.transform =
             `translate(${lbState.tx}px, ${lbState.ty}px) scale(${lbState.scale}) rotate(${lbState.rot}deg)`;
         img.classList.toggle('zoomed', lbState.scale > 1);
@@ -307,7 +307,7 @@
     function zoomAtPoint(targetScale, cx, cy) {
         if (!lbState || !lb) return;
         const next = Math.max(1, Math.min(targetScale, 8));
-        const img = lb.querySelector('.fpt-lb-img');
+        const img = lb.querySelector('.fxn-lb-img');
         const rect = img.getBoundingClientRect();
         const ox = cx - (rect.left + rect.width / 2);
         const oy = cy - (rect.top + rect.height / 2);
@@ -342,16 +342,16 @@
     // просмотрщиком FunPay - без зума, мелкие. Теперь любая одиночная картинка
     // тоже открывается в нашем лайтбоксе (зум/поворот/панорама), как в альбомах.
     function bindSingleImages(container) {
-        const links = container.querySelectorAll('a.chat-img-link:not([data-fpt-single-bound])');
+        const links = container.querySelectorAll('a.chat-img-link:not([data-fxn-single-bound])');
         links.forEach(link => {
             // пропускаем картинки, попавшие в альбом-мозаику (там свой обработчик)
             const item = link.closest('.chat-msg-item');
-            if (item && (item.getAttribute(GROUP_ATTR) === '1' || item.classList.contains('fpt-album-merged'))) {
+            if (item && (item.getAttribute(GROUP_ATTR) === '1' || item.classList.contains('fxn-album-merged'))) {
                 return;
             }
-            if (link.closest('.fpt-album-mosaic')) return;
+            if (link.closest('.fxn-album-mosaic')) return;
 
-            link.setAttribute('data-fpt-single-bound', '1');
+            link.setAttribute('data-fxn-single-bound', '1');
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();

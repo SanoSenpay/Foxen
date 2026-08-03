@@ -1,6 +1,6 @@
 // content/ui/settings_loader.js
 
-let fpToolsAccounts = [];
+let foxenAccounts = [];
 let aiModeActive = false;
 
 async function renderTemplateSettings() {
@@ -25,7 +25,7 @@ async function renderTemplateSettings() {
             </div>
             <div class="textarea-with-controls">
                 <textarea class="template-input template-text" data-key="${key}" data-custom="${isCustom}" placeholder="Текст шаблона...">${config.text}</textarea>
-                <button class="btn add-image-btn fpt-img-btn" title="Добавить изображение"><span class="material-symbols-rounded">image</span></button>
+                <button class="btn add-image-btn fxn-img-btn" title="Добавить изображение"><span class="material-symbols-rounded">image</span></button>
             </div>
         `;
         // === КОНЕЦ ИЗМЕНЕНИЯ ===
@@ -35,14 +35,14 @@ async function renderTemplateSettings() {
         const ta = item.querySelector('textarea.template-text');
         if (ta) {
             // restore send order BEFORE rendering chips so the mini-preview is correct
-            if (typeof fptSetSendOrder === 'function') {
-                fptSetSendOrder(ta, config.sendOrder === 'image_first' ? 'image_first' : 'text_first');
+            if (typeof fxnSetSendOrder === 'function') {
+                fxnSetSendOrder(ta, config.sendOrder === 'image_first' ? 'image_first' : 'text_first');
             }
             if (Array.isArray(config.images) && config.images.length) {
                 const arr = config.images.map(d => ({ id: Math.random().toString(36).slice(2, 8), dataUrl: d }));
                 __fptAttachments.set(ta, arr);
-                ta.dataset.fptImages = JSON.stringify(config.images);
-                if (typeof fptRenderAttachments === 'function') fptRenderAttachments(ta);
+                ta.dataset.fxnImages = JSON.stringify(config.images);
+                if (typeof fxnRenderAttachments === 'function') fxnRenderAttachments(ta);
             }
         }
     };
@@ -61,20 +61,20 @@ async function setupTemplateSettingsHandlers() {
     await renderTemplateSettings();
 
     const container = document.getElementById('template-settings-container');
-    const templatesPage = document.querySelector('.fp-tools-page-content[data-page="templates"]');
+    const templatesPage = document.querySelector('.foxen-page-content[data-page="templates"]');
     if (!container || !templatesPage) return;
     
     const posRadio = templatesPage.querySelector(`input[name="templatePos"][value="${templateSettings.buttonPosition}"]`);
     if(posRadio) posRadio.checked = true;
 
     // Popover hint visible only when the «popover» layout is selected.
-    const popoverHint = document.getElementById('fpt-popover-hint');
+    const popoverHint = document.getElementById('fxn-popover-hint');
     const isSidebarPos = () => templateSettings.buttonPosition === 'sidebar_top' || templateSettings.buttonPosition === 'sidebar_bottom';
     const syncPopoverHint = () => {
         if (popoverHint) popoverHint.style.display = (templateSettings.buttonPosition === 'popover') ? 'block' : 'none';
     };
     // Sidebar-only settings block appears (not just dims) when a sidebar position is chosen.
-    const sidebarExtra = document.getElementById('fpt-sidebar-extra');
+    const sidebarExtra = document.getElementById('fxn-sidebar-extra');
     const syncSidebarExtra = () => {
         if (sidebarExtra) sidebarExtra.style.display = isSidebarPos() ? '' : 'none';
     };
@@ -83,7 +83,7 @@ async function setupTemplateSettingsHandlers() {
 
     // Master enable toggle - hides the whole config block when off.
     const enabledChk = document.getElementById('templatesEnabled');
-    const configBlock = document.getElementById('fpt-templates-config');
+    const configBlock = document.getElementById('fxn-templates-config');
     const syncEnabled = () => {
         if (configBlock) configBlock.style.display = (templateSettings.enabled === false) ? 'none' : '';
     };
@@ -126,12 +126,12 @@ async function setupTemplateSettingsHandlers() {
             if (target.classList.contains('template-label')) template.label = target.textContent;
             if (target.classList.contains('template-text')) {
                 template.text = target.value;
-                if (target.dataset.fptImages) { try { template.images = JSON.parse(target.dataset.fptImages); } catch(_){} }
+                if (target.dataset.fxnImages) { try { template.images = JSON.parse(target.dataset.fxnImages); } catch(_){} }
             }
             // send order travels on the textarea dataset (set by the chip picker)
             const ta = target.classList.contains('template-text') ? target
                      : target.closest('.template-item')?.querySelector('textarea.template-text');
-            if (ta && ta.dataset.fptSendOrder) template.sendOrder = ta.dataset.fptSendOrder;
+            if (ta && ta.dataset.fxnSendOrder) template.sendOrder = ta.dataset.fxnSendOrder;
         } else {
             const template = templateSettings.standard[key];
             if (!template) return;
@@ -140,11 +140,11 @@ async function setupTemplateSettingsHandlers() {
             if (target.classList.contains('template-label')) template.label = target.textContent;
             if (target.classList.contains('template-text')) {
                 template.text = target.value;
-                if (target.dataset.fptImages) { try { template.images = JSON.parse(target.dataset.fptImages); } catch(_){} }
+                if (target.dataset.fxnImages) { try { template.images = JSON.parse(target.dataset.fxnImages); } catch(_){} }
             }
             const ta = target.classList.contains('template-text') ? target
                      : target.closest('.template-item')?.querySelector('textarea.template-text');
-            if (ta && ta.dataset.fptSendOrder) template.sendOrder = ta.dataset.fptSendOrder;
+            if (ta && ta.dataset.fxnSendOrder) template.sendOrder = ta.dataset.fxnSendOrder;
         }
 
         if (target.classList.contains('template-toggle')) {
@@ -159,11 +159,11 @@ async function setupTemplateSettingsHandlers() {
     };
 
     // Guard against attaching listeners twice (this function is called repeatedly).
-    if (!container.dataset.fptHandlersAttached) {
-        container.dataset.fptHandlersAttached = '1';
+    if (!container.dataset.fxnHandlersAttached) {
+        container.dataset.fxnHandlersAttached = '1';
         container.addEventListener('input', handleInput);
         container.addEventListener('change', handleInput);
-        container.addEventListener('fpt-attachment-changed', handleInput);
+        container.addEventListener('fxn-attachment-changed', handleInput);
         container.addEventListener('focusout', (e) => {
             if (e.target.classList.contains('template-label')) handleInput(e);
         });
@@ -216,47 +216,47 @@ async function setupTemplateSettingsHandlers() {
     };
 
     // ── Button appearance ─────────────────────────────────────────────────────
-    const appx = templatesPage.querySelector('.fpt-appx');
+    const appx = templatesPage.querySelector('.fxn-appx');
     const dispRef = () => (templateSettings.display = templateSettings.display || { ...DEFAULT_TEMPLATE_DISPLAY });
 
     const writePreviewAttrs = () => {
-        const preview = document.getElementById('fpt-appearance-preview');
+        const preview = document.getElementById('fxn-appearance-preview');
         if (!preview) return;
         const disp = dispRef();
-        preview.setAttribute('data-fpt-shape', disp.shape);
-        preview.setAttribute('data-fpt-size', disp.size);
-        preview.setAttribute('data-fpt-fill', disp.fill);
-        preview.setAttribute('data-fpt-align', disp.align);
-        preview.setAttribute('data-fpt-fullwidth', disp.fullWidth ? '1' : '0');
-        preview.setAttribute('data-fpt-uppercase', disp.uppercase ? '1' : '0');
-        preview.setAttribute('data-fpt-compact', disp.compact ? '1' : '0');
+        preview.setAttribute('data-fxn-shape', disp.shape);
+        preview.setAttribute('data-fxn-size', disp.size);
+        preview.setAttribute('data-fxn-fill', disp.fill);
+        preview.setAttribute('data-fxn-align', disp.align);
+        preview.setAttribute('data-fxn-fullwidth', disp.fullWidth ? '1' : '0');
+        preview.setAttribute('data-fxn-uppercase', disp.uppercase ? '1' : '0');
+        preview.setAttribute('data-fxn-compact', disp.compact ? '1' : '0');
     };
 
     const syncAppxUI = () => {
         if (!appx) return;
         const disp = dispRef();
-        appx.querySelectorAll('.fpt-seg').forEach(seg => {
-            const opt = seg.dataset.fptOpt;
+        appx.querySelectorAll('.fxn-seg').forEach(seg => {
+            const opt = seg.dataset.fxnOpt;
             seg.querySelectorAll('button').forEach(b =>
                 b.classList.toggle('active', b.dataset.val === String(disp[opt])));
         });
-        appx.querySelectorAll('.fpt-chip-toggle').forEach(chip =>
-            chip.classList.toggle('active', !!disp[chip.dataset.fptToggle]));
+        appx.querySelectorAll('.fxn-chip-toggle').forEach(chip =>
+            chip.classList.toggle('active', !!disp[chip.dataset.fxnToggle]));
         // Alignment only matters when buttons span the full width - otherwise they're
         // content-sized and alignment is invisible. Hide the control unless fullWidth.
-        const alignBlock = document.getElementById('fpt-align-block');
-        if (alignBlock) alignBlock.classList.toggle('fpt-disabled', !disp.fullWidth);
+        const alignBlock = document.getElementById('fxn-align-block');
+        if (alignBlock) alignBlock.classList.toggle('fxn-disabled', !disp.fullWidth);
         writePreviewAttrs();
     };
 
-    if (appx && !appx.dataset.fptBound) {
-        appx.dataset.fptBound = '1';
+    if (appx && !appx.dataset.fxnBound) {
+        appx.dataset.fxnBound = '1';
         const persist = async () => {
             await saveTemplateSettings();
             await addChatTemplateButtons();
         };
-        appx.querySelectorAll('.fpt-seg').forEach(seg => {
-            const opt = seg.dataset.fptOpt;
+        appx.querySelectorAll('.fxn-seg').forEach(seg => {
+            const opt = seg.dataset.fxnOpt;
             seg.addEventListener('click', async (e) => {
                 const btn = e.target.closest('button[data-val]');
                 if (!btn) return;
@@ -265,9 +265,9 @@ async function setupTemplateSettingsHandlers() {
                 await persist();
             });
         });
-        appx.querySelectorAll('.fpt-chip-toggle').forEach(chip => {
+        appx.querySelectorAll('.fxn-chip-toggle').forEach(chip => {
             chip.addEventListener('click', async () => {
-                const key = chip.dataset.fptToggle;
+                const key = chip.dataset.fxnToggle;
                 dispRef()[key] = !dispRef()[key];
                 syncAppxUI();
                 await persist();
@@ -280,28 +280,28 @@ async function setupTemplateSettingsHandlers() {
 
 async function loadSavedSettings() {
     const settings = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
-        'fpToolsTemplateSettings', 'enableCustomTheme', 'fpToolsTheme', 'aiModeActive',
-        'autoBumpEnabled', 'autoBumpCooldown', 'fpToolsSmartBumpEnabled', 'fpToolsCursorFx', 'fpToolsCustomCursor',
-        'fpToolsPopupPosition', 'fpToolsPopupSize', 'enableRedesignedHomepage', 'fpToolsPopupDragged',
-        'fpToolsAccounts', 'showSalesStats', 'showFinanceStats', 'hideBalance', 'viewSellersPromo', 'notificationSound', 'notificationVolume',
-        'fpToolsDiscord',
-        'fpToolsSelectiveBumpEnabled', 'fpToolsSelectedBumpCategories', 'fpToolsBumpOnlyAutoDelivery',
+        'foxenTemplateSettings', 'enableCustomTheme', 'foxenTheme', 'aiModeActive',
+        'autoBumpEnabled', 'autoBumpCooldown', 'foxenSmartBumpEnabled', 'foxenCursorFx', 'foxenCustomCursor',
+        'foxenPopupPosition', 'foxenPopupSize', 'enableRedesignedHomepage', 'foxenPopupDragged',
+        'foxenAccounts', 'showSalesStats', 'showFinanceStats', 'hideBalance', 'viewSellersPromo', 'notificationSound', 'notificationVolume',
+        'foxenDiscord',
+        'foxenSelectiveBumpEnabled', 'foxenSelectedBumpCategories', 'foxenBumpOnlyAutoDelivery',
         'autoReviewEnabled', 'reviewTemplates', 'greetingEnabled', 'greetingText', 'keywordsEnabled', 'keywords',
-        'fpToolsIdentifierEnabled',
-        'fpToolsBuyerHistory',
-        'fpToolsShowUnconfirmed',
-        'fpToolsAutoRestoreEnabled',
-        'fpToolsAutoDisableEnabled',
-        'fpToolsReviewRequestTemplate'
+        'foxenIdentifierEnabled',
+        'foxenBuyerHistory',
+        'foxenShowUnconfirmed',
+        'foxenAutoRestoreEnabled',
+        'foxenAutoDisableEnabled',
+        'foxenReviewRequestTemplate'
     ]);
     
-    fpToolsAccounts = settings.fpToolsAccounts || [];
+    foxenAccounts = settings.foxenAccounts || [];
     renderAccountsList();
 
     const logoutLink = document.querySelector('.menu-item-logout');
-    if(logoutLink && !document.querySelector('.fp-tools-logout-clean')) {
+    if(logoutLink && !document.querySelector('.foxen-logout-clean')) {
         const cleanLogoutItem = document.createElement('li');
-        cleanLogoutItem.innerHTML = `<a href="#" class="fp-tools-logout-clean" style="color: #ff6b6b !important;">Выйти (очистить куки)</a>`;
+        cleanLogoutItem.innerHTML = `<a href="#" class="foxen-logout-clean" style="color: #ff6b6b !important;">Выйти (очистить куки)</a>`;
         logoutLink.parentElement.insertAdjacentElement('afterend', cleanLogoutItem);
         cleanLogoutItem.querySelector('a').addEventListener('click', (e) => {
             e.preventDefault();
@@ -313,18 +313,18 @@ async function loadSavedSettings() {
         initializePiggyBank();
     }
     
-    const toolsPopup = document.querySelector('.fp-tools-popup');
-    if (settings.fpToolsPopupDragged && settings.fpToolsPopupPosition) {
-        toolsPopup.style.setProperty('left', settings.fpToolsPopupPosition.left, 'important');
-        toolsPopup.style.setProperty('top', settings.fpToolsPopupPosition.top, 'important');
+    const toolsPopup = document.querySelector('.foxen-popup');
+    if (settings.foxenPopupDragged && settings.foxenPopupPosition) {
+        toolsPopup.style.setProperty('left', settings.foxenPopupPosition.left, 'important');
+        toolsPopup.style.setProperty('top', settings.foxenPopupPosition.top, 'important');
         toolsPopup.classList.add('no-transform');
     }
-    if (settings.fpToolsPopupSize) {
-        toolsPopup.style.width = settings.fpToolsPopupSize.width;
-        toolsPopup.style.height = settings.fpToolsPopupSize.height;
+    if (settings.foxenPopupSize) {
+        toolsPopup.style.width = settings.foxenPopupSize.width;
+        toolsPopup.style.height = settings.foxenPopupSize.height;
     }
 
-    const discordSettings = settings.fpToolsDiscord || { enabled: false, webhookUrl: '', pingEveryone: false, pingHere: false };
+    const discordSettings = settings.foxenDiscord || { enabled: false, webhookUrl: '', pingEveryone: false, pingHere: false };
     const discordLogEnabledEl = document.getElementById('discordLogEnabled');
     const discordWebhookUrlEl = document.getElementById('discordWebhookUrl');
     const discordPingEveryoneEl = document.getElementById('discordPingEveryone');
@@ -372,22 +372,22 @@ async function loadSavedSettings() {
 
     document.getElementById('autoBumpEnabled').checked = settings.autoBumpEnabled === true;
     document.getElementById('autoBumpCooldown').value = settings.autoBumpCooldown || 245;
-    document.getElementById('selectiveBumpEnabled').checked = settings.fpToolsSelectiveBumpEnabled === true;
-    document.getElementById('bumpOnlyAutoDelivery').checked = settings.fpToolsBumpOnlyAutoDelivery === true;
-    { const sb = document.getElementById('fpToolsSmartBumpEnabled'); if (sb) sb.checked = settings.fpToolsSmartBumpEnabled === true; }
+    document.getElementById('selectiveBumpEnabled').checked = settings.foxenSelectiveBumpEnabled === true;
+    document.getElementById('bumpOnlyAutoDelivery').checked = settings.foxenBumpOnlyAutoDelivery === true;
+    { const sb = document.getElementById('foxenSmartBumpEnabled'); if (sb) sb.checked = settings.foxenSmartBumpEnabled === true; }
 
     document.getElementById('enableRedesignedHomepage').checked = settings.enableRedesignedHomepage !== false;
 
     const enableCustomProfileCheckboxEl = document.getElementById('enableCustomProfileCheckbox');
     if (enableCustomProfileCheckboxEl) {
-        const dfData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
-        const disabled = Array.isArray(dfData.fpToolsDisabledFeatures) ? dfData.fpToolsDisabledFeatures : [];
+        const dfData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDisabledFeatures');
+        const disabled = Array.isArray(dfData.foxenDisabledFeatures) ? dfData.foxenDisabledFeatures : [];
         enableCustomProfileCheckboxEl.checked = !disabled.includes('profile_descriptions');
 
         enableCustomProfileCheckboxEl.addEventListener('change', async (e) => {
             const checked = e.target.checked;
-            const currentData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
-            let currentDisabled = Array.isArray(currentData.fpToolsDisabledFeatures) ? currentData.fpToolsDisabledFeatures : [];
+            const currentData = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDisabledFeatures');
+            let currentDisabled = Array.isArray(currentData.foxenDisabledFeatures) ? currentData.foxenDisabledFeatures : [];
             if (checked) {
                 currentDisabled = currentDisabled.filter(id => id !== 'profile_descriptions');
             } else {
@@ -395,21 +395,21 @@ async function loadSavedSettings() {
                     currentDisabled.push('profile_descriptions');
                 }
             }
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsDisabledFeatures: currentDisabled });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenDisabledFeatures: currentDisabled });
         });
 
         const storageApi = (typeof browser !== 'undefined' && browser.storage) ? browser.storage : (typeof chrome !== 'undefined' && chrome.storage ? chrome.storage : null);
         if (storageApi && storageApi.onChanged) {
             storageApi.onChanged.addListener((changes, area) => {
-                if (area !== 'local' || !changes.fpToolsDisabledFeatures) return;
-                const newDisabled = Array.isArray(changes.fpToolsDisabledFeatures.newValue)
-                    ? changes.fpToolsDisabledFeatures.newValue : [];
+                if (area !== 'local' || !changes.foxenDisabledFeatures) return;
+                const newDisabled = Array.isArray(changes.foxenDisabledFeatures.newValue)
+                    ? changes.foxenDisabledFeatures.newValue : [];
                 enableCustomProfileCheckboxEl.checked = !newDisabled.includes('profile_descriptions');
             });
         }
     }
 
-    const cursorFxSettings = settings.fpToolsCursorFx || {};
+    const cursorFxSettings = settings.foxenCursorFx || {};
     const cursorFxDefaults = { enabled: false, type: 'sparkle', color1: '#FF6B6B', color2: '#C026D3', rgb: false, count: 50 };
     const finalCursorFxSettings = { ...cursorFxDefaults, ...cursorFxSettings };
 
@@ -422,7 +422,7 @@ async function loadSavedSettings() {
     document.getElementById('cursorFxCountValue').textContent = `${finalCursorFxSettings.count}%`;
     cursorFx.updateConfig(finalCursorFxSettings);
     
-    const customCursorSettings = settings.fpToolsCustomCursor || {};
+    const customCursorSettings = settings.foxenCustomCursor || {};
     const customCursorDefaults = { enabled: false, image: null, size: 32, opacity: 100, hideSystem: true };
     const finalCustomCursorSettings = { ...customCursorDefaults, ...customCursorSettings };
 
@@ -453,13 +453,13 @@ async function loadSavedSettings() {
     document.getElementById('viewSellersPromoCheckbox').checked = settings.viewSellersPromo !== false;
 
     // 2.8: FPT identifier toggle (default: enabled)
-    const identifierEl = document.getElementById('fptIdentifierEnabled');
+    const identifierEl = document.getElementById('fxnIdentifierEnabled');
     if (identifierEl) {
-        identifierEl.checked = settings.fpToolsIdentifierEnabled !== false;
+        identifierEl.checked = settings.foxenIdentifierEnabled !== false;
     }
 
     // Telemetry & Error Tracker settings restore & event handlers
-    const telemetryEnabledEl = document.getElementById('fptTelemetryEnabled');
+    const telemetryEnabledEl = document.getElementById('fxnTelemetryEnabled');
     if (telemetryEnabledEl) {
         telemetryEnabledEl.checked = settings.fpt_telemetry_enabled !== false;
         telemetryEnabledEl.addEventListener('change', () => {
@@ -469,24 +469,24 @@ async function loadSavedSettings() {
 
     // 2.9: New settings toggles
 
-    const buyerHistoryEl = document.getElementById('fpToolsBuyerHistory');
-    if (buyerHistoryEl) buyerHistoryEl.checked = settings.fpToolsBuyerHistory !== false;
+    const buyerHistoryEl = document.getElementById('foxenBuyerHistory');
+    if (buyerHistoryEl) buyerHistoryEl.checked = settings.foxenBuyerHistory !== false;
 
-    const unconfirmedEl = document.getElementById('fpToolsShowUnconfirmed');
-    if (unconfirmedEl) unconfirmedEl.checked = settings.fpToolsShowUnconfirmed !== false;
+    const unconfirmedEl = document.getElementById('foxenShowUnconfirmed');
+    if (unconfirmedEl) unconfirmedEl.checked = settings.foxenShowUnconfirmed !== false;
 
     // 3.0: Auto-restore/disable
     const autoRestoreEl = document.getElementById('fpAutoRestoreEnabled');
-    if (autoRestoreEl) autoRestoreEl.checked = settings.fpToolsAutoRestoreEnabled === true;
+    if (autoRestoreEl) autoRestoreEl.checked = settings.foxenAutoRestoreEnabled === true;
 
     const autoDisableEl = document.getElementById('fpAutoDisableEnabled');
-    if (autoDisableEl) autoDisableEl.checked = settings.fpToolsAutoDisableEnabled === true;
+    if (autoDisableEl) autoDisableEl.checked = settings.foxenAutoDisableEnabled === true;
 
     const reviewTplEl = document.getElementById('reviewRequestTemplate');
-    if (reviewTplEl) reviewTplEl.value = settings.fpToolsReviewRequestTemplate || '';
+    if (reviewTplEl) reviewTplEl.value = settings.foxenReviewRequestTemplate || '';
 
     // 3.0: Extended autoresponder
-    chrome.storage.local.get('fpToolsAutoReplies', ({ fpToolsAutoReplies: ar = {} }) => {
+    chrome.storage.local.get('foxenAutoReplies', ({ foxenAutoReplies: ar = {} }) => {
         const setCheck = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
         const setVal   = (id, val) => { const el = document.getElementById(id); if (el) el.value  = val || ''; };
         setCheck('newOrderReplyEnabled',     ar.newOrderReplyEnabled);
@@ -502,29 +502,29 @@ async function loadSavedSettings() {
         const restoreImgs = (id, arr, order) => {
             const el = document.getElementById(id);
             if (!el) return;
-            if (order && typeof fptSetSendOrder === 'function') fptSetSendOrder(el, order);
+            if (order && typeof fxnSetSendOrder === 'function') fxnSetSendOrder(el, order);
             if (!Array.isArray(arr) || !arr.length) return;
             const list = arr.map(d => ({ id: Math.random().toString(36).slice(2, 8), dataUrl: d }));
             if (typeof __fptAttachments !== 'undefined') __fptAttachments.set(el, list);
-            el.dataset.fptImages = JSON.stringify(arr);
-            if (typeof fptRenderAttachments === 'function') fptRenderAttachments(el);
+            el.dataset.fxnImages = JSON.stringify(arr);
+            if (typeof fxnRenderAttachments === 'function') fxnRenderAttachments(el);
         };
         restoreImgs('greetingText', ar.greetingImages, ar.greetingSendOrder);
         restoreImgs('newOrderReplyText', ar.newOrderReplyImages, ar.newOrderReplySendOrder);
         restoreImgs('orderConfirmReplyText', ar.orderConfirmReplyImages, ar.orderConfirmReplySendOrder);
         if (ar.reviewTemplateImages) {
-            restoreImgs('fpt-review-5', ar.reviewTemplateImages['5']);
-            restoreImgs('fpt-review-4', ar.reviewTemplateImages['4']);
-            restoreImgs('fpt-review-3', ar.reviewTemplateImages['3']);
-            restoreImgs('fpt-review-2', ar.reviewTemplateImages['2']);
-            restoreImgs('fpt-review-1', ar.reviewTemplateImages['1']);
+            restoreImgs('fxn-review-5', ar.reviewTemplateImages['5']);
+            restoreImgs('fxn-review-4', ar.reviewTemplateImages['4']);
+            restoreImgs('fxn-review-3', ar.reviewTemplateImages['3']);
+            restoreImgs('fxn-review-2', ar.reviewTemplateImages['2']);
+            restoreImgs('fxn-review-1', ar.reviewTemplateImages['1']);
         }
     });
 
     // Review request template
     const rrTemplateEl = document.getElementById('fp-review-request-template');
-    if (rrTemplateEl && settings.fpToolsAutoReplies?.reviewRequestTemplate !== undefined) {
-        rrTemplateEl.value = settings.fpToolsAutoReplies.reviewRequestTemplate;
+    if (rrTemplateEl && settings.foxenAutoReplies?.reviewRequestTemplate !== undefined) {
+        rrTemplateEl.value = settings.foxenAutoReplies.reviewRequestTemplate;
     }
 
     const savedSound = settings.notificationSound || 'default';
@@ -540,16 +540,16 @@ async function loadSavedSettings() {
         const vol = (typeof settings.notificationVolume === 'number') ? settings.notificationVolume : 1;
         volSlider.value = Math.round(vol * 100);
         if (volValue) volValue.textContent = `${Math.round(vol * 100)}%`;
-        if (!volSlider.dataset.fptBound) {
-            volSlider.dataset.fptBound = '1';
+        if (!volSlider.dataset.fxnBound) {
+            volSlider.dataset.fxnBound = '1';
             volSlider.addEventListener('input', () => {
                 if (volValue) volValue.textContent = `${volSlider.value}%`;
             });
         }
     }
     const previewBtn = document.getElementById('previewNotificationBtn');
-    if (previewBtn && !previewBtn.dataset.fptBound) {
-        previewBtn.dataset.fptBound = '1';
+    if (previewBtn && !previewBtn.dataset.fxnBound) {
+        previewBtn.dataset.fxnBound = '1';
         previewBtn.addEventListener('click', (e) => {
             e.preventDefault();
             const sel = document.querySelector('input[name="notificationSound"]:checked');

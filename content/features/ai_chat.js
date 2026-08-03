@@ -147,7 +147,7 @@ function setupAIChatFeature() {
             aiButton.title = aiModeActive ? 'AI Режим АКТИВЕН (Enter для генерации/отправки)' : 'AI Режим (Enter для генерации/отправки)';
             if (aiModeActive) {
                 showNotification('AI режим активирован.');
-                const warningDiv = document.getElementById('fpToolsProfanityWarning');
+                const warningDiv = document.getElementById('foxenProfanityWarning');
                 if(warningDiv) warningDiv.style.display = 'none';
             }
             else {
@@ -182,7 +182,7 @@ function setupAIChatFeature() {
             }
         });
 
-        let profanityWarning = document.getElementById('fpToolsProfanityWarning');
+        let profanityWarning = document.getElementById('foxenProfanityWarning');
         if (!profanityWarning) {
             let buttonsContainer = document.querySelector('.chat-buttons-container');
             if(!buttonsContainer) {
@@ -190,7 +190,7 @@ function setupAIChatFeature() {
                  buttonsContainer.className = 'chat-buttons-container';
                  chatTextarea.parentElement.insertBefore(buttonsContainer, chatTextarea);
             }
-            profanityWarning = createElement('div', { id: 'fpToolsProfanityWarning' });
+            profanityWarning = createElement('div', { id: 'foxenProfanityWarning' });
             profanityWarning.textContent = "Обнаружена грубость! Хотите это исправить с помощью AI? Нажмите сюда, чтобы включить AI-режим.";
             chatTextarea.parentElement.insertBefore(profanityWarning, buttonsContainer);
             setupProfanityChecker(chatTextarea, profanityWarning);

@@ -90,31 +90,31 @@
 
         modal = document.createElement('div');
         modal.id = 'fp-export-log-modal';
-        modal.className = 'fpt-modal-overlay';
+        modal.className = 'fxn-modal-overlay';
         modal.innerHTML = `
-            <div class="fpt-modal-card">
-                <div class="fpt-modal-header">
-                    <div class="fpt-modal-title">
-                        <span class="fpt-modal-icon">📦</span>
+            <div class="fxn-modal-card">
+                <div class="fxn-modal-header">
+                    <div class="fxn-modal-title">
+                        <span class="fxn-modal-icon">📦</span>
                         <span>Экспорт лотов в JSON</span>
                     </div>
-                    <button type="button" class="fpt-modal-close" id="fp-export-log-close">✕</button>
+                    <button type="button" class="fxn-modal-close" id="fp-export-log-close">✕</button>
                 </div>
-                <div class="fpt-modal-body">
-                    <div class="fpt-progress-container">
-                        <div class="fpt-progress-info">
+                <div class="fxn-modal-body">
+                    <div class="fxn-progress-container">
+                        <div class="fxn-progress-info">
                             <span id="fp-export-status-text">Инициализация...</span>
                             <span id="fp-export-counter-text">0 / 0</span>
                         </div>
-                        <div class="fpt-progress-bar-track">
-                            <div class="fpt-progress-bar-fill" id="fp-export-progress-fill" style="width: 0%;"></div>
+                        <div class="fxn-progress-bar-track">
+                            <div class="fxn-progress-bar-fill" id="fp-export-progress-fill" style="width: 0%;"></div>
                         </div>
                     </div>
-                    <div class="fpt-log-stream" id="fp-export-log-stream"></div>
+                    <div class="fxn-log-stream" id="fp-export-log-stream"></div>
                 </div>
-                <div class="fpt-modal-footer" id="fp-export-modal-footer" style="display:none;">
+                <div class="fxn-modal-footer" id="fp-export-modal-footer" style="display:none;">
                     <div id="fp-export-footer-buttons" style="display:flex; gap:10px; align-items:center;">
-                        <button type="button" class="fpt-btn-primary" id="fp-export-done-btn">Готово</button>
+                        <button type="button" class="fxn-btn-primary" id="fp-export-done-btn">Готово</button>
                     </div>
                 </div>
             </div>
@@ -125,12 +125,12 @@
         if (!reopenBtn) {
             reopenBtn = document.createElement('button');
             reopenBtn.id = 'fp-export-reopen-btn';
-            reopenBtn.className = 'fpt-reopen-btn';
+            reopenBtn.className = 'fxn-reopen-btn';
             reopenBtn.style.display = 'none';
             reopenBtn.innerHTML = `📋 Лог экспорта`;
             document.body.appendChild(reopenBtn);
             reopenBtn.onclick = () => {
-                modal.classList.remove('fpt-hidden');
+                modal.classList.remove('fxn-hidden');
                 modal.setAttribute('style', 'display: flex !important;');
                 reopenBtn.style.display = 'none';
             };
@@ -141,7 +141,7 @@
         
         const hideModal = (e) => {
             if (e) e.stopPropagation();
-            modal.classList.add('fpt-hidden');
+            modal.classList.add('fxn-hidden');
             modal.setAttribute('style', 'display: none !important;');
             reopenBtn.style.display = 'inline-flex';
         };
@@ -156,7 +156,7 @@
             modal,
             reopenBtn,
             show() {
-                modal.classList.remove('fpt-hidden');
+                modal.classList.remove('fxn-hidden');
                 modal.setAttribute('style', 'display: flex !important;');
                 reopenBtn.style.display = 'none';
             },
@@ -169,7 +169,7 @@
             addLog(msg, type = 'info') {
                 const stream = modal.querySelector('#fp-export-log-stream');
                 const item = document.createElement('div');
-                item.className = `fpt-log-item ${type}`;
+                item.className = `fxn-log-item ${type}`;
                 
                 const badgeMap = {
                     success: '✓',
@@ -179,8 +179,8 @@
                 };
                 
                 item.innerHTML = `
-                    <span class="fpt-log-badge">${badgeMap[type] || 'ℹ'}</span>
-                    <span class="fpt-log-msg">${msg}</span>
+                    <span class="fxn-log-badge">${badgeMap[type] || 'ℹ'}</span>
+                    <span class="fxn-log-msg">${msg}</span>
                 `;
                 stream.appendChild(item);
                 stream.scrollTop = stream.scrollHeight;
@@ -195,7 +195,7 @@
                 if (failedLotIds && failedLotIds.length > 0) {
                     const reselectBtn = document.createElement('button');
                     reselectBtn.type = 'button';
-                    reselectBtn.className = 'fpt-btn-secondary';
+                    reselectBtn.className = 'fxn-btn-secondary';
                     reselectBtn.id = 'fp-export-reselect-btn';
                     reselectBtn.textContent = `Выбрать неэкспортированные (${failedLotIds.length})`;
                     reselectBtn.onclick = (e) => {
@@ -207,7 +207,7 @@
 
                 const doneBtnNew = document.createElement('button');
                 doneBtnNew.type = 'button';
-                doneBtnNew.className = 'fpt-btn-primary';
+                doneBtnNew.className = 'fxn-btn-primary';
                 doneBtnNew.id = 'fp-export-done-btn';
                 doneBtnNew.textContent = 'Готово';
                 doneBtnNew.onclick = hideModal;

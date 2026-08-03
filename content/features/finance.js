@@ -114,132 +114,132 @@
     }
 
     function ensureStyles() {
-        if (document.getElementById('fpt-fin-styles')) return;
+        if (document.getElementById('fxn-fin-styles')) return;
         const css = document.createElement('style');
-        css.id = 'fpt-fin-styles';
+        css.id = 'fxn-fin-styles';
         css.textContent = `
-        .fpt-fin{margin:0 0 26px;font-family:Inter,'Segoe UI',sans-serif;}
-        .fpt-fin-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
-        .fpt-fin-head h2{font-size:21px;font-weight:800;margin:0;flex:1;color:var(--fpt-text,inherit);letter-spacing:-0.3px;}
-        .fpt-fin-period{padding:8px 12px;border-radius:10px;border:1px solid var(--fpt-border,#e3e3ea);
-            background:var(--fpt-surface-2,#fff);color:inherit;font-size:13px;cursor:pointer;font-weight:500;transition:border-color .15s;}
-        .fpt-fin-period:hover{border-color:var(--fpt-text-muted,#b0b4c0);}
-        .fpt-fin-btn{padding:8px 16px;border-radius:10px;border:1px solid var(--fpt-border,#e3e3ea);
-            background:var(--fpt-surface-2,#fff);color:inherit;font-size:13px;cursor:pointer;font-weight:600;transition:all .15s;}
-        .fpt-fin-btn:hover{border-color:#7c5cff;color:#7c5cff;box-shadow:0 2px 10px rgba(124,92,255,.12);}
-        .fpt-fin-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:13px;margin-bottom:18px;}
-        .fpt-fin-card{position:relative;background:var(--fpt-surface-2,#fbfbfd);border:1px solid var(--fpt-border,#edeef2);
+        .fxn-fin{margin:0 0 26px;font-family:Inter,'Segoe UI',sans-serif;}
+        .fxn-fin-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+        .fxn-fin-head h2{font-size:21px;font-weight:800;margin:0;flex:1;color:var(--fxn-text,inherit);letter-spacing:-0.3px;}
+        .fxn-fin-period{padding:8px 12px;border-radius:10px;border:1px solid var(--fxn-border,#e3e3ea);
+            background:var(--fxn-surface-2,#fff);color:inherit;font-size:13px;cursor:pointer;font-weight:500;transition:border-color .15s;}
+        .fxn-fin-period:hover{border-color:var(--fxn-text-muted,#b0b4c0);}
+        .fxn-fin-btn{padding:8px 16px;border-radius:10px;border:1px solid var(--fxn-border,#e3e3ea);
+            background:var(--fxn-surface-2,#fff);color:inherit;font-size:13px;cursor:pointer;font-weight:600;transition:all .15s;}
+        .fxn-fin-btn:hover{border-color:#7c5cff;color:#7c5cff;box-shadow:0 2px 10px rgba(124,92,255,.12);}
+        .fxn-fin-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:13px;margin-bottom:18px;}
+        .fxn-fin-card{position:relative;background:var(--fxn-surface-2,#fbfbfd);border:1px solid var(--fxn-border,#edeef2);
             border-radius:16px;padding:16px 16px 15px;cursor:pointer;transition:transform .12s cubic-bezier(.2,.8,.2,1),box-shadow .15s;overflow:hidden;}
-        .fpt-fin-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--fpt-text-muted,#c8ccd8);opacity:.55;}
-        .fpt-fin-card[data-fin-card="in"]::before{background:linear-gradient(180deg,#22c55e,#16a34a);opacity:1;}
-        .fpt-fin-card[data-fin-card="out"]::before{background:linear-gradient(180deg,#f87171,#ef4444);opacity:1;}
-        .fpt-fin-card[data-fin-card="net"]::before{background:linear-gradient(180deg,#7c5cff,#6d28d9);opacity:1;}
-        .fpt-fin-card[data-fin-card="all"]::before{background:linear-gradient(180deg,#38bdf8,#0ea5e9);opacity:1;}
-        .fpt-fin-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(20,22,40,0.10);border-color:var(--fpt-text-muted,#d4d7e2);}
-        .fpt-fin-card-label{font-size:11px;letter-spacing:.2px;color:var(--fpt-text-muted,#8b90a0);font-weight:600;margin-bottom:8px;}
-        .fpt-fin-card-val{font-size:20px;font-weight:800;line-height:1.2;color:var(--fpt-text,inherit);letter-spacing:-0.5px;}
-        .fpt-fin-in{color:#16a34a;} .fpt-fin-out{color:#ef4444;}
-        .fpt-fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
-        @media(max-width:680px){.fpt-fin-grid{grid-template-columns:1fr;}}
-        .fpt-fin-block{background:var(--fpt-surface-2,#fbfbfd);border:1px solid var(--fpt-border,#edeef2);
+        .fxn-fin-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--fxn-text-muted,#c8ccd8);opacity:.55;}
+        .fxn-fin-card[data-fin-card="in"]::before{background:linear-gradient(180deg,#22c55e,#16a34a);opacity:1;}
+        .fxn-fin-card[data-fin-card="out"]::before{background:linear-gradient(180deg,#f87171,#ef4444);opacity:1;}
+        .fxn-fin-card[data-fin-card="net"]::before{background:linear-gradient(180deg,#7c5cff,#6d28d9);opacity:1;}
+        .fxn-fin-card[data-fin-card="all"]::before{background:linear-gradient(180deg,#38bdf8,#0ea5e9);opacity:1;}
+        .fxn-fin-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(20,22,40,0.10);border-color:var(--fxn-text-muted,#d4d7e2);}
+        .fxn-fin-card-label{font-size:11px;letter-spacing:.2px;color:var(--fxn-text-muted,#8b90a0);font-weight:600;margin-bottom:8px;}
+        .fxn-fin-card-val{font-size:20px;font-weight:800;line-height:1.2;color:var(--fxn-text,inherit);letter-spacing:-0.5px;}
+        .fxn-fin-in{color:#16a34a;} .fxn-fin-out{color:#ef4444;}
+        .fxn-fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+        @media(max-width:680px){.fxn-fin-grid{grid-template-columns:1fr;}}
+        .fxn-fin-block{background:var(--fxn-surface-2,#fbfbfd);border:1px solid var(--fxn-border,#edeef2);
             border-radius:16px;padding:16px 18px;}
-        .fpt-fin-block h3{font-size:11.5px;font-weight:700;margin:0 0 12px;color:var(--fpt-text-muted,#8b90a0);
+        .fxn-fin-block h3{font-size:11.5px;font-weight:700;margin:0 0 12px;color:var(--fxn-text-muted,#8b90a0);
             letter-spacing:.3px;text-transform:uppercase;}
-        .fpt-fin-trow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-            padding:8px 0;border-bottom:1px solid var(--fpt-border,#f0f1f5);font-size:13px;cursor:pointer;transition:padding-left .12s;}
-        .fpt-fin-trow:hover{padding-left:4px;}
-        .fpt-fin-trow:last-child{border-bottom:none;}
-        .fpt-fin-trow:hover .fpt-fin-tname{color:var(--fpt-accent,#ff6d15);text-decoration:underline;}
-        .fpt-fin-tname{color:var(--fpt-text,inherit);}
-        .fpt-fin-tcount{font-size:11px;color:var(--fpt-text-muted,#8a8a94);margin-left:6px;}
-        .fpt-fin-tval{font-weight:700;white-space:nowrap;text-align:right;}
-        .fpt-fin-bars{display:flex;flex-direction:column;gap:8px;}
-        .fpt-fin-svg{margin-top:4px;}
-        .fpt-fin-svgbar{transition:opacity .1s;}
-        .fpt-fin-svgbar:hover{opacity:.8;}
-        .fpt-fin-donut-row{display:flex;gap:14px;align-items:center;}
-        .fpt-fin-legend{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;}
-        .fpt-fin-leg{display:flex;align-items:center;gap:7px;font-size:11.5px;}
-        .fpt-fin-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
-        .fpt-fin-leg-l{color:var(--fpt-text,inherit);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-        .fpt-fin-leg-v{color:var(--fpt-text-muted,#8a8a94);white-space:nowrap;}
-        .fpt-fin-loading{padding:32px;text-align:center;color:var(--fpt-text-muted,#8a8a94);font-size:14px;}
-        .fpt-fin-spin{width:30px;height:30px;border:3px solid var(--fpt-border,#ddd);
-            border-top-color:var(--fpt-accent,#ff6d15);border-radius:50%;animation:fptFinSpin .8s linear infinite;margin:0 auto 12px;}
-        @keyframes fptFinSpin{to{transform:rotate(360deg)}}
+        .fxn-fin-trow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+            padding:8px 0;border-bottom:1px solid var(--fxn-border,#f0f1f5);font-size:13px;cursor:pointer;transition:padding-left .12s;}
+        .fxn-fin-trow:hover{padding-left:4px;}
+        .fxn-fin-trow:last-child{border-bottom:none;}
+        .fxn-fin-trow:hover .fxn-fin-tname{color:var(--fxn-accent,#ff6d15);text-decoration:underline;}
+        .fxn-fin-tname{color:var(--fxn-text,inherit);}
+        .fxn-fin-tcount{font-size:11px;color:var(--fxn-text-muted,#8a8a94);margin-left:6px;}
+        .fxn-fin-tval{font-weight:700;white-space:nowrap;text-align:right;}
+        .fxn-fin-bars{display:flex;flex-direction:column;gap:8px;}
+        .fxn-fin-svg{margin-top:4px;}
+        .fxn-fin-svgbar{transition:opacity .1s;}
+        .fxn-fin-svgbar:hover{opacity:.8;}
+        .fxn-fin-donut-row{display:flex;gap:14px;align-items:center;}
+        .fxn-fin-legend{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;}
+        .fxn-fin-leg{display:flex;align-items:center;gap:7px;font-size:11.5px;}
+        .fxn-fin-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+        .fxn-fin-leg-l{color:var(--fxn-text,inherit);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+        .fxn-fin-leg-v{color:var(--fxn-text-muted,#8a8a94);white-space:nowrap;}
+        .fxn-fin-loading{padding:32px;text-align:center;color:var(--fxn-text-muted,#8a8a94);font-size:14px;}
+        .fxn-fin-spin{width:30px;height:30px;border:3px solid var(--fxn-border,#ddd);
+            border-top-color:var(--fxn-accent,#ff6d15);border-radius:50%;animation:fxnFinSpin .8s linear infinite;margin:0 auto 12px;}
+        @keyframes fxnFinSpin{to{transform:rotate(360deg)}}
         /* модалка списка операций */
-        .fpt-fin-ov{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;
+        .fxn-fin-ov{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;
             background:rgba(8,9,14,0.62);backdrop-filter:blur(3px);}
-        .fpt-fin-modal{width:min(640px,94vw);max-height:86vh;display:flex;flex-direction:column;
-            background:var(--fpt-surface,#fff);color:var(--fpt-text,#1a1a1a);border:1px solid var(--fpt-border,#e3e3e8);
+        .fxn-fin-modal{width:min(640px,94vw);max-height:86vh;display:flex;flex-direction:column;
+            background:var(--fxn-surface,#fff);color:var(--fxn-text,#1a1a1a);border:1px solid var(--fxn-border,#e3e3e8);
             border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.5);overflow:hidden;}
-        .fpt-fin-mhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 18px;
-            border-bottom:1px solid var(--fpt-border,#ececf0);}
-        .fpt-fin-mtitle{font-size:15px;font-weight:700;}
-        .fpt-fin-msub{font-size:12px;color:var(--fpt-text-muted,#8a8a94);margin-top:2px;}
-        .fpt-fin-mclose{background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:inherit;opacity:.7;}
-        .fpt-fin-mclose:hover{opacity:1;}
-        .fpt-fin-mtools{display:flex;gap:8px;padding:10px 18px 0;}
-        .fpt-fin-msearch{flex:1;padding:8px 10px;border-radius:8px;font-size:13px;
-            background:var(--fpt-surface-2,#f3f3f5);color:inherit;border:1px solid var(--fpt-border,#ddd);}
-        .fpt-fin-msort{padding:8px 10px;border-radius:8px;font-size:13px;background:var(--fpt-surface-2,#f3f3f5);
-            color:inherit;border:1px solid var(--fpt-border,#ddd);cursor:pointer;}
-        .fpt-fin-mlist{padding:12px 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
-        .fpt-fin-row{display:flex;justify-content:space-between;gap:10px;align-items:baseline;
-            background:var(--fpt-surface-2,#f7f7f9);border:1px solid var(--fpt-border,#ececf0);border-radius:9px;padding:8px 11px;}
-        .fpt-fin-rtitle{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-        .fpt-fin-rmeta{font-size:11px;color:var(--fpt-text-muted,#8a8a94);margin-top:3px;}
-        .fpt-fin-rval{font-size:13px;font-weight:700;white-space:nowrap;}
-        .fpt-fin-empty{padding:24px;text-align:center;color:var(--fpt-text-muted,#8a8a94);font-size:13px;}
+        .fxn-fin-mhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 18px;
+            border-bottom:1px solid var(--fxn-border,#ececf0);}
+        .fxn-fin-mtitle{font-size:15px;font-weight:700;}
+        .fxn-fin-msub{font-size:12px;color:var(--fxn-text-muted,#8a8a94);margin-top:2px;}
+        .fxn-fin-mclose{background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:inherit;opacity:.7;}
+        .fxn-fin-mclose:hover{opacity:1;}
+        .fxn-fin-mtools{display:flex;gap:8px;padding:10px 18px 0;}
+        .fxn-fin-msearch{flex:1;padding:8px 10px;border-radius:8px;font-size:13px;
+            background:var(--fxn-surface-2,#f3f3f5);color:inherit;border:1px solid var(--fxn-border,#ddd);}
+        .fxn-fin-msort{padding:8px 10px;border-radius:8px;font-size:13px;background:var(--fxn-surface-2,#f3f3f5);
+            color:inherit;border:1px solid var(--fxn-border,#ddd);cursor:pointer;}
+        .fxn-fin-mlist{padding:12px 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
+        .fxn-fin-row{display:flex;justify-content:space-between;gap:10px;align-items:baseline;
+            background:var(--fxn-surface-2,#f7f7f9);border:1px solid var(--fxn-border,#ececf0);border-radius:9px;padding:8px 11px;}
+        .fxn-fin-rtitle{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .fxn-fin-rmeta{font-size:11px;color:var(--fxn-text-muted,#8a8a94);margin-top:3px;}
+        .fxn-fin-rval{font-size:13px;font-weight:700;white-space:nowrap;}
+        .fxn-fin-empty{padding:24px;text-align:center;color:var(--fxn-text-muted,#8a8a94);font-size:13px;}
         `;
         document.head.appendChild(css);
     }
 
     function txnRow(t) {
         const cur = t.currency || 'UNKNOWN';
-        const valCls = t.signed >= 0 ? 'fpt-fin-in' : 'fpt-fin-out';
+        const valCls = t.signed >= 0 ? 'fxn-fin-in' : 'fxn-fin-out';
         const sign = t.signed >= 0 ? '+ ' : '− ';
         const d = t.date ? new Date(t.date) : null;
         const ds = d ? d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '';
         const statusTxt = t.status === 'cancel' ? 'Отменено' : (t.status === 'waiting' ? 'Ожидание' : 'Завершено');
-        return `<div class="fpt-fin-row">
+        return `<div class="fxn-fin-row">
             <div style="min-width:0;">
-                <div class="fpt-fin-rtitle">${esc(t.title || TYPE_LABELS[t.type] || 'Операция')}</div>
-                <div class="fpt-fin-rmeta">${esc(TYPE_LABELS[t.type] || t.type)} · ${esc(statusTxt)} · ${esc(ds)}</div>
+                <div class="fxn-fin-rtitle">${esc(t.title || TYPE_LABELS[t.type] || 'Операция')}</div>
+                <div class="fxn-fin-rmeta">${esc(TYPE_LABELS[t.type] || t.type)} · ${esc(statusTxt)} · ${esc(ds)}</div>
             </div>
-            <div class="fpt-fin-rval ${valCls}">${sign}${money(Math.abs(t.signed), cur)}</div>
+            <div class="fxn-fin-rval ${valCls}">${sign}${money(Math.abs(t.signed), cur)}</div>
         </div>`;
     }
 
     function openList(title, list) {
         ensureStyles();
-        const old = document.getElementById('fpt-fin-ov');
+        const old = document.getElementById('fxn-fin-ov');
         if (old) old.remove();
         const ov = document.createElement('div');
-        ov.id = 'fpt-fin-ov';
-        ov.className = 'fpt-fin-ov';
+        ov.id = 'fxn-fin-ov';
+        ov.className = 'fxn-fin-ov';
         ov.innerHTML = `
-            <div class="fpt-fin-modal">
-                <div class="fpt-fin-mhead">
-                    <div><div class="fpt-fin-mtitle">${esc(title)}</div>
-                    <div class="fpt-fin-msub">${list.length} операц.</div></div>
-                    <button class="fpt-fin-mclose" title="Закрыть">×</button>
+            <div class="fxn-fin-modal">
+                <div class="fxn-fin-mhead">
+                    <div><div class="fxn-fin-mtitle">${esc(title)}</div>
+                    <div class="fxn-fin-msub">${list.length} операц.</div></div>
+                    <button class="fxn-fin-mclose" title="Закрыть">×</button>
                 </div>
-                <div class="fpt-fin-mtools">
-                    <input class="fpt-fin-msearch" type="text" placeholder="Поиск по операциям…" autocomplete="off">
-                    <select class="fpt-fin-msort">
+                <div class="fxn-fin-mtools">
+                    <input class="fxn-fin-msearch" type="text" placeholder="Поиск по операциям…" autocomplete="off">
+                    <select class="fxn-fin-msort">
                         <option value="date-desc">Сначала новые</option>
                         <option value="date-asc">Сначала старые</option>
                         <option value="amt-desc">Больше сумма</option>
                         <option value="amt-asc">Меньше сумма</option>
                     </select>
                 </div>
-                <div class="fpt-fin-mlist"></div>
+                <div class="fxn-fin-mlist"></div>
             </div>`;
         document.body.appendChild(ov);
-        const listEl = ov.querySelector('.fpt-fin-mlist');
-        const searchEl = ov.querySelector('.fpt-fin-msearch');
-        const sortEl = ov.querySelector('.fpt-fin-msort');
+        const listEl = ov.querySelector('.fxn-fin-mlist');
+        const searchEl = ov.querySelector('.fxn-fin-msearch');
+        const sortEl = ov.querySelector('.fxn-fin-msort');
         const render = () => {
             let arr = list.slice();
             const q = searchEl.value.trim().toLowerCase();
@@ -250,14 +250,14 @@
             else if (v === 'amt-asc') arr.sort((a, b) => Math.abs(a.signed) - Math.abs(b.signed));
             else if (v === 'date-asc') arr.sort((a, b) => a.date - b.date);
             else arr.sort((a, b) => b.date - a.date);
-            listEl.innerHTML = arr.length ? arr.map(txnRow).join('') : `<div class="fpt-fin-empty">Ничего не найдено.</div>`;
+            listEl.innerHTML = arr.length ? arr.map(txnRow).join('') : `<div class="fxn-fin-empty">Ничего не найдено.</div>`;
         };
         render();
         searchEl.addEventListener('input', render);
         sortEl.addEventListener('change', render);
         const close = () => ov.remove();
         ov.addEventListener('click', e => { if (e.target === ov) close(); });
-        ov.querySelector('.fpt-fin-mclose').addEventListener('click', close);
+        ov.querySelector('.fxn-fin-mclose').addEventListener('click', close);
         document.addEventListener('keydown', function onEsc(e) {
             if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
         });
@@ -273,7 +273,7 @@
     // Столбчатый SVG-график в стиле статистики продаж: приход (зелёный) над осью,
     // расход (красный) под осью. keys — отсортированные периоды (месяцы/дни).
     function barChart(title, keys, getIn, getOut, labelFmt) {
-        if (!keys.length) return `<div class="fpt-fin-block"><h3>${esc(title)}</h3><div class="fpt-fin-empty">Нет данных.</div></div>`;
+        if (!keys.length) return `<div class="fxn-fin-block"><h3>${esc(title)}</h3><div class="fxn-fin-empty">Нет данных.</div></div>`;
         const W = 560, H = 220, PAD = { t: 16, r: 14, b: 30, l: 54 };
         const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b;
         const ins = keys.map(getIn), outs = keys.map(getOut);
@@ -288,8 +288,8 @@
             const xc = PAD.l + slot * i + slot / 2;
             const ih = (ins[i] / maxV) * half;
             const oh = (outs[i] / maxV) * half;
-            bars += `<rect class="fpt-fin-svgbar" x="${xc - barW - 1}" y="${zeroY - ih}" width="${barW}" height="${ih}" rx="2" fill="#22c55e" data-tip="${esc(labelFmt(k, ins[i], outs[i]))}" tabindex="0"></rect>`;
-            bars += `<rect class="fpt-fin-svgbar" x="${xc + 1}" y="${zeroY}" width="${barW}" height="${oh}" rx="2" fill="#ef4444" data-tip="${esc(labelFmt(k, ins[i], outs[i]))}" tabindex="0"></rect>`;
+            bars += `<rect class="fxn-fin-svgbar" x="${xc - barW - 1}" y="${zeroY - ih}" width="${barW}" height="${ih}" rx="2" fill="#22c55e" data-tip="${esc(labelFmt(k, ins[i], outs[i]))}" tabindex="0"></rect>`;
+            bars += `<rect class="fxn-fin-svgbar" x="${xc + 1}" y="${zeroY}" width="${barW}" height="${oh}" rx="2" fill="#ef4444" data-tip="${esc(labelFmt(k, ins[i], outs[i]))}" tabindex="0"></rect>`;
             const isLast = i === keys.length - 1;
             const lbl = k.length === 7 ? k.slice(5) + '.' + k.slice(2, 4) : k.slice(5);
             if (isLast) {
@@ -300,17 +300,17 @@
                 xlParts.push({ x: xc, anchor: 'middle', label: lbl });
             }
         });
-        xL = xlParts.map(p => `<text x="${p.x}" y="${H - 8}" text-anchor="${p.anchor}" font-size="9" fill="var(--fpt-text-muted,#8a8a94)">${esc(p.label)}</text>`).join('');
+        xL = xlParts.map(p => `<text x="${p.x}" y="${H - 8}" text-anchor="${p.anchor}" font-size="9" fill="var(--fxn-text-muted,#8a8a94)">${esc(p.label)}</text>`).join('');
         // линия нуля + пара ориентиров
-        grid += `<line x1="${PAD.l}" y1="${zeroY}" x2="${W - PAD.r}" y2="${zeroY}" stroke="var(--fpt-border,#ddd)" stroke-width="1"/>`;
+        grid += `<line x1="${PAD.l}" y1="${zeroY}" x2="${W - PAD.r}" y2="${zeroY}" stroke="var(--fxn-border,#ddd)" stroke-width="1"/>`;
         const topLbl = maxV >= 1000 ? Math.round(maxV / 1000) + 'к' : Math.round(maxV);
-        grid += `<text x="${PAD.l - 6}" y="${PAD.t + 4}" text-anchor="end" font-size="9" fill="var(--fpt-text-muted,#8a8a94)">${topLbl}</text>`;
-        grid += `<text x="${PAD.l - 6}" y="${zeroY + 3}" text-anchor="end" font-size="9" fill="var(--fpt-text-muted,#8a8a94)">0</text>`;
-        grid += `<text x="${PAD.l - 6}" y="${PAD.t + ch + 2}" text-anchor="end" font-size="9" fill="var(--fpt-text-muted,#8a8a94)">${topLbl}</text>`;
-        return `<div class="fpt-fin-block">
+        grid += `<text x="${PAD.l - 6}" y="${PAD.t + 4}" text-anchor="end" font-size="9" fill="var(--fxn-text-muted,#8a8a94)">${topLbl}</text>`;
+        grid += `<text x="${PAD.l - 6}" y="${zeroY + 3}" text-anchor="end" font-size="9" fill="var(--fxn-text-muted,#8a8a94)">0</text>`;
+        grid += `<text x="${PAD.l - 6}" y="${PAD.t + ch + 2}" text-anchor="end" font-size="9" fill="var(--fxn-text-muted,#8a8a94)">${topLbl}</text>`;
+        return `<div class="fxn-fin-block">
             <h3>${esc(title)}</h3>
-            <svg class="fpt-fin-svg" viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible;">${grid}${bars}${xL}</svg>
-            <div style="margin-top:6px;font-size:10.5px;color:var(--fpt-text-muted,#8a8a94);">
+            <svg class="fxn-fin-svg" viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible;">${grid}${bars}${xL}</svg>
+            <div style="margin-top:6px;font-size:10.5px;color:var(--fxn-text-muted,#8a8a94);">
                 <span style="color:#22c55e;">▮</span> приход &nbsp; <span style="color:#ef4444;">▮</span> расход &nbsp;(нормализовано к ₽)</div>
         </div>`;
     }
@@ -318,7 +318,7 @@
     // Кольцевая диаграмма (как в продажах) — доли по типам операций.
     function donut(title, entries, fmtVal) {
         const total = entries.reduce((s, e) => s + e.value, 0);
-        if (!total) return `<div class="fpt-fin-block"><h3>${esc(title)}</h3><div class="fpt-fin-empty">Нет данных.</div></div>`;
+        if (!total) return `<div class="fxn-fin-block"><h3>${esc(title)}</h3><div class="fxn-fin-empty">Нет данных.</div></div>`;
         const cx = 70, cy = 70, r = 56, rin = 34;
         let acc = 0, paths = '', legend = '';
         entries.slice(0, 8).forEach((e, i) => {
@@ -333,28 +333,28 @@
             const col = PALETTE[i % PALETTE.length];
             paths += `<path d="M${x0},${y0} A${r},${r} 0 ${large} 1 ${x1},${y1} L${xi1},${yi1} A${rin},${rin} 0 ${large} 0 ${xi0},${yi0} Z" fill="${col}"></path>`;
             const vstr = fmtVal ? fmtVal(e.value) : String(e.value);
-            legend += `<div class="fpt-fin-leg"><span class="fpt-fin-dot" style="background:${col}"></span><span class="fpt-fin-leg-l">${esc(e.label)}</span><span class="fpt-fin-leg-v">${Math.round(frac * 100)}% · ${esc(vstr)}</span></div>`;
+            legend += `<div class="fxn-fin-leg"><span class="fxn-fin-dot" style="background:${col}"></span><span class="fxn-fin-leg-l">${esc(e.label)}</span><span class="fxn-fin-leg-v">${Math.round(frac * 100)}% · ${esc(vstr)}</span></div>`;
         });
-        return `<div class="fpt-fin-block">
+        return `<div class="fxn-fin-block">
             <h3>${esc(title)}</h3>
-            <div class="fpt-fin-donut-row">
-                <svg viewBox="0 0 140 140" width="130" height="130" style="flex-shrink:0;overflow:visible;">${paths}<text x="70" y="74" text-anchor="middle" font-size="13" font-weight="700" fill="var(--fpt-text,inherit)">${total}</text></svg>
-                <div class="fpt-fin-legend">${legend}</div>
+            <div class="fxn-fin-donut-row">
+                <svg viewBox="0 0 140 140" width="130" height="130" style="flex-shrink:0;overflow:visible;">${paths}<text x="70" y="74" text-anchor="middle" font-size="13" font-weight="700" fill="var(--fxn-text,inherit)">${total}</text></svg>
+                <div class="fxn-fin-legend">${legend}</div>
             </div>
         </div>`;
     }
 
     function attachChartTips(root) {
-        let tip = document.getElementById('fpt-fin-tip');
+        let tip = document.getElementById('fxn-fin-tip');
         if (!tip) {
             tip = document.createElement('div');
-            tip.id = 'fpt-fin-tip';
+            tip.id = 'fxn-fin-tip';
             tip.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;display:none;' +
                 'background:#11131a;color:#fff;font-size:12px;padding:5px 8px;border-radius:6px;' +
                 'box-shadow:0 4px 14px rgba(0,0,0,.4);white-space:nowrap;';
             document.body.appendChild(tip);
         }
-        root.querySelectorAll('.fpt-fin-svgbar').forEach(bar => {
+        root.querySelectorAll('.fxn-fin-svgbar').forEach(bar => {
             const show = (e) => {
                 tip.textContent = bar.getAttribute('data-tip') || '';
                 tip.style.display = 'block';
@@ -371,18 +371,18 @@
     }
 
     function render() {
-        const host = document.getElementById('fpt-fin-root');
+        const host = document.getElementById('fxn-fin-root');
         if (!host) return;
         const agg = aggregate();
 
         const typeRows = Object.keys(TYPE_LABELS).filter(t => agg.byType[t]).map(t => {
             const b = agg.byType[t];
             const net = netLine(b.in, b.out);
-            return `<div class="fpt-fin-trow" data-fin-type="${t}">
-                <span class="fpt-fin-tname">${esc(TYPE_LABELS[t])}<span class="fpt-fin-tcount">${b.count}</span></span>
-                <span class="fpt-fin-tval">${esc(net)}</span>
+            return `<div class="fxn-fin-trow" data-fin-type="${t}">
+                <span class="fxn-fin-tname">${esc(TYPE_LABELS[t])}<span class="fxn-fin-tcount">${b.count}</span></span>
+                <span class="fxn-fin-tval">${esc(net)}</span>
             </div>`;
-        }).join('') || '<div class="fpt-fin-empty">Нет операций за период.</div>';
+        }).join('') || '<div class="fxn-fin-empty">Нет операций за период.</div>';
 
         // График потока: для коротких периодов — по дням, иначе — по месяцам
         const useDaily = (_period === 'today' || _period === '7d' || _period === '30d');
@@ -406,26 +406,26 @@
         const typeDonut = donut('Операции по типам', typeEntries, v => v + ' шт.');
 
         host.innerHTML = `
-            <div class="fpt-fin-cards">
-                <div class="fpt-fin-card" data-fin-card="in">
-                    <div class="fpt-fin-card-label">Поступления</div>
-                    <div class="fpt-fin-card-val fpt-fin-in">${esc(sumLine(agg.inByCur))}</div>
+            <div class="fxn-fin-cards">
+                <div class="fxn-fin-card" data-fin-card="in">
+                    <div class="fxn-fin-card-label">Поступления</div>
+                    <div class="fxn-fin-card-val fxn-fin-in">${esc(sumLine(agg.inByCur))}</div>
                 </div>
-                <div class="fpt-fin-card" data-fin-card="out">
-                    <div class="fpt-fin-card-label">Расходы (выводы и пр.)</div>
-                    <div class="fpt-fin-card-val fpt-fin-out">${esc(sumLine(agg.outByCur))}</div>
+                <div class="fxn-fin-card" data-fin-card="out">
+                    <div class="fxn-fin-card-label">Расходы (выводы и пр.)</div>
+                    <div class="fxn-fin-card-val fxn-fin-out">${esc(sumLine(agg.outByCur))}</div>
                 </div>
-                <div class="fpt-fin-card" data-fin-card="net">
-                    <div class="fpt-fin-card-label">Чистый поток</div>
-                    <div class="fpt-fin-card-val">${esc(netLine(agg.inByCur, agg.outByCur))}</div>
+                <div class="fxn-fin-card" data-fin-card="net">
+                    <div class="fxn-fin-card-label">Чистый поток</div>
+                    <div class="fxn-fin-card-val">${esc(netLine(agg.inByCur, agg.outByCur))}</div>
                 </div>
-                <div class="fpt-fin-card" data-fin-card="all">
-                    <div class="fpt-fin-card-label">Всего операций</div>
-                    <div class="fpt-fin-card-val">${agg.count}</div>
+                <div class="fxn-fin-card" data-fin-card="all">
+                    <div class="fxn-fin-card-label">Всего операций</div>
+                    <div class="fxn-fin-card-val">${agg.count}</div>
                 </div>
             </div>
-            <div class="fpt-fin-grid">
-                <div class="fpt-fin-block">
+            <div class="fxn-fin-grid">
+                <div class="fxn-fin-block">
                     <h3>По типам операций</h3>
                     ${typeRows}
                 </div>
@@ -458,9 +458,9 @@
     }
 
     function showLoading() {
-        const host = document.getElementById('fpt-fin-root');
-        if (host) host.innerHTML = `<div class="fpt-fin-loading"><div class="fpt-fin-spin"></div>
-            Собираем историю операций с FunPay…<div id="fpt-fin-count" style="margin-top:6px;font-size:12px;"></div></div>`;
+        const host = document.getElementById('fxn-fin-root');
+        if (host) host.innerHTML = `<div class="fxn-fin-loading"><div class="fxn-fin-spin"></div>
+            Собираем историю операций с FunPay…<div id="fxn-fin-count" style="margin-top:6px;font-size:12px;"></div></div>`;
     }
 
     async function load(forceUpdate) {
@@ -471,10 +471,10 @@
             // живой счётчик
             const tick = setInterval(async () => {
                 try {
-                    const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsFinanceCount', 'fpToolsFinanceCollecting']);
-                    const el = document.getElementById('fpt-fin-count');
-                    if (el && st.fpToolsFinanceCount) el.textContent = `Загружено: ${st.fpToolsFinanceCount}`;
-                    if (st.fpToolsFinanceCollecting === false) clearInterval(tick);
+                    const st = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenFinanceCount', 'foxenFinanceCollecting']);
+                    const el = document.getElementById('fxn-fin-count');
+                    if (el && st.foxenFinanceCount) el.textContent = `Загружено: ${st.foxenFinanceCount}`;
+                    if (st.foxenFinanceCollecting === false) clearInterval(tick);
                 } catch (_) { clearInterval(tick); }
             }, 600);
             await FPTFinanceDB.update();
@@ -485,17 +485,17 @@
     }
 
     function mount() {
-        if (document.getElementById('fpt-fin')) return;
+        if (document.getElementById('fxn-fin')) return;
         const anchor = document.querySelector('.tc-finance') || document.querySelector('.page-content-full');
         if (!anchor) return;
         ensureStyles();
         const block = document.createElement('div');
-        block.id = 'fpt-fin';
-        block.className = 'fpt-fin';
+        block.id = 'fxn-fin';
+        block.className = 'fxn-fin';
         block.innerHTML = `
-            <div class="fpt-fin-head">
+            <div class="fxn-fin-head">
                 <h2>Статистика финансов</h2>
-                <select class="fpt-fin-period" id="fpt-fin-period">
+                <select class="fxn-fin-period" id="fxn-fin-period">
                     <option value="all">Всё время</option>
                     <option value="today">Сегодня</option>
                     <option value="7d">7 дней</option>
@@ -503,9 +503,9 @@
                     <option value="90d">3 месяца</option>
                     <option value="365d">Год</option>
                 </select>
-                <button class="fpt-fin-btn" id="fpt-fin-refresh">Обновить</button>
+                <button class="fxn-fin-btn" id="fxn-fin-refresh">Обновить</button>
             </div>
-            <div id="fpt-fin-root"></div>`;
+            <div id="fxn-fin-root"></div>`;
         // вставляем НАД таблицей операций
         const tableWrap = document.querySelector('.tc-finance');
         if (tableWrap && tableWrap.parentElement) {
@@ -513,10 +513,10 @@
         } else {
             anchor.insertBefore(block, anchor.firstChild);
         }
-        document.getElementById('fpt-fin-period').addEventListener('change', (e) => {
+        document.getElementById('fxn-fin-period').addEventListener('change', (e) => {
             _period = e.target.value; render();
         });
-        document.getElementById('fpt-fin-refresh').addEventListener('click', () => load(true));
+        document.getElementById('fxn-fin-refresh').addEventListener('click', () => load(true));
         load(false);
     }
 

@@ -1,6 +1,6 @@
 function getAnalyticsBlockHTML() {
     return `
-    <div class="fp-tools-analytics-container">
+    <div class="foxen-analytics-container">
         <div class="fp-stats-header">
             <h1>Аналитика рынка</h1>
             <div class="fp-stats-controls">
@@ -51,7 +51,7 @@ function getAnalyticsBlockHTML() {
                     <div class="stat-card-value" id="fpTools-analytics-total-value">0 ₽</div>
                 </div>
             </div>
-            <div class="fp-stat-card fpt-analytics-online">
+            <div class="fp-stat-card fxn-analytics-online">
                 <div class="stat-card-icon">🟢</div>
                 <div class="stat-card-content">
                     <div class="stat-card-label">Продавцов онлайн</div>
@@ -137,7 +137,7 @@ function initializeMarketAnalytics() {
     parentColumn.insertBefore(analyticsButtonWrapper, originalButtonContainer);
     
     analyticsButton.addEventListener('click', () => {
-        let analyticsBlock = document.querySelector('.fp-tools-analytics-container');
+        let analyticsBlock = document.querySelector('.foxen-analytics-container');
         if (analyticsBlock) {
             analyticsBlock.remove();
             return;
@@ -148,7 +148,7 @@ function initializeMarketAnalytics() {
             runMarketAnalysis();
             document.getElementById('fpTools-analytics-refresh').addEventListener('click', runMarketAnalysis);
             document.getElementById('fpTools-analytics-close').addEventListener('click', () => {
-                document.querySelector('.fp-tools-analytics-container')?.remove();
+                document.querySelector('.foxen-analytics-container')?.remove();
             });
         }
     });

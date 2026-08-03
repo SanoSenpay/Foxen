@@ -9,21 +9,21 @@
   const ICON = 'open_in_new'; // material-symbols, как у остальной части FPT
 
   function injectStyles() {
-    if (document.getElementById('fpt-openlot-style')) return;
+    if (document.getElementById('fxn-openlot-style')) return;
     const s = document.createElement('style');
-    s.id = 'fpt-openlot-style';
+    s.id = 'fxn-openlot-style';
     s.textContent = [
-      '.fpt-open-lot{display:inline-flex;align-items:center;justify-content:center;',
+      '.fxn-open-lot{display:inline-flex;align-items:center;justify-content:center;',
       'width:24px;height:24px;border-radius:6px;cursor:pointer;text-decoration:none;',
-      'color:var(--fpt-text-muted,#9099b8);opacity:.55;transition:opacity .15s,background .15s,color .15s;',
+      'color:var(--fxn-text-muted,#9099b8);opacity:.55;transition:opacity .15s,background .15s,color .15s;',
       'font-size:16px;line-height:1;vertical-align:middle;}',
-      '.fpt-open-lot:hover{opacity:1;background:rgba(127,127,127,.15);color:var(--fpt-accent,#2563eb);}',
-      '.fpt-open-lot .material-symbols-rounded,.fpt-open-lot .material-symbols-outlined{font-size:16px;}',
+      '.fxn-open-lot:hover{opacity:1;background:rgba(127,127,127,.15);color:var(--fxn-accent,#2563eb);}',
+      '.fxn-open-lot .material-symbols-rounded,.fxn-open-lot .material-symbols-outlined{font-size:16px;}',
       // в таблице лотов — клик по иконке не должен открывать редактирование (родительская ссылка)
-      '.tc-price .fpt-open-lot{margin-left:6px;}',
+      '.tc-price .fxn-open-lot{margin-left:6px;}',
       // кликабельный заголовок «Редактирование предложения»
-      '.fpt-head-link{cursor:pointer;transition:color .15s;}',
-      '.fpt-head-link:hover{color:var(--fpt-accent,#2563eb);}',
+      '.fxn-head-link{cursor:pointer;transition:color .15s;}',
+      '.fxn-head-link:hover{color:var(--fxn-accent,#2563eb);}',
     ].join('');
     document.head.appendChild(s);
   }
@@ -37,7 +37,7 @@
 
   function makeOpenBtn(lotId, title) {
     const a = document.createElement('a');
-    a.className = 'fpt-open-lot';
+    a.className = 'fxn-open-lot';
     a.href = 'https://funpay.com/lots/offer?id=' + encodeURIComponent(lotId);
     a.target = '_blank';
     a.rel = 'noopener';
@@ -52,7 +52,7 @@
   function mountOnOffersTable() {
     const rows = document.querySelectorAll('a.tc-item[data-offer]');
     rows.forEach((row) => {
-      if (row.querySelector('.fpt-open-lot')) return;
+      if (row.querySelector('.fxn-open-lot')) return;
       const id = row.getAttribute('data-offer');
       if (!id) return;
       const priceEl = row.querySelector('.tc-price') || row;
@@ -69,16 +69,16 @@
     const h = document.querySelector('h1.page-header');
     if (!h) return;
     if (!/Редактирование предложения/.test(h.textContent)) return;
-    if (h.querySelector('.fpt-open-lot')) return;
+    if (h.querySelector('.fxn-open-lot')) return;
     const m = location.search.match(/offer=(\d+)/);
     if (!m) return;
     const id = m[1];
 
     // заголовок кликабельный (цвет только при наведении)
-    h.classList.add('fpt-head-link');
+    h.classList.add('fxn-head-link');
     h.addEventListener('click', (e) => {
       // клик по самой иконке обрабатывается отдельно
-      if (e.target.closest('.fpt-open-lot')) return;
+      if (e.target.closest('.fxn-open-lot')) return;
       window.open('https://funpay.com/lots/offer?id=' + id, '_blank', 'noopener');
     });
 
@@ -90,10 +90,10 @@
   // 3) Вкладка «Что тебе нужно» (needs) — если там есть карточки лотов
   function mountOnNeeds() {
     // карточки в needs-вкладке тоже имеют ссылки на offerEdit или data-offer
-    const cards = document.querySelectorAll('[data-fpt-need-offer], a.tc-item[data-offer]');
+    const cards = document.querySelectorAll('[data-fxn-need-offer], a.tc-item[data-offer]');
     cards.forEach((c) => {
-      if (c.querySelector && c.querySelector('.fpt-open-lot')) return;
-      const id = c.getAttribute('data-fpt-need-offer') || c.getAttribute('data-offer');
+      if (c.querySelector && c.querySelector('.fxn-open-lot')) return;
+      const id = c.getAttribute('data-fxn-need-offer') || c.getAttribute('data-offer');
       if (!id) return;
       const btn = makeOpenBtn(id, 'Открыть лот');
       c.appendChild(btn);

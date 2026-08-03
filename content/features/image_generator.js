@@ -32,7 +32,7 @@ class ImageGenerator {
 
     init() {
         this.createModal();
-        this.canvas = document.getElementById('fpToolsImageCanvas');
+        this.canvas = document.getElementById('foxenImageCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.addEventListeners();
         this.applyTheme({
@@ -45,79 +45,79 @@ class ImageGenerator {
     }
 
     createModal() {
-        if (document.getElementById('fpToolsImageGeneratorModal')) return;
+        if (document.getElementById('foxenImageGeneratorModal')) return;
 
-        const modal = createElement('div', { id: 'fpToolsImageGeneratorModal' });
+        const modal = createElement('div', { id: 'foxenImageGeneratorModal' });
         modal.innerHTML = `
-            <div class="fp-tools-ig-container">
-                <div class="fp-tools-ig-header">
+            <div class="foxen-ig-container">
+                <div class="foxen-ig-header">
                     <h3>Генератор изображений</h3>
-                    <button id="fpToolsImageGeneratorClose" class="fp-tools-ig-close">×</button>
+                    <button id="foxenImageGeneratorClose" class="foxen-ig-close">×</button>
                 </div>
-                <div class="fp-tools-ig-body">
-                    <div class="fp-tools-ig-preview">
-                        <canvas id="fpToolsImageCanvas" width="320" height="320"></canvas>
+                <div class="foxen-ig-body">
+                    <div class="foxen-ig-preview">
+                        <canvas id="foxenImageCanvas" width="320" height="320"></canvas>
                     </div>
-                    <div class="fp-tools-ig-controls">
-                        <div class="fp-tools-ig-tabs">
-                            <button class="fp-tools-ig-tab active" data-tab="themes">Темы</button>
-                            <button class="fp-tools-ig-tab" data-tab="text">Текст</button>
-                            <button class="fp-tools-ig-tab" data-tab="background">Фон</button>
-                            <button class="fp-tools-ig-tab" data-tab="icon">Иконка</button>
-                            <button class="fp-tools-ig-tab" id="fpToolsKeyboardToggleBtn">Символы</button>
+                    <div class="foxen-ig-controls">
+                        <div class="foxen-ig-tabs">
+                            <button class="foxen-ig-tab active" data-tab="themes">Темы</button>
+                            <button class="foxen-ig-tab" data-tab="text">Текст</button>
+                            <button class="foxen-ig-tab" data-tab="background">Фон</button>
+                            <button class="foxen-ig-tab" data-tab="icon">Иконка</button>
+                            <button class="foxen-ig-tab" id="foxenKeyboardToggleBtn">Символы</button>
                         </div>
-                        <div class="fp-tools-ig-panels">
-                            <div class="fp-tools-ig-panel active" data-panel="themes">
-                                <div class="fp-tools-ig-theme-grid">
-                                    <div class="fp-tools-ig-theme-item" data-theme='{"bgColor1":"#2c3e50","bgColor2":"#fd746c","text1Color":"#ffffff","iconColor":"#ffffff"}' style="background: linear-gradient(45deg, #2c3e50, #fd746c);"></div>
-                                    <div class="fp-tools-ig-theme-item" data-theme='{"bgColor1":"#00c6ff","bgColor2":"#0072ff","text1Color":"#ffffff","iconColor":"#ffffff"}' style="background: linear-gradient(45deg, #00c6ff, #0072ff);"></div>
-                                    <div class="fp-tools-ig-theme-item" data-theme='{"bgColor1":"#ff0084","bgColor2":"#33001b","text1Color":"#ffffff","iconColor":"#ffffff"}' style="background: linear-gradient(45deg, #ff0084, #33001b);"></div>
-                                    <div class="fp-tools-ig-theme-item" data-theme='{"bgColor1":"#101010","bgColor2":"#101010","text1Color":"#00ff00","iconColor":"#00ff00"}' style="background: #101010;"></div>
-                                    <div class="fp-tools-ig-theme-item" data-theme='{"bgColor1":"#fdfc47","bgColor2":"#24fe41","text1Color":"#000000","iconColor":"#000000"}' style="background: linear-gradient(45deg, #fdfc47, #24fe41);"></div>
-                                    <div class="fp-tools-ig-theme-item" data-theme='{"bgColor1":"#ffffff","bgColor2":"#e0e0e0","text1Color":"#333333","iconColor":"#333333"}' style="background: #ffffff;"></div>
+                        <div class="foxen-ig-panels">
+                            <div class="foxen-ig-panel active" data-panel="themes">
+                                <div class="foxen-ig-theme-grid">
+                                    <div class="foxen-ig-theme-item" data-theme='{"bgColor1":"#2c3e50","bgColor2":"#fd746c","text1Color":"#ffffff","iconColor":"#ffffff"}' style="background: linear-gradient(45deg, #2c3e50, #fd746c);"></div>
+                                    <div class="foxen-ig-theme-item" data-theme='{"bgColor1":"#00c6ff","bgColor2":"#0072ff","text1Color":"#ffffff","iconColor":"#ffffff"}' style="background: linear-gradient(45deg, #00c6ff, #0072ff);"></div>
+                                    <div class="foxen-ig-theme-item" data-theme='{"bgColor1":"#ff0084","bgColor2":"#33001b","text1Color":"#ffffff","iconColor":"#ffffff"}' style="background: linear-gradient(45deg, #ff0084, #33001b);"></div>
+                                    <div class="foxen-ig-theme-item" data-theme='{"bgColor1":"#101010","bgColor2":"#101010","text1Color":"#00ff00","iconColor":"#00ff00"}' style="background: #101010;"></div>
+                                    <div class="foxen-ig-theme-item" data-theme='{"bgColor1":"#fdfc47","bgColor2":"#24fe41","text1Color":"#000000","iconColor":"#000000"}' style="background: linear-gradient(45deg, #fdfc47, #24fe41);"></div>
+                                    <div class="foxen-ig-theme-item" data-theme='{"bgColor1":"#ffffff","bgColor2":"#e0e0e0","text1Color":"#333333","iconColor":"#333333"}' style="background: #ffffff;"></div>
                                 </div>
                             </div>
-                            <div class="fp-tools-ig-panel" data-panel="text">
-                                <input type="text" id="igText1" class="fp-tools-ig-input" placeholder="Заголовок">
-                                <div class="fp-tools-ig-inline-controls"><input type="color" id="igText1Color"><input type="range" id="igText1Size" min="16" max="100" value="48"></div>
-                                <input type="text" id="igText2" class="fp-tools-ig-input" placeholder="Подзаголовок">
-                                <div class="fp-tools-ig-inline-controls"><input type="color" id="igText2Color"><input type="range" id="igText2Size" min="12" max="64" value="24"></div>
-                                <input type="text" id="igText3" class="fp-tools-ig-input" placeholder="Доп. текст">
-                                <div class="fp-tools-ig-inline-controls"><input type="color" id="igText3Color"><input type="range" id="igText3Size" min="10" max="48" value="20"></div>
+                            <div class="foxen-ig-panel" data-panel="text">
+                                <input type="text" id="igText1" class="foxen-ig-input" placeholder="Заголовок">
+                                <div class="foxen-ig-inline-controls"><input type="color" id="igText1Color"><input type="range" id="igText1Size" min="16" max="100" value="48"></div>
+                                <input type="text" id="igText2" class="foxen-ig-input" placeholder="Подзаголовок">
+                                <div class="foxen-ig-inline-controls"><input type="color" id="igText2Color"><input type="range" id="igText2Size" min="12" max="64" value="24"></div>
+                                <input type="text" id="igText3" class="foxen-ig-input" placeholder="Доп. текст">
+                                <div class="foxen-ig-inline-controls"><input type="color" id="igText3Color"><input type="range" id="igText3Size" min="10" max="48" value="20"></div>
                             </div>
-                            <div class="fp-tools-ig-panel" data-panel="background">
+                            <div class="foxen-ig-panel" data-panel="background">
                                 <label>Цвет 1:</label><input type="color" id="igBgColor1">
                                 <label>Цвет 2 (для градиента):</label><input type="color" id="igBgColor2">
                             </div>
-                            <div class="fp-tools-ig-panel" data-panel="icon">
-                                 <input type="text" id="igIcon" class="fp-tools-ig-input" placeholder="Иконка (напр. gamepad). Оставьте пустым, чтобы убрать.">
-                                <div class="fp-tools-ig-inline-controls"><input type="color" id="igIconColor"><input type="range" id="igIconSize" min="32" max="200" value="100"></div>
-                                <p class="fp-tools-ig-small-text">Используйте названия из <a href="https://fonts.google.com/icons" target="_blank" rel="noopener noreferrer">Google Material Icons</a> (в нижнем регистре, заменяя пробелы на \`_\`).</p>
+                            <div class="foxen-ig-panel" data-panel="icon">
+                                 <input type="text" id="igIcon" class="foxen-ig-input" placeholder="Иконка (напр. gamepad). Оставьте пустым, чтобы убрать.">
+                                <div class="foxen-ig-inline-controls"><input type="color" id="igIconColor"><input type="range" id="igIconSize" min="32" max="200" value="100"></div>
+                                <p class="foxen-ig-small-text">Используйте названия из <a href="https://fonts.google.com/icons" target="_blank" rel="noopener noreferrer">Google Material Icons</a> (в нижнем регистре, заменяя пробелы на \`_\`).</p>
                             </div>
-                            <div class="fp-tools-ig-symbols-panel"></div>
+                            <div class="foxen-ig-symbols-panel"></div>
                         </div>
-                        <div class="fp-tools-ig-ai-generator">
-                            <div class="fp-tools-ig-ai-header">
+                        <div class="foxen-ig-ai-generator">
+                            <div class="foxen-ig-ai-header">
                                 <span class="material-icons" style="font-size: 20px;">auto_awesome</span>
                                 <span>Создать с помощью ИИ</span>
                             </div>
                             <textarea id="igAiPrompt" rows="3" placeholder="Пример: огненный значок для клана, текст 'FIRE SQUAD'"></textarea>
-                            <button id="igAiGenerateBtn" class="fp-tools-ig-btn-primary">
+                            <button id="igAiGenerateBtn" class="foxen-ig-btn-primary">
                                 <span class="btn-text">Сгенерировать</span>
                                 <span class="btn-loader"></span>
                             </button>
                         </div>
                     </div>
                 </div>
-                <div class="fp-tools-ig-footer">
-                    <button id="fpToolsImageGeneratorSave" class="fp-tools-ig-btn-primary">Сохранить</button>
+                <div class="foxen-ig-footer">
+                    <button id="foxenImageGeneratorSave" class="foxen-ig-btn-primary">Сохранить</button>
                 </div>
             </div>`;
         document.body.appendChild(modal);
     }
 
-    show() { document.getElementById('fpToolsImageGeneratorModal').style.display = 'flex'; }
-    hide() { document.getElementById('fpToolsImageGeneratorModal').style.display = 'none'; }
+    show() { document.getElementById('foxenImageGeneratorModal').style.display = 'flex'; }
+    hide() { document.getElementById('foxenImageGeneratorModal').style.display = 'none'; }
     
     updateInputs() {
         document.getElementById('igText1').value = this.settings.text1;
@@ -143,24 +143,24 @@ class ImageGenerator {
     }
 
     addEventListeners() {
-        const modal = document.getElementById('fpToolsImageGeneratorModal');
-        modal.querySelector('#fpToolsImageGeneratorClose').addEventListener('click', () => this.hide());
-        modal.querySelector('#fpToolsImageGeneratorSave').addEventListener('click', () => this.saveToComputer());
+        const modal = document.getElementById('foxenImageGeneratorModal');
+        modal.querySelector('#foxenImageGeneratorClose').addEventListener('click', () => this.hide());
+        modal.querySelector('#foxenImageGeneratorSave').addEventListener('click', () => this.saveToComputer());
 
-        modal.querySelectorAll('.fp-tools-ig-tab').forEach(tab => {
+        modal.querySelectorAll('.foxen-ig-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const tabName = e.target.dataset.tab;
-                modal.querySelectorAll('.fp-tools-ig-tab, .fp-tools-ig-panel, .fp-tools-ig-symbols-panel').forEach(el => el.classList.remove('active'));
+                modal.querySelectorAll('.foxen-ig-tab, .foxen-ig-panel, .foxen-ig-symbols-panel').forEach(el => el.classList.remove('active'));
                 e.target.classList.add('active');
                 if (tabName !== 'symbols') {
-                    const panel = modal.querySelector(`.fp-tools-ig-panel[data-panel="${tabName}"]`);
+                    const panel = modal.querySelector(`.foxen-ig-panel[data-panel="${tabName}"]`);
                     if (panel) panel.classList.add('active');
-                    modal.querySelector('.fp-tools-ig-symbols-panel').style.display = 'none';
+                    modal.querySelector('.foxen-ig-symbols-panel').style.display = 'none';
                 }
             });
         });
 
-        modal.querySelectorAll('.fp-tools-ig-theme-item').forEach(item => {
+        modal.querySelectorAll('.foxen-ig-theme-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 this.applyTheme(JSON.parse(e.target.dataset.theme));
             });
@@ -183,21 +183,21 @@ class ImageGenerator {
             el.addEventListener('focus', () => { this.activeInput = el; });
         });
 
-        modal.querySelector("#fpToolsKeyboardToggleBtn").addEventListener("click", () => {
-            const panel = modal.querySelector(".fp-tools-ig-symbols-panel");
+        modal.querySelector("#foxenKeyboardToggleBtn").addEventListener("click", () => {
+            const panel = modal.querySelector(".foxen-ig-symbols-panel");
             const symbols = [ '★', '☆', '✪', '✯', '✡', '✩', '✧', '✵', '✶', '✷', '✸', '✹', '✔', '✓', '☑', '✅', '✖', '❌', '✘', '❎', '❤', '♡', '♥', '✨', '⚡', '❄', '🔥', '☘', '⚜', '⚫', '⚪', '◼', '◻', '●', '○', '➥', '➡', '➢', '➤', '▶', '◀', '▲', '▼', '⚔', '⚖', '⚕', '⚓', '⚙', '⚠', '⛔', '☢', '☣', '⬆', '↗' ];
             if (panel.innerHTML === '') {
-                panel.innerHTML = symbols.map(symbol => `<span class="fp-tools-ig-symbol-char">${symbol}</span>`).join('');
+                panel.innerHTML = symbols.map(symbol => `<span class="foxen-ig-symbol-char">${symbol}</span>`).join('');
             }
             const isVisible = panel.style.display === 'grid';
             panel.style.display = isVisible ? 'none' : 'grid';
             if (!isVisible) {
-                modal.querySelectorAll('.fp-tools-ig-panel').forEach(p => p.classList.remove('active'));
+                modal.querySelectorAll('.foxen-ig-panel').forEach(p => p.classList.remove('active'));
             }
         });
 
-        modal.querySelector('.fp-tools-ig-panels').addEventListener("click", (event) => {
-            if (!event.target.classList.contains('fp-tools-ig-symbol-char')) return;
+        modal.querySelector('.foxen-ig-panels').addEventListener("click", (event) => {
+            if (!event.target.classList.contains('foxen-ig-symbol-char')) return;
             if (this.activeInput) {
                 const start = this.activeInput.selectionStart;
                 const end = this.activeInput.selectionEnd;
@@ -325,7 +325,7 @@ function initializeImageGenerator() {
     const imageField = offerEditor.querySelector('.lot-field[data-id="images"]');
     if (!imageField) return;
 
-    if (document.getElementById('fpToolsGenerateImageBtn')) return;
+    if (document.getElementById('foxenGenerateImageBtn')) return;
 
     if (!document.getElementById('google-material-icons')) {
         const link = createElement('link', {
@@ -338,7 +338,7 @@ function initializeImageGenerator() {
     
     const btnContainer = createElement('div', { class: 'generate-btn-container' });
     const generateBtn = createElement('button', {
-        id: 'fpToolsGenerateImageBtn',
+        id: 'foxenGenerateImageBtn',
         class: 'btn btn-default',
         type: 'button'
     }, {}, 'Сгенерировать');

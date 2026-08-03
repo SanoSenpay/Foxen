@@ -5,7 +5,7 @@
 /* ═══════════════════════════════════════════════════
    TOKENS — Dark Theme (default)
 ═══════════════════════════════════════════════════ */
-.fp-tools-popup {
+.foxen-popup {
     /* Premium macOS Vibrancy Effect */
     --bg-window: rgba(30, 30, 30, 0.75);
     --backdrop-blur: blur(40px) saturate(200%);
@@ -47,7 +47,7 @@
 /* ═══════════════════════════════════════════════════
    TOKENS — Light Theme
 ═══════════════════════════════════════════════════ */
-.fp-tools-popup.fp-light {
+.foxen-popup.fp-light {
     --bg-window: rgba(245, 245, 247, 0.85);
     --bg-sidebar: rgba(0, 0, 0, 0.03);
     --bg-content: transparent;
@@ -79,7 +79,7 @@
 /* ═══════════════════════════════════════════════════
    GLOBAL POPUP STYLES
 ═══════════════════════════════════════════════════ */
-.fp-tools-popup {
+.foxen-popup {
     display: flex;
     flex-direction: column;
     visibility: hidden;
@@ -108,7 +108,7 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
-.fp-tools-popup.active {
+.foxen-popup.active {
     visibility: visible;
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
@@ -117,7 +117,7 @@
 /* ═══════════════════════════════════════════════════
    HEADER (macOS style window title)
 ═══════════════════════════════════════════════════ */
-.fp-tools-header {
+.foxen-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -148,8 +148,8 @@
 }
 
 /* Close & Theme buttons */
-.fp-tools-popup .close-btn,
-.fp-tools-popup .fp-theme-btn {
+.foxen-popup .close-btn,
+.foxen-popup .fp-theme-btn {
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -164,20 +164,20 @@
     background: transparent;
 }
 
-.fp-tools-popup .fp-theme-btn:hover {
+.foxen-popup .fp-theme-btn:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
 }
 
-.fp-tools-popup .close-btn {
+.foxen-popup .close-btn {
     color: #FF3B30;
 }
 
-.fp-tools-popup .close-btn:hover {
+.foxen-popup .close-btn:hover {
     background: rgba(255, 59, 48, 0.15);
 }
 
-.fp-tools-popup .close-btn::after {
+.foxen-popup .close-btn::after {
     content: '✕';
     font-size: 13px;
     font-weight: 600;
@@ -186,13 +186,13 @@
 /* ═══════════════════════════════════════════════════
    BODY & SIDEBAR
 ═══════════════════════════════════════════════════ */
-.fp-tools-body {
+.foxen-body {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
-.fp-tools-nav {
+.foxen-nav {
     width: 240px;
     background: var(--bg-sidebar);
     border-right: 1px solid var(--border-light);
@@ -201,13 +201,13 @@
     flex-shrink: 0;
 }
 
-.fp-tools-nav ul {
+.foxen-nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-.fp-tools-nav li.fp-nav-divider {
+.foxen-nav li.fp-nav-divider {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -217,11 +217,11 @@
     margin: 24px 0 8px;
 }
 
-.fp-tools-nav li.fp-nav-divider:first-child {
+.foxen-nav li.fp-nav-divider:first-child {
     margin-top: 4px;
 }
 
-.fp-tools-nav li:not(.fp-nav-divider) a {
+.foxen-nav li:not(.fp-nav-divider) a {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -237,19 +237,19 @@
     border: none;
 }
 
-.fp-tools-nav li:not(.fp-nav-divider) a:hover {
+.foxen-nav li:not(.fp-nav-divider) a:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
 }
 
-.fp-tools-nav li.active:not(.fp-nav-divider) a {
+.foxen-nav li.active:not(.fp-nav-divider) a {
     background: var(--accent);
     color: #FFFFFF;
     font-weight: 500;
     box-shadow: 0 2px 8px rgba(10, 132, 255, 0.3);
 }
 
-.fp-tools-nav .nav-icon {
+.foxen-nav .nav-icon {
     width: 18px;
     height: 18px;
     display: flex;
@@ -258,25 +258,25 @@
     opacity: 0.8;
 }
 
-.fp-tools-nav li.active .nav-icon {
+.foxen-nav li.active .nav-icon {
     opacity: 1;
 }
 
 /* ═══════════════════════════════════════════════════
    CONTENT AREA
 ═══════════════════════════════════════════════════ */
-.fp-tools-content {
+.foxen-content {
     flex: 1;
     background: var(--bg-content);
     padding: 36px 48px;
     overflow-y: auto;
 }
 
-.fp-tools-page-content {
+.foxen-page-content {
     display: none;
 }
 
-.fp-tools-page-content.active {
+.foxen-page-content.active {
     display: block;
     animation: fp-fade 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) both;
 }
@@ -294,7 +294,7 @@
 }
 
 /* Headings */
-.fp-tools-page-content h3 {
+.foxen-page-content h3 {
     font-size: 26px;
     font-weight: 700;
     color: var(--text-primary);
@@ -304,7 +304,7 @@
     letter-spacing: -0.5px;
 }
 
-.fp-tools-page-content h4 {
+.foxen-page-content h4 {
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
@@ -397,8 +397,8 @@
 /* ═══════════════════════════════════════════════════
    BUTTONS
 ═══════════════════════════════════════════════════ */
-.fp-tools-popup button,
-.fp-tools-popup .btn {
+.foxen-popup button,
+.foxen-popup .btn {
     background: var(--accent);
     color: #FFFFFF;
     border: none;
@@ -416,26 +416,26 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.fp-tools-popup button:hover,
-.fp-tools-popup .btn:hover {
+.foxen-popup button:hover,
+.foxen-popup .btn:hover {
     background: var(--accent-hover);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
 }
 
-.fp-tools-popup button:active,
-.fp-tools-popup .btn:active {
+.foxen-popup button:active,
+.foxen-popup .btn:active {
     transform: scale(0.97);
     box-shadow: none;
 }
 
-.fp-tools-popup .btn-default {
+.foxen-popup .btn-default {
     background: var(--btn-bg);
     color: var(--text-primary);
     box-shadow: none;
 }
 
-.fp-tools-popup .btn-default:hover {
+.foxen-popup .btn-default:hover {
     background: var(--btn-bg-hover);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -443,10 +443,10 @@
 /* ═══════════════════════════════════════════════════
    INPUTS & TEXTAREAS
 ═══════════════════════════════════════════════════ */
-.fp-tools-popup input[type="text"],
-.fp-tools-popup input[type="number"],
-.fp-tools-popup textarea,
-.fp-tools-popup select {
+.foxen-popup input[type="text"],
+.foxen-popup input[type="number"],
+.foxen-popup textarea,
+.foxen-popup select {
     width: 100%;
     padding: 12px 16px;
     margin-bottom: 16px;
@@ -461,15 +461,15 @@
     box-sizing: border-box;
 }
 
-.fp-tools-popup input:focus,
-.fp-tools-popup textarea:focus,
-.fp-tools-popup select:focus {
+.foxen-popup input:focus,
+.foxen-popup textarea:focus,
+.foxen-popup select:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
     background: var(--bg-active);
 }
 
-.fp-tools-popup .template-input {
+.foxen-popup .template-input {
     min-height: 100px;
     resize: vertical;
 }
@@ -477,8 +477,8 @@
 /* ═══════════════════════════════════════════════════
    INFO CARDS
 ═══════════════════════════════════════════════════ */
-.fp-tools-popup .template-info,
-.fp-tools-popup .support-promo {
+.foxen-popup .template-info,
+.foxen-popup .support-promo {
     background: var(--bg-elevated);
     border: 1px solid var(--border-light);
     padding: 16px 20px;
@@ -490,7 +490,7 @@
     box-shadow: var(--shadow-card);
 }
 
-.fp-tools-popup .support-promo {
+.foxen-popup .support-promo {
     background: var(--accent-soft);
     color: var(--accent);
     border-color: transparent;
@@ -499,7 +499,7 @@
 /* ═══════════════════════════════════════════════════
    RADIO GROUPS (Segmented Control style)
 ═══════════════════════════════════════════════════ */
-.fp-tools-radio-group {
+.foxen-radio-group {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
@@ -511,15 +511,15 @@
     width: fit-content;
 }
 
-.fp-tools-radio-option {
+.foxen-radio-option {
     cursor: pointer;
 }
 
-.fp-tools-radio-option input {
+.foxen-radio-option input {
     display: none;
 }
 
-.fp-tools-radio-option span {
+.foxen-radio-option span {
     display: inline-block;
     padding: 8px 16px;
     border-radius: var(--r-sm);
@@ -529,7 +529,7 @@
     transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.fp-tools-radio-option input:checked+span {
+.foxen-radio-option input:checked+span {
     background: var(--bg-hover);
     color: var(--text-primary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -538,23 +538,23 @@
 /* ═══════════════════════════════════════════════════
    SCROLLBARS
 ═══════════════════════════════════════════════════ */
-.fp-tools-popup *::-webkit-scrollbar {
+.foxen-popup *::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-.fp-tools-popup *::-webkit-scrollbar-track {
+.foxen-popup *::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.fp-tools-popup *::-webkit-scrollbar-thumb {
+.foxen-popup *::-webkit-scrollbar-thumb {
     background: var(--border-strong);
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
 
-.fp-tools-popup *::-webkit-scrollbar-thumb:hover {
+.foxen-popup *::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
     border: 2px solid transparent;
     background-clip: padding-box;
@@ -563,7 +563,7 @@
 /* ═══════════════════════════════════════════════════
    FOOTER
 ═══════════════════════════════════════════════════ */
-.fp-tools-footer {
+.foxen-footer {
     padding: 16px 24px;
     background: var(--bg-sidebar);
     border-top: 1px solid var(--border-light);
@@ -575,7 +575,7 @@
 /* ═══════════════════════════════════════════════════
    MODAL OVERLAYS
 ═══════════════════════════════════════════════════ */
-.fp-tools-modal-overlay {
+.foxen-modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
@@ -586,7 +586,7 @@
     justify-content: center;
 }
 
-.fp-tools-modal-content {
+.foxen-modal-content {
     background: var(--bg-elevated);
     border: 1px solid var(--border-light);
     border-radius: var(--r-xl);
@@ -611,7 +611,7 @@
     }
 }
 
-.fp-tools-modal-header {
+.foxen-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -619,19 +619,19 @@
     border-bottom: 1px solid var(--border-light);
 }
 
-.fp-tools-modal-header h3 {
+.foxen-modal-header h3 {
     font-size: 16px;
     font-weight: 600;
     margin: 0;
 }
 
-.fp-tools-modal-body {
+.foxen-modal-body {
     flex: 1;
     padding: 24px;
     overflow-y: auto;
 }
 
-.fp-tools-modal-footer {
+.foxen-modal-footer {
     padding: 20px 24px;
     border-top: 1px solid var(--border-light);
     display: flex;
@@ -644,7 +644,7 @@
 /* ═══════════════════════════════════════════════════
    CONSOLE
 ═══════════════════════════════════════════════════ */
-.fp-tools-console {
+.foxen-console {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-strong);
     border-radius: var(--r-md);
@@ -657,7 +657,7 @@
     overflow-y: auto;
 }
 
-.fp-tools-popup svg {
+.foxen-popup svg {
     vertical-align: middle;
 }
 
@@ -666,36 +666,36 @@
    MOVED FROM CONTENT_STYLES.CSS
    ========================================= */
 
-.fp-tools-body {
+.foxen-body {
     display: flex;
     flex-grow: 1;
     overflow: hidden;
 }
 
-.fp-tools-content {
+.foxen-content {
     flex-grow: 1;
     padding: 25px 30px;
     overflow-y: auto;
 }
 
-.fp-tools-content::-webkit-scrollbar {
+.foxen-content::-webkit-scrollbar {
     width: 6px;
 }
 
-.fp-tools-content::-webkit-scrollbar-track {
+.foxen-content::-webkit-scrollbar-track {
     background: #0e0f16;
 }
 
-.fp-tools-content::-webkit-scrollbar-thumb {
+.foxen-content::-webkit-scrollbar-thumb {
     background: #2a2d44;
     border-radius: 3px;
 }
 
-.fp-tools-content::-webkit-scrollbar-thumb:hover {
+.foxen-content::-webkit-scrollbar-thumb:hover {
     background: #363a5a;
 }
 
-.fp-tools-footer {
+.foxen-footer {
     padding: 15px 25px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     text-align: right;
@@ -738,7 +738,7 @@
     display: none;
 }
 
-.fp-tools-console {
+.foxen-console {
     background-color: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -753,7 +753,7 @@
     flex-direction: column-reverse;
 }
 
-.fp-tools-console p {
+.foxen-console p {
     margin: 0 0 4px 0;
     padding: 0;
     line-height: 1.3;
@@ -761,20 +761,20 @@
     word-break: break-all;
 }
 
-.fp-tools-console::-webkit-scrollbar {
+.foxen-console::-webkit-scrollbar {
     width: 5px;
 }
 
-.fp-tools-console::-webkit-scrollbar-track {
+.foxen-console::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.fp-tools-console::-webkit-scrollbar-thumb {
+.foxen-console::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 5px;
 }
 
-.fp-tools-ad-popup {
+.foxen-ad-popup {
     display: none;
     position: fixed;
     top: 50%;
@@ -792,44 +792,44 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.fp-tools-ad-popup h4 {
+.foxen-ad-popup h4 {
     margin-top: 0;
     margin-bottom: 20px;
     text-align: center;
     font-size: 20px;
 }
 
-.fp-tools-ad-popup input {
+.foxen-ad-popup input {
     margin-bottom: 15px;
     background-color: rgba(255, 255, 255, 0.1);
     color: #fff;
 }
 
-.fp-tools-ad-popup input::placeholder {
+.foxen-ad-popup input::placeholder {
     color: rgba(255, 255, 255, 0.5);
 }
 
-.fp-tools-ad-popup .popup-actions {
+.foxen-ad-popup .popup-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     margin-top: 10px;
 }
 
-.fp-tools-ad-popup .btn {
+.foxen-ad-popup .btn {
     background: #0A84FF;
     color: white;
 }
 
-.fp-tools-ad-popup .btn.btn-default {
+.foxen-ad-popup .btn.btn-default {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.fp-tools-ad-popup .btn.btn-default:hover {
+.foxen-ad-popup .btn.btn-default:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
-.fp-tools-user-status {
+.foxen-user-status {
     display: inline-block;
     width: 10px;
     height: 10px;
@@ -839,12 +839,12 @@
     flex-shrink: 0;
 }
 
-.fp-tools-set-status {
+.foxen-set-status {
     display: flex;
     align-items: center;
 }
 
-.fp-tools-status-circle {
+.foxen-status-circle {
     display: inline-block;
     width: 12px;
     height: 12px;
@@ -853,7 +853,7 @@
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.fp-tools-font-controls {
+.foxen-font-controls {
     display: flex;
     align-items: flex-end;
     gap: 15px;
@@ -863,21 +863,21 @@
     margin-top: 10px;
 }
 
-.fp-tools-font-controls .font-selector {
+.foxen-font-controls .font-selector {
     flex-grow: 1;
 }
 
-.fp-tools-font-controls label {
+.foxen-font-controls label {
     margin-bottom: 5px;
     font-size: 14px;
     color: #ccc;
 }
 
-.fp-tools-font-controls .btn {
+.foxen-font-controls .btn {
     height: 42px;
 }
 
-.fp-tools-symbols-panel {
+.foxen-symbols-panel {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
     gap: 10px;
@@ -887,7 +887,7 @@
     margin-top: 10px;
 }
 
-.fp-tools-symbol-char {
+.foxen-symbol-char {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -899,12 +899,12 @@
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.fp-tools-symbol-char:hover {
+.foxen-symbol-char:hover {
     background-color: rgba(255, 255, 255, 0.2);
     transform: scale(1.1);
 }
 
-.fp-tools-stats-container {
+.foxen-stats-container {
     background: rgba(20, 20, 20, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
@@ -913,14 +913,14 @@
 
 }
 
-.fp-tools-radio-group {
+.foxen-radio-group {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 10px;
 }
 
-.fp-tools-radio-option {
+.foxen-radio-option {
     display: flex;
     align-items: center;
     cursor: pointer;
@@ -930,11 +930,11 @@
     transition: background-color 0.2s ease;
 }
 
-.fp-tools-radio-option:hover {
+.foxen-radio-option:hover {
     background: rgba(255, 255, 255, 0.15);
 }
 
-.fp-tools-radio-option input[type="radio"] {
+.foxen-radio-option input[type="radio"] {
     appearance: none;
     -webkit-appearance: none;
     width: 18px;
@@ -947,11 +947,11 @@
     transition: all 0.2s ease;
 }
 
-.fp-tools-radio-option input[type="radio"]:checked {
+.foxen-radio-option input[type="radio"]:checked {
     border-color: var(--accent);
 }
 
-.fp-tools-radio-option input[type="radio"]:checked::after {
+.foxen-radio-option input[type="radio"]:checked::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -963,7 +963,7 @@
     background: var(--accent);
 }
 
-.fp-tools-radio-option span {
+.foxen-radio-option span {
     font-size: 14px;
     color: #eee;
 }
@@ -992,7 +992,7 @@
     border-bottom-color: #32D74B;
 }
 
-.fp-tools-template-sidebar {
+.foxen-template-sidebar {
     padding: 15px;
     max-height: 400px;
     overflow-y: auto;
@@ -1001,15 +1001,15 @@
     gap: 8px;
 }
 
-.fp-tools-template-sidebar::-webkit-scrollbar {
+.foxen-template-sidebar::-webkit-scrollbar {
     width: 5px;
 }
 
-.fp-tools-template-sidebar::-webkit-scrollbar-track {
+.foxen-template-sidebar::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.fp-tools-template-sidebar::-webkit-scrollbar-thumb {
+.foxen-template-sidebar::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
 }
@@ -1050,7 +1050,7 @@
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-.fp-tools-template-preview {
+.foxen-template-preview {
     visibility: hidden;
     opacity: 0;
     position: absolute;
@@ -1076,18 +1076,18 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.custom-chat-template-btn:hover .fp-tools-template-preview {
+.custom-chat-template-btn:hover .foxen-template-preview {
     visibility: visible;
     opacity: 1;
     transition-delay: 0.5s;
 }
 
-.custom-chat-template-btn .fp-tools-template-preview {
+.custom-chat-template-btn .foxen-template-preview {
     bottom: 120%;
     left: 50%;
 }
 
-.fp-tools-empty-template-overlay {
+.foxen-empty-template-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -1102,7 +1102,7 @@
     animation: fadeIn 0.3s ease;
 }
 
-.fp-tools-empty-template-modal {
+.foxen-empty-template-modal {
     background: rgba(30, 30, 30, 0.9);
     padding: 30px;
     border-radius: 15px;
@@ -1114,24 +1114,24 @@
     animation: popIn 0.4s cubic-bezier(0.26, 0.53, 0.74, 1.48);
 }
 
-.fp-tools-empty-template-modal h4 {
+.foxen-empty-template-modal h4 {
     margin-top: 0;
     color: #ffc107;
     font-size: 20px;
 }
 
-.fp-tools-empty-template-modal p {
+.foxen-empty-template-modal p {
     color: #ccc;
     margin-bottom: 20px;
 }
 
-.fp-tools-empty-template-modal textarea {
+.foxen-empty-template-modal textarea {
     width: 100%;
     min-height: 80px;
     resize: vertical;
 }
 
-.fp-tools-empty-template-modal .modal-actions {
+.foxen-empty-template-modal .modal-actions {
     margin-top: 20px;
     display: flex;
     justify-content: center;
@@ -1300,7 +1300,7 @@
     background: rgba(255, 107, 107, 0.4) !important;
 }
 
-.fp-tools-template-sidebar {
+.foxen-template-sidebar {
     padding: 15px;
     max-height: 400px;
     overflow-y: auto;
@@ -1309,15 +1309,15 @@
     gap: 8px;
 }
 
-.fp-tools-template-sidebar::-webkit-scrollbar {
+.foxen-template-sidebar::-webkit-scrollbar {
     width: 5px;
 }
 
-.fp-tools-template-sidebar::-webkit-scrollbar-track {
+.foxen-template-sidebar::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.fp-tools-template-sidebar::-webkit-scrollbar-thumb {
+.foxen-template-sidebar::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
 }
@@ -1358,7 +1358,7 @@
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-.fp-tools-template-preview {
+.foxen-template-preview {
     visibility: hidden;
     opacity: 0;
     position: absolute;
@@ -1384,18 +1384,18 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.custom-chat-template-btn:hover .fp-tools-template-preview {
+.custom-chat-template-btn:hover .foxen-template-preview {
     visibility: visible;
     opacity: 1;
     transition-delay: 0.5s;
 }
 
-.custom-chat-template-btn .fp-tools-template-preview {
+.custom-chat-template-btn .foxen-template-preview {
     bottom: 120%;
     left: 50%;
 }
 
-.fp-tools-empty-template-overlay {
+.foxen-empty-template-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -1410,7 +1410,7 @@
     animation: fadeIn 0.3s ease;
 }
 
-.fp-tools-empty-template-modal {
+.foxen-empty-template-modal {
     background: rgba(30, 30, 30, 0.9);
     padding: 30px;
     border-radius: 15px;
@@ -1422,24 +1422,24 @@
     animation: popIn 0.4s cubic-bezier(0.26, 0.53, 0.74, 1.48);
 }
 
-.fp-tools-empty-template-modal h4 {
+.foxen-empty-template-modal h4 {
     margin-top: 0;
     color: #ffc107;
     font-size: 20px;
 }
 
-.fp-tools-empty-template-modal p {
+.foxen-empty-template-modal p {
     color: #ccc;
     margin-bottom: 20px;
 }
 
-.fp-tools-empty-template-modal textarea {
+.foxen-empty-template-modal textarea {
     width: 100%;
     min-height: 80px;
     resize: vertical;
 }
 
-.fp-tools-empty-template-modal .modal-actions {
+.foxen-empty-template-modal .modal-actions {
     margin-top: 20px;
     display: flex;
     justify-content: center;
@@ -1608,7 +1608,7 @@
     background: rgba(255, 107, 107, 0.4) !important;
 }
 
-.fp-tools-lot-edit-actions-container {
+.foxen-lot-edit-actions-container {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1633,16 +1633,16 @@
     color: inherit;
 }
 
-.fp-tools-import-btn {
+.foxen-import-btn {
     background: #16a085;
     border-color: #16a085;
 }
 
-.fp-tools-import-btn:hover {
+.foxen-import-btn:hover {
     background-color: #1abc9c;
 }
 
-.fp-tools-share-modal-overlay {
+.foxen-share-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -1657,7 +1657,7 @@
     animation: fadeIn 0.3s ease;
 }
 
-.fp-tools-share-modal-content {
+.foxen-share-modal-content {
     background: #1e1e1e;
     border-radius: 12px;
     border: 1px solid #333;
@@ -1667,7 +1667,7 @@
     animation: popIn 0.4s cubic-bezier(0.26, 0.53, 0.74, 1.48);
 }
 
-.fp-tools-share-modal-header {
+.foxen-share-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1675,7 +1675,7 @@
     border-bottom: 1px solid #333;
 }
 
-.fp-tools-share-modal-header h3 {
+.foxen-share-modal-header h3 {
     margin: 0;
     font-size: 18px;
     color: #eee;
@@ -1683,7 +1683,7 @@
     padding: 0;
 }
 
-.fp-tools-share-modal-close {
+.foxen-share-modal-close {
     background: none;
     border: none;
     color: #aaa;
@@ -1692,34 +1692,34 @@
     line-height: 1;
 }
 
-.fp-tools-share-modal-body {
+.foxen-share-modal-body {
     padding: 20px;
 }
 
-.fp-tools-share-modal-body p {
+.foxen-share-modal-body p {
     color: #ccc;
     font-size: 14px;
     line-height: 1.6;
     margin: 0 0 15px 0;
 }
 
-.fp-tools-share-modal-body a {
+.foxen-share-modal-body a {
     color: #00c9ff;
     font-weight: bold;
     text-decoration: none;
 }
 
-.fp-tools-share-modal-footer {
+.foxen-share-modal-footer {
     padding: 15px 20px;
     border-top: 1px solid #333;
     text-align: right;
 }
 
-.fp-tools-share-modal-footer .btn {
+.foxen-share-modal-footer .btn {
     background: #0088cc;
 }
 
-.fp-tools-analytics-container {
+.foxen-analytics-container {
     background: rgba(20, 20, 20, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
@@ -1728,7 +1728,7 @@
 
 }
 
-.fp-tools-piggy-bank-dropdown {
+.foxen-piggy-bank-dropdown {
     display: none;
     position: absolute;
     top: 100%;
@@ -1746,19 +1746,19 @@
     overflow-y: auto;
 }
 
-#fp-tools-piggy-bank-icon-li:hover .fp-tools-piggy-bank-dropdown {
+#foxen-piggy-bank-icon-li:hover .foxen-piggy-bank-dropdown {
     display: block;
 }
 
-.fp-tools-piggy-bank-dropdown::-webkit-scrollbar {
+.foxen-piggy-bank-dropdown::-webkit-scrollbar {
     width: 5px;
 }
 
-.fp-tools-piggy-bank-dropdown::-webkit-scrollbar-track {
+.foxen-piggy-bank-dropdown::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.fp-tools-piggy-bank-dropdown::-webkit-scrollbar-thumb {
+.foxen-piggy-bank-dropdown::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
 }
@@ -1802,13 +1802,13 @@
     margin-top: 20px;
 }
 
-.fp-tools-user-status.fp-tooltip-host {
+.foxen-user-status.fp-tooltip-host {
     cursor: help;
     position: relative;
     /* Необходимо для позиционирования подсказки */
 }
 
-.fp-tools-user-status.fp-tooltip-host::after {
+.foxen-user-status.fp-tooltip-host::after {
     content: attr(data-fp-tooltip);
     position: absolute;
     bottom: 140%;
@@ -1837,7 +1837,7 @@
     pointer-events: none;
 }
 
-.fp-tools-user-status.fp-tooltip-host::before {
+.foxen-user-status.fp-tooltip-host::before {
     content: '';
     position: absolute;
     bottom: 100%;
@@ -1856,20 +1856,20 @@
     pointer-events: none;
 }
 
-.fp-tools-user-status.fp-tooltip-host:hover::before {
+.foxen-user-status.fp-tooltip-host:hover::before {
     opacity: 1;
     visibility: visible;
     transform: translateX(-50%) translateY(0);
 }
 
-.fp-tools-status-item a {
+.foxen-status-item a {
     display: flex !important;
     align-items: center;
     gap: 10px;
     padding: 8px 15px !important;
 }
 
-.fp-tools-status-color-picker {
+.foxen-status-color-picker {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -1883,16 +1883,16 @@
     overflow: hidden;
 }
 
-.fp-tools-status-color-picker::-webkit-color-swatch-wrapper {
+.foxen-status-color-picker::-webkit-color-swatch-wrapper {
     padding: 0;
 }
 
-.fp-tools-status-color-picker::-webkit-color-swatch {
+.foxen-status-color-picker::-webkit-color-swatch {
     border: none;
     border-radius: 5px;
 }
 
-.fp-tools-status-label {
+.foxen-status-label {
     flex-grow: 1;
     color: #eee;
     background-color: transparent;
@@ -1903,11 +1903,11 @@
     transition: background-color 0.2s;
 }
 
-.fp-tools-status-label:focus {
+.foxen-status-label:focus {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.fp-tools-status-delete {
+.foxen-status-delete {
     color: #ff6b6b;
     font-size: 20px;
     font-weight: bold;
@@ -1917,11 +1917,11 @@
     transition: background-color 0.2s;
 }
 
-.fp-tools-status-delete:hover {
+.foxen-status-delete:hover {
     background-color: rgba(255, 107, 107, 0.2);
 }
 
-.fp-tools-chat-toggle {
+.foxen-chat-toggle {
     display: inline-block;
     position: relative;
     cursor: pointer;
@@ -1930,11 +1930,11 @@
     vertical-align: middle;
 }
 
-.fp-tools-chat-toggle input {
+.foxen-chat-toggle input {
     display: none;
 }
 
-.fp-tools-chat-toggle-slider {
+.foxen-chat-toggle-slider {
     width: 48px;
     height: 28px;
     background-color: #333;
@@ -1945,7 +1945,7 @@
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.fp-tools-chat-toggle-slider .material-icons {
+.foxen-chat-toggle-slider .material-icons {
     font-size: 20px;
     color: #888;
     position: absolute;
@@ -1953,18 +1953,18 @@
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.fp-tools-chat-toggle input:checked+.fp-tools-chat-toggle-slider {
+.foxen-chat-toggle input:checked+.foxen-chat-toggle-slider {
     background-color: #1a4d2e;
     box-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
 }
 
-.fp-tools-chat-toggle input:checked+.fp-tools-chat-toggle-slider .material-icons {
+.foxen-chat-toggle input:checked+.foxen-chat-toggle-slider .material-icons {
     transform: translateX(20px);
     color: #4CAF50;
     text-shadow: 0 0 8px #4CAF50;
 }
 
-.fp-tools-modal-overlay {
+.foxen-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -1978,7 +1978,7 @@
     align-items: center;
 }
 
-.fp-tools-modal-content {
+.foxen-modal-content {
     background: #1e1e1e;
     border-radius: 12px;
     border: 1px solid #333;
@@ -1990,7 +1990,7 @@
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
-.fp-tools-modal-header {
+.foxen-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1998,7 +1998,7 @@
     border-bottom: 1px solid #333;
 }
 
-.fp-tools-modal-header h3 {
+.foxen-modal-header h3 {
     margin: 0;
     font-size: 16px;
     color: #eee;
@@ -2006,7 +2006,7 @@
     border: none;
 }
 
-.fp-tools-modal-close {
+.foxen-modal-close {
     background: none;
     border: none;
     color: #aaa;
@@ -2015,14 +2015,14 @@
     line-height: 1;
 }
 
-.fp-tools-modal-body {
+.foxen-modal-body {
     padding: 15px;
     overflow-y: auto;
     flex-grow: 1;
     min-height: 0;
 }
 
-.fp-tools-modal-footer {
+.foxen-modal-footer {
     padding: 15px;
     border-top: 1px solid #333;
     text-align: right;
@@ -2042,19 +2042,19 @@
     background: rgba(255, 107, 107, 0.4) !important;
 }
 
-.fp-tools-styler-header {
+.foxen-styler-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
 }
 
-.fp-tools-styler-header h4 {
+.foxen-styler-header h4 {
     margin: 0;
     font-size: 16px;
 }
 
-.fp-tools-styler-header .close-btn {
+.foxen-styler-header .close-btn {
     background: none;
     border: none;
     color: #aaa;
@@ -2227,7 +2227,7 @@
     margin-top: 25px;
 }
 
-.fp-tools-radio-option {
+.foxen-radio-option {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -2241,13 +2241,13 @@
     border: 1px solid transparent;
 }
 
-.fp-tools-radio-option:has(input:checked) {
+.foxen-radio-option:has(input:checked) {
     background: #1e1f38;
     color: #a09ef8;
     border-color: #363a5a;
 }
 
-.fp-tools-radio-option input[type="radio"] {
+.foxen-radio-option input[type="radio"] {
     accent-color: #0A84FF;
 }
 
@@ -2328,7 +2328,7 @@
     margin-top: 8px;
 }
 
-.fp-tools-console {
+.foxen-console {
     background: #0a0b10;
     border: 1px solid #1e2030;
     border-radius: 6px;
@@ -2341,44 +2341,44 @@
     line-height: 1.6;
 }
 
-.fp-tools-modal-overlay {
+.foxen-modal-overlay {
     background: rgba(0, 0, 0, 0.7) !important;
     backdrop-filter: none !important;
 }
 
-.fp-tools-modal-content {
+.foxen-modal-content {
     background: #13141a !important;
     border: 1px solid #22253a !important;
     border-radius: 10px !important;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6) !important;
 }
 
-.fp-tools-modal-header {
+.foxen-modal-header {
     border-bottom: 1px solid #1e2030 !important;
 }
 
-.fp-tools-modal-footer {
+.foxen-modal-footer {
     border-top: 1px solid #1e2030 !important;
 }
 
-.fp-tools-content::-webkit-scrollbar {
+.foxen-content::-webkit-scrollbar {
     width: 4px;
 }
 
-.fp-tools-content::-webkit-scrollbar-track {
+.foxen-content::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.fp-tools-content::-webkit-scrollbar-thumb {
+.foxen-content::-webkit-scrollbar-thumb {
     background: rgba(10, 132, 255, 0.25);
     border-radius: 4px;
 }
 
-.fp-tools-content::-webkit-scrollbar-thumb:hover {
+.foxen-content::-webkit-scrollbar-thumb:hover {
     background: rgba(10, 132, 255, 0.5);
 }
 
-.fp-tools-radio-option:has(input:checked) {
+.foxen-radio-option:has(input:checked) {
     background: rgba(10, 132, 255, 0.1) !important;
     border-color: rgba(10, 132, 255, 0.35) !important;
     color: #5AC8FA !important;
@@ -2402,27 +2402,27 @@
     border-color: rgba(10, 132, 255, 0.2) !important;
 }
 
-.fp-tools-footer {
+.foxen-footer {
     background: var(--bg-sidebar);
     border-top: 1px solid var(--border-light);
 }
 
 /* ---- AI Settings page ---- */
-.fpt-ai-provider-btn {
+.fxn-ai-provider-btn {
     transition: background 0.15s, border-color 0.15s, color 0.15s;
     border: 1px solid rgba(255,255,255,0.08);
 }
-.fpt-ai-provider-btn--active {
+.fxn-ai-provider-btn--active {
     background: rgba(192, 38, 211, 0.15) !important;
     border-color: rgba(192, 38, 211, 0.5) !important;
     color: #e879f9 !important;
 }
-.fpt-ai-provider-btn:hover:not(.fpt-ai-provider-btn--active) {
+.fxn-ai-provider-btn:hover:not(.fxn-ai-provider-btn--active) {
     border-color: rgba(192, 38, 211, 0.25);
     background: rgba(192, 38, 211, 0.05);
 }
-.fpt-ai-test-status { transition: color 0.2s; }
-.fpt-ai-test-status--ok      { color: #4ade80; }
-.fpt-ai-test-status--err     { color: #f87171; }
-.fpt-ai-test-status--warn    { color: #fbbf24; }
-.fpt-ai-test-status--loading { color: var(--fpt-text-sub, #5a5f7a); }
+.fxn-ai-test-status { transition: color 0.2s; }
+.fxn-ai-test-status--ok      { color: #4ade80; }
+.fxn-ai-test-status--err     { color: #f87171; }
+.fxn-ai-test-status--warn    { color: #fbbf24; }
+.fxn-ai-test-status--loading { color: var(--fxn-text-sub, #5a5f7a); }

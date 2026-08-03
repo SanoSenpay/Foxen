@@ -1,5 +1,5 @@
 function initAutoDeliveryUI() {
-    const page = document.querySelector('.fp-tools-page-content[data-page="auto_delivery"]');
+    const page = document.querySelector('.foxen-page-content[data-page="auto_delivery"]');
     if (!page || page.dataset.initialized) return;
     page.dataset.initialized = 'true';
 
@@ -29,8 +29,8 @@ function initAutoDeliveryUI() {
                 return;
             }
 
-            const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
-            renderDeliveryLots(lots, fpToolsAutoDeliveryLots, listEl);
+            const { foxenAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoDeliveryLots');
+            renderDeliveryLots(lots, foxenAutoDeliveryLots, listEl);
 
         } catch (e) {
             showNotification(`Ошибка: ${e.message}`, true);
@@ -78,12 +78,12 @@ function renderDeliveryLots(lots, config, container) {
                     </div>
                 </div>
                 <div class="fp-ad-settings" data-lot-id="${lot.id}" style="display:${lotConfig.enabled ? 'block' : 'none'};">
-                    <div class="fp-tools-radio-group" style="margin-bottom:8px;flex-wrap:wrap;">
-                        <label class="fp-tools-radio-option">
+                    <div class="foxen-radio-group" style="margin-bottom:8px;flex-wrap:wrap;">
+                        <label class="foxen-radio-option">
                             <input type="radio" name="fp-ad-mode-${lot.id}" value="secrets" ${(lotConfig.mode || 'secrets') === 'secrets' ? 'checked' : ''}>
                             <span>Секреты лота (автоматически)</span>
                         </label>
-                        <label class="fp-tools-radio-option">
+                        <label class="foxen-radio-option">
                             <input type="radio" name="fp-ad-mode-${lot.id}" value="template" ${lotConfig.mode === 'template' ? 'checked' : ''}>
                             <span>Свой шаблон</span>
                         </label>
@@ -146,7 +146,7 @@ function renderDeliveryLots(lots, config, container) {
 }
 
 async function autoSaveDeliveryLot(lotId, container) {
-    const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
+    const { foxenAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoDeliveryLots');
 
     const enabledEl = container.querySelector(`.fp-ad-enabled[data-lot-id="${lotId}"]`);
     const modeEl    = container.querySelector(`input[name="fp-ad-mode-${lotId}"]:checked`);
@@ -154,31 +154,31 @@ async function autoSaveDeliveryLot(lotId, container) {
     const restoreEl = container.querySelector(`.fp-ad-auto-restore[data-lot-id="${lotId}"]`);
     const disableEl = container.querySelector(`.fp-ad-auto-disable[data-lot-id="${lotId}"]`);
 
-    fpToolsAutoDeliveryLots[String(lotId)] = {
+    foxenAutoDeliveryLots[String(lotId)] = {
         enabled:           enabledEl?.checked ?? false,
         mode:              modeEl?.value || 'secrets',
         text:              textEl?.value || '',
         autoRestoreEnabled: restoreEl?.checked !== false,
         autoDisableEnabled: disableEl?.checked !== false,
-        productCount:      fpToolsAutoDeliveryLots[String(lotId)]?.productCount ?? 0,
+        productCount:      foxenAutoDeliveryLots[String(lotId)]?.productCount ?? 0,
         updatedAt:         Date.now()
     };
 
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoDeliveryLots });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoDeliveryLots });
 }
 
 async function initStockCounterDisplay() {
     if (!window.location.pathname.match(/\/users\/\d+\/?/)) return;
 
-    const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
-    if (!Object.keys(fpToolsAutoDeliveryLots).length) return;
+    const { foxenAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoDeliveryLots');
+    if (!Object.keys(foxenAutoDeliveryLots).length) return;
 
     document.querySelectorAll('a.tc-item:not(.fp-stock-init)').forEach(row => {
         row.classList.add('fp-stock-init');
         const offerMatch = row.getAttribute('href')?.match(/id=(\d+)/);
         if (!offerMatch) return;
         const lotId = offerMatch[1];
-        const config = fpToolsAutoDeliveryLots[String(lotId)];
+        const config = foxenAutoDeliveryLots[String(lotId)];
         if (!config?.enabled) return;
 
         const priceEl = row.querySelector('.tc-price');

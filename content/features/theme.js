@@ -1,6 +1,6 @@
 let bottomBarObserver = null;
-const BOTTOM_BAR_STYLE_ID = 'fp-tools-bottom-bar-style';
-const THEME_OVERRIDE_STYLE_ID = 'fp-tools-theme-override';
+const BOTTOM_BAR_STYLE_ID = 'foxen-bottom-bar-style';
+const THEME_OVERRIDE_STYLE_ID = 'foxen-theme-override';
 
 function applyDropupClassForBottomBar() {
     const dropdowns = document.querySelectorAll('#header .navbar-nav > li.dropdown');
@@ -68,8 +68,8 @@ function disableBottomBar() {
 }
 
 async function applyHeaderPosition() {
-    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsTheme']);
-    const position = fpToolsTheme.headerPosition || 'top';
+    const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenTheme']);
+    const position = foxenTheme.headerPosition || 'top';
 
     if (position === 'bottom') {
         enableBottomBar();
@@ -131,7 +131,7 @@ function hexToRgba(hex, alpha) {
 }
 
 function manageFontImports(settings) {
-    const fontStyleId = 'fp-tools-google-fonts';
+    const fontStyleId = 'foxen-google-fonts';
     let styleEl = document.getElementById(fontStyleId);
     const font = settings.font;
     const isGoogleFont = GOOGLE_FONTS.includes(font);
@@ -246,17 +246,17 @@ function getCustomThemeCss(settings) {
 }
 
 async function applyCustomTheme() {
-    const { enableCustomTheme = true, fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'fpToolsTheme']);
-    let styleEl = document.getElementById('fp-tools-custom-theme');
+    const { enableCustomTheme = true, foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'foxenTheme']);
+    let styleEl = document.getElementById('foxen-custom-theme');
     let overrideStyleEl = document.getElementById(THEME_OVERRIDE_STYLE_ID);
-    const flashFixStyle = document.getElementById('fp-tools-flash-fix');
+    const flashFixStyle = document.getElementById('foxen-flash-fix');
 
     // Контур тексту работает независимо от кастомной темы.
-    applyFptTextOutline({ ...DEFAULT_THEME, ...fpToolsTheme });
+    applyFptTextOutline({ ...DEFAULT_THEME, ...foxenTheme });
 
     if (!enableCustomTheme) {
-        document.documentElement.classList.remove('fpt-custom-theme-on');
-        document.documentElement.classList.add('fpt-custom-theme-off');
+        document.documentElement.classList.remove('fxn-custom-theme-on');
+        document.documentElement.classList.add('fxn-custom-theme-off');
         if (styleEl) styleEl.remove();
         manageFontImports({font: 'Helvetica Neue'});
         if (!overrideStyleEl) {
@@ -269,14 +269,14 @@ async function applyCustomTheme() {
             .stat-card-label, .detail-label { color: #555 !important; }
         `;
         if (flashFixStyle) flashFixStyle.remove();
-        // Палитра --fpt-* зависит от фактического фона страницы. После выключения
+        // Палитра --fxn-* зависит от фактического фона страницы. После выключения
         // темы фон становится светлым НЕ мгновенно, поэтому пересчитываем переменные
         // на следующих кадрах - иначе панели (статистика и пр.) останутся тёмными
         // на белой странице («чёрное окно статистики»).
-        if (typeof fptApplyThemeVars === 'function') {
-            requestAnimationFrame(() => { try { fptApplyThemeVars(); } catch (_) {} });
-            setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 120);
-            setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 400);
+        if (typeof fxnApplyThemeVars === 'function') {
+            requestAnimationFrame(() => { try { fxnApplyThemeVars(); } catch (_) {} });
+            setTimeout(() => { try { fxnApplyThemeVars(); } catch (_) {} }, 120);
+            setTimeout(() => { try { fxnApplyThemeVars(); } catch (_) {} }, 400);
         }
         return;
     }
@@ -284,26 +284,26 @@ async function applyCustomTheme() {
     if (overrideStyleEl) {
         overrideStyleEl.remove();
     }
-    document.documentElement.classList.add('fpt-custom-theme-on');
-    document.documentElement.classList.remove('fpt-custom-theme-off');
+    document.documentElement.classList.add('fxn-custom-theme-on');
+    document.documentElement.classList.remove('fxn-custom-theme-off');
 
     if (!styleEl) {
         styleEl = document.createElement('style');
-        styleEl.id = 'fp-tools-custom-theme';
+        styleEl.id = 'foxen-custom-theme';
         document.head.appendChild(styleEl);
     }
 
-    const settings = { ...DEFAULT_THEME, ...fpToolsTheme };
+    const settings = { ...DEFAULT_THEME, ...foxenTheme };
 
     manageFontImports(settings);
     let themeCss = getCustomThemeCss(settings);
     themeCss += ` body { visibility: visible !important; } `; 
     styleEl.textContent = themeCss;
     // фон становится тёмным не мгновенно - пересчитываем палитру на след. кадрах
-    if (typeof fptApplyThemeVars === 'function') {
-        requestAnimationFrame(() => { try { fptApplyThemeVars(); } catch (_) {} });
-        setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 120);
-        setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 400);
+    if (typeof fxnApplyThemeVars === 'function') {
+        requestAnimationFrame(() => { try { fxnApplyThemeVars(); } catch (_) {} });
+        setTimeout(() => { try { fxnApplyThemeVars(); } catch (_) {} }, 120);
+        setTimeout(() => { try { fxnApplyThemeVars(); } catch (_) {} }, 400);
     }
 }
 
@@ -324,8 +324,8 @@ function updateCirclePreview() {
 }
 
 async function updateThemePreview() {
-    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-    const settings = { ...DEFAULT_THEME, ...fpToolsTheme };
+    const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+    const settings = { ...DEFAULT_THEME, ...foxenTheme };
 
     const elements = {
         previewDiv: document.getElementById('bg-image-preview'),
@@ -454,7 +454,7 @@ function toggleThemeControls(disabled) {
 }
 
 async function randomizeTheme() {
-    const { fpToolsTheme: currentTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsTheme']);
+    const { foxenTheme: currentTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenTheme']);
     const randomHex = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
     const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -491,7 +491,7 @@ async function randomizeTheme() {
     }
 
     try {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: randomTheme });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: randomTheme });
         await applyCustomTheme();
         await applyHeaderPosition();
         await updateThemePreview();
@@ -503,8 +503,8 @@ async function randomizeTheme() {
 }
 
 async function exportTheme() {
-    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-    const settingsToExport = { ...DEFAULT_THEME, ...fpToolsTheme };
+    const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+    const settingsToExport = { ...DEFAULT_THEME, ...foxenTheme };
 
     const themeName = prompt("Введите название темы:", "Моя тема");
     if (!themeName || themeName.trim() === "") {
@@ -535,7 +535,7 @@ function importTheme(event) {
         try {
             const importedTheme = JSON.parse(e.target.result);
             if (importedTheme && importedTheme.bgColor1 && importedTheme.font) {
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: importedTheme });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: importedTheme });
                 await applyCustomTheme();
                 await applyHeaderPosition();
                 await updateThemePreview();
@@ -552,8 +552,8 @@ function importTheme(event) {
 }
 
 async function generatePaletteFromImage() {
-    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-    if (!fpToolsTheme.bgImage) {
+    const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+    if (!foxenTheme.bgImage) {
         showNotification('Сначала загрузите фоновое изображение.', true);
         return;
     }
@@ -611,9 +611,9 @@ async function generatePaletteFromImage() {
                 
                 if (newPalette.containerBgColor) newPalette.textColor = getContrastColor(newPalette.containerBgColor);
                 
-                const finalTheme = { ...fpToolsTheme, ...newPalette };
+                const finalTheme = { ...foxenTheme, ...newPalette };
 
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: finalTheme });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: finalTheme });
                 await applyCustomTheme();
                 await updateThemePreview();
                 showNotification('Палитра успешно сгенерирована!');
@@ -622,7 +622,7 @@ async function generatePaletteFromImage() {
             img.onerror = () => { reject(new Error('Не удалось загрузить изображение для анализа.')); };
         });
         
-        img.src = fpToolsTheme.bgImage;
+        img.src = foxenTheme.bgImage;
         await promise;
 
     } catch (error) {
@@ -634,20 +634,20 @@ async function generatePaletteFromImage() {
 }
 
 function createShareThemeModal() {
-    if (document.getElementById('fp-tools-share-theme-modal')) return;
+    if (document.getElementById('foxen-share-theme-modal')) return;
 
-    const modalOverlay = createElement('div', { id: 'fp-tools-share-theme-modal', class: 'fp-tools-share-modal-overlay' });
+    const modalOverlay = createElement('div', { id: 'foxen-share-theme-modal', class: 'foxen-share-modal-overlay' });
     modalOverlay.innerHTML = `
-        <div class="fp-tools-share-modal-content">
-            <div class="fp-tools-share-modal-header">
+        <div class="foxen-share-modal-content">
+            <div class="foxen-share-modal-header">
                 <h3>Поделиться темой</h3>
-                <button class="fp-tools-share-modal-close">&times;</button>
+                <button class="foxen-share-modal-close">&times;</button>
             </div>
-            <div class="fp-tools-share-modal-body">
+            <div class="foxen-share-modal-body">
                 <p>Для того, чтобы поделиться темой, вы можете нажать кнопку "ЭКСПОРТ" и поделиться темой с телеграм-ботом <a href="https://t.me/FunPayThemesBot" target="_blank">@FunPayThemesBot</a>.</p>
                 <p>Там вы сможете кинуть файл темы и поделиться темой по ссылке либо выложить в боте в публичный доступ чтобы другие люди тоже могли скачивать.</p>
             </div>
-            <div class="fp-tools-share-modal-footer">
+            <div class="foxen-share-modal-footer">
                 <a href="https://t.me/FunPayThemesBot" target="_blank" class="btn">Перейти к боту</a>
             </div>
         </div>
@@ -658,7 +658,7 @@ function createShareThemeModal() {
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) closeModal();
     });
-    modalOverlay.querySelector('.fp-tools-share-modal-close').addEventListener('click', closeModal);
+    modalOverlay.querySelector('.foxen-share-modal-close').addEventListener('click', closeModal);
 }
 
 function setupThemeCustomizationHandlers() {
@@ -674,8 +674,8 @@ function setupThemeCustomizationHandlers() {
     }
 
     const liveUpdate = async (event) => {
-        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-        const newSettings = { ...DEFAULT_THEME, ...fpToolsTheme };
+        const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+        const newSettings = { ...DEFAULT_THEME, ...foxenTheme };
         const el = event.target;
 
         switch(el.id) {
@@ -697,7 +697,7 @@ function setupThemeCustomizationHandlers() {
             case 'scrollbarWidth': newSettings.scrollbarWidth = el.value; break;
         }
 
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newSettings });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: newSettings });
         applyCustomTheme();
     };
 
@@ -720,8 +720,8 @@ function setupThemeCustomizationHandlers() {
     ];
     changeControls.forEach(id => {
         document.getElementById(id)?.addEventListener('change', async (event) => {
-            const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-            const newSettings = { ...DEFAULT_THEME, ...fpToolsTheme };
+            const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+            const newSettings = { ...DEFAULT_THEME, ...foxenTheme };
             let applyAll = true;
 
             if (id === 'enableCustomThemeCheckbox') {
@@ -733,7 +733,7 @@ function setupThemeCustomizationHandlers() {
                  const reader = new FileReader();
                  reader.onload = async (readEvent) => {
                      newSettings.bgImage = readEvent.target.result;
-                     await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newSettings });
+                     await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: newSettings });
                      applyCustomTheme();
                      updateThemePreview();
                  };
@@ -758,7 +758,7 @@ function setupThemeCustomizationHandlers() {
                      document.getElementById('customScrollbarControls').style.display = event.target.checked ? 'block' : 'none';
                      newSettings.enableCustomScrollbar = event.target.checked;
                 }
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: newSettings });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: newSettings });
             }
 
             if(applyAll) {
@@ -788,10 +788,10 @@ function setupThemeCustomizationHandlers() {
     document.getElementById('uploadBgImageBtn')?.addEventListener('click', () => document.getElementById('bgImageInput').click());
 
     document.getElementById('removeBgImageBtn')?.addEventListener('click', async () => {
-         const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-         if (!fpToolsTheme.bgImage) return; 
-         delete fpToolsTheme.bgImage;
-         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: fpToolsTheme });
+         const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+         if (!foxenTheme.bgImage) return; 
+         delete foxenTheme.bgImage;
+         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: foxenTheme });
          applyCustomTheme();
          updateThemePreview();
          showNotification('Фоновое изображение удалено.');
@@ -799,7 +799,7 @@ function setupThemeCustomizationHandlers() {
 
     document.getElementById('resetThemeBtn')?.addEventListener('click', async () => {
         if (!confirm('Вы уверены, что хотите сбросить все настройки темы и оформления?')) return;
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('fpToolsTheme');
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('foxenTheme');
         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ enableRedesignedHomepage: true });
         applyCustomTheme();
         applyHeaderPosition();
@@ -810,7 +810,7 @@ function setupThemeCustomizationHandlers() {
 
     createShareThemeModal();
     document.getElementById('shareThemeBtn')?.addEventListener('click', () => {
-        const modal = document.getElementById('fp-tools-share-theme-modal');
+        const modal = document.getElementById('foxen-share-theme-modal');
         if (modal) modal.style.display = 'flex';
     });
     document.getElementById('randomizeThemeBtn')?.addEventListener('click', randomizeTheme);
@@ -828,101 +828,101 @@ function setupThemeCustomizationHandlers() {
 // Прозрачное меню Foxen
 // ════════════════════════════════════════════════════════════════════════════
 
-// Применяет настройки прозрачности к окну .fp-tools-popup.
+// Применяет настройки прозрачности к окну .foxen-popup.
 // Может принять явные значения (из контролов) - иначе читает из storage.
 async function applyFptMenuTransparency(override) {
-    const popup = document.querySelector('.fp-tools-popup');
+    const popup = document.querySelector('.foxen-popup');
     if (!popup) return;
 
     let s;
     if (override) {
         s = override;
     } else {
-        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-        s = { ...DEFAULT_THEME, ...fpToolsTheme };
+        const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+        s = { ...DEFAULT_THEME, ...foxenTheme };
     }
 
     if (s.menuTransparent) {
         const alpha = Math.max(0, Math.min(100, parseFloat(s.menuOpacity))) / 100;
         const tintC = s.menuTintColor || DEFAULT_THEME.menuTintColor;
-        popup.style.setProperty('--fpt-menu-bg', hexToRgba(tintC, alpha));
+        popup.style.setProperty('--fxn-menu-bg', hexToRgba(tintC, alpha));
         // кнопки боковой панели - на 2% плотнее самого меню (как просил пользователь)
-        popup.style.setProperty('--fpt-menu-navbtn', hexToRgba(tintC, Math.min(1, alpha + 0.02)));
+        popup.style.setProperty('--fxn-menu-navbtn', hexToRgba(tintC, Math.min(1, alpha + 0.02)));
         // активный пункт - заметнее, на 8% плотнее
-        popup.style.setProperty('--fpt-menu-navactive', hexToRgba(tintC, Math.min(1, alpha + 0.08)));
-        popup.classList.add('fpt-menu-transparent');
+        popup.style.setProperty('--fxn-menu-navactive', hexToRgba(tintC, Math.min(1, alpha + 0.08)));
+        popup.classList.add('fxn-menu-transparent');
 
         // ЧИТАЕМОСТЬ: при 3% прозрачности на СВЕТЛОМ фоне (белая/выключенная тема)
         // светлый текст меню сливается. Определяем яркость фона за меню и:
         //   - на светлом фоне → тёмный текст меню + светлый скрим;
         //   - на тёмном фоне → светлый текст + тёмный скрим.
-        // Скрим (var --fpt-menu-scrim) - тонкая контрастная подложка поверх блюра,
+        // Скрим (var --fxn-menu-scrim) - тонкая контрастная подложка поверх блюра,
         // чтобы текст читался при любой теме, не делая меню непрозрачным.
         let lightBg = false;
         try {
-            if (typeof fptResolveBg === 'function' && typeof fptLuma === 'function') {
-                lightBg = fptLuma(fptResolveBg()) >= 0.5;
+            if (typeof fxnResolveBg === 'function' && typeof fxnLuma === 'function') {
+                lightBg = fxnLuma(fxnResolveBg()) >= 0.5;
             }
         } catch (_) {}
-        popup.classList.toggle('fpt-menu-on-light', lightBg);
-        popup.classList.toggle('fpt-menu-on-dark', !lightBg);
+        popup.classList.toggle('fxn-menu-on-light', lightBg);
+        popup.classList.toggle('fxn-menu-on-dark', !lightBg);
         // скрим: на светлом - белесый, на тёмном - чёрный; даёт контраст тексту
-        popup.style.setProperty('--fpt-menu-scrim', lightBg ? 'rgba(245,245,250,0.80)' : 'rgba(15,16,22,0.45)');
+        popup.style.setProperty('--fxn-menu-scrim', lightBg ? 'rgba(245,245,250,0.80)' : 'rgba(15,16,22,0.45)');
 
         if (s.menuBlurEnabled) {
-            popup.style.setProperty('--fpt-menu-blur', `${parseInt(s.menuBlur, 10) || 0}px`);
-            popup.classList.add('fpt-menu-blur');
+            popup.style.setProperty('--fxn-menu-blur', `${parseInt(s.menuBlur, 10) || 0}px`);
+            popup.classList.add('fxn-menu-blur');
         } else {
-            popup.classList.remove('fpt-menu-blur');
+            popup.classList.remove('fxn-menu-blur');
         }
     } else {
-        popup.classList.remove('fpt-menu-transparent', 'fpt-menu-blur', 'fpt-menu-on-light', 'fpt-menu-on-dark');
-        popup.style.removeProperty('--fpt-menu-bg');
-        popup.style.removeProperty('--fpt-menu-navbtn');
-        popup.style.removeProperty('--fpt-menu-navactive');
-        popup.style.removeProperty('--fpt-menu-scrim');
-        popup.style.removeProperty('--fpt-menu-blur');
+        popup.classList.remove('fxn-menu-transparent', 'fxn-menu-blur', 'fxn-menu-on-light', 'fxn-menu-on-dark');
+        popup.style.removeProperty('--fxn-menu-bg');
+        popup.style.removeProperty('--fxn-menu-navbtn');
+        popup.style.removeProperty('--fxn-menu-navactive');
+        popup.style.removeProperty('--fxn-menu-scrim');
+        popup.style.removeProperty('--fxn-menu-blur');
     }
 }
 
 // Загружает значения в контролы и навешивает обработчики.
 // Из UI настраивается только ЦВЕТ; прозрачность и размытие фиксированы (дефолты).
 async function setupFptMenuTransparency() {
-    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-    const s = { ...DEFAULT_THEME, ...fpToolsTheme };
+    const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+    const s = { ...DEFAULT_THEME, ...foxenTheme };
 
-    const enabled    = document.getElementById('fptMenuTransparentEnabled');
-    const controls   = document.getElementById('fptMenuTransparentControls');
-    const tint       = document.getElementById('fptMenuTintColor');
+    const enabled    = document.getElementById('fxnMenuTransparentEnabled');
+    const controls   = document.getElementById('fxnMenuTransparentControls');
+    const tint       = document.getElementById('fxnMenuTintColor');
     if (!enabled) return;
 
     enabled.checked = !!s.menuTransparent;
     if (controls) controls.style.display = s.menuTransparent ? 'block' : 'none';
     if (tint) tint.value = s.menuTintColor || DEFAULT_THEME.menuTintColor;
     // «Контур тексту» имеет смысл только при прозрачном меню - иначе скрываем весь блок.
-    const outlineGroup0 = document.getElementById('fptTextOutlineGroup');
+    const outlineGroup0 = document.getElementById('fxnTextOutlineGroup');
     if (outlineGroup0) outlineGroup0.style.display = s.menuTransparent ? '' : 'none';
 
     applyFptMenuTransparency(s);
 
     const save = async (patch) => {
-        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-        const next = { ...DEFAULT_THEME, ...fpToolsTheme, ...patch };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: next });
+        const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+        const next = { ...DEFAULT_THEME, ...foxenTheme, ...patch };
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: next });
     };
 
     enabled.addEventListener('change', (e) => {
         if (controls) controls.style.display = e.target.checked ? 'block' : 'none';
-        const outlineGroup = document.getElementById('fptTextOutlineGroup');
+        const outlineGroup = document.getElementById('fxnTextOutlineGroup');
         if (outlineGroup) outlineGroup.style.display = e.target.checked ? '' : 'none';
         applyFptMenuTransparency({ ...DEFAULT_THEME, ...s,
             menuTransparent: e.target.checked,
             menuTintColor: (tint && tint.value) || DEFAULT_THEME.menuTintColor });
         save({ menuTransparent: e.target.checked });
         // контур зависит от прозрачного меню - пересчитываем с актуальным состоянием
-        const oEnabled = document.getElementById('fptTextOutlineEnabled');
-        const oColor = document.getElementById('fptTextOutlineColor');
-        const oWidth = document.getElementById('fptTextOutlineWidth');
+        const oEnabled = document.getElementById('fxnTextOutlineEnabled');
+        const oColor = document.getElementById('fxnTextOutlineColor');
+        const oWidth = document.getElementById('fxnTextOutlineWidth');
         applyFptTextOutline({ ...DEFAULT_THEME, ...s,
             menuTransparent: e.target.checked,
             textOutlineEnabled: !!(oEnabled && oEnabled.checked),
@@ -942,23 +942,23 @@ async function setupFptMenuTransparency() {
 // чтобы галочки/цвета всегда отражали сохранённое состояние, даже если что-то
 // перетёрло DOM ранее.
 async function syncFptMenuControls() {
-    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-    const s = { ...DEFAULT_THEME, ...fpToolsTheme };
+    const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+    const s = { ...DEFAULT_THEME, ...foxenTheme };
 
-    const enabled  = document.getElementById('fptMenuTransparentEnabled');
-    const controls = document.getElementById('fptMenuTransparentControls');
-    const tint     = document.getElementById('fptMenuTintColor');
+    const enabled  = document.getElementById('fxnMenuTransparentEnabled');
+    const controls = document.getElementById('fxnMenuTransparentControls');
+    const tint     = document.getElementById('fxnMenuTintColor');
     if (enabled) enabled.checked = !!s.menuTransparent;
     if (controls) controls.style.display = s.menuTransparent ? 'block' : 'none';
     if (tint) tint.value = s.menuTintColor || DEFAULT_THEME.menuTintColor;
-    const outlineGroupSync = document.getElementById('fptTextOutlineGroup');
+    const outlineGroupSync = document.getElementById('fxnTextOutlineGroup');
     if (outlineGroupSync) outlineGroupSync.style.display = s.menuTransparent ? '' : 'none';
 
-    const oEn  = document.getElementById('fptTextOutlineEnabled');
-    const oCtl = document.getElementById('fptTextOutlineControls');
-    const oCol = document.getElementById('fptTextOutlineColor');
-    const oW   = document.getElementById('fptTextOutlineWidth');
-    const oWV  = document.getElementById('fptTextOutlineWidthValue');
+    const oEn  = document.getElementById('fxnTextOutlineEnabled');
+    const oCtl = document.getElementById('fxnTextOutlineControls');
+    const oCol = document.getElementById('fxnTextOutlineColor');
+    const oW   = document.getElementById('fxnTextOutlineWidth');
+    const oWV  = document.getElementById('fxnTextOutlineWidthValue');
     if (oEn) oEn.checked = !!s.textOutlineEnabled;
     if (oCtl) oCtl.style.display = s.textOutlineEnabled ? 'block' : 'none';
     if (oCol) oCol.value = s.textOutlineColor || '#000000';
@@ -974,15 +974,15 @@ async function syncFptMenuControls() {
 async function applyFptTextOutline(override) {
     let s = override;
     if (!s) {
-        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-        s = { ...DEFAULT_THEME, ...fpToolsTheme };
+        const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+        s = { ...DEFAULT_THEME, ...foxenTheme };
     }
-    const STYLE_ID = 'fpt-text-outline-style';
+    const STYLE_ID = 'fxn-text-outline-style';
     let styleEl = document.getElementById(STYLE_ID);
 
     // menuTransparent в override может быть устаревшим (снимок на момент инициализации).
     // Берём актуальное состояние из живого чекбокса, если он есть.
-    const liveTranspEl = document.getElementById('fptMenuTransparentEnabled');
+    const liveTranspEl = document.getElementById('fxnMenuTransparentEnabled');
     const menuTransparent = liveTranspEl ? liveTranspEl.checked : !!s.menuTransparent;
 
     // Контур работает ТОЛЬКО в меню Foxen и ТОЛЬКО когда включено прозрачное меню.
@@ -1006,30 +1006,30 @@ async function applyFptTextOutline(override) {
         `${o}px ${o}px 0 ${c}`, `-${o}px -${o}px 0 ${c}`, `${o}px -${o}px 0 ${c}`, `-${o}px ${o}px 0 ${c}`
     ].join(', ');
     styleEl.textContent = `
-        .fp-tools-popup h1, .fp-tools-popup h2, .fp-tools-popup h3, .fp-tools-popup h4,
-        .fp-tools-popup h5, .fp-tools-popup p, .fp-tools-popup span:not(.material-symbols-rounded):not(.material-icons):not(.nav-icon),
-        .fp-tools-popup label, .fp-tools-popup a, .fp-tools-popup li, .fp-tools-popup small,
-        .fp-tools-popup .range-label, .fp-tools-popup b, .fp-tools-popup strong, .fp-tools-popup code {
+        .foxen-popup h1, .foxen-popup h2, .foxen-popup h3, .foxen-popup h4,
+        .foxen-popup h5, .foxen-popup p, .foxen-popup span:not(.material-symbols-rounded):not(.material-icons):not(.nav-icon),
+        .foxen-popup label, .foxen-popup a, .foxen-popup li, .foxen-popup small,
+        .foxen-popup .range-label, .foxen-popup b, .foxen-popup strong, .foxen-popup code {
             text-shadow: ${shadow} !important;
         }
         /* у инпутов/иконок контур не нужен */
-        .fp-tools-popup input, .fp-tools-popup textarea, .fp-tools-popup select,
-        .fp-tools-popup .material-symbols-rounded, .fp-tools-popup .material-icons,
-        .fp-tools-popup .nav-icon {
+        .foxen-popup input, .foxen-popup textarea, .foxen-popup select,
+        .foxen-popup .material-symbols-rounded, .foxen-popup .material-icons,
+        .foxen-popup .nav-icon {
             text-shadow: none !important;
         }
     `;
 }
 
 async function setupFptTextOutline() {
-    const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-    const s = { ...DEFAULT_THEME, ...fpToolsTheme };
+    const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+    const s = { ...DEFAULT_THEME, ...foxenTheme };
 
-    const enabled  = document.getElementById('fptTextOutlineEnabled');
-    const controls = document.getElementById('fptTextOutlineControls');
-    const color    = document.getElementById('fptTextOutlineColor');
-    const width    = document.getElementById('fptTextOutlineWidth');
-    const widthVal = document.getElementById('fptTextOutlineWidthValue');
+    const enabled  = document.getElementById('fxnTextOutlineEnabled');
+    const controls = document.getElementById('fxnTextOutlineControls');
+    const color    = document.getElementById('fxnTextOutlineColor');
+    const width    = document.getElementById('fxnTextOutlineWidth');
+    const widthVal = document.getElementById('fxnTextOutlineWidthValue');
     if (!enabled) return;
 
     enabled.checked = !!s.textOutlineEnabled;
@@ -1046,8 +1046,8 @@ async function setupFptTextOutline() {
         textOutlineWidth: width ? parseFloat(width.value) : 1
     });
     const save = async () => {
-        const { fpToolsTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTheme');
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTheme: { ...DEFAULT_THEME, ...fpToolsTheme, ...read() } });
+        const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTheme');
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: { ...DEFAULT_THEME, ...foxenTheme, ...read() } });
     };
 
     enabled.addEventListener('change', (e) => {

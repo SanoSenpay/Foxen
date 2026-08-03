@@ -1,6 +1,6 @@
 // content/features/lot_cloning.js
 
-const COPIED_LOT_STORAGE_KEY = 'fpToolsCopiedLotData';
+const COPIED_LOT_STORAGE_KEY = 'foxenCopiedLotData';
 let __fpCloneState = null;
 
 async function handlePublicLotCopy() {
@@ -404,7 +404,7 @@ async function checkForCopiedLotData() {
         return;
     }
 
-    const pasteBar = createElement('div', { id: 'fp-tools-paste-bar' });
+    const pasteBar = createElement('div', { id: 'foxen-paste-bar' });
     pasteBar.innerHTML = `
         <span class="paste-bar-icon">📋</span>
         <span class="paste-bar-text">Найдены скопированные данные лота. Вставить их в форму?</span>
@@ -753,7 +753,7 @@ function setupImportWizardLogic(overlay) {
         if (type === 'game') {
             items.forEach(g => {
                 html += `<div class="fp-iw-list-item" data-url="${g.url}" style="flex-direction:row; align-items:center;">
-                    <img src="${g.img}" style="width:24px;height:24px;border-radius:4px;" onerror="this.style.display='none'">
+                    <img src="${g.img}" style="width:24px;height:24px;border-radius:4px;">
                     <span class="fp-iw-list-item-title" style="flex:1;">${escapeHtmlClone(g.name)}</span>
                 </div>`;
             });
@@ -951,14 +951,14 @@ function initializeLotCloning() {
     const header = Array.from(document.querySelectorAll('h1.page-header.page-header-no-hr')).find(h1 => h1.textContent.includes('Редактирование предложения') || h1.textContent.includes('Добавление предложения'));
     if (!header) return;
 
-    let actionsContainer = document.querySelector('.fp-tools-lot-edit-actions-container');
+    let actionsContainer = document.querySelector('.foxen-lot-edit-actions-container');
     if (!actionsContainer) {
-        actionsContainer = createElement('div', { class: 'fp-tools-lot-edit-actions-container' });
+        actionsContainer = createElement('div', { class: 'foxen-lot-edit-actions-container' });
         header.parentNode.insertBefore(actionsContainer, header.nextSibling);
     }
     
-    if (!document.querySelector('.fp-tools-clone-btn')) {
-        const cloneButton = createElement('button', { class: 'btn btn-default fp-tools-clone-btn' }, {}, 'Копировать');
+    if (!document.querySelector('.foxen-clone-btn')) {
+        const cloneButton = createElement('button', { class: 'btn btn-default foxen-clone-btn' }, {}, 'Копировать');
         actionsContainer.appendChild(cloneButton);
         const popupMenu = createElement('div', { class: 'fp-clone-popup' }, {}, `
             <h3>Клонирование лота</h3>
@@ -1075,8 +1075,8 @@ function initializeLotCloning() {
         document.getElementById('closePopup')?.addEventListener('click', () => { popupMenu.classList.remove('active'); });
     }
 
-    if (!document.querySelector('.fp-tools-import-btn')) {
-        const importButton = createElement('button', { class: 'btn btn-default fp-tools-import-btn' }, {}, 'Импорт');
+    if (!document.querySelector('.foxen-import-btn')) {
+        const importButton = createElement('button', { class: 'btn btn-default foxen-import-btn' }, {}, 'Импорт');
         actionsContainer.appendChild(importButton);
 
         importButton.addEventListener('click', async () => {

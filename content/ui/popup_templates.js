@@ -1,14 +1,14 @@
 function getModalOverlaysHTML() {
     return `
-        <div class="fp-tools-modal-overlay" id="autobump-category-modal-overlay" style="display: none;"><div class="fp-tools-modal-content"><div class="fp-tools-modal-header"><h3>Выберите категории для поднятия</h3><button class="fp-tools-modal-close">&times;</button></div><div class="fp-tools-modal-body"><div class="autobump-modal-controls"><input type="text" id="autobump-category-search" placeholder="Поиск по категориям..."><button id="autobump-select-all" class="btn btn-default" style="padding: 6px 12px; font-size: 13px;">Выбрать всё</button></div><div id="autobump-category-list" class="autobump-category-list"></div></div><div class="fp-tools-modal-footer"><button id="autobump-category-save" class="btn">Сохранить</button></div></div></div>
+        <div class="foxen-modal-overlay" id="autobump-category-modal-overlay" style="display: none;"><div class="foxen-modal-content"><div class="foxen-modal-header"><h3>Выберите категории для поднятия</h3><button class="foxen-modal-close">&times;</button></div><div class="foxen-modal-body"><div class="autobump-modal-controls"><input type="text" id="autobump-category-search" placeholder="Поиск по категориям..."><button id="autobump-select-all" class="btn btn-default" style="padding: 6px 12px; font-size: 13px;">Выбрать всё</button></div><div id="autobump-category-list" class="autobump-category-list"></div></div><div class="foxen-modal-footer"><button id="autobump-category-save" class="btn">Сохранить</button></div></div></div>
 
-        <div class="fp-tools-modal-overlay" id="lot-io-export-modal" style="display: none;">
-            <div class="fp-tools-modal-content">
-                <div class="fp-tools-modal-header">
+        <div class="foxen-modal-overlay" id="lot-io-export-modal" style="display: none;">
+            <div class="foxen-modal-content">
+                <div class="foxen-modal-header">
                     <h3>Экспорт лотов</h3>
-                    <button class="fp-tools-modal-close">&times;</button>
+                    <button class="foxen-modal-close">&times;</button>
                 </div>
-                <div class="fp-tools-modal-body">
+                <div class="foxen-modal-body">
                     <p class="template-info">Выберите категории, лоты из которых вы хотите экспортировать в файл.</p>
                     <div class="autobump-modal-controls">
                         <button id="lot-io-select-all" class="btn btn-default" style="padding: 6px 12px; font-size: 13px; flex-grow:1;">Выбрать/снять все</button>
@@ -19,21 +19,21 @@ function getModalOverlaysHTML() {
                         <span><b>Внимание!</b> Не закрывайте и не перезагружайте эту вкладку до завершения процесса экспорта.</span>
                     </div>
                 </div>
-                <div class="fp-tools-modal-footer">
+                <div class="foxen-modal-footer">
                     <button id="lot-io-export-confirm" class="btn">Экспортировать</button>
                 </div>
             </div>
         </div>
-        <div class="fp-tools-modal-overlay" id="lot-io-import-progress-modal" style="display: none;">
-            <div class="fp-tools-modal-content">
-                <div class="fp-tools-modal-header">
+        <div class="foxen-modal-overlay" id="lot-io-import-progress-modal" style="display: none;">
+            <div class="foxen-modal-content">
+                <div class="foxen-modal-header">
                     <h3>Прогресс импорта</h3>
                 </div>
-                <div class="fp-tools-modal-body">
+                <div class="foxen-modal-body">
                     <div id="lot-io-progress-summary">Подготовка...</div>
                     <div class="lot-io-progress-list"></div>
                 </div>
-                <div class="fp-tools-modal-footer">
+                <div class="foxen-modal-footer">
                     <button id="lot-io-continue-btn" class="btn" style="display:none;">Продолжить</button>
                     <button id="lot-io-cancel-btn" class="btn btn-default">Отменить</button>
                     <div id="lot-io-postpone-controls">
@@ -49,38 +49,38 @@ function getModalOverlaysHTML() {
 
 function getMainPopupHTML() {
     return `
-        <div class="fp-tools-header">
+        <div class="foxen-header">
             <h2 class="fp-header-title">Foxen</h2>
             <button class="fp-theme-btn" id="fpThemeToggleBtn" aria-label="Переключить тему" title="Тёмная / Светлая тема"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
             <button class="close-btn" aria-label="Закрыть"></button>
         </div>
-        <div class="fp-tools-body">
-            <nav class="fp-tools-nav">
+        <div class="foxen-body">
+            <nav class="foxen-nav">
                 <!-- Navigation Category Lists -->
-                <div class="fpt-sidebar-nav-scroll">
-                    <div class="fpt-nav-group">
-                        <div class="fpt-nav-group-title">ОСНОВНОЕ</div>
-                        <ul class="fpt-nav-vertical-list">
+                <div class="fxn-sidebar-nav-scroll">
+                    <div class="fxn-nav-group">
+                        <div class="fxn-nav-group-title">ОСНОВНОЕ</div>
+                        <ul class="fxn-nav-vertical-list">
                             <li data-page="general" class="active"><a><span class="material-symbols-rounded nav-list-icon">settings</span><span>Общие настройки</span></a></li>
                             <li data-page="needs"><a><span class="material-symbols-rounded nav-list-icon">tune</span><span>Что тебе нужно</span></a></li>
                             <li data-page="accounts"><a><span class="material-symbols-rounded nav-list-icon">group</span><span>Аккаунты</span></a></li>
-                            <li data-page="news"><a><span class="material-symbols-rounded nav-list-icon">campaign</span><span>Новости</span><span class="fpt-news-unread-badge" style="display:none;"></span></a></li>
+                            <li data-page="news"><a><span class="material-symbols-rounded nav-list-icon">campaign</span><span>Новости</span><span class="fxn-news-unread-badge" style="display:none;"></span></a></li>
                             <li data-page="support"><a><span class="material-symbols-rounded nav-list-icon">favorite</span><span>Поддержка</span></a></li>
                         </ul>
                     </div>
 
-                    <div class="fpt-nav-group">
-                        <div class="fpt-nav-group-title">ТОРГОВЛЯ & ПРОДАВЕЦ</div>
-                        <ul class="fpt-nav-vertical-list">
+                    <div class="fxn-nav-group">
+                        <div class="fxn-nav-group-title">ТОРГОВЛЯ & ПРОДАВЕЦ</div>
+                        <ul class="fxn-nav-vertical-list">
                             <li data-page="lot_io"><a><span class="material-symbols-rounded nav-list-icon">inventory_2</span><span>Управление лотами</span></a></li>
                             <li data-page="autobump"><a><span class="material-symbols-rounded nav-list-icon">rocket_launch</span><span>Авто-поднятие</span></a></li>
                             <li data-page="ai_audit"><a><span class="material-symbols-rounded nav-list-icon">search_insights</span><span>ИИ-Аудит лотов</span></a></li>
                         </ul>
                     </div>
 
-                    <div class="fpt-nav-group">
-                        <div class="fpt-nav-group-title">КОММУНИКАЦИЯ</div>
-                        <ul class="fpt-nav-vertical-list">
+                    <div class="fxn-nav-group">
+                        <div class="fxn-nav-group-title">КОММУНИКАЦИЯ</div>
+                        <ul class="fxn-nav-vertical-list">
                             <li data-page="templates"><a><span class="material-symbols-rounded nav-list-icon">description</span><span>Шаблоны ответов</span></a></li>
                             <li data-page="auto_review"><a><span class="material-symbols-rounded nav-list-icon">smart_toy</span><span>Авто-ответы</span></a></li>
                             <li data-page="auto_delivery"><a><span class="material-symbols-rounded nav-list-icon">bolt</span><span>Авто-выдача</span></a></li>
@@ -88,17 +88,17 @@ function getMainPopupHTML() {
                         </ul>
                     </div>
 
-                    <div class="fpt-nav-group">
-                        <div class="fpt-nav-group-title">КАСТОМИЗАЦИЯ</div>
-                        <ul class="fpt-nav-vertical-list">
+                    <div class="fxn-nav-group">
+                        <div class="fxn-nav-group-title">КАСТОМИЗАЦИЯ</div>
+                        <ul class="fxn-nav-vertical-list">
                             <li data-page="theme"><a><span class="material-symbols-rounded nav-list-icon">palette</span><span>Внешний вид</span></a></li>
                             <li data-page="effects"><a><span class="material-symbols-rounded nav-list-icon">auto_awesome</span><span>Эффекты</span></a></li>
                         </ul>
                     </div>
 
-                    <div class="fpt-nav-group">
-                        <div class="fpt-nav-group-title">ФИНАНСЫ & ИНСТРУМЕНТЫ</div>
-                        <ul class="fpt-nav-vertical-list">
+                    <div class="fxn-nav-group">
+                        <div class="fxn-nav-group-title">ФИНАНСЫ & ИНСТРУМЕНТЫ</div>
+                        <ul class="fxn-nav-vertical-list">
                             <li data-page="piggy_banks"><a><span class="material-symbols-rounded nav-list-icon">savings</span><span>Копилки</span></a></li>
                             <li data-page="calculator"><a><span class="material-symbols-rounded nav-list-icon">calculate</span><span>Калькулятор</span></a></li>
                             <li data-page="currency_calc"><a><span class="material-symbols-rounded nav-list-icon">currency_exchange</span><span>Валюты</span></a></li>
@@ -109,16 +109,16 @@ function getMainPopupHTML() {
                 </div>
 
                 <!-- Footer Buttons Stack (Sidebar style) -->
-                <div class="fpt-sidebar-footer">
-                    <ul class="fpt-footer-nav-list">
+                <div class="fxn-sidebar-footer">
+                    <ul class="fxn-footer-nav-list">
                         <li>
-                            <a href="https://t.me/FoxenFF" target="_blank" rel="noopener" class="fpt-footer-nav-item fpt-footer-btn-tg">
+                            <a href="https://t.me/FoxenFF" target="_blank" rel="noopener" class="fxn-footer-nav-item fxn-footer-btn-tg">
                                 <span class="material-symbols-rounded nav-list-icon">send</span>
                                 <span>Telegram канал</span>
                             </a>
                         </li>
                         <li>
-                            <a href="https://github.com/SanoSenpay/Foxen/issues/new" target="_blank" rel="noopener" class="fpt-footer-nav-item fpt-footer-btn-bug">
+                            <a href="https://github.com/SanoSenpay/Foxen/issues/new" target="_blank" rel="noopener" class="fxn-footer-nav-item fxn-footer-btn-bug">
                                 <span class="material-symbols-rounded nav-list-icon">bug_report</span>
                                 <span>Сообщить об ошибке</span>
                             </a>
@@ -126,65 +126,65 @@ function getMainPopupHTML() {
                     </ul>
                 </div>
             </nav>
-            <main class="fp-tools-content">
-                <div class="fp-tools-page-content" data-page="news">
-                    <div class="fpt-news-topbar">
+            <main class="foxen-content">
+                <div class="foxen-page-content" data-page="news">
+                    <div class="fxn-news-topbar">
                         <h3>Новости & Чейнджлог</h3>
-                        <button id="fptNewsRefreshBtn" class="btn btn-default fpt-news-refresh-btn" title="Обновить новости">
+                        <button id="fxnNewsRefreshBtn" class="btn btn-default fxn-news-refresh-btn" title="Обновить новости">
                             <span class="material-symbols-rounded" style="font-size:18px;">refresh</span>
                         </button>
                     </div>
-                    <div id="fptNewsList" class="fpt-news-feed-list"></div>
+                    <div id="fxnNewsList" class="fxn-news-feed-list"></div>
                 </div>
-                <div class="fp-tools-page-content active" data-page="general">
-                    <div class="fpt-page-header">
-                        <div class="fpt-page-icon-badge">
+                <div class="foxen-page-content active" data-page="general">
+                    <div class="fxn-page-header">
+                        <div class="fxn-page-icon-badge">
                             <span class="material-symbols-rounded" style="font-size:24px;">cookie</span>
                         </div>
                         <div>
-                            <h3 class="fpt-page-title">Для продавца</h3>
-                            <p class="fpt-page-subtitle">Передовые функции для продавцов любого уровня на funpay</p>
+                            <h3 class="fxn-page-title">Для продавца</h3>
+                            <p class="fxn-page-subtitle">Передовые функции для продавцов любого уровня на funpay</p>
                         </div>
                     </div>
 
                     <!-- Main Hero Import Dashboard Card -->
-                    <div class="fpt-dashboard-card">
-                        <div class="fpt-dashboard-grid">
-                            <div class="fpt-user-card">
-                                <img src="https://funpay.com/img/layout/avatar.png" id="fptSellerAvatarImg" class="fpt-user-card-img" alt="MarketFulling">
-                                <div class="fpt-user-card-name" id="fptSellerUsername">MarketFulling</div>
-                                <div class="fpt-user-card-handle">@FunPay</div>
+                    <div class="fxn-dashboard-card">
+                        <div class="fxn-dashboard-grid">
+                            <div class="fxn-user-card">
+                                <img src="https://funpay.com/img/layout/avatar.png" id="fxnSellerAvatarImg" class="fxn-user-card-img" alt="MarketFulling">
+                                <div class="fxn-user-card-name" id="fxnSellerUsername">MarketFulling</div>
+                                <div class="fxn-user-card-handle">@FunPay</div>
                             </div>
-                            <div class="fpt-metrics-wrap">
-                                <div class="fpt-file-info-row">
+                            <div class="fxn-metrics-wrap">
+                                <div class="fxn-file-info-row">
                                     <div>
-                                        <div class="fpt-file-info-title" id="fptFileNameDisplay">lots (29).json</div>
-                                        <div class="fpt-file-info-size" id="fptFileSizeDisplay">11.43 KB</div>
+                                        <div class="fxn-file-info-title" id="fxnFileNameDisplay">lots (29).json</div>
+                                        <div class="fxn-file-info-size" id="fxnFileSizeDisplay">11.43 KB</div>
                                     </div>
-                                    <span class="fpt-badge-verified">Файл проверен</span>
+                                    <span class="fxn-badge-verified">Файл проверен</span>
                                 </div>
 
-                                <div class="fpt-metrics-grid">
-                                    <div class="fpt-metric-box">
-                                        <div class="fpt-metric-label">Количество лотов</div>
-                                        <div class="fpt-metric-value" id="fptMetricLotsCount">6 <span class="fpt-metric-unit">шт</span></div>
+                                <div class="fxn-metrics-grid">
+                                    <div class="fxn-metric-box">
+                                        <div class="fxn-metric-label">Количество лотов</div>
+                                        <div class="fxn-metric-value" id="fxnMetricLotsCount">6 <span class="fxn-metric-unit">шт</span></div>
                                     </div>
-                                    <div class="fpt-metric-box">
-                                        <div class="fpt-metric-label">Время загрузки</div>
-                                        <div class="fpt-metric-value" id="fptMetricLoadTime">0 <span class="fpt-metric-unit">мин 12 сек</span></div>
+                                    <div class="fxn-metric-box">
+                                        <div class="fxn-metric-label">Время загрузки</div>
+                                        <div class="fxn-metric-value" id="fxnMetricLoadTime">0 <span class="fxn-metric-unit">мин 12 сек</span></div>
                                     </div>
-                                    <div class="fpt-metric-box">
-                                        <div class="fpt-metric-label">Размер файла</div>
-                                        <div class="fpt-metric-value" id="fptMetricFileSize">11.43 <span class="fpt-metric-unit">KB</span></div>
+                                    <div class="fxn-metric-box">
+                                        <div class="fxn-metric-label">Размер файла</div>
+                                        <div class="fxn-metric-value" id="fxnMetricFileSize">11.43 <span class="fxn-metric-unit">KB</span></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="fpt-dashboard-actions">
-                            <button id="fptUploadFileBtn" class="fpt-btn-secondary" type="button">Загрузить новый файл</button>
-                            <button id="fptStartImportBtn" class="fpt-btn-primary-blue" type="button">Начать импорт</button>
-                            <input type="file" id="fptFileInput" accept=".json" style="display:none;">
+                        <div class="fxn-dashboard-actions">
+                            <button id="fxnUploadFileBtn" class="fxn-btn-secondary" type="button">Загрузить новый файл</button>
+                            <button id="fxnStartImportBtn" class="fxn-btn-primary-blue" type="button">Начать импорт</button>
+                            <input type="file" id="fxnFileInput" accept=".json" style="display:none;">
                         </div>
                     </div>
 
@@ -193,53 +193,53 @@ function getMainPopupHTML() {
                         <h4 style="font-size:15px; font-weight:700; color:#ffffff; margin:0 0 4px;">Дополнительные функции</h4>
                         <p style="font-size:12px; color:#64748b; margin:0 0 16px;">Настройте и управляйте функциями для активной продажи на FunPay</p>
 
-                        <div class="fpt-feature-cards-grid">
-                            <div class="fpt-feature-card">
-                                <div class="fpt-feature-card-header">
-                                    <span class="fpt-feature-card-title">Закрепление категорий</span>
-                                    <span class="fpt-badge-status-inactive">Не активно</span>
+                        <div class="fxn-feature-cards-grid">
+                            <div class="fxn-feature-card">
+                                <div class="fxn-feature-card-header">
+                                    <span class="fxn-feature-card-title">Закрепление категорий</span>
+                                    <span class="fxn-badge-status-inactive">Не активно</span>
                                 </div>
-                                <div class="fpt-feature-card-desc">Меняет категории местами, поднимите более активные и востребованные в верх списка вашего профиля.</div>
+                                <div class="fxn-feature-card-desc">Меняет категории местами, поднимите более активные и востребованные в верх списка вашего профиля.</div>
                             </div>
 
-                            <div class="fpt-feature-card">
-                                <div class="fpt-feature-card-header">
-                                    <span class="fpt-feature-card-title">Удаление лотов</span>
-                                    <span class="fpt-badge-status-active">Активно</span>
+                            <div class="fxn-feature-card">
+                                <div class="fxn-feature-card-header">
+                                    <span class="fxn-feature-card-title">Удаление лотов</span>
+                                    <span class="fxn-badge-status-active">Активно</span>
                                 </div>
-                                <div class="fpt-feature-card-desc">Удаляет выбранные лоты, вплоть до тысячи, упрощая управление товарами.</div>
+                                <div class="fxn-feature-card-desc">Удаляет выбранные лоты, вплоть до тысячи, упрощая управление товарами.</div>
                             </div>
 
-                            <div class="fpt-feature-card">
-                                <div class="fpt-feature-card-header">
-                                    <span class="fpt-feature-card-title">Отключение лотов</span>
-                                    <span class="fpt-badge-status-active">Активно</span>
+                            <div class="fxn-feature-card">
+                                <div class="fxn-feature-card-header">
+                                    <span class="fxn-feature-card-title">Отключение лотов</span>
+                                    <span class="fxn-badge-status-active">Активно</span>
                                 </div>
-                                <div class="fpt-feature-card-desc">Отключает выбранные лоты, вплоть до тысячи, упрощая управление товарами.</div>
+                                <div class="fxn-feature-card-desc">Отключает выбранные лоты, вплоть до тысячи, упрощая управление товарами.</div>
                             </div>
 
-                            <div class="fpt-feature-card">
-                                <div class="fpt-feature-card-header">
-                                    <span class="fpt-feature-card-title">Авто-поднятие лотов</span>
-                                    <span class="fpt-badge-status-active">Активно</span>
+                            <div class="fxn-feature-card">
+                                <div class="fxn-feature-card-header">
+                                    <span class="fxn-feature-card-title">Авто-поднятие лотов</span>
+                                    <span class="fxn-badge-status-active">Активно</span>
                                 </div>
-                                <div class="fpt-feature-card-desc">Автоматическое поднятие предложений по таймеру для всех выбранных категорий.</div>
+                                <div class="fxn-feature-card-desc">Автоматическое поднятие предложений по таймеру для всех выбранных категорий.</div>
                             </div>
 
-                            <div class="fpt-feature-card">
-                                <div class="fpt-feature-card-header">
-                                    <span class="fpt-feature-card-title">ИИ-Аудит лотов</span>
-                                    <span class="fpt-badge-status-active">Активно</span>
+                            <div class="fxn-feature-card">
+                                <div class="fxn-feature-card-header">
+                                    <span class="fxn-feature-card-title">ИИ-Аудит лотов</span>
+                                    <span class="fxn-badge-status-active">Активно</span>
                                 </div>
-                                <div class="fpt-feature-card-desc">Интеллектуальный анализ предложений и отзывов с рекомендациями по увеличению продаж.</div>
+                                <div class="fxn-feature-card-desc">Интеллектуальный анализ предложений и отзывов с рекомендациями по увеличению продаж.</div>
                             </div>
 
-                            <div class="fpt-feature-card">
-                                <div class="fpt-feature-card-header">
-                                    <span class="fpt-feature-card-title">Массовое редактирование</span>
-                                    <span class="fpt-badge-status-active">Активно</span>
+                            <div class="fxn-feature-card">
+                                <div class="fxn-feature-card-header">
+                                    <span class="fxn-feature-card-title">Массовое редактирование</span>
+                                    <span class="fxn-badge-status-active">Активно</span>
                                 </div>
-                                <div class="fpt-feature-card-desc">Быстрое изменение цен и параметров для нескольких лотов одновременно.</div>
+                                <div class="fxn-feature-card-desc">Быстрое изменение цен и параметров для нескольких лотов одновременно.</div>
                             </div>
                         </div>
                     </div>
@@ -249,12 +249,12 @@ function getMainPopupHTML() {
                     <label class="checkbox-label-inline"><input type="checkbox" id="showSalesStatsCheckbox"><span>Статистика продаж в "Продажи"</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="hideBalanceCheckbox"><span>Скрыть баланс</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="viewSellersPromoCheckbox"><span>Отображение иконок промо-лотов</span></label>
-                    <label class="checkbox-label-inline"><input type="checkbox" id="fpToolsShowPaymentType" checked><span>Показывать тип оплаты в списке заказов</span></label>
-                    <label class="checkbox-label-inline"><input type="checkbox" id="fpToolsBuyerHistory" checked><span>Показывать историю покупок в чате</span></label>
+                    <label class="checkbox-label-inline"><input type="checkbox" id="foxenShowPaymentType" checked><span>Показывать тип оплаты в списке заказов</span></label>
+                    <label class="checkbox-label-inline"><input type="checkbox" id="foxenBuyerHistory" checked><span>Показывать историю покупок в чате</span></label>
                 </div>
 
                     <h3 style="margin-top: 30px;">Идентификатор FPT</h3>
-                    <label class="checkbox-label-inline"><input type="checkbox" id="fptIdentifierEnabled" checked><span>Показывать метку «Foxen» рядом с ником собеседника</span></label>
+                    <label class="checkbox-label-inline"><input type="checkbox" id="fxnIdentifierEnabled" checked><span>Показывать метку «Foxen» рядом с ником собеседника</span></label>
                     <p class="template-info">При включении к исходящим сообщениям добавляется невидимый символ. Если собеседник тоже использует FPT — рядом с его ником появится пометка. Символ не виден обычным пользователям. Не добавляется в ссылки и скопированный текст.</p>
 
                     <div class="support-promo" style="background: rgba(107, 102, 255, 0.1); border-color: rgba(107, 102, 255, 0.3); margin-top: 15px;">
@@ -262,7 +262,7 @@ function getMainPopupHTML() {
                         <span>Данное расширение было создано на основе расширения <a href="https://funpay.tools" target="_blank" style="color:inherit;text-decoration:underline;font-weight:bold;">Foxen</a></span>
                     </div>
                 </div>
-                <div class="fp-tools-page-content" data-page="accounts">
+                <div class="foxen-page-content" data-page="accounts">
                     <h3>Управление аккаунтами</h3>
                     <p class="template-info">Добавьте текущий аккаунт в список, чтобы быстро переключаться между профилями без ввода пароля.</p>
                     <div class="support-promo" style="background: rgba(107,102,255,0.08); border-color: rgba(107,102,255,0.25); margin-bottom: 20px;">
@@ -271,15 +271,15 @@ function getMainPopupHTML() {
                     </div>
                     <button id="addCurrentAccountBtn" class="btn">+ Добавить текущий аккаунт</button>
                     <h4 style="margin-top: 30px;">Сохраненные аккаунты:</h4>
-                    <div id="fpToolsAccountsList"></div>
+                    <div id="foxenAccountsList"></div>
                 </div>
-                <div class="fp-tools-page-content" data-page="templates">
+                <div class="foxen-page-content" data-page="templates">
                     <h3>Настройки шаблонов</h3>
                     <label class="checkbox-label-inline"><input type="checkbox" id="sendTemplatesImmediately"><span>Отправлять шаблоны сразу по клику</span></label>
                     <label>Расположение кнопок:</label>
-                    <div class="fp-tools-radio-group">
-                        <label class="fp-tools-radio-option"><input type="radio" name="templatePos" value="bottom" checked><span>Под полем ввода</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="templatePos" value="sidebar"><span>В правой панели</span></label>
+                    <div class="foxen-radio-group">
+                        <label class="foxen-radio-option"><input type="radio" name="templatePos" value="bottom" checked><span>Под полем ввода</span></label>
+                        <label class="foxen-radio-option"><input type="radio" name="templatePos" value="sidebar"><span>В правой панели</span></label>
                     </div>
                     <h3>Редактор шаблонов</h3>
                      <p class="template-info">Кликните на название или текст шаблона, чтобы его изменить. Все изменения сохраняются автоматически.</p>
@@ -311,7 +311,7 @@ function getMainPopupHTML() {
                     <button id="addCustomTemplateBtn" class="btn" style="margin-top: 10px;">+ Добавить свой шаблон</button>
                 </div>
 
-                <div class="fp-tools-page-content" data-page="auto_review">
+                <div class="foxen-page-content" data-page="auto_review">
                     <h3>Ответы на отзывы</h3>
                     <label class="checkbox-label-inline"><input type="checkbox" id="autoReviewEnabled"><span>Включить автоматический ответ на отзывы</span></label>
                     <p class="template-info">Расширение будет автоматически отвечать на новые отзывы, используя заданные шаблоны. Ответ не будет отправлен, если вы уже ответили вручную.</p>
@@ -328,33 +328,33 @@ function getMainPopupHTML() {
                     </div>
                     <div class="review-templates-grid">
                         <div class="template-container">
-                            <label for="fpt-review-5">⭐⭐⭐⭐⭐</label>
-                            <textarea id="fpt-review-5" class="template-input" placeholder="Шаблон для 5 звёзд"></textarea>
+                            <label for="fxn-review-5">⭐⭐⭐⭐⭐</label>
+                            <textarea id="fxn-review-5" class="template-input" placeholder="Шаблон для 5 звёзд"></textarea>
                         </div>
                         <div class="template-container">
-                            <label for="fpt-review-4">⭐⭐⭐⭐</label>
-                            <textarea id="fpt-review-4" class="template-input" placeholder="Шаблон для 4 звёзд"></textarea>
+                            <label for="fxn-review-4">⭐⭐⭐⭐</label>
+                            <textarea id="fxn-review-4" class="template-input" placeholder="Шаблон для 4 звёзд"></textarea>
                         </div>
                         <div class="template-container">
-                            <label for="fpt-review-3">⭐⭐⭐</label>
-                            <textarea id="fpt-review-3" class="template-input" placeholder="Шаблон для 3 звёзд"></textarea>
+                            <label for="fxn-review-3">⭐⭐⭐</label>
+                            <textarea id="fxn-review-3" class="template-input" placeholder="Шаблон для 3 звёзд"></textarea>
                         </div>
                         <div class="template-container">
-                            <label for="fpt-review-2">⭐⭐</label>
-                            <textarea id="fpt-review-2" class="template-input" placeholder="Шаблон для 2 звёзд"></textarea>
+                            <label for="fxn-review-2">⭐⭐</label>
+                            <textarea id="fxn-review-2" class="template-input" placeholder="Шаблон для 2 звёзд"></textarea>
                         </div>
                         <div class="template-container">
-                            <label for="fpt-review-1">⭐</label>
-                            <textarea id="fpt-review-1" class="template-input" placeholder="Шаблон для 1 звезды"></textarea>
+                            <label for="fxn-review-1">⭐</label>
+                            <textarea id="fxn-review-1" class="template-input" placeholder="Шаблон для 1 звезды"></textarea>
                         </div>
                     </div>
                     
                     <h3>Бонус за отзыв</h3>
                     <label class="checkbox-label-inline"><input type="checkbox" id="bonusForReviewEnabled"><span>Отправлять бонус в чат за отзыв 5 ★</span></label>
                     <p class="template-info">Если покупатель оставит отзыв 5 звёзд, ему в чат будет автоматически отправлено сообщение с бонусом. Ничего не будет отправлено за оценки ниже 5 звёзд.</p>
-                    <div class="fp-tools-radio-group" id="bonusModeSelector">
-                        <label class="fp-tools-radio-option"><input type="radio" name="bonusMode" value="single" checked><span>Один бонус</span></label>
-                        <label class="fp-tools-radio-option"><input type="radio" name="bonusMode" value="random"><span>Случайный из списка</span></label>
+                    <div class="foxen-radio-group" id="bonusModeSelector">
+                        <label class="foxen-radio-option"><input type="radio" name="bonusMode" value="single" checked><span>Один бонус</span></label>
+                        <label class="foxen-radio-option"><input type="radio" name="bonusMode" value="random"><span>Случайный из списка</span></label>
                     </div>
                     <div id="singleBonusContainer" class="template-container">
                         <textarea id="singleBonusText" class="template-input" placeholder="Текст вашего бонуса..."></textarea>
@@ -395,9 +395,9 @@ function getMainPopupHTML() {
                         <div id="keywords-list-container" class="keywords-list"></div>
                         <div class="keyword-add-form">
                             <input type="text" id="newKeyword" placeholder="Ключевое слово или фраза">
-                            <div class="fp-tools-radio-group" style="margin: 6px 0;">
-                                <label class="fp-tools-radio-option"><input type="radio" name="newKeywordMatchMode" value="exact" checked><span>Точное совпадение</span></label>
-                                <label class="fp-tools-radio-option"><input type="radio" name="newKeywordMatchMode" value="contains"><span>Содержит</span></label>
+                            <div class="foxen-radio-group" style="margin: 6px 0;">
+                                <label class="foxen-radio-option"><input type="radio" name="newKeywordMatchMode" value="exact" checked><span>Точное совпадение</span></label>
+                                <label class="foxen-radio-option"><input type="radio" name="newKeywordMatchMode" value="contains"><span>Содержит</span></label>
                             </div>
                             <textarea id="newKeywordResponse" placeholder="Текст ответа (можно использовать {buyername})"></textarea>
                             <button id="addKeywordBtn" class="btn btn-default">Добавить правило</button>
@@ -405,7 +405,7 @@ function getMainPopupHTML() {
                     </div>
                 </div>
 
-                <div class="fp-tools-page-content" data-page="lot_io">
+                <div class="foxen-page-content" data-page="lot_io">
                     <h3>Управление лотами</h3>
                     <div class="template-info" style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
                         <p style="margin-top:0;">Здесь собраны инструменты для массовой работы с вашими лотами.</p>
@@ -413,7 +413,7 @@ function getMainPopupHTML() {
                             <li><strong>Экспорт/Импорт:</strong> Сохраняйте все свои лоты в файл и восстанавливайте их на любом аккаунте.</li>
                             <li><strong>Массовое управление:</strong> На странице вашего профиля (<code>funpay.com/users/ID</code>) или в категории с вашими лотами появится кнопка "Выбрать" для массового удаления, дублирования или изменения цен.</li>
                             <li><strong>Продвинутое клонирование:</strong> На странице редактирования лота кнопка "Копировать" позволяет создавать копии в разных категориях (например, на разных серверах).</li>
-                            <li><strong>Авто-поднятие:</strong> Настройте автоматическое поднятие лотов по таймеру. <a href="#" onclick="document.querySelector('.fp-tools-nav li[data-page=autobump] a').click(); return false;">Перейти к настройке</a>.</li>
+                            <li><strong>Авто-поднятие:</strong> Настройте автоматическое поднятие лотов по таймеру. <a href="#" class="fp-link-go-autobump">Перейти к настройке</a>.</li>
                         </ul>
                     </div>
                     
@@ -435,13 +435,13 @@ function getMainPopupHTML() {
                         <p class="template-info">Здесь будут отображаться отложенные процессы импорта.</p>
                     </div>
                 </div>
-                <div class="fp-tools-page-content" data-page="piggy_banks">
+                <div class="foxen-page-content" data-page="piggy_banks">
                     <h3>Управление копилками</h3>
                     <p class="template-info">Создавайте копилки для отслеживания прогресса к вашим финансовым целям. Основная копилка будет отображаться при наведении на баланс в шапке сайта.</p>
                     <button id="create-piggy-bank-btn" class="btn">+ Создать новую копилку</button>
                     <div id="piggy-banks-list-container" class="piggy-banks-list-container"></div>
                 </div>
-                <div class="fp-tools-page-content" data-page="theme">
+                <div class="foxen-page-content" data-page="theme">
                     <h3>Кастомизация темы</h3>
                     <div class="checkbox-label-inline" style="margin-bottom:15px;"><input type="checkbox" id="enableCustomThemeCheckbox"><label for="enableCustomThemeCheckbox" style="margin-bottom:0;"><span>Включить кастомную тему</span></label></div>
                     <div id="foxen-theme-gallery-mount" style="margin-bottom: 12px;"></div>
@@ -473,7 +473,7 @@ function getMainPopupHTML() {
                     <div class="setting-group"><h4 style="margin-top: 0;">Расположение</h4><div class="template-container"><div class="range-label"><label for="headerPositionSelect">Верхняя панель:</label></div><select id="headerPositionSelect"><option value="top">Вверх (по умолчанию)</option><option value="bottom">Вниз</option></select></div></div>
                     <div class="theme-actions-grid"><button id="enableMagicStickBtn" class="btn" style="grid-column: 1 / -1;"><span class="material-icons">auto_fix_normal</span><span>Включить режим редактора</span></button><button id="generatePaletteBtn" class="btn btn-default" style="display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-icons" style="font-size: 18px;">auto_fix_high</span>цвета фона</button><button id="randomizeThemeBtn" class="btn btn-default" style="display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-icons" style="font-size: 18px;">casino</span>рандом</button><button id="shareThemeBtn" class="btn btn-default" style="display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-icons" style="font-size: 18px;">share</span>Поделиться темой</button><button id="exportThemeBtn" class="btn btn-default" title="Сохранить текущие настройки темы в файл (.fptheme)">Экспорт</button><button id="importThemeBtn" class="btn btn-default" title="Загрузить настройки темы из файла (.fptheme)">Импорт</button><input type="file" id="importThemeInput" accept=".fptheme" style="display: none;"><button id="resetThemeBtn" class="btn btn-default">СБРОСИТЬ ТЕМУ</button></div>
                 </div>
-                <div class="fp-tools-page-content" data-page="autobump">
+                <div class="foxen-page-content" data-page="autobump">
                     <h3>Авто-поднятие лотов</h3>
                     <label class="checkbox-label-inline"><input type="checkbox" id="autoBumpEnabled"><span>Включить авто-поднятие</span></label>
                     <div class="template-container"><label for="autoBumpCooldown">Интервал поднятия (минуты):</label><input type="number" id="autoBumpCooldown" class="template-input" min="5" placeholder="Например: 245"><small style="font-size: 12px; opacity: 0.7;">Минимум 5 минут. FunPay позволяет поднимать раз в 4 часа (240 минут).</small></div>
@@ -485,23 +485,23 @@ function getMainPopupHTML() {
                     <small style="font-size: 12px; opacity: 0.7; display: block; margin-top: -10px; margin-left: 30px;">Будут подняты только те категории, в которых есть хотя бы один лот с иконкой автовыдачи (<span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span>).</small>
 
                     <label style="margin-top: 20px;">Консоль логов:</label>
-                    <div id="autoBumpConsole" class="fp-tools-console"></div>
+                    <div id="autoBumpConsole" class="foxen-console"></div>
                 </div>
-                <div class="fp-tools-page-content" data-page="notes">
+                <div class="foxen-page-content" data-page="notes">
                     <h3>Заметки</h3>
                     <p class="template-info">Это ваш личный блокнот. Текст сохраняется автоматически при вводе и доступен между сессиями браузера.</p>
-                    <textarea id="fpToolsNotesArea" class="template-input" style="height: 80%; resize: none; min-height: 400px;" placeholder="Запишите сюда что-нибудь важное: список дел, временные данные для покупателя, идеи для новых лотов..."></textarea>
+                    <textarea id="foxenNotesArea" class="template-input" style="height: 80%; resize: none; min-height: 400px;" placeholder="Запишите сюда что-нибудь важное: список дел, временные данные для покупателя, идеи для новых лотов..."></textarea>
                 </div>
-                <div class="fp-tools-page-content" data-page="calculator">
+                <div class="foxen-page-content" data-page="calculator">
                     <h3>Калькулятор</h3>
                     <div class="calculator-container"><div class="calculator-display"><span id="calcDisplay">0</span></div><div class="calculator-buttons"><button class="calc-btn calc-btn-light" data-action="clear">AC</button><button class="calc-btn calc-btn-light" data-action="toggle-sign">+/-</button><button class="calc-btn calc-btn-light" data-action="percentage">%</button><button class="calc-btn calc-btn-operator" data-action="divide">÷</button><button class="calc-btn" data-key="7">7</button><button class="calc-btn" data-key="8">8</button><button class="calc-btn" data-key="9">9</button><button class="calc-btn calc-btn-operator" data-action="multiply">×</button><button class="calc-btn" data-key="4">4</button><button class="calc-btn" data-key="5">5</button><button class="calc-btn" data-key="6">6</button><button class="calc-btn calc-btn-operator" data-action="subtract">−</button><button class="calc-btn" data-key="1">1</button><button class="calc-btn" data-key="2">2</button><button class="calc-btn" data-key="3">3</button><button class="calc-btn calc-btn-operator" data-action="add">+</button><button class="calc-btn calc-btn-zero" data-key="0">0</button><button class="calc-btn" data-action="decimal">.</button><button class="calc-btn calc-btn-operator" data-action="calculate">=</button></div></div>
                 </div>
-                <div class="fp-tools-page-content" data-page="currency_calc">
+                <div class="foxen-page-content" data-page="currency_calc">
                     <h3>Калькулятор валют</h3>
                     <p class="template-info">Курсы обновляются раз в день. Используется открытый API.</p>
                     <div class="currency-converter-container"><div class="currency-input-group"><input type="number" id="currencyAmountFrom" class="template-input currency-input" value="100"><select id="currencySelectFrom" class="template-input currency-select"></select></div><div class="currency-swap-container"><button id="currencySwapBtn" class="currency-swap-btn">⇅</button><div id="currencyRateDisplay" class="currency-rate-display"></div></div><div class="currency-input-group"><input type="text" id="currencyAmountTo" class="template-input currency-input" readonly><select id="currencySelectTo" class="template-input currency-select"></select></div></div><div id="currency-error-display" class="currency-error"></div>
                 </div>
-                <div class="fp-tools-page-content" data-page="effects">
+                <div class="foxen-page-content" data-page="effects">
                     <h3>Эффекты частиц</h3>
                     <label class="checkbox-label-inline"><input type="checkbox" id="cursorFxEnabled"><span>Включить эффекты частиц</span></label>
                     <div class="template-container"><label for="cursorFxType">Тип эффекта:</label><select id="cursorFxType"><option value="sparkle">Искры</option><option value="trail">След</option><option value="snow">Снег</option><option value="blood">Кровь</option></select></div>
@@ -514,11 +514,11 @@ function getMainPopupHTML() {
                     <label class="checkbox-label-inline"><input type="checkbox" id="customCursorEnabled"><span>Включить свой курсор</span></label>
                     <div id="customCursorControls" style="display: none;"><div class="template-container"><label>Изображение курсора:</label><div id="cursor-image-preview" style="width:64px; height:64px; background-color:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:10px; background-size:contain; background-position:center; background-repeat: no-repeat; display:flex; align-items:center; justify-content:center; color: #888; font-size:12px;">Нет</div><button id="uploadCursorImageBtn" class="btn">Загрузить</button><button id="removeCursorImageBtn" class="btn btn-default" style="margin-left: 10px;">Удалить</button><input type="file" id="cursorImageInput" accept="image/*" style="display: none;"></div><label class="checkbox-label-inline"><input type="checkbox" id="hideSystemCursor" checked><span>Скрыть системный курсор</span></label><div class="template-container"><div class="range-label"><label for="customCursorSize">Размер:</label><span id="customCursorSizeValue">32px</span></div><input type="range" id="customCursorSize" min="16" max="128" step="1" value="32"></div><div class="template-container"><div class="range-label"><label for="customCursorOpacity">Прозрачность:</label><span id="customCursorOpacityValue">100%</span></div><input type="range" id="customCursorOpacity" min="0" max="100" step="1" value="100"></div></div>
                 </div>
-                <div class="fp-tools-page-content" data-page="overview">
+                <div class="foxen-page-content" data-page="overview">
                     <div class="overview-container"><h3 style="border:none">Видео-обзор функций</h3><p class="template-info">Посмотрите короткий кинематографический ролик, демонстрирующий все возможности Foxen в действии. Откройте для себя инструменты, о которых вы могли не знать!</p><div class="overview-promo-art"></div><button id="start-overview-tour-btn" class="btn"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span> Начать обзор</button></div>
                     <div class="feature-list-container"><h3>Справочник по функциям</h3><div class="feature-item"><div class="feature-title"><span class="material-icons">smart_toy</span>ИИ-Ассистент в чате</div><div class="feature-location"><strong>Где найти:</strong> В любом чате, кнопка "AI" рядом с полем ввода.</div><div class="feature-desc">Улучшает ваш текст, делая его вежливым и профессиональным. Активируйте режим и нажмите Enter для обработки. Также предупреждает о грубости.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">auto_fix_high</span>AI-Генератор лотов</div><div class="feature-location"><strong>Где найти:</strong> На странице создания/редактирования лота.</div><div class="feature-desc">Создает название и описание для лота на основе ваших идей, анализируя и копируя стиль ваших существующих предложений.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">add_photo_alternate</span>AI-Генератор изображений</div><div class="feature-location"><strong>Где найти:</strong> На странице создания/редактирования лота, в разделе "Изображения".</div><div class="feature-desc">Создавайте уникальные и стильные превью для ваших предложений с помощью встроенного генератора, в том числе по текстовому запросу.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">palette</span>Полная кастомизация</div><div class="feature-location"><strong>Где найти:</strong> Вкладка "Кастомизация".</div><div class="feature-desc">Измените внешний вид FunPay: установите анимированный фон, настройте цвета, шрифты, прозрачность блоков и даже расположение верхней панели.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">auto_fix_normal</span>"Кастомизатор (режим редактора)</div><div class="feature-location"><strong>Где найти:</strong> Вкладка "Кастомизация".</div><div class="feature-desc">Редактируйте любой элемент сайта в реальном времени. Меняйте цвета, размеры или скрывайте ненужное, сохраняя стили навсегда.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">description</span>Шаблоны и AI-переменные</div><div class="feature-location"><strong>Где найти:</strong> Под полем ввода в чате. Настраиваются во вкладке "Шаблоны".</div><div class="feature-desc">Быстрая вставка готовых сообщений. Поддерживают переменные {buyername}, {date} и даже генерацию текста через {ai:ваш запрос}.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">checklist</span>Управление лотами и ценами</div><div class="feature-location"><strong>Где найти:</strong> На странице вашего профиля (funpay.com/users/...).</div><div class="feature-desc">Кнопка "Выбрать" позволяет выделить несколько лотов для массового удаления, дублирования, отключения или редактирования цен.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">control_point_duplicate</span>Клонирование лотов</div><div class="feature-location"><strong>Где найти:</strong> На странице редактирования любого вашего лота.</div><div class="feature-desc">Кнопка "Копировать" позволяет создать точную копию лота или массово размножить его по разным категориям (например, по разным серверам).</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">public</span>Глобальный импорт лотов</div><div class="feature-location"><strong>Где найти:</strong> На странице редактирования лота, кнопка "Импорт".</div><div class="feature-desc">Импортируйте название и описание любого лота с FunPay, чтобы анализировать конкурентов или использовать как основу.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">sort_by_alpha</span>Сортировка по отзывам</div><div class="feature-location"><strong>Где найти:</strong> На любой странице со списком лотов.</div><div class="feature-desc">Кликните на заголовок "Продавец" в таблице, чтобы отсортировать все предложения по количеству отзывов у продавцов.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">label</span>Пометки для пользователей</div><div class="feature-location"><strong>Где найти:</strong> В выпадающем меню в заголовке чата с человеком.</div><div class="feature-desc">Устанавливайте настраиваемые цветные метки для пользователей, которые будут видны в вашем списке контактов.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">rocket_launch</span>Авто-поднятие лотов</div><div class="feature-location"><strong>Где найти:</strong> Вкладка "Авто-поднятие".</div><div class="feature-desc">Настройте автоматическое поднятие лотов по таймеру. Можно выбрать для поднятия только определенные категории.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">monitoring</span>Статистика</div><div class="feature-location"><strong>Где найти:</strong> Страница "Продажи" - статистика продаж, кнопка "Аналитика рынка" на странице игры.</div><div class="feature-desc">Получайте детальную статистику по своим продажам и анализируйте рыночную ситуацию в любой категории.</div></div><div class="feature-item"><div class="feature-title"><span class="material-icons">savings</span>Финансовые копилки</div><div class="feature-location"><strong>Где найти:</strong> Вкладка "Копилки" и иконка в шапке сайта.</div><div class="feature-desc">Устанавливайте финансовые цели и отслеживайте их достижение. Копилка синхронизируется с балансом FunPay.</div></div></div>
                 </div>
-                <div class="fp-tools-page-content" data-page="ai_audit">
+                <div class="foxen-page-content" data-page="ai_audit">
                     <h3>ИИ-аудит лотов</h3>
 
                     <!-- START STATE -->
@@ -539,7 +539,7 @@ function getMainPopupHTML() {
                     <div id="fp-audit-survey" style="display:none;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                             <span id="fp-audit-q-num" style="font-size:12px;color:#5a5f7a;"></span>
-                            <span id="fp-audit-skip" style="font-size:11px;color:#3a3d52;cursor:pointer;" onclick="document.getElementById('fp-audit-next-btn')?.click()">Пропустить →</span>
+                            <span id="fp-audit-skip" style="font-size:11px;color:#3a3d52;cursor:pointer;">Пропустить →</span>
                         </div>
                         <div style="height:4px;background:#1e2030;border-radius:2px;margin-bottom:16px;overflow:hidden;">
                             <div id="fp-audit-progress-bar" style="height:100%;background:#6B66FF;width:0;transition:width .3s;border-radius:2px;"></div>
@@ -560,7 +560,7 @@ function getMainPopupHTML() {
                     <div id="fp-audit-results" style="display:none;overflow-y:auto;max-height:460px;padding-right:4px;"></div>
                 </div>
 
-                <div class="fp-tools-page-content" data-page="settings_io">
+                <div class="foxen-page-content" data-page="settings_io">
                     <h3>Импорт и экспорт настроек</h3>
                     <p class="template-info">Сохраните все настройки Foxen в файл и восстановите на другом устройстве или аккаунте.</p>
                     <div style="display:flex;gap:12px;margin-bottom:10px;">
@@ -585,7 +585,7 @@ function getMainPopupHTML() {
                     </div>
                 </div>
 
-                <div class="fp-tools-page-content" data-page="blacklist">
+                <div class="foxen-page-content" data-page="blacklist">
                     <h3>Чёрный список покупателей</h3>
                     <p class="template-info">Добавьте ненадёжных покупателей. Вы сможете заблокировать на них автоматизаию и уведомления.</p>
                     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
@@ -596,7 +596,7 @@ function getMainPopupHTML() {
                     <div id="fp-bl-list"></div>
                 </div>
 
-                <div class="fp-tools-page-content" data-page="auto_delivery">
+                <div class="foxen-page-content" data-page="auto_delivery">
                     <h3>Авто-выдача товаров</h3>
                     <p class="template-info">При новом заказе расширение автоматически отправит покупателю товар. Укажите что именно отправлять для каждого лота, или используйте поле «Секреты» лота как источник.</p>
                     <div class="support-promo" style="background:rgba(107,102,255,0.07);border-color:rgba(107,102,255,0.2);margin-bottom:16px;">
@@ -619,7 +619,7 @@ function getMainPopupHTML() {
                     <div id="fp-delivery-lots-list"></div>
                 </div>
 
-                <div class="fp-tools-page-content" data-page="tickets" style="position:relative;">
+                <div class="foxen-page-content" data-page="tickets" style="position:relative;">
                     <style>
                         #fp-tickets-list::-webkit-scrollbar{width:4px}
                         #fp-tickets-list::-webkit-scrollbar-track{background:transparent}
@@ -643,7 +643,7 @@ function getMainPopupHTML() {
                     <!-- Header -->
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                         <h3 style="margin:0;font-size:15px;">Техподдержка FunPay</h3>
-                        <button id="fp-ticket-refresh-btn" title="Обновить" style="background:none;border:none;color:#5a5f7a;cursor:pointer;font-size:16px;padding:2px 6px;transition:color .15s;" onmouseover="this.style.color='#d8dae8'" onmouseout="this.style.color='#5a5f7a'">↻</button>
+                        <button id="fp-ticket-refresh-btn" title="Обновить" style="background:none;border:none;color:#5a5f7a;cursor:pointer;font-size:16px;padding:2px 6px;transition:color .15s;">↻</button>
                     </div>
 
                     <!-- Auto ticket block -->
@@ -734,7 +734,7 @@ function getMainPopupHTML() {
                     <div id="fp-new-ticket-panel" style="display:none;position:absolute;inset:0;background:#0a0b14;z-index:20;border-radius:0;box-sizing:border-box;flex-direction:column;overflow:hidden;">
                         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;border-bottom:1px solid #1a1c2e;flex-shrink:0;">
                             <span style="font-weight:600;font-size:14px;">Новая заявка</span>
-                            <button id="fp-new-ticket-close" style="background:none;border:none;color:#5a5f7a;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;" onmouseover="this.style.color='#d8dae8'" onmouseout="this.style.color='#5a5f7a'">✕</button>
+                            <button id="fp-new-ticket-close" style="background:none;border:none;color:#5a5f7a;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;">✕</button>
                         </div>
                         <div id="fp-new-ticket-fields" style="display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;padding:10px 14px;"></div>
                         <div style="flex-shrink:0;padding:8px 14px 12px;border-top:1px solid #1a1c2e;background:#0a0b14;">
@@ -743,7 +743,7 @@ function getMainPopupHTML() {
                     </div>
                 </div>
 
-                <div class="fp-tools-page-content" data-page="support" style="padding:0;">
+                <div class="foxen-page-content" data-page="support" style="padding:0;">
                     <div style="padding:20px;background:linear-gradient(180deg, rgba(30,34,53,0.8) 0%, rgba(20,22,35,0.4) 100%);border-bottom:1px solid rgba(255,255,255,0.05);">
                         <h3 style="margin:0 0 12px;font-size:18px;display:flex;align-items:center;gap:8px;">
                             О расширении Foxen <span class="material-symbols-rounded" style="color:#f4c84a;">star</span>
@@ -769,10 +769,10 @@ function getMainPopupHTML() {
                 </div>
             </main>
         </div>
-        <div class="fp-tools-footer">
+        <div class="foxen-footer">
             <button id="saveSettings" class="btn">Сохранить</button>
         </div>
-        <div class="fpt-popup-outer-disclaimer">
+        <div class="fxn-popup-outer-disclaimer">
             <span>Используя расширение Foxen, вы автоматически соглашаетесь с <a href="https://github.com/SanoSenpay/Foxen/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener">Политикой конфиденциальности</a>.</span>
         </div>
     `;

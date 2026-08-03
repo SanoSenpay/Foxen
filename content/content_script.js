@@ -10,7 +10,7 @@
     setInterval(() => {
         try {
             const extApi = typeof browser !== 'undefined' ? browser : chrome;
-            extApi.runtime.sendMessage({ action: 'fptAutobumpPing' }).catch(() => {});
+            extApi.runtime.sendMessage({ action: 'fxnAutobumpPing' }).catch(() => {});
         } catch (_) {}
     }, 30000);
     
@@ -43,20 +43,20 @@
         };
 
         announcementsTab.addEventListener('click', async () => {
-            const popup = document.querySelector('.fp-tools-popup');
-            const navItems = popup.querySelectorAll('.fp-tools-nav li, .fp-tools-header-tab');
-            const contentPages = popup.querySelectorAll('.fp-tools-page-content');
+            const popup = document.querySelector('.foxen-popup');
+            const navItems = popup.querySelectorAll('.foxen-nav li, .foxen-header-tab');
+            const contentPages = popup.querySelectorAll('.foxen-page-content');
 
             navItems.forEach(item => item.classList.remove('active'));
             announcementsTab.classList.add('active');
             
             contentPages.forEach(page => page.classList.remove('active'));
-            popup.querySelector('.fp-tools-page-content[data-page="announcements"]').classList.add('active');
+            popup.querySelector('.foxen-page-content[data-page="announcements"]').classList.add('active');
 
             chrome.runtime.sendMessage({ action: 'markAnnouncementsAsRead' });
             
-            const { fpToolsAnnouncements } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAnnouncements');
-            displayAnnouncements(fpToolsAnnouncements);
+            const { foxenAnnouncements } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAnnouncements');
+            displayAnnouncements(foxenAnnouncements);
         });
 
         const refreshBtn = document.getElementById('refresh-announcements-btn');
@@ -78,8 +78,8 @@
             });
         }
 
-        chrome.storage.local.get('fpToolsUnreadCount', ({ fpToolsUnreadCount }) => {
-            updateAnnouncementsBadgeUI(fpToolsUnreadCount || 0);
+        chrome.storage.local.get('foxenUnreadCount', ({ foxenUnreadCount }) => {
+            updateAnnouncementsBadgeUI(foxenUnreadCount || 0);
         });
     }
 
@@ -110,16 +110,28 @@
     }
 
     function addFpToolsButton() {
-        const anchor = document.querySelector('.nav.navbar-nav.navbar-right.logged .user-link[data-toggle="dropdown"]')?.parentElement;
-        if (!anchor || document.getElementById('fpToolsButton')) {
+        if (document.getElementById('foxenButton')) return true;
+
+        const anchor = document.querySelector('.nav.navbar-nav.navbar-right.logged .user-link[data-toggle="dropdown"]')?.parentElement
+            || document.querySelector('.nav.navbar-nav.navbar-right .user-link')?.parentElement
+            || document.querySelector('.nav.navbar-nav.navbar-right li:last-child')
+            || document.querySelector('.nav.navbar-nav.navbar-right')
+            || document.querySelector('.navbar-nav.navbar-right');
+
+        if (!anchor) {
             return false;
         }
 
         const toolsMenu = createElement('li');
-        toolsMenu.innerHTML = `<a style="font-weight: bold; cursor: pointer; user-select: none;" id="fpToolsButton">Foxen<span></span></a>`;
-        anchor.insertAdjacentElement('afterend', toolsMenu);
+        toolsMenu.innerHTML = `<a style="font-weight: bold; cursor: pointer; user-select: none;" id="foxenButton">Foxen<span></span></a>`;
+        
+        if (anchor.tagName && anchor.tagName.toLowerCase() === 'li') {
+            anchor.insertAdjacentElement('afterend', toolsMenu);
+        } else {
+            anchor.appendChild(toolsMenu);
+        }
 
-        const button = toolsMenu.querySelector('#fpToolsButton');
+        const button = toolsMenu.querySelector('#foxenButton');
 
         if (typeof applyHeaderButtonStylesEarly === 'function') {
             applyHeaderButtonStylesEarly();
@@ -130,7 +142,7 @@
             if (typeof window.__fpEnsurePopup === 'function') {
                 await window.__fpEnsurePopup();
             }
-            const popup = document.querySelector('.fp-tools-popup');
+            const popup = document.querySelector('.foxen-popup');
             if (popup) {
                 await loadLastActivePage();
                 popup.classList.add('active');
@@ -169,11 +181,11 @@
     async function handleAIReviewReply(event) {
         const button = event.currentTarget;
     
-        if (!document.querySelector('style[data-fp-tools-btn-loader]')) {
+        if (!document.querySelector('style[data-foxen-btn-loader]')) {
             const style = document.createElement('style');
-            style.dataset.fpToolsBtnLoader = 'true';
+            style.dataset.foxenBtnLoader = 'true';
             style.textContent = `
-                .fp-tools-btn-loader {
+                .foxen-btn-loader {
                     display: inline-block;
                     width: 16px; height: 16px;
                     border: 2px solid rgba(255,255,255,0.3);
@@ -188,7 +200,7 @@
     
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = `<span class="fp-tools-btn-loader"></span><span style="margin-left:8px;">Генерация…</span>`;
+        button.innerHTML = `<span class="foxen-btn-loader"></span><span style="margin-left:8px;">Генерация…</span>`;
         
         const replyTextarea = document.querySelector('.review-item-answer-form textarea[name="text"], .review-editor-reply textarea[name="text"]');
         if (!replyTextarea) {
@@ -243,7 +255,7 @@
     function initializeDynamicFeatures() {
         document.body.addEventListener('focusin', (event) => {
             if (event.target.matches('.chat-form-input .form-control')) {
-                if (!document.querySelector('.chat-buttons-container') && !document.querySelector('.fp-tools-template-sidebar')) {
+                if (!document.querySelector('.chat-buttons-container') && !document.querySelector('.foxen-template-sidebar')) {
                     addChatTemplateButtons();
                 }
                 if (!document.getElementById('aiModeToggleBtn')) {
@@ -258,25 +270,25 @@
         });
     
         const checkAndInitFeatures = () => {
-            if (!document.getElementById('fpToolsGenerateImageBtn') && document.querySelector('.attachments-box')) {
+            if (!document.getElementById('foxenGenerateImageBtn') && document.querySelector('.attachments-box')) {
                 initializeImageGenerator();
             }
-            if (!document.getElementById('fp-tools-ai-gen-btn')) {
+            if (!document.getElementById('foxen-ai-gen-btn')) {
                 const header = document.querySelector('h1.page-header, h1.page-header.page-header-no-hr');
                 if (header && (header.textContent.includes('Добавление предложения') || header.textContent.includes('Редактирование предложения'))) {
                     createAIGeneratorUI();
                 }
             }
-            if (!document.getElementById('fp-tools-read-all-btn') && document.querySelector('.chat-full-header')) {
+            if (!document.getElementById('foxen-read-all-btn') && document.querySelector('.chat-full-header')) {
                 initializeMarkAllAsRead();
             }
             // --- ИИ-ОТВЕТ НА ОТЗЫВ: кнопка-клон «Опубликовать» со звёздочкой ---
             const reviewPublishBtn = document.querySelector('.review-item-answer-form .btn[data-action="save"], .review-editor-reply .btn[data-action="save"]');
-            if (reviewPublishBtn && !document.getElementById('fp-tools-ai-review-reply-btn')) {
+            if (reviewPublishBtn && !document.getElementById('foxen-ai-review-reply-btn')) {
                 const aiBtn = createElement('button', {
                     type: 'button',
                     class: reviewPublishBtn.className.trim(),
-                    id: 'fp-tools-ai-review-reply-btn'
+                    id: 'foxen-ai-review-reply-btn'
                 });
                 aiBtn.innerHTML = `<span class="fp-ai-reply-star">✦</span><span class="fp-ai-reply-label">Ответить</span>`;
                 aiBtn.style.marginLeft = '10px';
@@ -284,7 +296,7 @@
                 reviewPublishBtn.after(aiBtn);
                 aiBtn.addEventListener('click', handleAIReviewReply);
             }
-            if (window.location.pathname.includes('/lots/offer') && !document.getElementById('fp-tools-public-clone-btn')) {
+            if (window.location.pathname.includes('/lots/offer') && !document.getElementById('foxen-public-clone-btn')) {
                 const buyButtonForm = document.querySelector('form[action$="/orders/new"]');
                 const buyButton = buyButtonForm?.querySelector('button[type="submit"]');
 
@@ -297,7 +309,7 @@
 
                     const cloneBtn = createElement('button', {
                         type: 'button',
-                        id: 'fp-tools-public-clone-btn',
+                        id: 'foxen-public-clone-btn',
                         class: 'btn btn-default'
                     }, {
                         flex: '0 0 auto', // Кнопка занимает только нужную ширину
@@ -363,15 +375,15 @@
         let __fpPopupReady = false;
         let __fpPopupBuilding = null;
         async function ensureFpToolsPopup() {
-            const existingPopup = document.querySelector('.fp-tools-popup');
+            const existingPopup = document.querySelector('.foxen-popup');
             if (existingPopup && !__fpPopupReady) {
                 existingPopup.remove();
             }
-            if (__fpPopupReady && document.querySelector('.fp-tools-popup')) return document.querySelector('.fp-tools-popup');
+            if (__fpPopupReady && document.querySelector('.foxen-popup')) return document.querySelector('.foxen-popup');
             if (__fpPopupBuilding) return __fpPopupBuilding;
 
             __fpPopupBuilding = (async () => {
-                const oldP = document.querySelector('.fp-tools-popup');
+                const oldP = document.querySelector('.foxen-popup');
                 if (oldP) oldP.remove();
 
                 const toolsPopup = createMainPopup();
@@ -451,8 +463,8 @@
         initializeLotManagement();
         initializeReviewSorter();
         initializeMarketAnalytics();
-        initializeMarkAllAsRead();
-        initializeFPTIdentifier();
+        if (typeof initializeMarkAllAsRead === 'function') initializeMarkAllAsRead();
+        if (typeof initializeFPTIdentifier === 'function') initializeFPTIdentifier();
         initializeBlacklist();
         initializeUnconfirmedBalanceDisplay();
         initializeSalesFilters();
@@ -490,7 +502,7 @@
                 }
                 return true;
             }
-            if (request.action === 'fpToolsCheckRestoreLots') {
+            if (request.action === 'foxenCheckRestoreLots') {
                 setTimeout(checkAndRestoreLots, 5000);
                 return true;
             }
@@ -500,7 +512,7 @@
             }
             if (request.action === 'announcementsUpdated') {
                 const announcementsArea = document.getElementById('announcements-content-area');
-                if (announcementsArea && document.querySelector('.fp-tools-page-content[data-page="announcements"]').classList.contains('active')) {
+                if (announcementsArea && document.querySelector('.foxen-page-content[data-page="announcements"]').classList.contains('active')) {
                     const displayAnnouncements = (announcements) => {
                         if (!announcementsArea) return;
                         if (!announcements || announcements.length === 0) {
@@ -529,8 +541,8 @@
 
     // ── 2.9: Unconfirmed balance display ─────────────────────────────────────
     function initializeUnconfirmedBalanceDisplay() {
-        chrome.storage.local.get('fpToolsShowUnconfirmed', ({ fpToolsShowUnconfirmed }) => {
-            if (fpToolsShowUnconfirmed === false) return;
+        chrome.storage.local.get('foxenShowUnconfirmed', ({ foxenShowUnconfirmed }) => {
+            if (foxenShowUnconfirmed === false) return;
 
             async function updateUnconfirmedBadge() {
                 const balanceEl = document.querySelector('.user-balance-sum, .navbar-balance');
@@ -561,7 +573,7 @@
 
     // ── 2.9: Sales period filter ──────────────────────────────────────────────
     function initializeSalesFilters() {
-        const salesSection = document.querySelector('.sales-statistics, #fp-tools-sales-block');
+        const salesSection = document.querySelector('.sales-statistics, #foxen-sales-block');
         if (!salesSection) return;
         if (document.getElementById('fp-sales-filter-bar')) return;
 
@@ -608,10 +620,10 @@
 
     function applySalesPeriodFilter(days) {
         (async () => {
-            const fpToolsSalesData = await FPTSalesDB.getAllAsArray();
-            if (!fpToolsSalesData.length) return;
+            const foxenSalesData = await FPTSalesDB.getAllAsArray();
+            if (!foxenSalesData.length) return;
             const cutoff = days >= 9999 ? 0 : Date.now() - days * 24 * 60 * 60 * 1000;
-            const filtered = fpToolsSalesData.filter(o => o.orderDate >= cutoff);
+            const filtered = foxenSalesData.filter(o => o.orderDate >= cutoff);
             const total = filtered.reduce((s, o) => s + (o.price || 0), 0);
             const countEl = document.getElementById('fp-sales-count');
             const totalEl = document.getElementById('fp-sales-total');
@@ -641,24 +653,24 @@
     function initializeResetButtons() {
         const arBtn = document.getElementById('fp-reset-autoresponder-btn');
         arBtn?.addEventListener('click', async () => {
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['fpToolsAutoResponderTag']);
-            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-            fpToolsAutoReplies.processedMessageIds = [];
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['foxenAutoResponderTag']);
+            const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+            foxenAutoReplies.processedMessageIds = [];
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
             _resetBtnFeedback(arBtn, 'Сброшено');
         });
 
         const pinBtn = document.getElementById('fp-reset-pinned-btn');
         pinBtn?.addEventListener('click', async () => {
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('fpToolsPinnedLots');
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('foxenPinnedLots');
             _resetBtnFeedback(pinBtn, 'Очищено');
         });
 
         const greetBtn = document.getElementById('fp-reset-greeted-btn');
         greetBtn?.addEventListener('click', async () => {
-            const { fpToolsAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
-            fpToolsAutoReplies.greetedUsers = [];
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies });
+            const { foxenAutoReplies = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
+            foxenAutoReplies.greetedUsers = [];
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
             _resetBtnFeedback(greetBtn, 'Сброшено');
         });
 

@@ -53,7 +53,7 @@
         for (let i = 0; el && i < 80; i++) {
             const link = el.querySelector && el.querySelector('.chat-msg-author-link');
             if (link) {
-                const txt = link.querySelector('.fpt-epic-text');
+                const txt = link.querySelector('.fxn-epic-text');
                 return (txt ? txt.textContent : link.textContent).trim();
             }
             el = el.previousElementSibling;
@@ -69,13 +69,13 @@
             const img = item.querySelector('.chat-img, .chat-message img, a[href*="/s/chat/"]');
             return img ? 'Изображение' : '';
         }
-        const rest = t.querySelector('.fpt-reply-rest');
+        const rest = t.querySelector('.fxn-reply-rest');
         if (rest) {
             const v = rest.innerText.trim();
             if (v) return v;
         } else {
             const clone = t.cloneNode(true);
-            clone.querySelectorAll('.fp-trans-wrap, .fpt-reply-card, .fpt-reply-rest').forEach(n => n.remove());
+            clone.querySelectorAll('.fp-trans-wrap, .fxn-reply-card, .fxn-reply-rest').forEach(n => n.remove());
             const v = clone.innerText.trim();
             if (v) return v;
         }
@@ -85,76 +85,76 @@
     }
 
     function ensureStyles() {
-        if (document.getElementById('fpt-reply-styles')) return;
+        if (document.getElementById('fxn-reply-styles')) return;
         const s = document.createElement('style');
-        s.id = 'fpt-reply-styles';
+        s.id = 'fxn-reply-styles';
         s.textContent = `
-        .fpt-msg-tools{display:none;align-items:center;gap:2px;vertical-align:middle;
+        .fxn-msg-tools{display:none;align-items:center;gap:2px;vertical-align:middle;
             margin-right:6px;line-height:1;}
-        .chat-msg-item:hover .fpt-msg-tools{display:inline-flex;}
+        .chat-msg-item:hover .fxn-msg-tools{display:inline-flex;}
         /* Показываем панель инструментов если кнопка перевода активна (перевод показан) */
-        .chat-msg-item .fpt-msg-tools:has(.fpt-tr-btn.fpt-tr-active){display:inline-flex;}
-        .fpt-msg-tool{width:20px !important;height:20px !important;display:inline-flex;align-items:center;justify-content:center;
-            border:none;background:transparent;color:var(--fpt-text-muted,#8a8f9c);
+        .chat-msg-item .fxn-msg-tools:has(.fxn-tr-btn.fxn-tr-active){display:inline-flex;}
+        .fxn-msg-tool{width:20px !important;height:20px !important;display:inline-flex;align-items:center;justify-content:center;
+            border:none;background:transparent;color:var(--fxn-text-muted,#8a8f9c);
             border-radius:5px;cursor:pointer;padding:0 !important;margin:0 !important;
             transition:color .15s,background .15s,transform .1s;
             line-height:1 !important;min-width:0 !important;box-shadow:none !important;vertical-align:middle;}
-        .fpt-msg-tool:hover{color:var(--fpt-text,#cfd2dc);background:var(--fpt-hover,rgba(127,127,127,0.16));transform:scale(1.1);}
-        .fpt-msg-tool:active{transform:scale(0.92);}
-        .fpt-msg-tool .material-symbols-rounded{font-size:14px !important;line-height:1 !important;}
+        .fxn-msg-tool:hover{color:var(--fxn-text,#cfd2dc);background:var(--fxn-hover,rgba(127,127,127,0.16));transform:scale(1.1);}
+        .fxn-msg-tool:active{transform:scale(0.92);}
+        .fxn-msg-tool .material-symbols-rounded{font-size:14px !important;line-height:1 !important;}
 
         /* Кнопка перевода - активное состояние (перевод показан) */
-        .fpt-tr-btn.fpt-tr-active{color:var(--fpt-accent,#5b9cf6) !important;
+        .fxn-tr-btn.fxn-tr-active{color:var(--fxn-accent,#5b9cf6) !important;
             background:rgba(91,156,246,0.12) !important;}
-        .fpt-tr-btn.fpt-tr-active:hover{color:var(--fpt-accent,#5b9cf6) !important;
+        .fxn-tr-btn.fxn-tr-active:hover{color:var(--fxn-accent,#5b9cf6) !important;
             background:rgba(91,156,246,0.2) !important;}
         /* Кнопка перевода - состояние загрузки */
-        .fpt-tr-btn.fpt-tr-loading{pointer-events:none;opacity:0.7;}
-        .fpt-tr-btn.fpt-tr-loading .material-symbols-rounded{
-            animation:fptTranslateSpin 0.7s linear infinite;}
-        @keyframes fptTranslateSpin{
+        .fxn-tr-btn.fxn-tr-loading{pointer-events:none;opacity:0.7;}
+        .fxn-tr-btn.fxn-tr-loading .material-symbols-rounded{
+            animation:fxnTranslateSpin 0.7s linear infinite;}
+        @keyframes fxnTranslateSpin{
             0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}
         }
 
         /* всплывающая кнопка «Ответить» над выделенным текстом */
-        #fpt-sel-reply{position:fixed;z-index:100002;display:none;align-items:center;gap:4px;
-            background:var(--fpt-surface,#1a1c26);border:1px solid var(--fpt-border,rgba(127,127,127,0.3));
-            color:var(--fpt-text,#d8dae8);border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;
+        #fxn-sel-reply{position:fixed;z-index:100002;display:none;align-items:center;gap:4px;
+            background:var(--fxn-surface,#1a1c26);border:1px solid var(--fxn-border,rgba(127,127,127,0.3));
+            color:var(--fxn-text,#d8dae8);border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;
             cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.35);font-family:Inter,'Segoe UI',sans-serif;
             white-space:nowrap;user-select:none;}
-        #fpt-sel-reply:hover{border-color:var(--fpt-text-muted,#8a8f9c);}
-        #fpt-sel-reply .material-symbols-rounded{font-size:15px;line-height:1;}
+        #fxn-sel-reply:hover{border-color:var(--fxn-text-muted,#8a8f9c);}
+        #fxn-sel-reply .material-symbols-rounded{font-size:15px;line-height:1;}
 
-        .fpt-reply-bar{display:flex;align-items:center;gap:0;margin:0;
-            background:var(--fpt-surface,rgba(127,127,127,0.08));
-            border:1px solid var(--fpt-border,rgba(127,127,127,0.25));
-            border-left:3px solid var(--fpt-text-muted,#8a8f9c);
+        .fxn-reply-bar{display:flex;align-items:center;gap:0;margin:0;
+            background:var(--fxn-surface,rgba(127,127,127,0.08));
+            border:1px solid var(--fxn-border,rgba(127,127,127,0.25));
+            border-left:3px solid var(--fxn-text-muted,#8a8f9c);
             border-radius:7px;overflow:hidden;width:100%;box-sizing:border-box;}
-        .fpt-reply-bar-body{flex:1;min-width:0;padding:4px 9px;}
-        .fpt-reply-bar-author{font-size:11.5px;font-weight:700;color:var(--fpt-text,#cfd2dc);
+        .fxn-reply-bar-body{flex:1;min-width:0;padding:4px 9px;}
+        .fxn-reply-bar-author{font-size:11.5px;font-weight:700;color:var(--fxn-text,#cfd2dc);
             display:flex;align-items:center;gap:4px;line-height:1.3;}
-        .fpt-reply-bar-author .material-symbols-rounded{font-size:13px;color:var(--fpt-text-muted,#8a8f9c);}
-        .fpt-reply-bar-text{font-size:11.5px;color:var(--fpt-text-muted,#8a8f9c);overflow:hidden;
+        .fxn-reply-bar-author .material-symbols-rounded{font-size:13px;color:var(--fxn-text-muted,#8a8f9c);}
+        .fxn-reply-bar-text{font-size:11.5px;color:var(--fxn-text-muted,#8a8f9c);overflow:hidden;
             text-overflow:ellipsis;white-space:nowrap;line-height:1.3;}
-        .fpt-reply-bar-close{width:30px;align-self:stretch;border:none;background:transparent;
-            color:var(--fpt-text-muted,#8a8f9c);font-size:16px;cursor:pointer;flex-shrink:0;}
-        .fpt-reply-bar-close:hover{color:var(--fpt-text,#fff);background:var(--fpt-accent-soft,rgba(127,127,127,0.15));}
+        .fxn-reply-bar-close{width:30px;align-self:stretch;border:none;background:transparent;
+            color:var(--fxn-text-muted,#8a8f9c);font-size:16px;cursor:pointer;flex-shrink:0;}
+        .fxn-reply-bar-close:hover{color:var(--fxn-text,#fff);background:var(--fxn-accent-soft,rgba(127,127,127,0.15));}
 
-        .fpt-reply-card{display:inline-flex;align-items:stretch;margin-bottom:4px;cursor:pointer;
-            background:var(--fpt-surface,rgba(127,127,127,0.10));border-radius:5px;overflow:hidden;
-            border-left:3px solid var(--fpt-text-muted,#8a8f9c);max-width:100%;width:auto;vertical-align:top;}
-        .fpt-reply-card:hover{background:var(--fpt-hover,rgba(127,127,127,0.16));}
-        .fpt-reply-card-body{padding:2px 8px;min-width:0;display:flex;flex-direction:column;justify-content:center;}
-        .fpt-reply-card-author{font-size:10.5px;font-weight:700;color:var(--fpt-text,#cfd2dc);line-height:1.2;
+        .fxn-reply-card{display:inline-flex;align-items:stretch;margin-bottom:4px;cursor:pointer;
+            background:var(--fxn-surface,rgba(127,127,127,0.10));border-radius:5px;overflow:hidden;
+            border-left:3px solid var(--fxn-text-muted,#8a8f9c);max-width:100%;width:auto;vertical-align:top;}
+        .fxn-reply-card:hover{background:var(--fxn-hover,rgba(127,127,127,0.16));}
+        .fxn-reply-card-body{padding:2px 8px;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+        .fxn-reply-card-author{font-size:10.5px;font-weight:700;color:var(--fxn-text,#cfd2dc);line-height:1.2;
             overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-        .fpt-reply-card-text{font-size:11px;color:var(--fpt-text-muted,#8a8f9c);overflow:hidden;
+        .fxn-reply-card-text{font-size:11px;color:var(--fxn-text-muted,#8a8f9c);overflow:hidden;
             text-overflow:ellipsis;white-space:nowrap;max-width:260px;line-height:1.2;}
-        .fpt-reply-rest{white-space:pre-wrap;word-break:break-word;}
-        .contact-item-message .fpt-prev-reply-ico{font-size:13px;vertical-align:middle;margin-right:3px;
+        .fxn-reply-rest{white-space:pre-wrap;word-break:break-word;}
+        .contact-item-message .fxn-prev-reply-ico{font-size:13px;vertical-align:middle;margin-right:3px;
             opacity:0.7;position:relative;top:-1px;}
-        .contact-item-message .fpt-prev-reply-text{vertical-align:middle;}
-        .chat-msg-item.fpt-reply-flash{animation:fptReplyFlash 1.1s ease;}
-        @keyframes fptReplyFlash{0%,100%{background:transparent;}30%{background:var(--fpt-accent-soft,rgba(127,127,127,0.22));}}
+        .contact-item-message .fxn-prev-reply-text{vertical-align:middle;}
+        .chat-msg-item.fxn-reply-flash{animation:fxnReplyFlash 1.1s ease;}
+        @keyframes fxnReplyFlash{0%,100%{background:transparent;}30%{background:var(--fxn-accent-soft,rgba(127,127,127,0.22));}}
         `;
         (document.head || document.documentElement).appendChild(s);
     }
@@ -195,15 +195,15 @@
 
         const dateEl = item.querySelector('.chat-msg-date');
         if (!dateEl || !dateEl.parentNode) return;
-        if (dateEl.parentNode.querySelector(':scope > .fpt-msg-tools')) return;
+        if (dateEl.parentNode.querySelector(':scope > .fxn-msg-tools')) return;
 
         const tools = document.createElement('span');
-        tools.className = 'fpt-msg-tools';
+        tools.className = 'fxn-msg-tools';
 
         // Кнопка «Ответить»
         const rpBtn = document.createElement('button');
         rpBtn.type = 'button';
-        rpBtn.className = 'fpt-msg-tool';
+        rpBtn.className = 'fxn-msg-tool';
         rpBtn.title = 'Ответить';
         rpBtn.innerHTML = '<span class="material-symbols-rounded">reply</span>';
         rpBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); startReplyGroup(item); });
@@ -213,19 +213,19 @@
         // При нажатии переводит группу; повторное нажатие снимает перевод.
         const trBtn = document.createElement('button');
         trBtn.type = 'button';
-        trBtn.className = 'fpt-msg-tool fpt-tr-btn';
+        trBtn.className = 'fxn-msg-tool fxn-tr-btn';
         trBtn.title = 'Перевести сообщение';
         trBtn.innerHTML = '<span class="material-symbols-rounded">translate</span>';
         trBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (trBtn.classList.contains('fpt-tr-loading')) return;
-            trBtn.classList.add('fpt-tr-loading');
+            if (trBtn.classList.contains('fxn-tr-loading')) return;
+            trBtn.classList.add('fxn-tr-loading');
             await translateGroup(item);
-            trBtn.classList.remove('fpt-tr-loading');
+            trBtn.classList.remove('fxn-tr-loading');
             // Проверяем: есть ли сейчас активный перевод в группе?
             const anyTranslated = groupItems(item).some(it => it.querySelector('.chat-msg-text .fp-trans-wrap'));
-            trBtn.classList.toggle('fpt-tr-active', anyTranslated);
+            trBtn.classList.toggle('fxn-tr-active', anyTranslated);
             trBtn.title = anyTranslated ? 'Скрыть перевод' : 'Перевести сообщение';
         });
         tools.appendChild(trBtn);
@@ -282,9 +282,9 @@
 
     function cancelReply() {
         activeReply = null;
-        const bar = document.getElementById('fpt-reply-bar');
+        const bar = document.getElementById('fxn-reply-bar');
         if (bar) bar.remove();
-        const wrap = document.getElementById('fpt-reply-bar-wrap');
+        const wrap = document.getElementById('fxn-reply-bar-wrap');
         if (wrap) wrap.remove();
     }
 
@@ -296,28 +296,28 @@
         // чтобы она была над всей областью ввода на всю ширину, а не сбоку во флексе.
         const anchor = form.closest('.chat-form') || form;
 
-        let wrap = document.getElementById('fpt-reply-bar-wrap');
+        let wrap = document.getElementById('fxn-reply-bar-wrap');
         if (!wrap) {
             wrap = document.createElement('div');
-            wrap.id = 'fpt-reply-bar-wrap';
+            wrap.id = 'fxn-reply-bar-wrap';
             wrap.style.cssText = 'padding:6px 10px 0;width:100%;box-sizing:border-box;';
             anchor.parentNode.insertBefore(wrap, anchor);
         }
-        let bar = document.getElementById('fpt-reply-bar');
+        let bar = document.getElementById('fxn-reply-bar');
         if (!bar) {
             bar = document.createElement('div');
-            bar.id = 'fpt-reply-bar';
-            bar.className = 'fpt-reply-bar';
+            bar.id = 'fxn-reply-bar';
+            bar.className = 'fxn-reply-bar';
             wrap.appendChild(bar);
         }
         bar.innerHTML = `
-            <div class="fpt-reply-bar-body">
-                <div class="fpt-reply-bar-author"><span class="material-symbols-rounded">reply</span>${esc(activeReply.author)}</div>
-                <div class="fpt-reply-bar-text">${esc(activeReply.text || '')}</div>
+            <div class="fxn-reply-bar-body">
+                <div class="fxn-reply-bar-author"><span class="material-symbols-rounded">reply</span>${esc(activeReply.author)}</div>
+                <div class="fxn-reply-bar-text">${esc(activeReply.text || '')}</div>
             </div>
-            <button type="button" class="fpt-reply-bar-close" title="Отменить ответ">×</button>
+            <button type="button" class="fxn-reply-bar-close" title="Отменить ответ">×</button>
         `;
-        bar.querySelector('.fpt-reply-bar-close').addEventListener('click', cancelReply);
+        bar.querySelector('.fxn-reply-bar-close').addEventListener('click', cancelReply);
     }
 
     function buildSendText(typed) {
@@ -355,11 +355,11 @@
     }
 
     function renderReplyCards(scope) {
-        const items = (scope && scope.querySelectorAll ? scope : document).querySelectorAll('.chat-msg-text:not([data-fpt-reply-parsed])');
+        const items = (scope && scope.querySelectorAll ? scope : document).querySelectorAll('.chat-msg-text:not([data-fxn-reply-parsed])');
         items.forEach(textEl => {
             const raw = textEl.textContent;
             const m = raw.match(/^╭─ ⤸ ([\s\S]*?)\n╰ ([\s\S]*)$/);
-            textEl.dataset.fptReplyParsed = '1';
+            textEl.dataset.fxnReplyParsed = '1';
             if (!m) return;
             const quote = m[1].trim();
             const rest = m[2];
@@ -369,12 +369,12 @@
             const quotedAuthor = target ? resolveAuthor(headOfGroup(target)) : '';
 
             const card = document.createElement('div');
-            card.className = 'fpt-reply-card';
-            card.dataset.fptQuote = quote;
+            card.className = 'fxn-reply-card';
+            card.dataset.fxnQuote = quote;
             card.innerHTML = `
-                <div class="fpt-reply-card-body">
-                    <div class="fpt-reply-card-author">${esc(quotedAuthor || 'Ответ')}</div>
-                    <div class="fpt-reply-card-text">${esc(quote)}</div>
+                <div class="fxn-reply-card-body">
+                    <div class="fxn-reply-card-author">${esc(quotedAuthor || 'Ответ')}</div>
+                    <div class="fxn-reply-card-text">${esc(quote)}</div>
                 </div>`;
             card.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -386,7 +386,7 @@
             textEl.textContent = '';
             textEl.appendChild(card);
             const restDiv = document.createElement('div');
-            restDiv.className = 'fpt-reply-rest';
+            restDiv.className = 'fxn-reply-rest';
             restDiv.textContent = rest;
             textEl.appendChild(restDiv);
 
@@ -400,12 +400,12 @@
         let tries = 0;
         const tick = () => {
             if (!card.isConnected) return;
-            const quote = card.dataset.fptQuote || '';
+            const quote = card.dataset.fxnQuote || '';
             const target = findQuotedItem(fromItem, quote);
             if (target) {
                 const author = resolveAuthor(headOfGroup(target));
                 if (author && author !== 'Сообщение') {
-                    const aEl = card.querySelector('.fpt-reply-card-author');
+                    const aEl = card.querySelector('.fxn-reply-card-author');
                     if (aEl) aEl.textContent = author;
                     return;
                 }
@@ -426,7 +426,7 @@
         for (let i = myIdx - 1; i >= 0; i--) {
             const t = all[i].querySelector('.chat-msg-text');
             if (!t) continue;
-            const restEl = t.querySelector('.fpt-reply-rest');
+            const restEl = t.querySelector('.fxn-reply-rest');
             const tn = (restEl ? restEl.innerText : t.innerText).replace(/\s+/g, ' ').trim().toLowerCase();
             if (!tn) continue;
             if (tn === qn) { exact = all[i]; break; }
@@ -437,9 +437,9 @@
 
     function flashTo(el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.remove('fpt-reply-flash');
+        el.classList.remove('fxn-reply-flash');
         void el.offsetWidth;
-        el.classList.add('fpt-reply-flash');
+        el.classList.add('fxn-reply-flash');
     }
 
     // ── всплывающая кнопка «Ответить» над выделенным текстом ──────────────────
@@ -447,7 +447,7 @@
     function ensureSelBtn() {
         if (_selBtn) return _selBtn;
         _selBtn = document.createElement('div');
-        _selBtn.id = 'fpt-sel-reply';
+        _selBtn.id = 'fxn-sel-reply';
         _selBtn.innerHTML = '<span class="material-symbols-rounded">reply</span>Ответить';
         document.body.appendChild(_selBtn);
         _selBtn.addEventListener('mousedown', (e) => {
@@ -485,7 +485,7 @@
         const host = node && (node.nodeType === 1 ? node : node.parentElement);
         if (!host || !host.closest('.chat-message-list')) { hideSelBtn(); return; }
         // не показываем над нашими же служебными плашками
-        if (host.closest('.fpt-reply-card, #fpt-reply-bar')) { hideSelBtn(); return; }
+        if (host.closest('.fxn-reply-card, #fxn-reply-bar')) { hideSelBtn(); return; }
 
         const rect = sel.getRangeAt(0).getBoundingClientRect();
         if (!rect || (!rect.width && !rect.height)) { hideSelBtn(); return; }
@@ -507,7 +507,7 @@
         document.addEventListener('scroll', hideSelBtn, true);
         window.addEventListener('resize', hideSelBtn);
         document.addEventListener('mousedown', (e) => {
-            if (_selBtn && e.target.closest && e.target.closest('#fpt-sel-reply')) return;
+            if (_selBtn && e.target.closest && e.target.closest('#fxn-sel-reply')) return;
             // если кликнули вне выделения - спрячем (выделение всё равно сбросится)
             setTimeout(() => {
                 const s = window.getSelection();
@@ -521,20 +521,20 @@
     // строкой. Заменяем на иконку ответа + сам ответ (часть после ╰).
     function renderContactPreviews(scope) {
         const root = scope && scope.querySelectorAll ? scope : document;
-        const items = root.querySelectorAll('.contact-item-message:not([data-fpt-prev])');
+        const items = root.querySelectorAll('.contact-item-message:not([data-fxn-prev])');
         items.forEach(el => {
             const raw = el.textContent || '';
             // допускаем как многострочный, так и однострочный вариант
             const m = raw.match(/╭─\s*⤸\s*([\s\S]*?)\s*╰\s*([\s\S]*)$/);
-            if (!m) { el.dataset.fptPrev = '1'; return; }
-            el.dataset.fptPrev = '1';
+            if (!m) { el.dataset.fxnPrev = '1'; return; }
+            el.dataset.fxnPrev = '1';
             const replyText = (m[2] || '').replace(/\s+/g, ' ').trim() || '…';
             el.innerHTML = '';
             const ico = document.createElement('span');
-            ico.className = 'material-icons fpt-prev-reply-ico';
+            ico.className = 'material-icons fxn-prev-reply-ico';
             ico.textContent = 'reply';
             const txt = document.createElement('span');
-            txt.className = 'fpt-prev-reply-text';
+            txt.className = 'fxn-prev-reply-text';
             txt.textContent = replyText;
             el.appendChild(ico);
             el.appendChild(txt);
@@ -546,8 +546,8 @@
         const cl = document.querySelector('.contact-list');
         if (!cl) return;
         renderContactPreviews(cl);
-        if (cl.dataset.fptPrevBound) return;
-        cl.dataset.fptPrevBound = '1';
+        if (cl.dataset.fxnPrevBound) return;
+        cl.dataset.fxnPrevBound = '1';
         _contactObs = new MutationObserver(() => renderContactPreviews(cl));
         _contactObs.observe(cl, { childList: true, subtree: true, characterData: true });
     }
@@ -561,8 +561,8 @@
     function attach() {
         const list = document.querySelector('.chat-message-list');
         if (!list) return;
-        if (list.dataset.fptReplyBound) { processList(list); return; }
-        list.dataset.fptReplyBound = '1';
+        if (list.dataset.fxnReplyBound) { processList(list); return; }
+        list.dataset.fxnReplyBound = '1';
         ensureStyles();
         processList(list);
 
@@ -580,20 +580,20 @@
 
     async function isEnabled() {
         try {
-            const { fpToolsDisabledFeatures = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
-            return !Array.isArray(fpToolsDisabledFeatures) || !fpToolsDisabledFeatures.includes('chat_reply');
+            const { foxenDisabledFeatures = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDisabledFeatures');
+            return !Array.isArray(foxenDisabledFeatures) || !foxenDisabledFeatures.includes('chat_reply');
         } catch (_) { return true; }
     }
 
     async function init() {
         if (!(await isEnabled())) return;
         ensureStyles();
-        if (typeof fptApplyThemeVars === 'function') {
-            try { fptApplyThemeVars(); } catch (_) {}
-            setTimeout(() => { try { fptApplyThemeVars(); } catch (_) {} }, 400);
+        if (typeof fxnApplyThemeVars === 'function') {
+            try { fxnApplyThemeVars(); } catch (_) {}
+            setTimeout(() => { try { fxnApplyThemeVars(); } catch (_) {} }, 400);
         }
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && typeof fptApplyThemeVars === 'function') { try { fptApplyThemeVars(); } catch (_) {} }
+            if (!document.hidden && typeof fxnApplyThemeVars === 'function') { try { fxnApplyThemeVars(); } catch (_) {} }
         });
         interceptSend();
         setupSelectionReply();
@@ -602,9 +602,9 @@
         const root = document.getElementById('content') || document.body;
         const ro = new MutationObserver(() => {
             const list = document.querySelector('.chat-message-list');
-            if (list && !list.dataset.fptReplyBound) attach();
+            if (list && !list.dataset.fxnReplyBound) attach();
             const cl = document.querySelector('.contact-list');
-            if (cl && !cl.dataset.fptPrevBound) attachContactPreviews();
+            if (cl && !cl.dataset.fxnPrevBound) attachContactPreviews();
         });
         try { ro.observe(root, { childList: true, subtree: true }); } catch (_) {}
     }

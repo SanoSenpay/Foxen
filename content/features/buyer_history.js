@@ -305,7 +305,7 @@ function attachChatMenuItems(chatHeader) {
             blToggleBtn.dataset.fpBlSyncBound = '1';
             blToggleBtn.addEventListener('click', () => setTimeout(syncBlText, 0));
         }
-        document.addEventListener('fpToolsBlacklistUpdated', syncBlText);
+        document.addEventListener('foxenBlacklistUpdated', syncBlText);
 
         menu.appendChild(blLi);
     };

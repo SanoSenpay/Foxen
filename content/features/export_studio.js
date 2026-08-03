@@ -12,8 +12,8 @@
 // (zip без сжатия — валиден), PDF строится как нативный PDF-документ вручную.
 //
 // Кнопка «Экспорт» добавляется в панель статистики:
-//   • /orders/trade      — продажи  (источник FPTSalesDB / window.fptOrdersDB)
-//   • /orders/           — покупки  (источник FPTPurchasesDB / window.fptOrdersDB)
+//   • /orders/trade      — продажи  (источник FPTSalesDB / window.fxnOrdersDB)
+//   • /orders/           — покупки  (источник FPTPurchasesDB / window.fxnOrdersDB)
 //   • /account/balance   — финансы  (источник FPTFinanceDB)
 // =============================================================================
 
@@ -344,7 +344,7 @@
             meta: {
                 title: opt.title, subtitle: opt.subtitle, kind: opt.kind,
                 generated: new Date().toISOString(), period: opt.periodLabel, count: rows.length,
-                source: 'FunPay Tools — Export Studio'
+                source: 'Foxen — Export Studio'
             },
             columns: cols.map(c => ({ key: c.key, label: c.label })),
             rows: rows.map(r => {
@@ -556,7 +556,7 @@
             });
         }
         if (opt.watermark) {
-            body.push(wpPara(wpText('Сгенерировано в FunPay Tools · Export Studio · ' + fmtDateTime(Date.now()), { sz: 16, color: 'A0A0A0' }), { spacing: 0, align: 'c' }));
+            body.push(wpPara(wpText('Сгенерировано в Foxen · Export Studio · ' + fmtDateTime(Date.now()), { sz: 16, color: 'A0A0A0' }), { spacing: 0, align: 'c' }));
         }
 
         const sect = land
@@ -703,7 +703,7 @@
             if (!opt.watermark && !opt.pageNumbers) return;
             ctx.fillStyle = '#b8b8c0';
             ctx.font = `${9 * scale}px Inter, Arial, sans-serif`;
-            if (opt.watermark) { ctx.textAlign = 'left'; ctx.fillText('FunPay Tools · Export Studio', M, H - 18 * scale); }
+            if (opt.watermark) { ctx.textAlign = 'left'; ctx.fillText('Foxen · Export Studio', M, H - 18 * scale); }
             if (opt.pageNumbers) { ctx.textAlign = 'right'; ctx.fillText('стр. ' + (pages.length + 1), W - M, H - 18 * scale); }
         }
 
@@ -843,10 +843,10 @@
     function detectContext() {
         const p = window.location.pathname;
         if (/^\/orders\/trade\/?$/.test(p)) {
-            return { kind: 'sales', isPurchases: false, db: () => (window.fptOrdersDB || window.FPTSalesDB), titleDefault: 'Отчёт по продажам' };
+            return { kind: 'sales', isPurchases: false, db: () => (window.fxnOrdersDB || window.FPTSalesDB), titleDefault: 'Отчёт по продажам' };
         }
         if (/^\/orders\/?$/.test(p)) {
-            return { kind: 'sales', isPurchases: true, db: () => (window.fptOrdersDB || window.FPTPurchasesDB), titleDefault: 'Отчёт по покупкам' };
+            return { kind: 'sales', isPurchases: true, db: () => (window.fxnOrdersDB || window.FPTPurchasesDB), titleDefault: 'Отчёт по покупкам' };
         }
         if (/^\/account\/balance\/?$/.test(p)) {
             return { kind: 'finance', isPurchases: false, db: () => window.FPTFinanceDB, titleDefault: 'Финансовый отчёт' };
@@ -933,95 +933,95 @@
 
     // ── СТИЛИ модалки ──
     function ensureStyles() {
-        if (document.getElementById('fpt-es-styles')) return;
+        if (document.getElementById('fxn-es-styles')) return;
         const s = document.createElement('style');
-        s.id = 'fpt-es-styles';
+        s.id = 'fxn-es-styles';
         s.textContent = `
-        .fpt-es-ov{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;
+        .fxn-es-ov{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;
             background:rgba(8,9,14,.55);font-family:Inter,'Segoe UI',sans-serif;}
-        .fpt-es-modal{width:min(860px,95vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;
-            background:var(--fpt-surface,#fff);color:var(--fpt-text,#16181d);border:1px solid var(--fpt-border,#e4e4ec);
+        .fxn-es-modal{width:min(860px,95vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;
+            background:var(--fxn-surface,#fff);color:var(--fxn-text,#16181d);border:1px solid var(--fxn-border,#e4e4ec);
             border-radius:18px;}
-        .fpt-es-head{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--fpt-border,#ececf2);}
-        .fpt-es-head h2{font-size:18px;font-weight:800;margin:0;flex:1;letter-spacing:-.3px;}
-        .fpt-es-head .fpt-es-sub{font-size:12px;color:var(--fpt-text-muted,#8a8a96);font-weight:500;margin-top:1px;}
-        .fpt-es-x{background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:inherit;opacity:.6;}
-        .fpt-es-x:hover{opacity:1;}
-        .fpt-es-body{padding:20px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
-        .fpt-es-sec-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
-            color:var(--fpt-text-muted,#9298a6);margin:0 0 10px;}
-        .fpt-es-hint{font-size:11px;font-weight:500;color:var(--fpt-text-muted,#a0a4b0);text-transform:none;letter-spacing:0;margin-left:6px;}
-        .fpt-es-fmts{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;}
-        @media(max-width:640px){.fpt-es-fmts{grid-template-columns:repeat(3,1fr);}}
-        .fpt-es-fmt{border:1.5px solid var(--fpt-border,#e6e6ee);border-radius:13px;padding:13px 8px;cursor:pointer;
-            text-align:center;transition:border-color .14s,background .14s;background:var(--fpt-surface-2,#fafafd);position:relative;}
-        .fpt-es-fmt:hover{border-color:#2563eb;}
-        .fpt-es-fmt.sel{border-color:#2563eb;background:rgba(37,99,235,.10);}
-        .fpt-es-fmt.sel .ext{color:#2563eb;}
-        .fpt-es-fmt .ext{font-size:14px;font-weight:800;letter-spacing:.3px;}
-        .fpt-es-fmt .ds{font-size:10px;color:var(--fpt-text-muted,#9298a6);margin-top:2px;}
+        .fxn-es-head{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--fxn-border,#ececf2);}
+        .fxn-es-head h2{font-size:18px;font-weight:800;margin:0;flex:1;letter-spacing:-.3px;}
+        .fxn-es-head .fxn-es-sub{font-size:12px;color:var(--fxn-text-muted,#8a8a96);font-weight:500;margin-top:1px;}
+        .fxn-es-x{background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:inherit;opacity:.6;}
+        .fxn-es-x:hover{opacity:1;}
+        .fxn-es-body{padding:20px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
+        .fxn-es-sec-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+            color:var(--fxn-text-muted,#9298a6);margin:0 0 10px;}
+        .fxn-es-hint{font-size:11px;font-weight:500;color:var(--fxn-text-muted,#a0a4b0);text-transform:none;letter-spacing:0;margin-left:6px;}
+        .fxn-es-fmts{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;}
+        @media(max-width:640px){.fxn-es-fmts{grid-template-columns:repeat(3,1fr);}}
+        .fxn-es-fmt{border:1.5px solid var(--fxn-border,#e6e6ee);border-radius:13px;padding:13px 8px;cursor:pointer;
+            text-align:center;transition:border-color .14s,background .14s;background:var(--fxn-surface-2,#fafafd);position:relative;}
+        .fxn-es-fmt:hover{border-color:#2563eb;}
+        .fxn-es-fmt.sel{border-color:#2563eb;background:rgba(37,99,235,.10);}
+        .fxn-es-fmt.sel .ext{color:#2563eb;}
+        .fxn-es-fmt .ext{font-size:14px;font-weight:800;letter-spacing:.3px;}
+        .fxn-es-fmt .ds{font-size:10px;color:var(--fxn-text-muted,#9298a6);margin-top:2px;}
         /* палитра быстрых цветов + полноразмерный выбор цвета */
-        .fpt-es-colorrow{display:flex;align-items:center;gap:14px;}
-        .fpt-es-swatch-big{position:relative;width:46px;height:46px;flex-shrink:0;cursor:pointer;border-radius:12px;overflow:hidden;
-            border:1px solid var(--fpt-border,#dcdce4);}
-        .fpt-es-swatch-big input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;padding:0;}
-        .fpt-es-swatch-big-fill{display:block;width:100%;height:100%;}
-        .fpt-es-sliders{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
-        .fpt-es-spectrum{position:relative;height:18px;border-radius:9px;cursor:pointer;
+        .fxn-es-colorrow{display:flex;align-items:center;gap:14px;}
+        .fxn-es-swatch-big{position:relative;width:46px;height:46px;flex-shrink:0;cursor:pointer;border-radius:12px;overflow:hidden;
+            border:1px solid var(--fxn-border,#dcdce4);}
+        .fxn-es-swatch-big input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;padding:0;}
+        .fxn-es-swatch-big-fill{display:block;width:100%;height:100%;}
+        .fxn-es-sliders{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
+        .fxn-es-spectrum{position:relative;height:18px;border-radius:9px;cursor:pointer;
             background:linear-gradient(to right,#f00 0%,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,#f00 100%);
             box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
-        .fpt-es-light{position:relative;height:18px;border-radius:9px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
-        .fpt-es-spec-knob,.fpt-es-light-knob{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;
+        .fxn-es-light{position:relative;height:18px;border-radius:9px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
+        .fxn-es-spec-knob,.fxn-es-light-knob{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;
             background:#fff;border:2px solid rgba(0,0,0,.35);transform:translate(-50%,-50%);pointer-events:none;
             box-shadow:0 1px 3px rgba(0,0,0,.3);}
-        .fpt-es-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-        @media(max-width:640px){.fpt-es-grid2{grid-template-columns:1fr;}}
-        .fpt-es-field{display:flex;flex-direction:column;gap:5px;}
-        .fpt-es-field label{font-size:11.5px;font-weight:600;color:var(--fpt-text-muted,#7d8290);}
-        .fpt-es-inp,.fpt-es-sel{padding:9px 11px;border-radius:10px;border:1px solid var(--fpt-border,#e0e0e8);
-            background:var(--fpt-surface-2,#fff);color:inherit;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box;}
-        .fpt-es-inp:focus,.fpt-es-sel:focus{outline:none;border-color:#2563eb;}
-        .fpt-es-cols{display:flex;flex-wrap:wrap;gap:7px;}
-        .fpt-es-chip{font-size:12px;padding:6px 11px;border-radius:20px;border:1.5px solid var(--fpt-border,#e0e0e8);
-            cursor:pointer;user-select:none;transition:background .12s,border-color .12s,color .12s;background:var(--fpt-surface-2,#fafafd);}
-        .fpt-es-chip.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+        .fxn-es-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+        @media(max-width:640px){.fxn-es-grid2{grid-template-columns:1fr;}}
+        .fxn-es-field{display:flex;flex-direction:column;gap:5px;}
+        .fxn-es-field label{font-size:11.5px;font-weight:600;color:var(--fxn-text-muted,#7d8290);}
+        .fxn-es-inp,.fxn-es-sel{padding:9px 11px;border-radius:10px;border:1px solid var(--fxn-border,#e0e0e8);
+            background:var(--fxn-surface-2,#fff);color:inherit;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box;}
+        .fxn-es-inp:focus,.fxn-es-sel:focus{outline:none;border-color:#2563eb;}
+        .fxn-es-cols{display:flex;flex-wrap:wrap;gap:7px;}
+        .fxn-es-chip{font-size:12px;padding:6px 11px;border-radius:20px;border:1.5px solid var(--fxn-border,#e0e0e8);
+            cursor:pointer;user-select:none;transition:background .12s,border-color .12s,color .12s;background:var(--fxn-surface-2,#fafafd);}
+        .fxn-es-chip.on{background:#2563eb;border-color:#2563eb;color:#fff;}
         /* ── свои чекбоксы: не зависят от стилей страницы FunPay (нативные input ломались) ── */
-        .fpt-es-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;}
-        @media(max-width:640px){.fpt-es-opts{grid-template-columns:1fr;}}
-        .fpt-es-opt{display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:4px 0;user-select:none;}
-        .fpt-es-check{width:18px;height:18px;flex-shrink:0;border-radius:5px;border:1.5px solid var(--fpt-border,#c8ccd8);
-            background:var(--fpt-surface-2,#fff);position:relative;transition:background .12s,border-color .12s;box-sizing:border-box;}
-        .fpt-es-opt.on .fpt-es-check{background:#2563eb;border-color:#2563eb;}
-        .fpt-es-check::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;
+        .fxn-es-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;}
+        @media(max-width:640px){.fxn-es-opts{grid-template-columns:1fr;}}
+        .fxn-es-opt{display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:4px 0;user-select:none;}
+        .fxn-es-check{width:18px;height:18px;flex-shrink:0;border-radius:5px;border:1.5px solid var(--fxn-border,#c8ccd8);
+            background:var(--fxn-surface-2,#fff);position:relative;transition:background .12s,border-color .12s;box-sizing:border-box;}
+        .fxn-es-opt.on .fxn-es-check{background:#2563eb;border-color:#2563eb;}
+        .fxn-es-check::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;
             border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);transition:transform .12s;}
-        .fpt-es-opt.on .fpt-es-check::after{transform:rotate(45deg) scale(1);}
-        .fpt-es-opt.dim{opacity:.4;}
-        .fpt-es-rowflt{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
-        .fpt-es-tgl{font-size:12px;padding:6px 12px;border-radius:9px;border:1.5px solid var(--fpt-border,#e0e0e8);
-            cursor:pointer;background:var(--fpt-surface-2,#fafafd);transition:background .12s,border-color .12s,color .12s;user-select:none;}
-        .fpt-es-tgl.on{background:rgba(37,99,235,.12);border-color:#2563eb;
+        .fxn-es-opt.on .fxn-es-check::after{transform:rotate(45deg) scale(1);}
+        .fxn-es-opt.dim{opacity:.4;}
+        .fxn-es-rowflt{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
+        .fxn-es-tgl{font-size:12px;padding:6px 12px;border-radius:9px;border:1.5px solid var(--fxn-border,#e0e0e8);
+            cursor:pointer;background:var(--fxn-surface-2,#fafafd);transition:background .12s,border-color .12s,color .12s;user-select:none;}
+        .fxn-es-tgl.on{background:rgba(37,99,235,.12);border-color:#2563eb;
             color:#2563eb;font-weight:600;}
-        .fpt-es-foot{display:flex;align-items:center;gap:12px;padding:15px 22px;border-top:1px solid var(--fpt-border,#ececf2);
-            background:var(--fpt-surface-2,#fafafd);}
-        .fpt-es-count{font-size:12.5px;color:var(--fpt-text-muted,#8a8a96);flex:1;}
-        .fpt-es-count b{color:var(--fpt-text,#16181d);}
-        .fpt-es-btn{padding:11px 22px;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;
+        .fxn-es-foot{display:flex;align-items:center;gap:12px;padding:15px 22px;border-top:1px solid var(--fxn-border,#ececf2);
+            background:var(--fxn-surface-2,#fafafd);}
+        .fxn-es-count{font-size:12.5px;color:var(--fxn-text-muted,#8a8a96);flex:1;}
+        .fxn-es-count b{color:var(--fxn-text,#16181d);}
+        .fxn-es-btn{padding:11px 22px;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;
             background:#2563eb;color:#fff;transition:filter .15s;}
-        .fpt-es-btn:hover{filter:brightness(1.08);}
-        .fpt-es-btn:disabled{opacity:.6;cursor:default;filter:none;}
-        .fpt-es-btn2{padding:11px 18px;border-radius:12px;border:1px solid var(--fpt-border,#dcdce4);
-            background:var(--fpt-surface,#fff);color:inherit;font-size:14px;font-weight:600;cursor:pointer;}
-        .fpt-es-btn2:hover{border-color:var(--fpt-text-muted,#b6b6c2);}
-        .fpt-es-launch{margin-left:6px;}
-        .fpt-es-spin{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;
-            border-radius:50%;animation:fptEsSpin .7s linear infinite;display:inline-block;vertical-align:-3px;margin-right:7px;}
-        @keyframes fptEsSpin{to{transform:rotate(360deg)}}
+        .fxn-es-btn:hover{filter:brightness(1.08);}
+        .fxn-es-btn:disabled{opacity:.6;cursor:default;filter:none;}
+        .fxn-es-btn2{padding:11px 18px;border-radius:12px;border:1px solid var(--fxn-border,#dcdce4);
+            background:var(--fxn-surface,#fff);color:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+        .fxn-es-btn2:hover{border-color:var(--fxn-text-muted,#b6b6c2);}
+        .fxn-es-launch{margin-left:6px;}
+        .fxn-es-spin{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;
+            border-radius:50%;animation:fxnEsSpin .7s linear infinite;display:inline-block;vertical-align:-3px;margin-right:7px;}
+        @keyframes fxnEsSpin{to{transform:rotate(360deg)}}
         `;
         document.head.appendChild(s);
     }
 
     // ── конфиг по умолчанию (запоминаем в localStorage) ──
-    const CFG_KEY = 'fpToolsExportStudioCfg';
+    const CFG_KEY = 'foxenExportStudioCfg';
     function loadCfg(ctx) {
         const def = {
             formats: ['xlsx'], color: '#2563EB', period: 'all', from: '', to: '',
@@ -1068,7 +1068,7 @@
 
     async function openStudio(ctx) {
         ensureStyles();
-        const old = document.getElementById('fpt-es-ov');
+        const old = document.getElementById('fxn-es-ov');
         if (old) old.remove();
         const cfg = loadCfg(ctx);
         if (cfg.color && !/^#/.test(cfg.color)) cfg.color = '#' + cfg.color;
@@ -1076,65 +1076,65 @@
         const currencies = await detectCurrencies(ctx);
 
         const ov = document.createElement('div');
-        ov.id = 'fpt-es-ov';
-        ov.className = 'fpt-es-ov';
+        ov.id = 'fxn-es-ov';
+        ov.className = 'fxn-es-ov';
         ov.innerHTML = `
-        <div class="fpt-es-modal">
-            <div class="fpt-es-head">
+        <div class="fxn-es-modal">
+            <div class="fxn-es-head">
                 <div style="flex:1;">
                     <h2>Студия экспорта</h2>
-                    <div class="fpt-es-sub">${esc(ctx.kind === 'finance' ? 'Финансы' : ctx.isPurchases ? 'Покупки' : 'Продажи')} · настрой формат, стиль и содержимое</div>
+                    <div class="fxn-es-sub">${esc(ctx.kind === 'finance' ? 'Финансы' : ctx.isPurchases ? 'Покупки' : 'Продажи')} · настрой формат, стиль и содержимое</div>
                 </div>
-                <button class="fpt-es-x" title="Закрыть">×</button>
+                <button class="fxn-es-x" title="Закрыть">×</button>
             </div>
-            <div class="fpt-es-body">
+            <div class="fxn-es-body">
                 <div>
-                    <p class="fpt-es-sec-t">Формат файла<span class="fpt-es-hint">можно выбрать несколько</span></p>
-                    <div class="fpt-es-fmts" id="es-fmts">
-                        ${FORMATS.map(f => `<div class="fpt-es-fmt ${cfg.formats.includes(f.v) ? 'sel' : ''}" data-fmt="${f.v}"><div class="ext">${f.ext}</div><div class="ds">${f.ds}</div></div>`).join('')}
+                    <p class="fxn-es-sec-t">Формат файла<span class="fxn-es-hint">можно выбрать несколько</span></p>
+                    <div class="fxn-es-fmts" id="es-fmts">
+                        ${FORMATS.map(f => `<div class="fxn-es-fmt ${cfg.formats.includes(f.v) ? 'sel' : ''}" data-fmt="${f.v}"><div class="ext">${f.ext}</div><div class="ds">${f.ds}</div></div>`).join('')}
                     </div>
                 </div>
 
                 <div id="es-theme-wrap">
-                    <p class="fpt-es-sec-t">Цвет оформления</p>
-                    <div class="fpt-es-colorrow">
-                        <label class="fpt-es-swatch-big" title="Выбрать точный цвет">
+                    <p class="fxn-es-sec-t">Цвет оформления</p>
+                    <div class="fxn-es-colorrow">
+                        <label class="fxn-es-swatch-big" title="Выбрать точный цвет">
                             <input type="color" id="es-color" value="${esc(cfg.color)}">
-                            <span class="fpt-es-swatch-big-fill" id="es-color-swatch" style="background:${esc(cfg.color)}"></span>
+                            <span class="fxn-es-swatch-big-fill" id="es-color-swatch" style="background:${esc(cfg.color)}"></span>
                         </label>
-                        <div class="fpt-es-sliders">
-                            <div class="fpt-es-spectrum" id="es-spectrum"><span class="fpt-es-spec-knob" id="es-spec-knob"></span></div>
-                            <div class="fpt-es-light" id="es-light"><span class="fpt-es-light-knob" id="es-light-knob"></span></div>
+                        <div class="fxn-es-sliders">
+                            <div class="fxn-es-spectrum" id="es-spectrum"><span class="fxn-es-spec-knob" id="es-spec-knob"></span></div>
+                            <div class="fxn-es-light" id="es-light"><span class="fxn-es-light-knob" id="es-light-knob"></span></div>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <p class="fpt-es-sec-t">Заголовок документа</p>
-                    <div class="fpt-es-grid2">
-                        <div class="fpt-es-field"><label>Заголовок</label><input class="fpt-es-inp" id="es-title" value="${esc(cfg.title)}" placeholder="Например: Отчёт по продажам"></div>
-                        <div class="fpt-es-field"><label>Подзаголовок (необязательно)</label><input class="fpt-es-inp" id="es-subtitle" value="${esc(cfg.subtitle)}" placeholder="Например: магазин XYZ"></div>
+                    <p class="fxn-es-sec-t">Заголовок документа</p>
+                    <div class="fxn-es-grid2">
+                        <div class="fxn-es-field"><label>Заголовок</label><input class="fxn-es-inp" id="es-title" value="${esc(cfg.title)}" placeholder="Например: Отчёт по продажам"></div>
+                        <div class="fxn-es-field"><label>Подзаголовок (необязательно)</label><input class="fxn-es-inp" id="es-subtitle" value="${esc(cfg.subtitle)}" placeholder="Например: магазин XYZ"></div>
                     </div>
                 </div>
 
                 <div>
-                    <p class="fpt-es-sec-t">Период и фильтры</p>
-                    <div class="fpt-es-grid2">
-                        <div class="fpt-es-field"><label>Период</label>
-                            <select class="fpt-es-sel" id="es-period">${PERIODS.map(p => `<option value="${p.v}" ${cfg.period === p.v ? 'selected' : ''}>${p.l}</option>`).join('')}</select>
+                    <p class="fxn-es-sec-t">Период и фильтры</p>
+                    <div class="fxn-es-grid2">
+                        <div class="fxn-es-field"><label>Период</label>
+                            <select class="fxn-es-sel" id="es-period">${PERIODS.map(p => `<option value="${p.v}" ${cfg.period === p.v ? 'selected' : ''}>${p.l}</option>`).join('')}</select>
                         </div>
-                        <div class="fpt-es-field"><label>Валюта</label>
-                            <select class="fpt-es-sel" id="es-currency"><option value="all" ${cfg.currency === 'all' ? 'selected' : ''}>Все валюты</option>${currencies.map(c => `<option value="${c}" ${cfg.currency === c ? 'selected' : ''}>${c} ${SYM[c] || ''}</option>`).join('')}</select>
+                        <div class="fxn-es-field"><label>Валюта</label>
+                            <select class="fxn-es-sel" id="es-currency"><option value="all" ${cfg.currency === 'all' ? 'selected' : ''}>Все валюты</option>${currencies.map(c => `<option value="${c}" ${cfg.currency === c ? 'selected' : ''}>${c} ${SYM[c] || ''}</option>`).join('')}</select>
                         </div>
                     </div>
-                    <div class="fpt-es-grid2" id="es-custom-range" style="margin-top:10px;display:${cfg.period === 'custom' ? 'grid' : 'none'};">
-                        <div class="fpt-es-field"><label>С даты</label><input type="date" class="fpt-es-inp" id="es-from" value="${esc(cfg.from)}"></div>
-                        <div class="fpt-es-field"><label>По дату</label><input type="date" class="fpt-es-inp" id="es-to" value="${esc(cfg.to)}"></div>
+                    <div class="fxn-es-grid2" id="es-custom-range" style="margin-top:10px;display:${cfg.period === 'custom' ? 'grid' : 'none'};">
+                        <div class="fxn-es-field"><label>С даты</label><input type="date" class="fxn-es-inp" id="es-from" value="${esc(cfg.from)}"></div>
+                        <div class="fxn-es-field"><label>По дату</label><input type="date" class="fxn-es-inp" id="es-to" value="${esc(cfg.to)}"></div>
                     </div>
-                    <div style="margin-top:12px;" class="fpt-es-rowflt" id="es-statusflt"></div>
-                    <div style="margin-top:10px;" class="fpt-es-field">
+                    <div style="margin-top:12px;" class="fxn-es-rowflt" id="es-statusflt"></div>
+                    <div style="margin-top:10px;" class="fxn-es-field">
                         <label>Сортировка</label>
-                        <select class="fpt-es-sel" id="es-sort" style="max-width:280px;">
+                        <select class="fxn-es-sel" id="es-sort" style="max-width:280px;">
                             ${ctx.kind === 'finance'
                 ? `<option value="date-desc">Сначала новые</option><option value="date-asc">Сначала старые</option><option value="amt-desc">Больше сумма</option><option value="amt-asc">Меньше сумма</option>`
                 : `<option value="date-desc">Сначала новые</option><option value="date-asc">Сначала старые</option><option value="price-desc">Дороже сверху</option><option value="price-asc">Дешевле сверху</option>`}
@@ -1143,31 +1143,31 @@
                 </div>
 
                 <div>
-                    <p class="fpt-es-sec-t">Колонки</p>
-                    <div class="fpt-es-cols" id="es-cols">
-                        ${schema.map(c => `<span class="fpt-es-chip ${cfg.cols.includes(c.key) ? 'on' : ''}" data-col="${c.key}">${esc(c.label)}</span>`).join('')}
+                    <p class="fxn-es-sec-t">Колонки</p>
+                    <div class="fxn-es-cols" id="es-cols">
+                        ${schema.map(c => `<span class="fxn-es-chip ${cfg.cols.includes(c.key) ? 'on' : ''}" data-col="${c.key}">${esc(c.label)}</span>`).join('')}
                     </div>
                 </div>
 
                 <div>
-                    <p class="fpt-es-sec-t">Дополнительно</p>
-                    <div class="fpt-es-opts">
-                        <div class="fpt-es-opt on" data-opt="zebra"><span class="fpt-es-check"></span>Чередование строк (зебра)</div>
-                        <div class="fpt-es-opt on" data-opt="totals"><span class="fpt-es-check"></span>Блок итогов</div>
-                        <div class="fpt-es-opt on" data-opt="watermark"><span class="fpt-es-check"></span>Подпись FunPay Tools</div>
-                        <div class="fpt-es-opt on" data-opt="pageNumbers" id="es-opt-pagenum"><span class="fpt-es-check"></span>Номера страниц (PDF)</div>
+                    <p class="fxn-es-sec-t">Дополнительно</p>
+                    <div class="fxn-es-opts">
+                        <div class="fxn-es-opt on" data-opt="zebra"><span class="fxn-es-check"></span>Чередование строк (зебра)</div>
+                        <div class="fxn-es-opt on" data-opt="totals"><span class="fxn-es-check"></span>Блок итогов</div>
+                        <div class="fxn-es-opt on" data-opt="watermark"><span class="fxn-es-check"></span>Подпись Foxen</div>
+                        <div class="fxn-es-opt on" data-opt="pageNumbers" id="es-opt-pagenum"><span class="fxn-es-check"></span>Номера страниц (PDF)</div>
                     </div>
-                    <div style="margin-top:10px;" class="fpt-es-rowflt" id="es-orient-wrap">
-                        <span style="font-size:11.5px;color:var(--fpt-text-muted,#7d8290);">Ориентация (PDF/DOCX):</span>
-                        <span class="fpt-es-tgl ${cfg.orientation === 'portrait' ? 'on' : ''}" data-orient="portrait">Книжная</span>
-                        <span class="fpt-es-tgl ${cfg.orientation === 'landscape' ? 'on' : ''}" data-orient="landscape">Альбомная</span>
+                    <div style="margin-top:10px;" class="fxn-es-rowflt" id="es-orient-wrap">
+                        <span style="font-size:11.5px;color:var(--fxn-text-muted,#7d8290);">Ориентация (PDF/DOCX):</span>
+                        <span class="fxn-es-tgl ${cfg.orientation === 'portrait' ? 'on' : ''}" data-orient="portrait">Книжная</span>
+                        <span class="fxn-es-tgl ${cfg.orientation === 'landscape' ? 'on' : ''}" data-orient="landscape">Альбомная</span>
                     </div>
                 </div>
             </div>
-            <div class="fpt-es-foot">
-                <div class="fpt-es-count" id="es-count">Считаем записи…</div>
-                <button class="fpt-es-btn2" id="es-cancel">Отмена</button>
-                <button class="fpt-es-btn fpt-es-launch" id="es-go">Экспортировать</button>
+            <div class="fxn-es-foot">
+                <div class="fxn-es-count" id="es-count">Считаем записи…</div>
+                <button class="fxn-es-btn2" id="es-cancel">Отмена</button>
+                <button class="fxn-es-btn fxn-es-launch" id="es-go">Экспортировать</button>
             </div>
         </div>`;
         document.body.appendChild(ov);
@@ -1181,17 +1181,17 @@
             if (ctx.kind === 'finance') {
                 const stOpts = [['all', 'Все статусы'], ['complete', 'Завершённые'], ['cancel', 'Отменённые'], ['waiting', 'Ожидание']];
                 const tyOpts = [['all', 'Все типы'], ['order', 'Заказы'], ['payment', 'Пополнения'], ['withdraw', 'Выводы'], ['withdraw_cancel', 'Отмены выводов'], ['other', 'Другое']];
-                wrap.innerHTML = `<span style="font-size:11.5px;color:var(--fpt-text-muted,#7d8290);">Статус:</span>` +
-                    stOpts.map(([v, l]) => `<span class="fpt-es-tgl ${state.finStatus === v ? 'on' : ''}" data-finst="${v}">${l}</span>`).join('') +
-                    `<span style="font-size:11.5px;color:var(--fpt-text-muted,#7d8290);margin-left:8px;">Тип:</span>` +
-                    tyOpts.map(([v, l]) => `<span class="fpt-es-tgl ${state.finType === v ? 'on' : ''}" data-finty="${v}">${l}</span>`).join('');
+                wrap.innerHTML = `<span style="font-size:11.5px;color:var(--fxn-text-muted,#7d8290);">Статус:</span>` +
+                    stOpts.map(([v, l]) => `<span class="fxn-es-tgl ${state.finStatus === v ? 'on' : ''}" data-finst="${v}">${l}</span>`).join('') +
+                    `<span style="font-size:11.5px;color:var(--fxn-text-muted,#7d8290);margin-left:8px;">Тип:</span>` +
+                    tyOpts.map(([v, l]) => `<span class="fxn-es-tgl ${state.finType === v ? 'on' : ''}" data-finty="${v}">${l}</span>`).join('');
                 wrap.querySelectorAll('[data-finst]').forEach(b => b.onclick = () => { state.finStatus = b.dataset.finst; renderStatusFlt(); refreshCount(); });
                 wrap.querySelectorAll('[data-finty]').forEach(b => b.onclick = () => { state.finType = b.dataset.finty; renderStatusFlt(); refreshCount(); });
             } else {
-                wrap.innerHTML = `<span style="font-size:11.5px;color:var(--fpt-text-muted,#7d8290);">Статусы:</span>` +
-                    `<span class="fpt-es-tgl ${state.stClosed ? 'on' : ''}" data-st="stClosed">Закрытые</span>` +
-                    `<span class="fpt-es-tgl ${state.stPaid ? 'on' : ''}" data-st="stPaid">Оплаченные</span>` +
-                    `<span class="fpt-es-tgl ${state.stRefunded ? 'on' : ''}" data-st="stRefunded">Возвраты</span>`;
+                wrap.innerHTML = `<span style="font-size:11.5px;color:var(--fxn-text-muted,#7d8290);">Статусы:</span>` +
+                    `<span class="fxn-es-tgl ${state.stClosed ? 'on' : ''}" data-st="stClosed">Закрытые</span>` +
+                    `<span class="fxn-es-tgl ${state.stPaid ? 'on' : ''}" data-st="stPaid">Оплаченные</span>` +
+                    `<span class="fxn-es-tgl ${state.stRefunded ? 'on' : ''}" data-st="stRefunded">Возвраты</span>`;
                 wrap.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { state[b.dataset.st] = !state[b.dataset.st]; renderStatusFlt(); refreshCount(); });
             }
         }
@@ -1213,7 +1213,7 @@
             ov.querySelector('#es-orient-wrap').style.display = anyOriented ? 'flex' : 'none';
         }
 
-        ov.querySelectorAll('#es-fmts .fpt-es-fmt').forEach(el => el.onclick = () => {
+        ov.querySelectorAll('#es-fmts .fxn-es-fmt').forEach(el => el.onclick = () => {
             const f = el.dataset.fmt;
             if (state.formats.includes(f)) {
                 if (state.formats.length > 1) state.formats = state.formats.filter(x => x !== f); // нельзя снять последний
@@ -1264,14 +1264,14 @@
         picker.oninput = e => { _hsl = hexToHsl(e.target.value); syncFromHsl(true); };
         syncFromHsl();
 
-        ov.querySelectorAll('#es-cols .fpt-es-chip').forEach(el => el.onclick = () => {
+        ov.querySelectorAll('#es-cols .fxn-es-chip').forEach(el => el.onclick = () => {
             el.classList.toggle('on');
             const k = el.dataset.col;
             if (el.classList.contains('on')) { if (!state.cols.includes(k)) state.cols.push(k); }
             else state.cols = state.cols.filter(x => x !== k);
         });
         // свои чекбоксы (надёжнее нативных input на странице FunPay)
-        ov.querySelectorAll('.fpt-es-opt[data-opt]').forEach(el => {
+        ov.querySelectorAll('.fxn-es-opt[data-opt]').forEach(el => {
             const key = el.dataset.opt;
             el.classList.toggle('on', !!state[key]);
             el.onclick = () => {
@@ -1311,7 +1311,7 @@
 
         // close
         const close = () => ov.remove();
-        ov.querySelector('.fpt-es-x').onclick = close;
+        ov.querySelector('.fxn-es-x').onclick = close;
         ov.querySelector('#es-cancel').onclick = close;
         ov.onclick = e => { if (e.target === ov) close(); };
         document.addEventListener('keydown', function onEsc(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); } });
@@ -1324,7 +1324,7 @@
             if (!state.formats.length) { alert('Выберите хотя бы один формат.'); return; }
             btn.disabled = true;
             const orig = btn.innerHTML;
-            btn.innerHTML = '<span class="fpt-es-spin"></span>Готовим файлы…';
+            btn.innerHTML = '<span class="fxn-es-spin"></span>Готовим файлы…';
             try {
                 const rows = await gatherRows(ctx, state);
                 if (!rows.length) { alert('Нет данных для выбранных фильтров.'); btn.disabled = false; btn.innerHTML = orig; return; }
@@ -1344,7 +1344,7 @@
                 const order = ['xlsx', 'docx', 'csv', 'json', 'pdf'].filter(f => state.formats.includes(f));
                 let done = 0;
                 for (const fmt of order) {
-                    btn.innerHTML = `<span class="fpt-es-spin"></span>Формат ${fmt.toUpperCase()} (${done + 1}/${order.length})…`;
+                    btn.innerHTML = `<span class="fxn-es-spin"></span>Формат ${fmt.toUpperCase()} (${done + 1}/${order.length})…`;
                     let blob;
                     if (fmt === 'xlsx') blob = ES.buildXLSX(cols, rows, opt);
                     else if (fmt === 'docx') blob = ES.buildDOCX(cols, rows, opt);
@@ -1370,13 +1370,13 @@
     // ──────────────────────────────────────────────────────────────────────────
     //  ВСТАВКА КНОПКИ «ЭКСПОРТ» В ПАНЕЛЬ СТАТИСТИКИ
     //  • продажи/покупки: в .fp-stats-controls (рядом с «Обновить»/фильтрами)
-    //  • финансы: в .fpt-fin-head (рядом с «Обновить»)
+    //  • финансы: в .fxn-fin-head (рядом с «Обновить»)
     // ──────────────────────────────────────────────────────────────────────────
     function makeBtnSales() {
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'btn btn-default fpt-es-trigger';
-        b.id = 'fpt-es-open';
+        b.className = 'btn btn-default fxn-es-trigger';
+        b.id = 'fxn-es-open';
         b.title = 'Студия экспорта — XLSX, DOCX, PDF, CSV, JSON';
         b.textContent = 'Экспорт';
         return b;
@@ -1384,18 +1384,18 @@
     function makeBtnFinance() {
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'fpt-fin-btn fpt-es-trigger';
-        b.id = 'fpt-es-open';
+        b.className = 'fxn-fin-btn fxn-es-trigger';
+        b.id = 'fxn-es-open';
         b.title = 'Студия экспорта — XLSX, DOCX, PDF, CSV, JSON';
         b.textContent = 'Экспорт';
         return b;
     }
 
     function tryMount(ctx) {
-        if (document.getElementById('fpt-es-open')) return true;
+        if (document.getElementById('fxn-es-open')) return true;
         if (ctx.kind === 'finance') {
-            const head = document.querySelector('.fpt-fin-head');
-            const refresh = document.getElementById('fpt-fin-refresh');
+            const head = document.querySelector('.fxn-fin-head');
+            const refresh = document.getElementById('fxn-fin-refresh');
             if (!head) return false;
             const btn = makeBtnFinance();
             btn.onclick = () => openStudio(ctx);

@@ -7,9 +7,9 @@
 (function () {
     try {
         if (!chrome?.storage?.local) return;
-        chrome.storage.local.get('fpToolsLiveStyles', (data) => {
+        chrome.storage.local.get('foxenLiveStyles', (data) => {
             try {
-                const savedStyles = (data && data.fpToolsLiveStyles) || {};
+                const savedStyles = (data && data.foxenLiveStyles) || {};
                 if (!savedStyles || !Object.keys(savedStyles).length) return;
 
                 let cssText = '';
@@ -22,10 +22,10 @@
                 }
 
                 const inject = () => {
-                    let styleEl = document.getElementById('fp-tools-magic-stick-persistent-styles');
+                    let styleEl = document.getElementById('foxen-magic-stick-persistent-styles');
                     if (!styleEl) {
                         styleEl = document.createElement('style');
-                        styleEl.id = 'fp-tools-magic-stick-persistent-styles';
+                        styleEl.id = 'foxen-magic-stick-persistent-styles';
                         (document.head || document.documentElement).appendChild(styleEl);
                     }
                     styleEl.textContent = cssText;

@@ -1,9 +1,9 @@
 // 3.0: Image reference store. Instead of dumping a giant [image:data:...base64...] string
 // into textareas (ugly, "in your face"), we insert a short readable token like {img:ab12cd}
-// and keep the real data URL in chrome.storage under fpToolsImageStore. Senders resolve
+// and keep the real data URL in chrome.storage under foxenImageStore. Senders resolve
 // tokens → data URLs right before sending. Old [image:dataURL] tags still work too.
-const FPT_IMG_STORE_KEY = 'fpToolsImageStore';
-async function fptStoreImage(dataUrl) {
+const FPT_IMG_STORE_KEY = 'foxenImageStore';
+async function fxnStoreImage(dataUrl) {
     const id = Math.random().toString(36).slice(2, 8);
     try {
         const { [FPT_IMG_STORE_KEY]: store = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(FPT_IMG_STORE_KEY);
@@ -17,12 +17,12 @@ async function fptStoreImage(dataUrl) {
 
 // 3.0: guards against "Extension context invalidated" errors. When the extension reloads or
 // updates, old content-script contexts linger on the page; any chrome.* call from them throws.
-// Use fptExtAlive() before chrome.* calls in observers/listeners, and fptSafe() to wrap them.
-function fptExtAlive() {
+// Use fxnExtAlive() before chrome.* calls in observers/listeners, and fxnSafe() to wrap them.
+function fxnExtAlive() {
     try { return !!(chrome && chrome.runtime && chrome.runtime.id); } catch (_) { return false; }
 }
-async function fptSafe(fn, fallback) {
-    if (!fptExtAlive()) return fallback;
+async function fxnSafe(fn, fallback) {
+    if (!fxnExtAlive()) return fallback;
     try { return await fn(); } catch (e) {
         if (String(e && e.message || '').includes('Extension context invalidated')) return fallback;
         throw e;
@@ -104,8 +104,8 @@ function showNotification(message, isError = false) {
     const PARTICLE_COUNT = 25;
 
     const particleContainer = createElement('div', { 'aria-hidden': 'true' });
-    const animationId = `fpToolsParticleAnimation-${Date.now()}`;
-    const styleTagId = `fp-tools-particle-style-${Date.now()}`;
+    const animationId = `foxenParticleAnimation-${Date.now()}`;
+    const styleTagId = `foxen-particle-style-${Date.now()}`;
 
     const startX = window.innerWidth / 2;
     const startY = window.innerHeight / 2;
@@ -175,9 +175,9 @@ function showNotification(message, isError = false) {
     });
 
     setTimeout(() => {
-        let container = document.getElementById('fp-tools-notification-container');
+        let container = document.getElementById('foxen-notification-container');
         if (!container) {
-            container = createElement('div', { id: 'fp-tools-notification-container' }, {
+            container = createElement('div', { id: 'foxen-notification-container' }, {
                 position: 'fixed',
                 bottom: '20px',
                 right: '20px',
@@ -195,34 +195,34 @@ function showNotification(message, isError = false) {
 
         const notification = createElement('div', {}, {
             position: 'relative',
-            background: isError ? 'rgba(194, 57, 42, 0.92)' : 'var(--fpt-surface-2, rgba(44, 47, 51, 0.9))',
-            color: isError ? '#fff' : 'var(--fpt-text, #A259FF)',
+            background: isError ? 'rgba(194, 57, 42, 0.92)' : 'var(--fxn-surface-2, rgba(44, 47, 51, 0.9))',
+            color: isError ? '#fff' : 'var(--fxn-text, #A259FF)',
             padding: '14px 22px',
             borderRadius: '8px',
             fontSize: '15px',
             fontWeight: '500',
-            boxShadow: '0 5px 25px var(--fpt-shadow, rgba(0, 0, 0, 0.3))',
-            border: '1px solid var(--fpt-border, rgba(255, 255, 255, 0.1))',
+            boxShadow: '0 5px 25px var(--fxn-shadow, rgba(0, 0, 0, 0.3))',
+            border: '1px solid var(--fxn-border, rgba(255, 255, 255, 0.1))',
             backdropFilter: 'blur(8px)',
             webkitBackdropFilter: 'blur(8px)',
             pointerEvents: 'auto',
             transform: 'scale(0.8)',
             opacity: '0',
-            animation: `fpToolsEmerge 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards, fpToolsFadeOut 0.5s ${FADE_OUT_DELAY / 1000}s forwards`
+            animation: `foxenEmerge 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards, foxenFadeOut 0.5s ${FADE_OUT_DELAY / 1000}s forwards`
         }, message);
 
-        if (!document.querySelector('style[data-fp-tools-notify-keyframes]')) {
+        if (!document.querySelector('style[data-foxen-notify-keyframes]')) {
             const keyframesStyle = `
-                @keyframes fpToolsEmerge {
+                @keyframes foxenEmerge {
                     from { opacity: 0; transform: scale(0.8) translateY(20px); }
                     to { opacity: 1; transform: scale(1) translateY(0); }
                 }
-                @keyframes fpToolsFadeOut {
+                @keyframes foxenFadeOut {
                     from { opacity: 1; transform: scale(1); margin-top: 0; margin-bottom: 0; } 
                     to { opacity: 0; transform: scale(0.9); margin-top: -20px; margin-bottom: -20px; }
                 }
             `;
-            const keyframesStyleSheet = createElement("style", { 'data-fp-tools-notify-keyframes': 'true' }, {}, keyframesStyle);
+            const keyframesStyleSheet = createElement("style", { 'data-foxen-notify-keyframes': 'true' }, {}, keyframesStyle);
             document.head.appendChild(keyframesStyleSheet);
         }
 
@@ -253,44 +253,44 @@ function showNotification(message, isError = false) {
 // отдельно и подставляются только в момент отправки - пользователь видит чистый текст.
 const __fptAttachments = new Map(); // textarea (element) -> [{id, dataUrl}]
 
-function fptGetAttachments(textarea) {
+function fxnGetAttachments(textarea) {
     return __fptAttachments.get(textarea) || [];
 }
 
 // Send order: 'text_first' = сообщение → картинка, 'image_first' = картинка → сообщение.
 // Stored on the textarea dataset so senders/savers can read it without a separate map.
-function fptGetSendOrder(textarea) {
-    const v = textarea && textarea.dataset ? textarea.dataset.fptSendOrder : '';
+function fxnGetSendOrder(textarea) {
+    const v = textarea && textarea.dataset ? textarea.dataset.fxnSendOrder : '';
     return v === 'image_first' ? 'image_first' : 'text_first';
 }
-function fptSetSendOrder(textarea, order) {
+function fxnSetSendOrder(textarea, order) {
     if (!textarea || !textarea.dataset) return;
-    textarea.dataset.fptSendOrder = (order === 'image_first') ? 'image_first' : 'text_first';
+    textarea.dataset.fxnSendOrder = (order === 'image_first') ? 'image_first' : 'text_first';
 }
 
 // Build the icon-only "order" mini-row markup (no words, just icons + arrow).
-function fptOrderIconsHtml(order) {
+function fxnOrderIconsHtml(order) {
     if (order === 'image_first') {
-        return `<span class="material-symbols-rounded fpt-order-img">image</span>` +
-               `<span class="fpt-order-arrow">→</span>` +
-               `<span class="material-symbols-rounded fpt-order-msg">chat_bubble</span>`;
+        return `<span class="material-symbols-rounded fxn-order-img">image</span>` +
+               `<span class="fxn-order-arrow">→</span>` +
+               `<span class="material-symbols-rounded fxn-order-msg">chat_bubble</span>`;
     }
-    return `<span class="material-symbols-rounded fpt-order-msg">chat_bubble</span>` +
-           `<span class="fpt-order-arrow">→</span>` +
-           `<span class="material-symbols-rounded fpt-order-img">image</span>`;
+    return `<span class="material-symbols-rounded fxn-order-msg">chat_bubble</span>` +
+           `<span class="fxn-order-arrow">→</span>` +
+           `<span class="material-symbols-rounded fxn-order-img">image</span>`;
 }
 
 // Icon-only popup that lets the user pick the send order. No text at all - the
 // two rows are: 💬 → 🖼️  and  🖼️ → 💬. Returns nothing; calls onPick(order).
-function fptShowOrderPopup(anchorEl, current, onPick) {
-    document.querySelectorAll('.fpt-order-popup').forEach(p => p.remove());
+function fxnShowOrderPopup(anchorEl, current, onPick) {
+    document.querySelectorAll('.fxn-order-popup').forEach(p => p.remove());
 
     const popup = document.createElement('div');
-    popup.className = 'fpt-order-popup';
+    popup.className = 'fxn-order-popup';
     const mk = (order) => `
-        <div class="fpt-order-opt${order === current ? ' active' : ''}" data-order="${order}" title="">
-            ${fptOrderIconsHtml(order)}
-            <span class="material-symbols-rounded fpt-order-check">check</span>
+        <div class="fxn-order-opt${order === current ? ' active' : ''}" data-order="${order}" title="">
+            ${fxnOrderIconsHtml(order)}
+            <span class="material-symbols-rounded fxn-order-check">check</span>
         </div>`;
     popup.innerHTML = mk('text_first') + mk('image_first');
     document.body.appendChild(popup);
@@ -306,7 +306,7 @@ function fptShowOrderPopup(anchorEl, current, onPick) {
     popup.style.top = (r.bottom + window.scrollY + 6) + 'px';
 
     popup.addEventListener('click', (e) => {
-        const opt = e.target.closest('.fpt-order-opt');
+        const opt = e.target.closest('.fxn-order-opt');
         if (!opt) return;
         const order = opt.dataset.order;
         if (typeof onPick === 'function') onPick(order);
@@ -324,67 +324,67 @@ function fptShowOrderPopup(anchorEl, current, onPick) {
     setTimeout(() => document.addEventListener('mousedown', outside, true), 0);
 }
 
-function fptRenderAttachments(textarea) {
+function fxnRenderAttachments(textarea) {
     // find or create the attachments container right after the textarea
-    let box = textarea.parentNode && textarea.parentNode.querySelector(':scope > .fpt-attachments');
+    let box = textarea.parentNode && textarea.parentNode.querySelector(':scope > .fxn-attachments');
     if (!box) {
         box = document.createElement('div');
-        box.className = 'fpt-attachments';
+        box.className = 'fxn-attachments';
         textarea.insertAdjacentElement('afterend', box);
     }
-    const list = fptGetAttachments(textarea);
+    const list = fxnGetAttachments(textarea);
     box.innerHTML = '';
     list.forEach((att) => {
-        const order = fptGetSendOrder(textarea);
+        const order = fxnGetSendOrder(textarea);
         const chip = document.createElement('div');
-        chip.className = 'fpt-attachment-chip';
+        chip.className = 'fxn-attachment-chip';
         chip.title = 'Нажмите, чтобы выбрать порядок отправки';
         // Whole chip is clickable → opens the icon-only order picker. The view/remove
         // buttons stop propagation so they still work independently.
         chip.innerHTML = `
-            <span class="material-symbols-rounded fpt-att-ic">image</span>
-            <span class="fpt-att-label">Прикреплённое изображение</span>
-            <span class="fpt-order-mini" aria-hidden="true">${fptOrderIconsHtml(order)}</span>
-            <span class="material-symbols-rounded fpt-att-hint">tune</span>
-            <button type="button" class="fpt-att-view" title="Посмотреть"><span class="material-symbols-rounded">visibility</span></button>
-            <button type="button" class="fpt-att-remove" title="Убрать"><span class="material-symbols-rounded">close</span></button>
+            <span class="material-symbols-rounded fxn-att-ic">image</span>
+            <span class="fxn-att-label">Прикреплённое изображение</span>
+            <span class="fxn-order-mini" aria-hidden="true">${fxnOrderIconsHtml(order)}</span>
+            <span class="material-symbols-rounded fxn-att-hint">tune</span>
+            <button type="button" class="fxn-att-view" title="Посмотреть"><span class="material-symbols-rounded">visibility</span></button>
+            <button type="button" class="fxn-att-remove" title="Убрать"><span class="material-symbols-rounded">close</span></button>
         `;
         // click anywhere on the chip (except the action buttons) → order picker
         chip.addEventListener('click', (e) => {
-            if (e.target.closest('.fpt-att-view') || e.target.closest('.fpt-att-remove')) return;
+            if (e.target.closest('.fxn-att-view') || e.target.closest('.fxn-att-remove')) return;
             e.preventDefault();
-            fptShowOrderPopup(chip, fptGetSendOrder(textarea), (newOrder) => {
-                fptSetSendOrder(textarea, newOrder);
-                fptRenderAttachments(textarea);
-                textarea.dispatchEvent(new CustomEvent('fpt-attachment-changed', { bubbles: true }));
+            fxnShowOrderPopup(chip, fxnGetSendOrder(textarea), (newOrder) => {
+                fxnSetSendOrder(textarea, newOrder);
+                fxnRenderAttachments(textarea);
+                textarea.dispatchEvent(new CustomEvent('fxn-attachment-changed', { bubbles: true }));
             });
         });
-        chip.querySelector('.fpt-att-view').addEventListener('click', (e) => {
+        chip.querySelector('.fxn-att-view').addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            fptShowImagePreview(att.dataUrl);
+            fxnShowImagePreview(att.dataUrl);
         });
-        chip.querySelector('.fpt-att-remove').addEventListener('click', (e) => {
+        chip.querySelector('.fxn-att-remove').addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const arr = fptGetAttachments(textarea).filter(a => a.id !== att.id);
+            const arr = fxnGetAttachments(textarea).filter(a => a.id !== att.id);
             if (arr.length) __fptAttachments.set(textarea, arr); else __fptAttachments.delete(textarea);
-            fptRenderAttachments(textarea);
+            fxnRenderAttachments(textarea);
             // also persist on the element dataset so senders can read it
-            textarea.dataset.fptImages = JSON.stringify(fptGetAttachments(textarea).map(a => a.dataUrl));
-            textarea.dispatchEvent(new CustomEvent('fpt-attachment-changed', { bubbles: true }));
+            textarea.dataset.fxnImages = JSON.stringify(fxnGetAttachments(textarea).map(a => a.dataUrl));
+            textarea.dispatchEvent(new CustomEvent('fxn-attachment-changed', { bubbles: true }));
         });
         box.appendChild(chip);
     });
 }
 
-function fptShowImagePreview(dataUrl) {
+function fxnShowImagePreview(dataUrl) {
     const overlay = document.createElement('div');
-    overlay.className = 'fpt-img-preview-overlay';
-    overlay.innerHTML = `<div class="fpt-img-preview-inner"><img src="${dataUrl}" alt="preview"><button type="button" class="fpt-img-preview-close"><span class="material-symbols-rounded">close</span></button></div>`;
+    overlay.className = 'fxn-img-preview-overlay';
+    overlay.innerHTML = `<div class="fxn-img-preview-inner"><img src="${dataUrl}" alt="preview"><button type="button" class="fxn-img-preview-close"><span class="material-symbols-rounded">close</span></button></div>`;
     const close = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-    overlay.querySelector('.fpt-img-preview-close').addEventListener('click', close);
+    overlay.querySelector('.fxn-img-preview-close').addEventListener('click', close);
     document.body.appendChild(overlay);
 }
 
@@ -416,15 +416,15 @@ function handleImageAddClick(targetTextarea) {
         reader.onload = (e) => {
             const dataUrl = e.target.result;
             const id = Math.random().toString(36).slice(2, 8);
-            const arr = fptGetAttachments(targetTextarea);
+            const arr = fxnGetAttachments(targetTextarea);
             arr.push({ id, dataUrl });
             __fptAttachments.set(targetTextarea, arr);
             // store on the element so the sender can pick them up (separate from text value)
-            targetTextarea.dataset.fptImages = JSON.stringify(arr.map(a => a.dataUrl));
-            fptRenderAttachments(targetTextarea);
+            targetTextarea.dataset.fxnImages = JSON.stringify(arr.map(a => a.dataUrl));
+            fxnRenderAttachments(targetTextarea);
             // Trigger autosave ONCE via a non-bubbling custom event (avoids re-render loops /
             // flicker that a bubbling 'input' caused on the whole popup).
-            targetTextarea.dispatchEvent(new CustomEvent('fpt-attachment-changed', { bubbles: true }));
+            targetTextarea.dispatchEvent(new CustomEvent('fxn-attachment-changed', { bubbles: true }));
             if (typeof showNotification === 'function') showNotification('Картинка прикреплена.');
             cleanup();
         };
@@ -441,12 +441,12 @@ function handleImageAddClick(targetTextarea) {
 // Многие наши окна (системные уведомления, глобальный импорт, аналитика рынка,
 // статистика продаж и т.д.) раньше были захардкожены под тёмно-фиолетовую палитру
 // и «шакалили» на светлой/кастомной теме FunPay. Этот движок ОДИН РАЗ парсит реальные
-// цвета страницы и выставляет CSS-переменные --fpt-* на :root. Фичи ссылаются на эти
+// цвета страницы и выставляет CSS-переменные --fxn-* на :root. Фичи ссылаются на эти
 // переменные вместо фиксированных цветов - и автоматически совпадают с любой темой.
 // ════════════════════════════════════════════════════════════════════════════
 
 // rgb(a) / hex → [r,g,b,a]
-function fptParseRGB(str) {
+function fxnParseRGB(str) {
     if (!str) return null;
     str = String(str).trim();
     let m = str.match(/rgba?\(([^)]+)\)/i);
@@ -462,10 +462,10 @@ function fptParseRGB(str) {
     }
     return null;
 }
-function fptRgbStr(rgb, a) { return `rgba(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])}, ${a == null ? (rgb[3] == null ? 1 : rgb[3]) : a})`; }
-function fptLuma(rgb) { return (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255; }
+function fxnRgbStr(rgb, a) { return `rgba(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])}, ${a == null ? (rgb[3] == null ? 1 : rgb[3]) : a})`; }
+function fxnLuma(rgb) { return (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255; }
 // смешать цвет к белому/чёрному на долю t (0..1)
-function fptMix(rgb, toward, t) {
+function fxnMix(rgb, toward, t) {
     const tgt = toward === 'white' ? [255, 255, 255] : [0, 0, 0];
     return [rgb[0] + (tgt[0] - rgb[0]) * t, rgb[1] + (tgt[1] - rgb[1]) * t, rgb[2] + (tgt[2] - rgb[2]) * t, 1];
 }
@@ -474,7 +474,7 @@ function fptMix(rgb, toward, t) {
 // FunPay и поднимаемся к <html>. Если у элемента фон прозрачный - берём вычисленный
 // фон через родителей. Это критично: на белой теме фон часто покрашен на .content/html,
 // а не на body, и раньше детект ошибочно считал тему тёмной.
-function fptResolveBg() {
+function fxnResolveBg() {
     const sel = [
         '.content-with-cd-wide', '.content-with-cd', '.content',
         '.page-content', '.chat-contacts', '.chat',
@@ -488,20 +488,20 @@ function fptResolveBg() {
         let el = start;
         // поднимаемся по дереву, пока не найдём непрозрачный фон
         for (let i = 0; el && i < 12; i++, el = el.parentElement) {
-            const rgb = fptParseRGB(getComputedStyle(el).backgroundColor);
+            const rgb = fxnParseRGB(getComputedStyle(el).backgroundColor);
             if (rgb && rgb[3] > 0.2) return rgb;
         }
     }
     // последний шанс - фон html/body даже если бледный
-    const bodyBg = fptParseRGB(getComputedStyle(document.body).backgroundColor);
+    const bodyBg = fxnParseRGB(getComputedStyle(document.body).backgroundColor);
     if (bodyBg && bodyBg[3] > 0) return bodyBg;
     return [255, 255, 255, 1]; // дефолт - СВЕТЛЫЙ (белая тема FunPay по умолчанию)
 }
 
 // Главная функция: парсит палитру и возвращает набор производных цветов.
-function fptComputePalette() {
-    let bg = fptResolveBg();
-    const textRaw = fptParseRGB(getComputedStyle(document.body).color) || [224, 224, 224, 1];
+function fxnComputePalette() {
+    let bg = fxnResolveBg();
+    const textRaw = fxnParseRGB(getComputedStyle(document.body).color) || [224, 224, 224, 1];
 
     // Если наша кастомная тема ВЫКЛЮЧЕНА, базовая страница FunPay - светлая по
     // умолчанию (тёмной её делает только сам сайт в редких темах). Чтобы случайный
@@ -509,77 +509,77 @@ function fptComputePalette() {
     // в тёмную при перемещении меню, при выключенной теме фон считаем светлым,
     // если он подозрительно тёмный.
     try {
-        if (document.documentElement.classList.contains('fpt-custom-theme-off')) {
+        if (document.documentElement.classList.contains('fxn-custom-theme-off')) {
             // Если фон вышел тёмным, но текст страницы тёмный - это противоречие
             // (на тёмном фоне текст светлый). Значит фон считан ошибочно с тёмного
             // оверлея/нашего окна → принудительно светлая база.
-            const txtDark = textRaw && fptLuma(textRaw) < 0.5;
-            if (fptLuma(bg) < 0.5 && txtDark) bg = [255, 255, 255, 1];
+            const txtDark = textRaw && fxnLuma(textRaw) < 0.5;
+            if (fxnLuma(bg) < 0.5 && txtDark) bg = [255, 255, 255, 1];
         }
     } catch (_) {}
 
-    const dark = fptLuma(bg) < 0.5; // тёмная тема?
+    const dark = fxnLuma(bg) < 0.5; // тёмная тема?
 
     // поверхности: чуть светлее (на тёмной) или чуть темнее (на светлой) основного фона
-    const surface  = fptMix(bg, dark ? 'white' : 'black', dark ? 0.05 : 0.03);
-    const surface2 = fptMix(bg, dark ? 'white' : 'black', dark ? 0.10 : 0.06);
-    const border   = fptMix(bg, dark ? 'white' : 'black', dark ? 0.16 : 0.12);
-    const hover    = fptMix(bg, dark ? 'white' : 'black', dark ? 0.14 : 0.08);
+    const surface  = fxnMix(bg, dark ? 'white' : 'black', dark ? 0.05 : 0.03);
+    const surface2 = fxnMix(bg, dark ? 'white' : 'black', dark ? 0.10 : 0.06);
+    const border   = fxnMix(bg, dark ? 'white' : 'black', dark ? 0.16 : 0.12);
+    const hover    = fxnMix(bg, dark ? 'white' : 'black', dark ? 0.14 : 0.08);
     const text     = textRaw;
-    const textMuted = dark ? fptMix(textRaw, 'black', 0.35) : fptMix(textRaw, 'white', 0.35);
+    const textMuted = dark ? fxnMix(textRaw, 'black', 0.35) : fxnMix(textRaw, 'white', 0.35);
     // акцент берём фирменный фанпеевский, но это можно переопределить
     const accent = [193, 38, 211, 1]; // #C026D3 - но используем умеренно
 
     return {
         dark,
-        bg:        fptRgbStr(bg),
-        surface:   fptRgbStr(surface),
-        surface2:  fptRgbStr(surface2),
-        border:    fptRgbStr(border),
-        hover:     fptRgbStr(hover),
-        text:      fptRgbStr(text),
-        textMuted: fptRgbStr(textMuted),
-        accent:    fptRgbStr(accent),
-        accentSoft: fptRgbStr(accent, dark ? 0.18 : 0.12),
+        bg:        fxnRgbStr(bg),
+        surface:   fxnRgbStr(surface),
+        surface2:  fxnRgbStr(surface2),
+        border:    fxnRgbStr(border),
+        hover:     fxnRgbStr(hover),
+        text:      fxnRgbStr(text),
+        textMuted: fxnRgbStr(textMuted),
+        accent:    fxnRgbStr(accent),
+        accentSoft: fxnRgbStr(accent, dark ? 0.18 : 0.12),
         shadow:    dark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.18)'
     };
 }
 
-// Выставляет CSS-переменные --fpt-* на :root.
-function fptApplyThemeVars() {
+// Выставляет CSS-переменные --fxn-* на :root.
+function fxnApplyThemeVars() {
     try {
-        const p = fptComputePalette();
+        const p = fxnComputePalette();
         const r = document.documentElement.style;
-        r.setProperty('--fpt-bg',         p.bg);
-        r.setProperty('--fpt-surface',    p.surface);
-        r.setProperty('--fpt-surface-2',  p.surface2);
-        r.setProperty('--fpt-border',     p.border);
-        r.setProperty('--fpt-hover',      p.hover);
-        r.setProperty('--fpt-text',       p.text);
-        r.setProperty('--fpt-text-muted', p.textMuted);
-        r.setProperty('--fpt-accent',     p.accent);
-        r.setProperty('--fpt-accent-soft',p.accentSoft);
-        r.setProperty('--fpt-shadow',     p.shadow);
-        document.documentElement.classList.toggle('fpt-theme-dark', p.dark);
-        document.documentElement.classList.toggle('fpt-theme-light', !p.dark);
+        r.setProperty('--fxn-bg',         p.bg);
+        r.setProperty('--fxn-surface',    p.surface);
+        r.setProperty('--fxn-surface-2',  p.surface2);
+        r.setProperty('--fxn-border',     p.border);
+        r.setProperty('--fxn-hover',      p.hover);
+        r.setProperty('--fxn-text',       p.text);
+        r.setProperty('--fxn-text-muted', p.textMuted);
+        r.setProperty('--fxn-accent',     p.accent);
+        r.setProperty('--fxn-accent-soft',p.accentSoft);
+        r.setProperty('--fxn-shadow',     p.shadow);
+        document.documentElement.classList.toggle('fxn-theme-dark', p.dark);
+        document.documentElement.classList.toggle('fxn-theme-light', !p.dark);
     } catch (e) { /* noop */ }
 }
 
 // Инициализация + реакция на смену темы (FunPay-тема, наша кастомная тема, смена страницы).
 let __fptThemeInited = false;
-function fptInitThemeEngine() {
+function fxnInitThemeEngine() {
     if (__fptThemeInited) return;
     __fptThemeInited = true;
-    fptApplyThemeVars();
+    fxnApplyThemeVars();
     // повтор после полной загрузки (на случай если фон применяется позже)
     if (document.readyState !== 'complete') {
-        window.addEventListener('load', fptApplyThemeVars, { once: true });
+        window.addEventListener('load', fxnApplyThemeVars, { once: true });
     }
     // следим за сменой темы: класс/стиль на <html>/<body>
     try {
         const mo = new MutationObserver(() => {
             clearTimeout(window.__fptThemeT);
-            window.__fptThemeT = setTimeout(fptApplyThemeVars, 80);
+            window.__fptThemeT = setTimeout(fxnApplyThemeVars, 80);
         });
         mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
         mo.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
@@ -587,13 +587,13 @@ function fptInitThemeEngine() {
 }
 
 // запуск как можно раньше
-if (document.body) fptInitThemeEngine();
-else document.addEventListener('DOMContentLoaded', fptInitThemeEngine, { once: true });
+if (document.body) fxnInitThemeEngine();
+else document.addEventListener('DOMContentLoaded', fxnInitThemeEngine, { once: true });
 
 // Если вкладку открыли в фоне, computed-стили могли посчитаться до отрисовки -
 // палитра выходила «чёрной». Переприменяем при возврате на вкладку и фокусе.
 document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) { try { fptApplyThemeVars(); } catch (_) {} }
+    if (!document.hidden) { try { fxnApplyThemeVars(); } catch (_) {} }
 });
-window.addEventListener('focus', () => { try { fptApplyThemeVars(); } catch (_) {} });
-window.addEventListener('pageshow', () => { try { fptApplyThemeVars(); } catch (_) {} });
+window.addEventListener('focus', () => { try { fxnApplyThemeVars(); } catch (_) {} });
+window.addEventListener('pageshow', () => { try { fxnApplyThemeVars(); } catch (_) {} });

@@ -16,8 +16,8 @@
 
     function enhance() {
         const editLink = document.querySelector('a.btn.btn-gray.btn-block[href*="offerEdit?node="][href*="offer="]');
-        if (!editLink || editLink.dataset.fptActions) return;
-        editLink.dataset.fptActions = '1';
+        if (!editLink || editLink.dataset.fxnActions) return;
+        editLink.dataset.fxnActions = '1';
 
         const offerId = offerIdFromEditUrl(editLink.getAttribute('href'));
 
@@ -35,7 +35,7 @@
         // Маленькая БЕЛАЯ кнопка заметки (та же форма, что и удаление) — иконка бумажки.
         const noteBtn = document.createElement('button');
         noteBtn.type = 'button';
-        noteBtn.className = 'btn btn-default fpt-lot-note-btn';
+        noteBtn.className = 'btn btn-default fxn-lot-note-btn';
         noteBtn.title = 'Заметка к лоту';
         noteBtn.style.cssText = 'flex:0 0 auto;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;';
         noteBtn.innerHTML = '<i class="far fa-sticky-note"></i>';
@@ -55,7 +55,7 @@
         // Красная кнопка удаления
         const del = document.createElement('button');
         del.type = 'button';
-        del.className = 'btn btn-danger fpt-lot-del-btn';
+        del.className = 'btn btn-danger fxn-lot-del-btn';
         del.title = 'Удалить лот';
         del.style.cssText = 'flex:0 0 auto;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;';
         del.innerHTML = '<i class="fas fa-trash"></i>';

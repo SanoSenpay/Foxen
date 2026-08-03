@@ -22,7 +22,7 @@ import {
 // Оборачиваем глобальный fetch так, чтобы для ВСЕХ запросов к funpay.com по
 // умолчанию подставлялись реальные куки активной сессии (credentials:'include').
 // Прочие домены (api.telegram.org, *.workers.dev, CDN и т.д.) не затрагиваются.
-// Совместимо с подменой golden_key в fptSnapshotForKey (она и так грузит главную
+// Совместимо с подменой golden_key в fxnSnapshotForKey (она и так грузит главную
 // с credentials:'include' из cookie-jar).
 (function () {
     const _origFetch = self.fetch.bind(self);
@@ -40,10 +40,10 @@ import {
 })();
 
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen/offscreen.html';
-const DISCORD_LOG_ALARM_NAME = 'fpToolsDiscordCheck';
-const AUTO_RESPONDER_ALARM_NAME = 'fpToolsAutoResponder';
+const DISCORD_LOG_ALARM_NAME = 'foxenDiscordCheck';
+const AUTO_RESPONDER_ALARM_NAME = 'foxenAutoResponder';
 let lastDiscordChatTag = null;
-const IMPORT_PROCESS_KEY = 'fpToolsLotImportProcess';
+const IMPORT_PROCESS_KEY = 'foxenLotImportProcess';
 const RETRY_LIMIT = 5;
 const RETRY_DELAY = 5000; // 5 секунд
 
@@ -58,7 +58,7 @@ let _financeCycleRunning = false;
 // «лежит» бэкенд (а это бывает — в чате жалуются, что сайт падает), один и тот же
 // запрос через секунду часто проходит. Это НЕ замедляет обычную работу: ретрай
 // включается только при ошибке сервера.
-async function fptFetchResilient(url, options, { retries = 3, baseDelay = 700 } = {}) {
+async function fxnFetchResilient(url, options, { retries = 3, baseDelay = 700 } = {}) {
     let lastErr;
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
@@ -75,7 +75,7 @@ async function fptFetchResilient(url, options, { retries = 3, baseDelay = 700 } 
             await new Promise(r => setTimeout(r, baseDelay * Math.pow(2, attempt) + Math.random() * 300));
         }
     }
-    throw lastErr || new Error('fptFetchResilient: исчерпаны попытки');
+    throw lastErr || new Error('fxnFetchResilient: исчерпаны попытки');
 }
 
 // --- СБОР СТАТИСТИКИ ПРОДАЖ (IndexedDB) ---
@@ -87,7 +87,7 @@ async function runSalesUpdateCycle() {
     _salesCycleRunning = true;
     console.log("Foxen: Запуск полного цикла сбора статистики продаж...");
     try {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSalesCollecting: true, fpToolsSalesError: null });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenSalesCollecting: true, foxenSalesError: null });
         // Однократно переносим старые данные из storage.local в IndexedDB
         // (и освобождаем квоту). Безопасно вызывать каждый раз — отработает один раз.
         await FPTSalesDB.migrateFromLocalStorage();
@@ -129,7 +129,7 @@ async function runSalesUpdateCycle() {
             const now = Date.now();
             await FPTSalesDB.setMeta('lastUpdate', now);
             // Маленькое зеркало для UI, который читает дату из storage.local — это байты, не мегабайты.
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSalesLastUpdate: now });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenSalesLastUpdate: now });
         };
 
         // --- Догрузка НОВЫХ заказов сверху (инкрементально) ---
@@ -226,13 +226,13 @@ async function runSalesUpdateCycle() {
 
     } catch (e) {
         console.error(`Foxen: Ошибка в цикле сбора статистики: ${e.message}`);
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSalesError: e.message });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenSalesError: e.message });
     } finally {
         _salesCycleRunning = false;
         console.log("Foxen: Сбор статистики продаж завершен.");
         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
-            fpToolsSalesLastUpdate: Date.now(),
-            fpToolsSalesCollecting: false
+            foxenSalesLastUpdate: Date.now(),
+            foxenSalesCollecting: false
         });
     }
 }
@@ -242,7 +242,7 @@ async function runFinanceUpdateCycle() {
     _financeCycleRunning = true;
     console.log("Foxen: Запуск сбора статистики финансов...");
     try {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsFinanceCollecting: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenFinanceCollecting: true });
         const auth = await getAuthDetailsForBackground();
         if (!auth.golden_key) throw new Error("Не удалось получить golden_key для сбора финансов.");
         const userId = auth.userId;
@@ -303,7 +303,7 @@ async function runFinanceUpdateCycle() {
 
             if (fresh.length > 0) {
                 await FPTFinanceDB.putOrders(fresh);
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsFinanceCount: seenIds.size });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenFinanceCount: seenIds.size });
                 const dts = txns.map(t => t.date).filter(Boolean);
                 if (dts.length) {
                     const newest = new Date(Math.max(...dts)).toISOString().slice(0, 10);
@@ -335,15 +335,15 @@ async function runFinanceUpdateCycle() {
 
         const now = Date.now();
         await FPTFinanceDB.setMeta('lastUpdate', now);
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsFinanceLastUpdate: now });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenFinanceLastUpdate: now });
         console.log(`Foxen: Финансы собраны, операций: ${total}.`);
     } catch (e) {
         console.error(`Foxen: Ошибка в цикле сбора финансов: ${e.message}`);
     } finally {
         _financeCycleRunning = false;
         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
-            fpToolsFinanceLastUpdate: Date.now(),
-            fpToolsFinanceCollecting: false
+            foxenFinanceLastUpdate: Date.now(),
+            foxenFinanceCollecting: false
         });
     }
 }
@@ -353,7 +353,7 @@ async function runPurchasesUpdateCycle() {
     _purchasesCycleRunning = true;
     console.log("Foxen: Запуск полного цикла сбора статистики покупок...");
     try {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPurchasesCollecting: true, fpToolsPurchasesError: null });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenPurchasesCollecting: true, foxenPurchasesError: null });
         // Однократно переносим старые данные из storage.local в IndexedDB
         // (и освобождаем квоту). Безопасно вызывать каждый раз — отработает один раз.
         await FPTPurchasesDB.migrateFromLocalStorage();
@@ -395,7 +395,7 @@ async function runPurchasesUpdateCycle() {
             const now = Date.now();
             await FPTPurchasesDB.setMeta('lastUpdate', now);
             // Маленькое зеркало для UI, который читает дату из storage.local — это байты, не мегабайты.
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPurchasesLastUpdate: now });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenPurchasesLastUpdate: now });
         };
 
         // --- Догрузка НОВЫХ покупок сверху (инкрементально) ---
@@ -492,13 +492,13 @@ async function runPurchasesUpdateCycle() {
 
     } catch (e) {
         console.error(`Foxen: Ошибка в цикле сбора статистики: ${e.message}`);
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsPurchasesError: e.message });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenPurchasesError: e.message });
     } finally {
         _purchasesCycleRunning = false;
         console.log("Foxen: Сбор статистики покупок завершен.");
         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
-            fpToolsPurchasesLastUpdate: Date.now(),
-            fpToolsPurchasesCollecting: false
+            foxenPurchasesLastUpdate: Date.now(),
+            foxenPurchasesCollecting: false
         });
     }
 }
@@ -793,8 +793,8 @@ telegramInit({
 // Полный цикл Telegram: приём команд (getUpdates) + уведомления (сообщения/заказы).
 let _tgChatTag = null;
 async function runTelegramCheckCycle() {
-    const { fpToolsTelegram } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTelegram');
-    const cfg = fpToolsTelegram || {};
+    const { foxenTelegram } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTelegram');
+    const cfg = foxenTelegram || {};
     if (!cfg.enabled || !cfg.token) return;
 
     // 1) команды из бота
@@ -803,8 +803,8 @@ async function runTelegramCheckCycle() {
     // 2) уведомления о новых сообщениях (если Discord-цикл не активен, тянем сами)
     if (cfg.notifyMessages) {
         try {
-            const { fpToolsDiscord } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDiscord');
-            const discordActive = fpToolsDiscord && fpToolsDiscord.enabled && fpToolsDiscord.webhookUrl;
+            const { foxenDiscord } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDiscord');
+            const discordActive = foxenDiscord && foxenDiscord.enabled && foxenDiscord.webhookUrl;
             // Если Discord активен - он уже кормит Telegram внутри runDiscordCheckCycle.
             if (!discordActive) {
                 const chats = await tgFetchChatList();
@@ -871,7 +871,7 @@ async function cloneCalcNetPrice(auth, nodeId, buyerPrice, currencyCode) {
     };
     const base = 100; // как в плагине
     const body = new URLSearchParams({ nodeId: String(nodeId), price: String(base) });
-    const r = await fptFetchResilient('https://funpay.com/lots/calc', { method: 'POST', headers, body });
+    const r = await fxnFetchResilient('https://funpay.com/lots/calc', { method: 'POST', headers, body });
     if (!r.ok) return null;
     const j = await r.json();
     if (!j || j.error) return null;
@@ -947,14 +947,14 @@ async function sendDiscordNotification(chat, settings) {
 }
 
 async function runDiscordCheckCycle() {
-    const { fpToolsDiscord, fpToolsProcessedDiscordIds } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsDiscord', 'fpToolsProcessedDiscordIds']);
+    const { foxenDiscord, foxenProcessedDiscordIds } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenDiscord', 'foxenProcessedDiscordIds']);
 
-    if (!fpToolsDiscord || !fpToolsDiscord.enabled || !fpToolsDiscord.webhookUrl) {
+    if (!foxenDiscord || !foxenDiscord.enabled || !foxenDiscord.webhookUrl) {
         chrome.alarms.clear(DISCORD_LOG_ALARM_NAME);
         return;
     }
     
-    const processedDiscordMessageIds = new Set(fpToolsProcessedDiscordIds || []);
+    const processedDiscordMessageIds = new Set(foxenProcessedDiscordIds || []);
 
     try {
         const auth = await getAuthDetailsForBackground();
@@ -997,7 +997,7 @@ async function runDiscordCheckCycle() {
                     const b = typeof browser !== 'undefined' ? browser : chrome;
                     try {
                         const p = b.tabs.sendMessage(tab.id, {
-                            action: 'fpToolsBuyerViewing',
+                            action: 'foxenBuyerViewing',
                             buyerId: bv.id,
                             data: bv.data
                         });
@@ -1022,8 +1022,8 @@ async function runDiscordCheckCycle() {
         //      and DON'T notify (otherwise enabling Discord blasts every existing unread chat).
         //  (2) Only notify when the chat's last message is genuinely new inbound
         //      (nodeMsg > userMsg), not merely flagged unread.
-        const { fpToolsDiscordSeeded } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDiscordSeeded');
-        const isFirstDiscordRun = !fpToolsDiscordSeeded;
+        const { foxenDiscordSeeded } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDiscordSeeded');
+        const isFirstDiscordRun = !foxenDiscordSeeded;
 
         let newMessagesToSend = false;
         for (const chat of parsedChats) {
@@ -1034,7 +1034,7 @@ async function runDiscordCheckCycle() {
             if (processedDiscordMessageIds.has(chat.msgId)) continue;
 
             if (!isFirstDiscordRun) {
-                await sendDiscordNotification(chat, fpToolsDiscord);
+                await sendDiscordNotification(chat, foxenDiscord);
             }
             processedDiscordMessageIds.add(chat.msgId);
             newMessagesToSend = true;
@@ -1045,7 +1045,7 @@ async function runDiscordCheckCycle() {
             if (idsToStore.length > 200) {
                 idsToStore = idsToStore.slice(-200);
             }
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsProcessedDiscordIds: idsToStore, fpToolsDiscordSeeded: true });
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenProcessedDiscordIds: idsToStore, foxenDiscordSeeded: true });
         }
 
     } catch (e) {
@@ -1169,9 +1169,9 @@ async function processNextLotImport() {
 // Все вызовы сериализуются (очередь), чтобы параллельные снимки не затирали
 // cookie друг друга и не разлогинивали активную сессию.
 // =====================================================================
-let _fptSnapChain = Promise.resolve();
+let _fxnSnapChain = Promise.resolve();
 
-function fptSnapshotForKey(key) {
+function fxnSnapshotForKey(key) {
     const run = async () => {
         // 1) Запоминаем текущую golden_key, чтобы вернуть её после запроса.
         let original = null;
@@ -1218,22 +1218,22 @@ function fptSnapshotForKey(key) {
         }
     };
     // сериализация
-    const next = _fptSnapChain.then(run, run);
-    _fptSnapChain = next.catch(() => {});
+    const next = _fxnSnapChain.then(run, run);
+    _fxnSnapChain = next.catch(() => {});
     return next;
 }
 
 
 // --- Главный обработчик сообщений ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request && request.action === 'fptRaiseAllNow') {
+    if (request && request.action === 'fxnRaiseAllNow') {
         runBumpCycle()
             .then(res => sendResponse({ ok: true, summary: res || {} }))
             .catch(e => sendResponse({ ok: false, error: e && e.message }));
         return true;
     }
     // 3.0: offscreen keepalive ping - receiving it resets the worker idle timer.
-    if (request && request.target === 'background' && request.action === 'fptEngineKeepalive') {
+    if (request && request.target === 'background' && request.action === 'fxnEngineKeepalive') {
         onKeepalivePing();
         sendResponse({ ok: true });
         return true;
@@ -1249,7 +1249,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // 3.0: Background image send (ported from Foxen upload_image + send_image).
     // Uploads the image to FunPay, then sends it via the runner with image_id - entirely
     // in the background, so it never touches the visible chat input.
-    if (request.action === 'fptSendImage') {
+    if (request.action === 'fxnSendImage') {
         (async () => {
             try {
                 const result = await sendChatImageInBackground(request.chatId, request.dataUrl, request.chatName);
@@ -1262,7 +1262,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // 3.0: send plain text to a chat in the background (used for ordered template parts).
-    if (request.action === 'fptSendChatText') {
+    if (request.action === 'fxnSendChatText') {
         (async () => {
             try {
                 const auth = await getAuthDetailsForBackground();
@@ -1292,7 +1292,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // Generic Fetch Proxy for bypassing CSP (used by profile_descriptions.js)
-    if (request.action === 'fptFetchProxy') {
+    if (request.action === 'fxnFetchProxy') {
         (async () => {
             try {
                 const res = await fetch(request.url, request.options);
@@ -1517,7 +1517,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 // 1) ФОРСИРУЕМ РУССКИЙ язык для сбора названий и описаний
                 let ruResp;
                 try {
-                    ruResp = await fptFetchResilient(`https://funpay.com/lots/offer?id=${offerId}&setlocale=ru`, { headers: ck });
+                    ruResp = await fxnFetchResilient(`https://funpay.com/lots/offer?id=${offerId}&setlocale=ru`, { headers: ck });
                 } catch (err) {
                     const msg = String(err?.message || err);
                     if (msg.includes('429')) throw new Error('429 (Слишком много запросов)');
@@ -1535,7 +1535,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 try {
                     // ФОРСИРУЕМ АНГЛИЙСКИЙ язык для сбора атрибутов для формы
                     await waitIfBatch();
-                    const enResp = await fptFetchResilient(`https://funpay.com/lots/offer?id=${offerId}&setlocale=en`, { headers: ck });
+                    const enResp = await fxnFetchResilient(`https://funpay.com/lots/offer?id=${offerId}&setlocale=en`, { headers: ck });
                     if (enResp.ok) {
                         const enHtml = await enResp.text();
                         en = await parseHtmlViaOffscreen(enHtml, 'parsePublicLotForClone');
@@ -1545,7 +1545,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 // ВОЗВРАЩАЕМ РУССКИЙ ЯЗЫК НА АККАУНТ, чтобы не сломать юзеру сайт
                 await waitIfBatch();
-                try { await fptFetchResilient(`https://funpay.com/?setlocale=ru`, { headers: ck }); } catch (_) {}
+                try { await fxnFetchResilient(`https://funpay.com/?setlocale=ru`, { headers: ck }); } catch (_) {}
 
                 // Цена.
                 // 1) ЛУЧШИЙ источник: data-factors на странице покупки (цена продавца нетто).
@@ -1563,7 +1563,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (!rawPrice && ru.sellerId) {
                     try {
                         await waitIfBatch();
-                        const upResp = await fptFetchResilient(`https://funpay.com/users/${ru.sellerId}/`, { headers: ck });
+                        const upResp = await fxnFetchResilient(`https://funpay.com/users/${ru.sellerId}/`, { headers: ck });
                         if (upResp.ok) {
                             const upHtml = await upResp.text();
                             const pr = await parseHtmlViaOffscreen(upHtml, 'parseSellerLotPrice', { offerId });
@@ -1577,7 +1577,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (!rawPrice || true) { // всегда пробуем offerEdit ради точного node_id
                     try {
                         await waitIfBatch();
-                        const edResp = await fptFetchResilient(
+                        const edResp = await fxnFetchResilient(
                             `https://funpay.com/lots/offerEdit?offer=${offerId}&location=offer&setlocale=ru`,
                             { headers: ck });
                         if (edResp.ok) {
@@ -1730,7 +1730,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 // POST в EN-локали - ровно как в плагине: method("post", "lots/offerSave", ..., locale="en")
                 let response;
                 try {
-                    response = await fptFetchResilient('https://funpay.com/en/lots/offerSave', {
+                    response = await fxnFetchResilient('https://funpay.com/en/lots/offerSave', {
                         method: 'POST',
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
@@ -2085,7 +2085,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 const key = request.key;
                 if (!key) { sendResponse({ ok: false, error: 'no key' }); return; }
-                const snap = await fptSnapshotForKey(key);
+                const snap = await fxnSnapshotForKey(key);
                 sendResponse({ ok: true, snapshot: snap || {} });
             } catch (e) {
                 sendResponse({ ok: false, error: e.message });
@@ -2160,7 +2160,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 await FPTSalesDB.clearAll();
                 await FPTSalesDB.setMeta('migratedFromLocal', true); // не тянуть старьё обратно
                 await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove([
-                    'fpToolsSalesData', 'fpToolsFirstOrderId', 'fpToolsLastOrderId', 'fpToolsSalesLastUpdate'
+                    'foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId', 'foxenSalesLastUpdate'
                 ]);
                 sendResponse({ success: true });
             } catch (e) {
@@ -2201,7 +2201,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 await FPTPurchasesDB.clearAll();
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['fpToolsPurchasesLastUpdate']);
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['foxenPurchasesLastUpdate']);
                 sendResponse({ success: true });
             } catch (e) {
                 sendResponse({ success: false, error: e.message });
@@ -2241,7 +2241,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 await FPTFinanceDB.clearAll();
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['fpToolsFinanceLastUpdate', 'fpToolsFinanceCount']);
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['foxenFinanceLastUpdate', 'foxenFinanceCount']);
                 sendResponse({ success: true });
             } catch (e) {
                 sendResponse({ success: false, error: e.message });
@@ -2493,7 +2493,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 sendResponse({ success: false, error: 'Unknown action' });
             } catch (e) {
-                console.error('[FPTools Support]', e);
+                console.error('[Foxen Support]', e);
                 sendResponse({ success: false, error: e.message });
             }
         })();
@@ -2525,13 +2525,13 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === SMART_BUMP_ALARM) {
         await runSmartBumpCycle();
     }
-    if (alarm.name === 'fpToolsAutoRestore') {
+    if (alarm.name === 'foxenAutoRestore') {
         // Notify all FunPay tabs to check and restore/disable lots
         const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
         tabs.forEach(tab => {
             const b = typeof browser !== 'undefined' ? browser : chrome;
             try {
-                const p = b.tabs.sendMessage(tab.id, { action: 'fpToolsCheckRestoreLots' });
+                const p = b.tabs.sendMessage(tab.id, { action: 'foxenCheckRestoreLots' });
                 if (p && typeof p.catch === 'function') p.catch(() => {});
             } catch (e) {}
         });
@@ -2539,8 +2539,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 });
 
 function setupInitialAlarms() {
-    chrome.storage.local.get(['autoBumpEnabled', 'autoBumpCooldown', 'fpToolsDiscord', 'fpToolsAutoReplies', 'fpToolsSmartBumpEnabled'], (settings) => {
-        if (settings.fpToolsSmartBumpEnabled) {
+    chrome.storage.local.get(['autoBumpEnabled', 'autoBumpCooldown', 'foxenDiscord', 'foxenAutoReplies', 'foxenSmartBumpEnabled'], (settings) => {
+        if (settings.foxenSmartBumpEnabled) {
             // 3.0: smart raise takes over; the fixed-interval bump is disabled to avoid double-raising.
             chrome.alarms.clear(BUMP_ALARM_NAME);
             startSmartBump();
@@ -2548,15 +2548,15 @@ function setupInitialAlarms() {
             startAutoBump(settings.autoBumpCooldown);
         }
         // 3.0: Periodic lot restore/disable check (every 5 minutes)
-        const AUTO_RESTORE_ALARM = 'fpToolsAutoRestore';
-        if (settings.fpToolsAutoRestoreEnabled || settings.fpToolsAutoDisableEnabled) {
+        const AUTO_RESTORE_ALARM = 'foxenAutoRestore';
+        if (settings.foxenAutoRestoreEnabled || settings.foxenAutoDisableEnabled) {
             chrome.alarms.create(AUTO_RESTORE_ALARM, {
                 delayInMinutes: 1,
                 periodInMinutes: 5
             });
         }
 
-        if (settings.fpToolsDiscord && settings.fpToolsDiscord.enabled && settings.fpToolsDiscord.webhookUrl) {
+        if (settings.foxenDiscord && settings.foxenDiscord.enabled && settings.foxenDiscord.webhookUrl) {
             chrome.alarms.create(DISCORD_LOG_ALARM_NAME, {
                 delayInMinutes: 1,
                 periodInMinutes: 1
@@ -2566,7 +2566,7 @@ function setupInitialAlarms() {
         // Telegram: запускаем опрос, если включён и есть токен.
         telegramSyncAlarm();
         // <-- НОВЫЙ БЛОК ДЛЯ АВТООТВЕТЧИКА -->
-        const autoReplies = settings.fpToolsAutoReplies || {};
+        const autoReplies = settings.foxenAutoReplies || {};
         const arAnyEnabled = autoReplies.greetingEnabled || autoReplies.keywordsEnabled ||
             autoReplies.autoReviewEnabled || autoReplies.bonusForReviewEnabled ||
             autoReplies.newOrderReplyEnabled || autoReplies.orderConfirmReplyEnabled ||
@@ -2588,20 +2588,23 @@ chrome.runtime.onInstalled.addListener((details) => {
             showSalesStats: true,
             hideBalance: false,
             viewSellersPromo: true,
-            fpToolsDisabledFeatures: [],
-            fpToolsDiscord: { enabled: false, webhookUrl: '', pingEveryone: false, pingHere: false }
+            foxenDisabledFeatures: [],
+            foxenDiscord: { enabled: false, webhookUrl: '', pingEveryone: false, pingHere: false }
         });
     }
     
     setupInitialAlarms();
 });
 
+// Всегда запускаем инициализацию движка при старте/пробуждении Service Worker
+setupInitialAlarms();
+
 
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
 
-    if (changes.fpToolsDiscord) {
-        const newValue = changes.fpToolsDiscord.newValue;
+    if (changes.foxenDiscord) {
+        const newValue = changes.foxenDiscord.newValue;
         const isEnabled = newValue && newValue.enabled && newValue.webhookUrl;
 
         chrome.alarms.get(DISCORD_LOG_ALARM_NAME, (alarm) => {
@@ -2615,28 +2618,31 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 
     // Telegram: включение/выключение и смена токена → пересоздаём/убираем опрос.
-    if (changes.fpToolsTelegram) {
+    if (changes.foxenTelegram) {
         telegramSyncAlarm();
     }
 
     // <-- НОВЫЙ БЛОК ДЛЯ УПРАВЛЕНИЯ БУДИЛЬНИКОМ АВТООТВЕТЧИКА -->
-    if (changes.fpToolsAutoReplies) {
-        const newSettings = changes.fpToolsAutoReplies.newValue || {};
-        const isEnabled = newSettings.greetingEnabled || newSettings.keywordsEnabled || newSettings.autoReviewEnabled || newSettings.bonusForReviewEnabled ||
-            newSettings.newOrderReplyEnabled || newSettings.orderConfirmReplyEnabled || newSettings.autoDeliveryEnabled;
+    if (changes.foxenAutoReplies) {
+        const oldSettings = changes.foxenAutoReplies.oldValue || {};
+        const newSettings = changes.foxenAutoReplies.newValue || {};
+        const isEnabled = !!(newSettings.greetingEnabled || newSettings.keywordsEnabled || newSettings.autoReviewEnabled || newSettings.bonusForReviewEnabled ||
+            newSettings.newOrderReplyEnabled || newSettings.orderConfirmReplyEnabled || newSettings.autoDeliveryEnabled);
+        const wasEnabled = !!(oldSettings.greetingEnabled || oldSettings.keywordsEnabled || oldSettings.autoReviewEnabled || oldSettings.bonusForReviewEnabled ||
+            oldSettings.newOrderReplyEnabled || oldSettings.orderConfirmReplyEnabled || oldSettings.autoDeliveryEnabled);
 
         // 3.0: drive the engine instead of the broken alarm
         if (isEnabled) {
             startEngine();
-        } else {
+        } else if (wasEnabled) {
             stopEngine();
             chrome.alarms.clear(AUTO_RESPONDER_ALARM_NAME);
             resetAutoResponderState();
         }
     }
     // 3.0: smart auto-raise toggle
-    if (changes.fpToolsSmartBumpEnabled) {
-        const enabled = changes.fpToolsSmartBumpEnabled.newValue;
+    if (changes.foxenSmartBumpEnabled) {
+        const enabled = changes.foxenSmartBumpEnabled.newValue;
         if (enabled) {
             chrome.alarms.clear(BUMP_ALARM_NAME); // stop fixed-interval bump
             startSmartBump();

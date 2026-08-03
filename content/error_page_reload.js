@@ -49,38 +49,38 @@
         document.documentElement.innerHTML = `
             <head><meta charset="utf-8"><title>Подождите...</title></head>
             <body style="margin:0;">
-              <div id="fpt-err-wrap" style="
+              <div id="fxn-err-wrap" style="
                   position:fixed;inset:0;display:flex;flex-direction:column;
                   align-items:center;justify-content:center;gap:22px;
                   background:#0f1016;color:#e6e7ee;
                   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
                 <div style="width:64px;height:64px;border-radius:50%;
                     border:5px solid rgba(27,117,187,.18);border-top-color:#1b75bb;
-                    animation:fptErrSpin .9s linear infinite;"></div>
+                    animation:fxnErrSpin .9s linear infinite;"></div>
                 <div style="font-size:21px;font-weight:600;letter-spacing:.2px;">Подождите...</div>
                 <div style="font-size:14px;color:#9a9db4;text-align:center;max-width:320px;line-height:1.5;">
                     ${codeText}${code ? ` (${code})` : ''}.<br>Страница обновится автоматически.
                 </div>
                 <div style="width:220px;height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;">
-                    <div id="fpt-err-bar" style="height:100%;width:0;background:#1b75bb;border-radius:3px;
+                    <div id="fxn-err-bar" style="height:100%;width:0;background:#1b75bb;border-radius:3px;
                         transition:width ${RELOAD_MS}ms linear;"></div>
                 </div>
-                <button id="fpt-err-now" style="
+                <button id="fxn-err-now" style="
                     margin-top:4px;background:transparent;border:1px solid rgba(255,255,255,.18);
                     color:#c8cadc;padding:7px 16px;border-radius:8px;font-size:13px;cursor:pointer;">
                     Обновить сейчас</button>
               </div>
-              <style>@keyframes fptErrSpin{to{transform:rotate(360deg)}}</style>
+              <style>@keyframes fxnErrSpin{to{transform:rotate(360deg)}}</style>
             </body>`;
 
         // запускаем прогресс-бар
         requestAnimationFrame(() => {
-            const bar = document.getElementById('fpt-err-bar');
+            const bar = document.getElementById('fxn-err-bar');
             if (bar) bar.style.width = '100%';
         });
 
         const reload = () => location.reload();
-        const btn = document.getElementById('fpt-err-now');
+        const btn = document.getElementById('fxn-err-now');
         if (btn) btn.addEventListener('click', reload);
         setTimeout(reload, RELOAD_MS);
     }

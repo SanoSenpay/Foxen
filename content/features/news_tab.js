@@ -46,15 +46,15 @@
     let html = escapeHtml(text);
     
     // Headers ### Title
-    html = html.replace(/^### (.*$)/gim, '<h4 class="fpt-news-h4">$1</h4>');
-    html = html.replace(/^## (.*$)/gim, '<h3 class="fpt-news-h3">$1</h3>');
+    html = html.replace(/^### (.*$)/gim, '<h4 class="fxn-news-h4">$1</h4>');
+    html = html.replace(/^## (.*$)/gim, '<h3 class="fxn-news-h3">$1</h3>');
     
     // Bold **text**
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
     // List items - item
-    html = html.replace(/^- (.*$)/gim, '<li class="fpt-news-li">$1</li>');
-    html = html.replace(/(<li class="fpt-news-li">.*<\/li>\n?)+/g, '<ul class="fpt-news-ul">$&</ul>');
+    html = html.replace(/^- (.*$)/gim, '<li class="fxn-news-li">$1</li>');
+    html = html.replace(/(<li class="fxn-news-li">.*<\/li>\n?)+/g, '<ul class="fxn-news-ul">$&</ul>');
     
     // Line breaks
     html = html.replace(/\n\n/g, '<br><br>');
@@ -95,19 +95,19 @@
         }
       }
     } catch (e) {
-      console.warn('[FPT News] Local fetch error:', e);
+      console.warn('[Foxen News] Local fetch error:', e);
     }
     return null;
   }
 
   async function loadNewsData(forceRefresh) {
     const NOW = Date.now();
-    const stored = await storageGet(['fptNewsCache', 'fptNewsCacheTime']);
+    const stored = await storageGet(['fxnNewsCache', 'fxnNewsCacheTime']);
 
-    const isCacheFresh = stored.fptNewsCacheTime && (NOW - stored.fptNewsCacheTime < 5 * 60 * 1000);
+    const isCacheFresh = stored.fxnNewsCacheTime && (NOW - stored.fxnNewsCacheTime < 5 * 60 * 1000);
 
-    if (!forceRefresh && isCacheFresh && stored.fptNewsCache && Array.isArray(stored.fptNewsCache.posts)) {
-      _newsCache = stored.fptNewsCache;
+    if (!forceRefresh && isCacheFresh && stored.fxnNewsCache && Array.isArray(stored.fxnNewsCache.posts)) {
+      _newsCache = stored.fxnNewsCache;
       return _newsCache;
     }
 
@@ -115,13 +115,13 @@
     const data = await fetchNews();
     if (data && Array.isArray(data.posts)) {
       _newsCache = data;
-      await storageSet({ fptNewsCache: data, fptNewsCacheTime: NOW });
+      await storageSet({ fxnNewsCache: data, fxnNewsCacheTime: NOW });
       return _newsCache;
     }
 
     // Fallback to stored cache if network fetch failed
-    if (stored.fptNewsCache && Array.isArray(stored.fptNewsCache.posts)) {
-      _newsCache = stored.fptNewsCache;
+    if (stored.fxnNewsCache && Array.isArray(stored.fxnNewsCache.posts)) {
+      _newsCache = stored.fxnNewsCache;
       return _newsCache;
     }
 
@@ -130,36 +130,36 @@
 
   function renderNewsCards(posts) {
     if (!posts || !posts.length) {
-      return '<div class="fpt-news-empty">Новостей пока нет.</div>';
+      return '<div class="fxn-news-empty">Новостей пока нет.</div>';
     }
 
     return posts.map(post => {
       const badgeStyle = post.badgeColor ? `background-color: ${post.badgeColor}22; color: ${post.badgeColor}; border: 1px solid ${post.badgeColor}44;` : '';
-      const imageHtml = post.image ? `<div class="fpt-news-media"><img src="${escapeHtml(post.image)}" alt="News image" loading="lazy"></div>` : '';
+      const imageHtml = post.image ? `<div class="fxn-news-media"><img src="${escapeHtml(post.image)}" alt="News image" loading="lazy"></div>` : '';
       const linkHtml = (post.link && post.linkText) ? `
-        <div class="fpt-news-footer">
-          <a href="${escapeHtml(post.link)}" target="_blank" rel="noopener noreferrer" class="btn fpt-news-btn">
+        <div class="fxn-news-footer">
+          <a href="${escapeHtml(post.link)}" target="_blank" rel="noopener noreferrer" class="btn fxn-news-btn">
             <span>${escapeHtml(post.linkText)}</span>
             <span class="material-symbols-rounded" style="font-size:16px;">open_in_new</span>
           </a>
         </div>` : '';
 
       return `
-        <article class="fpt-news-card" data-id="${escapeHtml(post.id)}">
-          <header class="fpt-news-card-header">
-            <div class="fpt-news-meta">
-              ${post.badge ? `<span class="fpt-news-badge" style="${badgeStyle}">${escapeHtml(post.badge)}</span>` : ''}
-              <span class="fpt-news-date">${escapeHtml(post.date || '')}</span>
+        <article class="fxn-news-card" data-id="${escapeHtml(post.id)}">
+          <header class="fxn-news-card-header">
+            <div class="fxn-news-meta">
+              ${post.badge ? `<span class="fxn-news-badge" style="${badgeStyle}">${escapeHtml(post.badge)}</span>` : ''}
+              <span class="fxn-news-date">${escapeHtml(post.date || '')}</span>
             </div>
-            <div class="fpt-news-title-row">
-              <h3 class="fpt-news-title">${escapeHtml(post.title || '')}</h3>
-              <span class="material-symbols-rounded fpt-news-expand-icon">expand_more</span>
+            <div class="fxn-news-title-row">
+              <h3 class="fxn-news-title">${escapeHtml(post.title || '')}</h3>
+              <span class="material-symbols-rounded fxn-news-expand-icon">expand_more</span>
             </div>
           </header>
-          <div class="fpt-news-expandable-wrapper">
-            <div class="fpt-news-expandable-body">
+          <div class="fxn-news-expandable-wrapper">
+            <div class="fxn-news-expandable-body">
               ${imageHtml}
-              <div class="fpt-news-body">
+              <div class="fxn-news-body">
                 ${formatContent(post.content || post.summary || '')}
               </div>
               ${linkHtml}
@@ -171,7 +171,7 @@
   }
 
   async function renderNewsList() {
-    const listEl = document.getElementById('fptNewsList');
+    const listEl = document.getElementById('fxnNewsList');
     if (!listEl) return;
 
     const data = await loadNewsData();
@@ -182,13 +182,13 @@
     if (!listEl.dataset.accordionBound) {
       listEl.dataset.accordionBound = '1';
       listEl.addEventListener('click', (e) => {
-        const card = e.target.closest('.fpt-news-card');
+        const card = e.target.closest('.fxn-news-card');
         if (!card) return;
 
         // Ignore clicks inside links so links still work
         if (e.target.closest('a')) return;
 
-        card.classList.toggle('fpt-news-expanded');
+        card.classList.toggle('fxn-news-expanded');
       });
     }
   }
@@ -199,10 +199,10 @@
     if (!posts.length) return;
 
     const latestId = posts[0].id;
-    const stored = await storageGet(['fptLastReadNewsId']);
-    const unread = stored.fptLastReadNewsId !== latestId;
+    const stored = await storageGet(['fxnLastReadNewsId']);
+    const unread = stored.fxnLastReadNewsId !== latestId;
 
-    document.querySelectorAll('.fpt-news-unread-badge').forEach(el => {
+    document.querySelectorAll('.fxn-news-unread-badge').forEach(el => {
       el.style.display = unread ? 'inline-block' : 'none';
     });
   }
@@ -211,22 +211,22 @@
     const data = await loadNewsData();
     const posts = data.posts || [];
     if (posts.length && posts[0].id) {
-      await storageSet({ fptLastReadNewsId: posts[0].id });
-      document.querySelectorAll('.fpt-news-unread-badge').forEach(el => {
+      await storageSet({ fxnLastReadNewsId: posts[0].id });
+      document.querySelectorAll('.fxn-news-unread-badge').forEach(el => {
         el.style.display = 'none';
       });
     }
   }
 
   async function initializeNewsTab() {
-    const refreshBtn = document.getElementById('fptNewsRefreshBtn');
+    const refreshBtn = document.getElementById('fxnNewsRefreshBtn');
     if (refreshBtn && !refreshBtn.dataset.bound) {
       refreshBtn.dataset.bound = '1';
       refreshBtn.addEventListener('click', async () => {
-        refreshBtn.classList.add('fpt-spin');
+        refreshBtn.classList.add('fxn-spin');
         await loadNewsData(true);
         await renderNewsList();
-        setTimeout(() => refreshBtn.classList.remove('fpt-spin'), 600);
+        setTimeout(() => refreshBtn.classList.remove('fxn-spin'), 600);
       });
     }
 

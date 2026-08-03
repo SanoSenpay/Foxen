@@ -4,13 +4,13 @@
     const PING_MS = 20000; // < 30s worker idle timeout
     setInterval(() => {
         try {
-            chrome.runtime.sendMessage({ target: 'background', action: 'fptEngineKeepalive', t: Date.now() })
+            chrome.runtime.sendMessage({ target: 'background', action: 'fxnEngineKeepalive', t: Date.now() })
                 .catch(() => {});
         } catch (_) {}
     }, PING_MS);
 })();
 
-function fptCleanDescriptionHtml(rawHtml) {
+function fxnCleanDescriptionHtml(rawHtml) {
     if (!rawHtml) return '';
     let html = String(rawHtml);
     // Убираем реальные переносы/табы исходника - они НЕ являются контентом.
@@ -24,12 +24,12 @@ function fptCleanDescriptionHtml(rawHtml) {
     // Декодируем базовые HTML-сущности.
     const ent = { '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
     html = html.replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#39;/gi, m => ent[m.toLowerCase()] || m);
-    return fptNormalizeText(html);
+    return fxnNormalizeText(html);
 }
 
 // Нормализует уже готовый текст: убирает лишние пробелы в строках,
 // схлопывает 2+ пустых строк в одну и обрезает края.
-function fptNormalizeText(text) {
+function fxnNormalizeText(text) {
     if (!text) return '';
     return String(text)
         .replace(/\r\n?/g, '\n')                 // CRLF → LF
@@ -307,7 +307,7 @@ function parseLotEditPage(html) {
         // spurious blank lines (FunPay textareas may store CRLF / trailing spaces).
         Object.keys(dataObject).forEach(k => {
             if (/fields\[(desc|summary|payment_msg)\]/.test(k) && typeof dataObject[k] === 'string') {
-                dataObject[k] = fptNormalizeText(dataObject[k]);
+                dataObject[k] = fxnNormalizeText(dataObject[k]);
             }
         });
 
@@ -392,10 +392,10 @@ function parsePublicLotForClone(html) {
             const header = headerRaw.toLowerCase();
             const valDiv = item.querySelector('div');
             const value = valDiv ? valDiv.textContent.trim() : '';
-            const valueHtml = valDiv ? fptCleanDescriptionHtml(valDiv.innerHTML) : '';
+            const valueHtml = valDiv ? fxnCleanDescriptionHtml(valDiv.innerHTML) : '';
 
             if (SUMMARY_H.includes(header)) {
-                summary = fptNormalizeText(value);
+                summary = fxnNormalizeText(value);
             } else if (DESC_H.includes(header)) {
                 description = valueHtml;
             } else if (IMG_H.includes(header)) {
@@ -816,24 +816,21 @@ function parseChatList(html) {
             const nodeMsg = parseInt(item.dataset.nodeMsg, 10);   // last message id in the chat
             const userMsg = parseInt(item.dataset.userMsg, 10);   // last message id the user has read
             const rawMsg = item.querySelector('.contact-item-message')?.textContent || '';
-            const lastByBot = rawMsg.startsWith(BOT_MARKER) || rawMsg.startsWith(OLD_BOT_MARKER);
+            const lastByBot = rawMsg.includes(BOT_MARKER) || rawMsg.includes(OLD_BOT_MARKER);
             // strip marker + zero-width chars for clean text used in matching
             const cleanMsg = rawMsg.replace(/[\u2061\u2064]/g, '').trim();
-            // lastByMe: true when the last message was sent BY the current user (not incoming).
-            // If nodeMsg <= userMsg the message was already "read" by the account owner,
-            // which on FunPay means it was written by themselves. Also covers the case where
-            // the chat is not marked unread (isUnread=false) while nodeMsg advanced – i.e. the
-            // user typed a message in someone else's chat first.
+            // lastByMe: true when the last message was sent BY the current user (manual or bot).
+            const isOutPrefix = /^(?:Вы|You):\s*/i.test(cleanMsg) || /^(?:Вы|You):\s*/i.test(rawMsg);
+            const lastByMe = lastByBot || isOutPrefix;
             const nodeMsgVal = Number.isNaN(nodeMsg) ? null : nodeMsg;
             const userMsgVal = Number.isNaN(userMsg) ? null : userMsg;
-            const lastByMe = nodeMsgVal !== null && userMsgVal !== null && nodeMsgVal <= userMsgVal;
             return {
                 chatId: item.dataset.id,
                 chatName: nameEl ? nameEl.textContent.trim() : 'Unknown',
                 msgId: item.dataset.nodeMsg,
                 nodeMsg: nodeMsgVal,
                 userMsg: userMsgVal,
-                messageText: cleanMsg,
+                messageText: cleanMsg.replace(/^(?:Вы|You):\s*/i, '').trim(),
                 lastByBot,
                 lastByMe,
                 isUnread: item.classList.contains('unread'),
@@ -1006,12 +1003,20 @@ function parseOrderPageForReview(html) {
         }
 
         // --- Stars ---
-        const ratingDiv = doc.querySelector('.order-review .rating > div');
-        if (!ratingDiv) return null;
-        const ratingClass = Array.from(ratingDiv.classList).find(c => /^rating\d+$/.test(c));
-        if (!ratingClass) return null;
-        const stars = parseInt(ratingClass.replace('rating', ''), 10);
-        if (isNaN(stars)) return null;
+        let stars = null;
+        const ratingDiv = doc.querySelector('.order-review .rating > div, .review-item .rating > div, .rating > div, [class*="rating"] > div');
+        if (ratingDiv) {
+            const ratingClass = Array.from(ratingDiv.classList).find(c => /^rating\d+$/.test(c));
+            if (ratingClass) stars = parseInt(ratingClass.replace('rating', ''), 10);
+        }
+        if (stars == null) {
+            const directRating = doc.querySelector('.rating1, .rating2, .rating3, .rating4, .rating5');
+            if (directRating) {
+                const match = directRating.className.match(/rating(\d)/);
+                if (match) stars = parseInt(match[1], 10);
+            }
+        }
+        if (stars == null || isNaN(stars)) return null;
 
         // --- Lot name (NEW in 2.8) ---
         // Try different selectors that FunPay uses for lot/product name on order page

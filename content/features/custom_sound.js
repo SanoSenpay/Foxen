@@ -9,7 +9,7 @@ const soundMap = {
 };
 
 async function applyNotificationSound() {
-    const { notificationSound, notificationVolume, fpToolsCustomSoundData } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['notificationSound', 'notificationVolume', 'fpToolsCustomSoundData']);
+    const { notificationSound, notificationVolume, foxenCustomSoundData } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['notificationSound', 'notificationVolume', 'foxenCustomSoundData']);
     const selectedSound = notificationSound || 'default';
     const vol = (typeof notificationVolume === 'number') ? Math.max(0, Math.min(1, notificationVolume)) : 1;
 
@@ -47,20 +47,20 @@ async function applyNotificationSound() {
     } else if (selectedSound === 'custom') {
         // Своя загруженная мелодия (обрезанный отрезок). Преобразуем data URL в
         // blob: URL - он не попадает под ограничения CSP на data:-медиа.
-        if (fpToolsCustomSoundData) {
+        if (foxenCustomSoundData) {
             try {
-                if (!window.__fptCustomSoundBlobUrl || window.__fptCustomSoundBlobSrc !== fpToolsCustomSoundData) {
-                    const resp = await fetch(fpToolsCustomSoundData);
+                if (!window.__fptCustomSoundBlobUrl || window.__fptCustomSoundBlobSrc !== foxenCustomSoundData) {
+                    const resp = await fetch(foxenCustomSoundData);
                     const blob = await resp.blob();
                     if (window.__fptCustomSoundBlobUrl) { try { URL.revokeObjectURL(window.__fptCustomSoundBlobUrl); } catch (_) {} }
                     window.__fptCustomSoundBlobUrl = URL.createObjectURL(blob);
-                    window.__fptCustomSoundBlobSrc = fpToolsCustomSoundData;
+                    window.__fptCustomSoundBlobSrc = foxenCustomSoundData;
                 }
                 chosenSrc = window.__fptCustomSoundBlobUrl;
                 setSrc(chosenSrc);
             } catch (_) {
                 // если blob не удался - пробуем напрямую data URL
-                chosenSrc = fpToolsCustomSoundData;
+                chosenSrc = foxenCustomSoundData;
                 setSrc(chosenSrc);
             }
         } else {
@@ -99,9 +99,9 @@ async function previewNotificationSound(soundValue, volume) {
         let url;
         if (!soundValue || soundValue === 'default') url = 'https://funpay.com/audio/chat_loud.mp3';
         else if (soundValue === 'custom') {
-            const { fpToolsCustomSoundData } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsCustomSoundData');
-            if (!fpToolsCustomSoundData) { if (typeof showNotification === 'function') showNotification('Своя мелодия ещё не сохранена.', true); return; }
-            url = fpToolsCustomSoundData;
+            const { foxenCustomSoundData } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomSoundData');
+            if (!foxenCustomSoundData) { if (typeof showNotification === 'function') showNotification('Своя мелодия ещё не сохранена.', true); return; }
+            url = foxenCustomSoundData;
         }
         else if (soundMap[soundValue]) url = chrome.runtime.getURL(`sounds/${soundMap[soundValue]}`);
         else return;
@@ -136,7 +136,7 @@ function initializeCustomSound() {
 if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area !== 'local') return;
-        if (changes.notificationSound || changes.notificationVolume || changes.fpToolsCustomSoundData) {
+        if (changes.notificationSound || changes.notificationVolume || changes.foxenCustomSoundData) {
             if (typeof applyNotificationSound === 'function') applyNotificationSound();
         }
     });

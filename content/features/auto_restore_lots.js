@@ -1,8 +1,8 @@
 async function checkAndRestoreLots() {
-    const { fpToolsAutoRestoreEnabled, fpToolsAutoDisableEnabled } =
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsAutoRestoreEnabled', 'fpToolsAutoDisableEnabled']);
+    const { foxenAutoRestoreEnabled, foxenAutoDisableEnabled } =
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenAutoRestoreEnabled', 'foxenAutoDisableEnabled']);
 
-    if (!fpToolsAutoRestoreEnabled && !fpToolsAutoDisableEnabled) return;
+    if (!foxenAutoRestoreEnabled && !foxenAutoDisableEnabled) return;
 
     try {
         const appData = JSON.parse(document.body?.dataset?.appData || '{}');
@@ -25,10 +25,10 @@ async function checkAndRestoreLots() {
         if (!lots.length) return;
 
         
-        const { fpToolsAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoDeliveryLots');
+        const { foxenAutoDeliveryLots = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoDeliveryLots');
 
         for (const lot of lots) {
-            const deliveryConfig = fpToolsAutoDeliveryLots[String(lot.id)];
+            const deliveryConfig = foxenAutoDeliveryLots[String(lot.id)];
 
             
             const lotDoc = new DOMParser().parseFromString(profileHtml, 'text/html');
@@ -42,7 +42,7 @@ async function checkAndRestoreLots() {
                 const productCount = deliveryConfig.productCount ?? Infinity;
 
                 
-                if (fpToolsAutoDisableEnabled && productCount === 0 && isActive &&
+                if (foxenAutoDisableEnabled && productCount === 0 && isActive &&
                     deliveryConfig.autoDisableEnabled !== false) {
                     await toggleLotActive(lot.id, lot.nodeId, false, d['csrf-token']);
                     showNotification(`Лот "${lot.title}" деактивирован: товары закончились`, false);
@@ -50,13 +50,13 @@ async function checkAndRestoreLots() {
                 }
 
                 
-                if (fpToolsAutoRestoreEnabled && productCount > 0 && !isActive &&
+                if (foxenAutoRestoreEnabled && productCount > 0 && !isActive &&
                     deliveryConfig.autoRestoreEnabled !== false) {
                     await toggleLotActive(lot.id, lot.nodeId, true, d['csrf-token']);
                     showNotification(`Лот "${lot.title}" восстановлен: товары пополнены`, false);
                     console.log(`Foxen AutoRestore: восстановлен лот ${lot.id}`);
                 }
-            } else if (fpToolsAutoRestoreEnabled && !isActive) {
+            } else if (foxenAutoRestoreEnabled && !isActive) {
                 
                 await toggleLotActive(lot.id, lot.nodeId, true, d['csrf-token']);
                 console.log(`Foxen AutoRestore: глобальное восстановление лота ${lot.id}`);
@@ -99,7 +99,7 @@ async function toggleLotActive(offerId, nodeId, active, csrfToken) {
 }
 
 chrome.runtime.onMessage.addListener((request) => {
-    if (request.action === 'fpToolsCheckRestoreLots') {
+    if (request.action === 'foxenCheckRestoreLots') {
         setTimeout(checkAndRestoreLots, 5000); 
     }
 });

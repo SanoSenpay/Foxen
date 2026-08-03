@@ -7,8 +7,8 @@
 (function () {
     'use strict';
 
-    const STYLE_ID = 'fp-tools-support-theme';
-    const FONT_ID  = 'fp-tools-support-fonts';
+    const STYLE_ID = 'foxen-support-theme';
+    const FONT_ID  = 'foxen-support-fonts';
 
     const DEFAULTS = {
         bgColor1: '#ff6d15',
@@ -214,7 +214,7 @@
 
     async function apply() {
         let data = {};
-        try { data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'fpToolsTheme']); }
+        try { data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'foxenTheme']); }
         catch { return; }
 
         const styleEl = ensureStyle();
@@ -224,7 +224,7 @@
             if (f) f.textContent = '';
             return;
         }
-        const s = { ...DEFAULTS, ...(data.fpToolsTheme || {}) };
+        const s = { ...DEFAULTS, ...(data.foxenTheme || {}) };
         manageFont(s.font);
         styleEl.textContent = buildCss(s);
     }
@@ -236,7 +236,7 @@
     if (chrome?.storage?.onChanged) {
         chrome.storage.onChanged.addListener((changes, area) => {
             if (area !== 'local') return;
-            if (changes.fpToolsTheme || changes.enableCustomTheme) apply();
+            if (changes.foxenTheme || changes.enableCustomTheme) apply();
         });
     }
 })();

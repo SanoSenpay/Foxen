@@ -2,11 +2,11 @@
     'use strict';
 
     function injectStyles() {
-        if (document.getElementById('fpt-rmthub-profile-css')) return;
+        if (document.getElementById('fxn-rmthub-profile-css')) return;
         const s = document.createElement('style');
-        s.id = 'fpt-rmthub-profile-css';
+        s.id = 'fxn-rmthub-profile-css';
         s.textContent = `
-            .fpt-rmth-banner {
+            .fxn-rmth-banner {
                 margin-top: 15px;
                 margin-bottom: 15px;
                 background: rgba(20, 20, 30, 0.4);
@@ -17,11 +17,11 @@
                 transition: all 0.3s ease;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             }
-            .fpt-rmth-banner:hover {
+            .fxn-rmth-banner:hover {
                 border-color: rgba(255, 255, 255, 0.15);
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             }
-            .fpt-rmth-btn {
+            .fxn-rmth-btn {
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -37,32 +37,32 @@
                 cursor: pointer;
                 transition: background 0.2s, color 0.2s;
             }
-            .fpt-rmth-btn:hover {
+            .fxn-rmth-btn:hover {
                 background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
                 color: #ffffff;
             }
-            .fpt-rmth-content {
+            .fxn-rmth-content {
                 display: none;
                 padding: 16px;
                 border-top: 1px solid rgba(255, 255, 255, 0.08);
             }
-            .fpt-rmth-content.active {
+            .fxn-rmth-content.active {
                 display: block;
-                animation: fpt-rmth-fade 0.3s ease;
+                animation: fxn-rmth-fade 0.3s ease;
             }
-            @keyframes fpt-rmth-fade {
+            @keyframes fxn-rmth-fade {
                 from { opacity: 0; transform: translateY(-5px); }
                 to { opacity: 1; transform: translateY(0); }
             }
             
             /* Stats Grid */
-            .fpt-rmth-grid {
+            .fxn-rmth-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 10px;
                 margin-bottom: 15px;
             }
-            .fpt-rmth-stat {
+            .fxn-rmth-stat {
                 background: rgba(255,255,255,0.03);
                 border: 1px solid rgba(255,255,255,0.05);
                 border-radius: 8px;
@@ -70,33 +70,33 @@
                 text-align: center;
                 transition: transform 0.2s;
             }
-            .fpt-rmth-stat:hover {
+            .fxn-rmth-stat:hover {
                 transform: translateY(-2px);
                 background: rgba(255,255,255,0.06);
             }
-            .fpt-rmth-sval { font-size: 18px; font-weight: 800; color: #E9A8FF; margin-bottom: 4px; line-height: 1.1; }
-            .fpt-rmth-slbl { font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.5px; }
+            .fxn-rmth-sval { font-size: 18px; font-weight: 800; color: #E9A8FF; margin-bottom: 4px; line-height: 1.1; }
+            .fxn-rmth-slbl { font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.5px; }
             
             /* Top Games */
-            .fpt-rmth-glbl { font-size: 10px; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-            .fpt-rmth-grow { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 12px; }
-            .fpt-rmth-grow:last-child { border-bottom: none; }
-            .fpt-rmth-gname { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-            .fpt-rmth-gpct { font-size: 11px; opacity: 0.4; margin: 0 8px; flex-shrink: 0; }
-            .fpt-rmth-grev { font-size: 12px; font-weight: 700; color: #E9A8FF; flex-shrink: 0; }
+            .fxn-rmth-glbl { font-size: 10px; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+            .fxn-rmth-grow { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 12px; }
+            .fxn-rmth-grow:last-child { border-bottom: none; }
+            .fxn-rmth-gname { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+            .fxn-rmth-gpct { font-size: 11px; opacity: 0.4; margin: 0 8px; flex-shrink: 0; }
+            .fxn-rmth-grev { font-size: 12px; font-weight: 700; color: #E9A8FF; flex-shrink: 0; }
             
             /* Loading state */
-            .fpt-rmth-loading {
+            .fxn-rmth-loading {
                 display: inline-block;
                 width: 14px; height: 14px;
                 border: 2px solid rgba(233,168,255,0.3);
                 border-top-color: #E9A8FF;
                 border-radius: 50%;
-                animation: fpt-rmth-spin 0.8s linear infinite;
+                animation: fxn-rmth-spin 0.8s linear infinite;
             }
-            @keyframes fpt-rmth-spin { to { transform: rotate(360deg); } }
+            @keyframes fxn-rmth-spin { to { transform: rotate(360deg); } }
             
-            .fpt-rmth-error {
+            .fxn-rmth-error {
                 text-align: center;
                 padding: 10px;
                 color: #ff5c5c;
@@ -110,14 +110,14 @@
 
     function buildBanner(username) {
         const container = document.createElement('div');
-        container.className = 'fpt-rmth-banner';
+        container.className = 'fxn-rmth-banner';
 
         const btn = document.createElement('button');
-        btn.className = 'fpt-rmth-btn';
+        btn.className = 'fxn-rmth-btn';
         btn.innerHTML = `<span>📊</span> Статистика RMT Hub`;
         
         const content = document.createElement('div');
-        content.className = 'fpt-rmth-content';
+        content.className = 'fxn-rmth-content';
         
         container.appendChild(btn);
         container.appendChild(content);
@@ -136,7 +136,7 @@
             }
             
             // Start loading
-            btn.innerHTML = `<span class="fpt-rmth-loading"></span> Загрузка...`;
+            btn.innerHTML = `<span class="fxn-rmth-loading"></span> Загрузка...`;
             content.classList.add('active');
             isExpanded = true;
             content.innerHTML = `<div style="text-align:center; padding:10px; opacity:0.5;">Получение данных с rmthub.ru...</div>`;
@@ -148,7 +148,7 @@
 
                 if (!result || !result.ok || result.notFound) {
                     btn.innerHTML = `<span>📊</span> Статистика RMT Hub`;
-                    content.innerHTML = `<div class="fpt-rmth-error">Пользователь «${esc(username)}» не найден на RMT Hub.</div>`;
+                    content.innerHTML = `<div class="fxn-rmth-error">Пользователь «${esc(username)}» не найден на RMT Hub.</div>`;
                     loaded = false;
                     return;
                 }
@@ -158,7 +158,7 @@
                 renderContent(content, result.data);
             } catch (err) {
                 btn.innerHTML = `<span>📊</span> Статистика RMT Hub`;
-                content.innerHTML = `<div class="fpt-rmth-error">Ошибка связи с RMT Hub.</div>`;
+                content.innerHTML = `<div class="fxn-rmth-error">Ошибка связи с RMT Hub.</div>`;
                 loaded = false;
             }
         });
@@ -178,18 +178,18 @@
             .slice(0, 3);
             
         let html = `
-            <div class="fpt-rmth-grid">
-                <div class="fpt-rmth-stat"><div class="fpt-rmth-sval">$${fmt(total)}</div><div class="fpt-rmth-slbl">Выручка</div></div>
-                <div class="fpt-rmth-stat"><div class="fpt-rmth-sval">${fmt(reviews,0)}</div><div class="fpt-rmth-slbl">Отзывы</div></div>
-                <div class="fpt-rmth-stat"><div class="fpt-rmth-sval">$${fmt(avg)}</div><div class="fpt-rmth-slbl">Ср. чек</div></div>
-                <div class="fpt-rmth-stat"><div class="fpt-rmth-sval">${games}</div><div class="fpt-rmth-slbl">Игр</div></div>
+            <div class="fxn-rmth-grid">
+                <div class="fxn-rmth-stat"><div class="fxn-rmth-sval">$${fmt(total)}</div><div class="fxn-rmth-slbl">Выручка</div></div>
+                <div class="fxn-rmth-stat"><div class="fxn-rmth-sval">${fmt(reviews,0)}</div><div class="fxn-rmth-slbl">Отзывы</div></div>
+                <div class="fxn-rmth-stat"><div class="fxn-rmth-sval">$${fmt(avg)}</div><div class="fxn-rmth-slbl">Ср. чек</div></div>
+                <div class="fxn-rmth-stat"><div class="fxn-rmth-sval">${games}</div><div class="fxn-rmth-slbl">Игр</div></div>
             </div>
         `;
         
         if (top3.length) {
-            html += `<div class="fpt-rmth-glbl">ТОП ИГРЫ</div>`;
+            html += `<div class="fxn-rmth-glbl">ТОП ИГРЫ</div>`;
             top3.forEach(g => {
-                html += `<div class="fpt-rmth-grow"><span class="fpt-rmth-gname">${esc(g.game)}</span><span class="fpt-rmth-gpct">${g.percentage}%</span><span class="fpt-rmth-grev">$${fmt(g.amount)}</span></div>`;
+                html += `<div class="fxn-rmth-grow"><span class="fxn-rmth-gname">${esc(g.game)}</span><span class="fxn-rmth-gpct">${g.percentage}%</span><span class="fxn-rmth-grev">$${fmt(g.amount)}</span></div>`;
             });
         }
         
@@ -208,7 +208,7 @@
 
     function mount() {
         if (!window.location.pathname.includes('/users/')) return;
-        if (document.querySelector('.fpt-rmth-banner')) return; 
+        if (document.querySelector('.fxn-rmth-banner')) return; 
         
         const nameEl = document.querySelector('.media-user-name, .profile-header h1, .profile-user-name');
         

@@ -5,7 +5,7 @@
 // На странице заказа есть: игра, категория, сервер, краткое и подробное
 // описание, и (если это был товар с автовыдачей) сам выданный товар в блоке
 // «Оплаченный товар» (.order-secrets-box). Кнопка собирает эти данные и кладёт
-// их в то же хранилище, что и обычное клонирование лота (fpToolsCopiedLotData),
+// их в то же хранилище, что и обычное клонирование лота (foxenCopiedLotData),
 // поэтому на странице создания/редактирования лота появится привычная плашка
 // «Вставить данные лота» — и summary/описание, и автовыдача подставятся сразу.
 //
@@ -18,7 +18,7 @@
 (function () {
     'use strict';
 
-    const COPIED_KEY = 'fpToolsCopiedLotData'; // тот же ключ, что у lot_cloning
+    const COPIED_KEY = 'foxenCopiedLotData'; // тот же ключ, что у lot_cloning
 
     // Только страница конкретного заказа: /orders/CODE/ (не /orders/ и не /orders/trade)
     function isOrderPage() {
@@ -140,20 +140,20 @@
 
     // ── UI: кнопка под блоком «Оплаченный товар», на всю его ширину ──
     function ensureStyles() {
-        if (document.getElementById('fpt-olc-styles')) return;
+        if (document.getElementById('fxn-olc-styles')) return;
         const s = document.createElement('style');
-        s.id = 'fpt-olc-styles';
+        s.id = 'fxn-olc-styles';
         s.textContent = `
-        .fpt-olc-btn{display:flex;width:100%;box-sizing:border-box;align-items:center;justify-content:center;gap:7px;
+        .fxn-olc-btn{display:flex;width:100%;box-sizing:border-box;align-items:center;justify-content:center;gap:7px;
             margin:6px 0 14px;padding:5px 16px;border-radius:8px;
-            border:1px solid var(--fpt-border,#dcdce4);background:var(--fpt-surface-2,#fafafd);color:var(--fpt-text,#16181d);
+            border:1px solid var(--fxn-border,#dcdce4);background:var(--fxn-surface-2,#fafafd);color:var(--fxn-text,#16181d);
             font-size:12px;font-weight:600;line-height:1.2;cursor:pointer;transition:border-color .14s,color .14s,background .14s;}
-        .fpt-olc-btn:hover{border-color:#2563eb;color:#2563eb;}
-        .fpt-olc-btn .material-symbols-rounded{font-size:15px;}
-        .fpt-olc-btn:disabled{opacity:.6;cursor:default;}
-        .fpt-olc-spin{width:14px;height:14px;border:2px solid rgba(37,99,235,.35);border-top-color:#2563eb;
-            border-radius:50%;animation:fptOlcSpin .7s linear infinite;display:inline-block;}
-        @keyframes fptOlcSpin{to{transform:rotate(360deg)}}
+        .fxn-olc-btn:hover{border-color:#2563eb;color:#2563eb;}
+        .fxn-olc-btn .material-symbols-rounded{font-size:15px;}
+        .fxn-olc-btn:disabled{opacity:.6;cursor:default;}
+        .fxn-olc-spin{width:14px;height:14px;border:2px solid rgba(37,99,235,.35);border-top-color:#2563eb;
+            border-radius:50%;animation:fxnOlcSpin .7s linear infinite;display:inline-block;}
+        @keyframes fxnOlcSpin{to{transform:rotate(360deg)}}
         `;
         document.head.appendChild(s);
     }
@@ -178,7 +178,7 @@
         }
         const orig = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<span class="fpt-olc-spin"></span> Перевод EN…';
+        btn.innerHTML = '<span class="fxn-olc-spin"></span> Перевод EN…';
 
         // Автоперевод RU→EN (страница заказа — только RU)
         const [summaryEn, descEn] = await Promise.all([
@@ -189,7 +189,7 @@
         // запускаем ТОТ ЖЕ визард создания лота, что и при копировании со страницы
         // лота — он построит форму категории по nodeId и даст кнопку «Создать лот».
         if (typeof openCloneWizardFromOrder === 'function') {
-            btn.innerHTML = '<span class="fpt-olc-spin"></span> Открываю мастер…';
+            btn.innerHTML = '<span class="fxn-olc-spin"></span> Открываю мастер…';
             try {
                 await openCloneWizardFromOrder({
                     nodeId: data.nodeId,
@@ -229,15 +229,15 @@
 
     function mount() {
         if (!isOrderPage()) return;
-        if (document.getElementById('fpt-olc-btn')) return;
+        if (document.getElementById('fxn-olc-btn')) return;
         // показываем кнопку только если на странице есть данные лота
         if (!document.querySelector('.param-item') && !document.querySelector('.order-secrets-box')) return;
 
         ensureStyles();
         const btn = document.createElement('button');
-        btn.id = 'fpt-olc-btn';
+        btn.id = 'fxn-olc-btn';
         btn.type = 'button';
-        btn.className = 'fpt-olc-btn';
+        btn.className = 'fxn-olc-btn';
         btn.title = 'Скопировать лот из этого заказа (создаёт копию через мастер, с EN-переводом и автовыдачей)';
         btn.innerHTML = '<span class="material-symbols-rounded">content_copy</span> Копировать лот';
         btn.addEventListener('click', () => doCopy(btn));
@@ -259,7 +259,7 @@
         // заказ-страница может дорисовываться — наблюдаем недолго
         if (typeof MutationObserver === 'undefined') return;
         let tries = 0;
-        const obs = new MutationObserver(() => { mount(); if (++tries > 60 || document.getElementById('fpt-olc-btn')) obs.disconnect(); });
+        const obs = new MutationObserver(() => { mount(); if (++tries > 60 || document.getElementById('fxn-olc-btn')) obs.disconnect(); });
         obs.observe(document.body, { childList: true, subtree: true });
     }
 

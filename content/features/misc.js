@@ -180,7 +180,7 @@ function initializeCalculatorLogic() {
 // 3.0: подвкладки калькулятора (Обычный / Временной) + «временной» режим.
 // Подаётся как калькулятор: никаких упоминаний ИИ в интерфейсе.
 function initializeCalcSubtabs() {
-    const page = document.querySelector('.fp-tools-page-content[data-page="calculator"]');
+    const page = document.querySelector('.foxen-page-content[data-page="calculator"]');
     if (!page || page.dataset.subtabsInit) return;
 
     const tabs = page.querySelectorAll('.calc-subtab');
@@ -246,7 +246,7 @@ function initializeCalcSubtabs() {
 
 
 function initializeToolsPopup() {
-    const popup = document.querySelector('.fp-tools-popup');
+    const popup = document.querySelector('.foxen-popup');
     if (!popup || popup.dataset.initialized === 'true') {
         return;
     }
@@ -262,27 +262,27 @@ function initializeToolsPopup() {
             
             // --- ИСПРАВЛЕНО: Добавлено считывание настроек авто-ответов ---
             const reviewTemplates = {
-                '5': document.getElementById('fpt-review-5').value,
-                '4': document.getElementById('fpt-review-4').value,
-                '3': document.getElementById('fpt-review-3').value,
-                '2': document.getElementById('fpt-review-2').value,
-                '1': document.getElementById('fpt-review-1').value
+                '5': document.getElementById('fxn-review-5').value,
+                '4': document.getElementById('fxn-review-4').value,
+                '3': document.getElementById('fxn-review-3').value,
+                '2': document.getElementById('fxn-review-2').value,
+                '1': document.getElementById('fxn-review-1').value
             };
 
             // helper: read attached images from a textarea (stored on dataset by the chip UI)
             const readImgs = (id) => {
                 const el = document.getElementById(id);
-                if (!el || !el.dataset.fptImages) return [];
-                try { return JSON.parse(el.dataset.fptImages) || []; } catch (_) { return []; }
+                if (!el || !el.dataset.fxnImages) return [];
+                try { return JSON.parse(el.dataset.fxnImages) || []; } catch (_) { return []; }
             };
             // helper: read the per-field send order (text→image vs image→text)
             const readOrder = (id) => {
                 const el = document.getElementById(id);
-                return (el && el.dataset.fptSendOrder === 'image_first') ? 'image_first' : 'text_first';
+                return (el && el.dataset.fxnSendOrder === 'image_first') ? 'image_first' : 'text_first';
             };
             const reviewTemplateImages = {
-                '5': readImgs('fpt-review-5'), '4': readImgs('fpt-review-4'),
-                '3': readImgs('fpt-review-3'), '2': readImgs('fpt-review-2'), '1': readImgs('fpt-review-1')
+                '5': readImgs('fxn-review-5'), '4': readImgs('fxn-review-4'),
+                '3': readImgs('fxn-review-3'), '2': readImgs('fxn-review-2'), '1': readImgs('fxn-review-1')
             };
 
             const settingsToSave = {
@@ -297,9 +297,9 @@ function initializeToolsPopup() {
                 // Авто-поднятие
                 autoBumpEnabled: document.getElementById('autoBumpEnabled').checked,
                 autoBumpCooldown: parseInt(document.getElementById('autoBumpCooldown').value, 10) || 245,
-                fpToolsSelectiveBumpEnabled: document.getElementById('selectiveBumpEnabled').checked,
-                fpToolsBumpOnlyAutoDelivery: document.getElementById('bumpOnlyAutoDelivery').checked,
-                fpToolsSmartBumpEnabled: (document.getElementById('fpToolsSmartBumpEnabled') ? document.getElementById('fpToolsSmartBumpEnabled').checked : false),
+                foxenSelectiveBumpEnabled: document.getElementById('selectiveBumpEnabled').checked,
+                foxenBumpOnlyAutoDelivery: document.getElementById('bumpOnlyAutoDelivery').checked,
+                foxenSmartBumpEnabled: (document.getElementById('foxenSmartBumpEnabled') ? document.getElementById('foxenSmartBumpEnabled').checked : false),
 
                 // Авто-ответы (добавленный блок)
                 autoReviewEnabled: document.getElementById('autoReviewEnabled').checked,
@@ -313,15 +313,15 @@ function initializeToolsPopup() {
                 // 'keywords' сохраняются отдельно при добавлении/удалении и здесь не нужны
 
                 // 2.8: Identifier toggle
-                fpToolsIdentifierEnabled: document.getElementById('fptIdentifierEnabled')?.checked !== false,
+                foxenIdentifierEnabled: document.getElementById('fxnIdentifierEnabled')?.checked !== false,
 
                 // 2.9: New toggles
-                fpToolsBuyerHistory:     document.getElementById('fpToolsBuyerHistory')?.checked !== false,
-                fpToolsShowUnconfirmed:  document.getElementById('fpToolsShowUnconfirmed')?.checked !== false
+                foxenBuyerHistory:     document.getElementById('foxenBuyerHistory')?.checked !== false,
+                foxenShowUnconfirmed:  document.getElementById('foxenShowUnconfirmed')?.checked !== false
             };
 
             // 3.0: Extended autoresponder settings
-            const existingAR = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies')).fpToolsAutoReplies || {};
+            const existingAR = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies')).foxenAutoReplies || {};
             const arExtras = {
                 ...existingAR,
                 newOrderReplyEnabled:    document.getElementById('newOrderReplyEnabled')?.checked ?? false,
@@ -337,25 +337,25 @@ function initializeToolsPopup() {
                 ignoreSystemMessages:    document.getElementById('ignoreSystemMessages')?.checked ?? false,
                 greetingCooldownDays:    parseFloat(document.getElementById('greetingCooldownDays')?.value || '0'),
             };
-            chrome.storage.local.set({ fpToolsAutoReplies: arExtras });
+            chrome.storage.local.set({ foxenAutoReplies: arExtras });
 
             // 3.0: Auto-restore/disable, review request template
             const reviewTpl = document.getElementById('reviewRequestTemplate')?.value || '';
             chrome.storage.local.set({
-                fpToolsAutoRestoreEnabled: document.getElementById('fpAutoRestoreEnabled')?.checked ?? false,
-                fpToolsAutoDisableEnabled: document.getElementById('fpAutoDisableEnabled')?.checked ?? false,
-                fpToolsReviewRequestTemplate: reviewTpl
+                foxenAutoRestoreEnabled: document.getElementById('fpAutoRestoreEnabled')?.checked ?? false,
+                foxenAutoDisableEnabled: document.getElementById('fpAutoDisableEnabled')?.checked ?? false,
+                foxenReviewRequestTemplate: reviewTpl
             });
 
             // Save review request template separately (it's in auto_review section)
             const rrTemplate = document.getElementById('fp-review-request-template')?.value?.trim();
             if (rrTemplate !== undefined) {
-                const { fpToolsAutoReplies: curAR = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAutoReplies');
+                const { foxenAutoReplies: curAR = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
                 curAR.reviewRequestTemplate = rrTemplate;
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsAutoReplies: curAR });
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies: curAR });
             }
 
-            settingsToSave.fpToolsDiscord = {
+            settingsToSave.foxenDiscord = {
                 enabled: document.getElementById('discordLogEnabled').checked,
                 webhookUrl: document.getElementById('discordWebhookUrl').value.trim(),
                 pingEveryone: document.getElementById('discordPingEveryone').checked,
@@ -396,12 +396,12 @@ function initializeToolsPopup() {
     // 3.0: GLOBAL AUTOSAVE. The save footer is removed; every change in the popup now persists
     // automatically (debounced). We listen at the popup root via delegation so dynamically
     // added controls are covered too.
-    const popupRoot = document.querySelector('.fp-tools-popup');
-    if (popupRoot && !popupRoot.dataset.fptAutosave) {
-        popupRoot.dataset.fptAutosave = '1';
+    const popupRoot = document.querySelector('.foxen-popup');
+    if (popupRoot && !popupRoot.dataset.fxnAutosave) {
+        popupRoot.dataset.fxnAutosave = '1';
         let autosaveTimer = null;
         const queueAutosave = () => {
-            if (!fptExtAlive || fptExtAlive()) {
+            if (!fxnExtAlive || fxnExtAlive()) {
                 if (autosaveTimer) clearTimeout(autosaveTimer);
                 autosaveTimer = setTimeout(() => { saveAllPopupSettings(true); }, 500);
             }
@@ -409,7 +409,7 @@ function initializeToolsPopup() {
         // 'change' covers checkboxes/radios/selects/color inputs; 'input' covers text/textarea/range.
         popupRoot.addEventListener('change', queueAutosave, true);
         popupRoot.addEventListener('input', queueAutosave, true);
-        popupRoot.addEventListener('fpt-attachment-changed', queueAutosave, true);
+        popupRoot.addEventListener('fxn-attachment-changed', queueAutosave, true);
     }
     
     const bgInfoToggle = document.getElementById('bgImageInfoToggle');
@@ -430,7 +430,7 @@ function initializeToolsPopup() {
     if (resetThemeBtn) {
         resetThemeBtn.addEventListener('click', async () => {
             if (confirm('Вы уверены, что хотите сбросить все настройки темы и оформления?')) {
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('fpToolsTheme');
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('foxenTheme');
                 await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ enableRedesignedHomepage: true });
                 applyCustomTheme();
                 applyHeaderPosition();
@@ -445,7 +445,7 @@ function initializeToolsPopup() {
     if (resetCursorFxBtn) {
         resetCursorFxBtn.addEventListener('click', async () => {
              if (confirm('Вы уверены, что хотите сбросить настройки эффектов курсора?')) {
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('fpToolsCursorFx');
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove('foxenCursorFx');
                 await loadSavedSettings();
                 showNotification('Настройки эффектов курсора сброшены.');
             }
@@ -464,12 +464,12 @@ function initializeToolsPopup() {
             const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getUserCategories' });
             if (!response.success) throw new Error(response.error);
             const categories = response.data;
-            const { fpToolsSelectedBumpCategories = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsSelectedBumpCategories');
+            const { foxenSelectedBumpCategories = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenSelectedBumpCategories');
             
             if (categories && categories.length > 0) {
                 listContainer.innerHTML = categories.map(cat => `
                     <label class="autobump-category-item">
-                        <input type="checkbox" data-id="${cat.id}" ${fpToolsSelectedBumpCategories.includes(cat.id) ? 'checked' : ''}>
+                        <input type="checkbox" data-id="${cat.id}" ${foxenSelectedBumpCategories.includes(cat.id) ? 'checked' : ''}>
                         <span>${cat.name}</span>
                     </label>
                 `).join('');
@@ -481,7 +481,7 @@ function initializeToolsPopup() {
         }
     });
 
-    modalOverlay.querySelector('.fp-tools-modal-close').addEventListener('click', () => {
+    modalOverlay.querySelector('.foxen-modal-close').addEventListener('click', () => {
         modalOverlay.style.display = 'none';
     });
 
@@ -507,7 +507,7 @@ function initializeToolsPopup() {
     document.getElementById('autobump-category-save').addEventListener('click', async () => {
         const selectedIds = Array.from(document.querySelectorAll('#autobump-category-list input:checked'))
                                 .map(cb => cb.dataset.id);
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsSelectedBumpCategories: selectedIds });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenSelectedBumpCategories: selectedIds });
         modalOverlay.style.display = 'none';
         showNotification('Список категорий для поднятия сохранен!', false);
     });
@@ -578,12 +578,12 @@ async function initializeQuickGamesMenu() {
     const inputField = gameDropdownItem.querySelector('#quickGameUrlInput');
 
     const getSavedGames = async () => {
-        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsQuickGames');
-        return data.fpToolsQuickGames || [];
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenQuickGames');
+        return data.foxenQuickGames || [];
     };
 
     const saveGames = async (games) => {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsQuickGames: games });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenQuickGames: games });
     };
 
     const renderList = (games) => {
@@ -684,25 +684,25 @@ async function initializeQuickGamesMenu() {
 function initializeMarkAllAsRead() {
     const observer = new MutationObserver(async (mutationsList, obs) => {
         const header = document.querySelector('.chat-full-header');
-        if (!header || document.getElementById('fp-tools-read-all-btn')) {
+        if (!header || document.getElementById('foxen-read-all-btn')) {
             return;
         }
 
         const readAllBtn = createElement('button', {
-            id: 'fp-tools-read-all-btn',
+            id: 'foxen-read-all-btn',
             class: 'fp-tooltip-host',
             'data-fp-tooltip': 'Прочитать все'
         });
         readAllBtn.innerHTML = '<span class="material-icons">done_all</span>';
         
         const filterMarkedBtn = createElement('label', {
-            id: 'fp-tools-filter-marked-btn',
-            class: 'fp-tooltip-host fp-tools-chat-toggle',
+            id: 'foxen-filter-marked-btn',
+            class: 'fp-tooltip-host foxen-chat-toggle',
             'data-fp-tooltip': 'Только помеченные'
         });
         filterMarkedBtn.innerHTML = `
             <input type="checkbox" id="filter-marked-checkbox">
-            <span class="fp-tools-chat-toggle-slider">
+            <span class="foxen-chat-toggle-slider">
                  <span class="material-icons">label</span>
             </span>
         `;
@@ -772,7 +772,7 @@ function initializeMarkAllAsRead() {
             const contactItems = document.querySelectorAll('.contact-list .contact-item');
             
             contactItems.forEach(item => {
-                const hasMark = item.querySelector('.fp-tools-user-status[data-fp-tooltip]');
+                const hasMark = item.querySelector('.foxen-user-status[data-fp-tooltip]');
                 if (isFilterActive) {
                     item.style.display = hasMark ? '' : 'none';
                 } else {
@@ -782,14 +782,14 @@ function initializeMarkAllAsRead() {
         };
 
         filterCheckbox.addEventListener('change', async () => {
-            if (!fptExtAlive()) return;
-            await fptSafe(() => chrome.storage.local.set({ fpToolsIsMarkedFilterActive: filterCheckbox.checked }));
+            if (!fxnExtAlive()) return;
+            await fxnSafe(() => chrome.storage.local.set({ foxenIsMarkedFilterActive: filterCheckbox.checked }));
             applyMarkedFilter();
         });
 
-        if (fptExtAlive()) {
-            fptSafe(() => chrome.storage.local.get('fpToolsIsMarkedFilterActive'), {}).then(data => {
-                if (data && data.fpToolsIsMarkedFilterActive) {
+        if (fxnExtAlive()) {
+            fxnSafe(() => chrome.storage.local.get('foxenIsMarkedFilterActive'), {}).then(data => {
+                if (data && data.foxenIsMarkedFilterActive) {
                     filterCheckbox.checked = true;
                     applyMarkedFilter();
                 }

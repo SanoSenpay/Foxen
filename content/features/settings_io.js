@@ -13,47 +13,72 @@ const FP_CONFIG_MAGIC    = 'FPTCONFIG';
 // 3) Большие кэши и временное состояние, которое только навредит на другом
 //    устройстве (heartbeat, «seeded/processed/collecting», позиции окна и т.п.).
 const EXCLUDE_KEYS = new Set([
-    // --- Аккаунты (НИКОГДА не экспортируем) ---
-    'fpToolsAccounts',
-    'fpToolsAccountsList',
+    // --- Донатеры и спонсоры ---
+    'foxenDonaters',
+    'foxenDonatersCache',
+    'foxenDonatersTs',
+    'foxenSponsors',
+    'donaters',
+    'donators',
+    // --- Аккаунты и авторизация (НИКОГДА не экспортируем/импортируем) ---
+    'foxenAccounts',
+    'foxenAccountsList',
+    'fpCurrentUserInfo',
     // --- Токены/секреты ---
-    'fpToolsGCToken',
-    'fpToolsGCConfig',
-    'fpToolsGCConfigTs',
+    'foxenGCToken',
+    'foxenGCConfig',
+    'foxenGCConfigTs',
+    // --- Базы данных продаж, покупок и финансов ---
+    'foxenSalesData',
+    'foxenPurchasesData',
+    'foxenFinanceData',
+    'foxenSalesCollecting',
+    'foxenPurchasesCollecting',
+    'foxenFinanceCollecting',
+    'foxenSalesLastUpdate',
+    'foxenPurchasesLastUpdate',
+    'foxenFinanceLastUpdate',
+    'foxenFinanceCount',
+    'foxenFirstOrderId',
+    'foxenLastOrderId',
     // --- Рантайм/служебное состояние движков (per-device) ---
-    'fpToolsEngineHeartbeat',
-    'fpToolsTelegramPoll',
-    'fpToolsTelegramSeeded',
-    'fpToolsTelegramOrdersSeeded',
-    'fpToolsTelegramProcessedIds',
-    'fpToolsTelegramProcessedOrders',
-    'fpToolsDiscordSeeded',
-    'fpToolsDiscordCheck',
-    'fpToolsProcessedDiscordIds',
-    'fpToolsSalesCollecting',
-    'fpToolsPurchasesCollecting',
-    'fpToolsFinanceCollecting',
-    'fpToolsSalesLastUpdate',
-    'fpToolsPurchasesLastUpdate',
-    'fpToolsFinanceLastUpdate',
-    'fpToolsFinanceCount',
-    'fpToolsFirstOrderId',
-    'fpToolsLastOrderId',
-    'fpToolsLotImportProcess',
-    'fpToolsCheckRestoreLots',
-    'fpToolsBlacklistUpdated',
-    'fpToolsUnreadCount',
+    'foxenEngineHeartbeat',
+    'foxenSmartBumpState',
+    'foxenSmartBumpRunning',
+    'foxenAutoBumpRunning',
+    'foxenLastAutoBumpTime',
+    'foxenAutoResponderTag',
+    'foxenTelegramPoll',
+    'foxenTelegramSeeded',
+    'foxenTelegramOrdersSeeded',
+    'foxenTelegramProcessedIds',
+    'foxenTelegramProcessedOrders',
+    'foxenDiscordSeeded',
+    'foxenDiscordCheck',
+    'foxenProcessedDiscordIds',
+    'fpt_telemetry_enabled',
+    'foxenLastSeenVersion',
+    'foxenLotImportProcess',
+    'foxenCheckRestoreLots',
+    'foxenBlacklistUpdated',
+    'foxenUnreadCount',
     // --- Кэши (большие, легко перезапросятся) ---
-    'fpToolsWallpaperCache',
-    'fpToolsImageStore',
-    'fpToolsImageCanvas',
-    'fpToolsCustomSoundData',   // звук может весить много; мета оставляем
-    'fpToolsBuyerHistory',
-    'fpToolsBuyerViewing',
+    'foxenWallpaperCache',
+    'foxenImageStore',
+    'foxenImageCanvas',
+    'foxenCustomSoundData',
+    'foxenBuyerHistory',
+    'foxenBuyerViewing',
     // --- Чисто UI-состояние текущей вкладки/окна (per-device) ---
-    'fpToolsLastPage',
-    'fpToolsPopupDragged',
+    'foxenLastPage',
+    'foxenPopupDragged',
 ]);
+
+function isJunkKey(k) {
+    if (!k || typeof k !== 'string') return true;
+    if (EXCLUDE_KEYS.has(k)) return true;
+    return /donat|sponsor|account|session|salesData|purchasesData|financeData|userInfo/i.test(k);
+}
 
 async function exportSettings() {
     try {
@@ -61,8 +86,19 @@ async function exportSettings() {
         const all = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(null);
         const data = {};
         for (const [k, v] of Object.entries(all)) {
-            if (EXCLUDE_KEYS.has(k)) continue;
+            if (isJunkKey(k)) continue;
             data[k] = v;
+        }
+
+        // Очищаем рантайм-состояние автоответчика перед экспортом
+        if (data.foxenAutoReplies && typeof data.foxenAutoReplies === 'object') {
+            const ar = { ...data.foxenAutoReplies };
+            delete ar.autoResponderSeeded;
+            delete ar.lastSeenMsgIds;
+            delete ar.lastHandledText;
+            delete ar.selfInitiatedChats;
+            delete ar.processedMessageIds;
+            data.foxenAutoReplies = ar;
         }
 
         const exportObj = {
@@ -97,49 +133,97 @@ async function importSettings(file) {
         const text = await file.text();
         const obj  = JSON.parse(text);
 
-        if (obj._magic !== FP_CONFIG_MAGIC) {
-            throw new Error('Неверный формат файла. Выберите файл .fpconfig от Foxen.');
+        let settingsToImport = null;
+        if (obj && typeof obj === 'object') {
+            if (obj.settings && typeof obj.settings === 'object') {
+                settingsToImport = obj.settings;
+            } else if (obj._magic === FP_CONFIG_MAGIC && obj.settings) {
+                settingsToImport = obj.settings;
+            } else if (obj.foxenAutoReplies || obj.autoBumpEnabled || obj.foxenAccounts) {
+                settingsToImport = obj;
+            } else {
+                settingsToImport = obj;
+            }
         }
 
-        if (!obj.settings || typeof obj.settings !== 'object') {
-            throw new Error('Файл не содержит настроек.');
+        if (!settingsToImport || typeof settingsToImport !== 'object' || !Object.keys(settingsToImport).length) {
+            throw new Error('Файл не содержит валидных настроек.');
         }
 
         // На всякий случай НЕ применяем исключённые ключи, даже если они попали
         // в старый файл (например, аккаунты из бэкапа другой версии).
         const safe = {};
-        for (const [k, v] of Object.entries(obj.settings)) {
-            if (EXCLUDE_KEYS.has(k)) continue;
+        for (const [k, v] of Object.entries(settingsToImport)) {
+            if (isJunkKey(k)) continue;
             safe[k] = v;
+        }
+
+        // Обязательно очищаем рантайм-маркеры просмотренных сообщений автоответчика из импортируемого конфига,
+        // чтобы при следующем цикле раннер прошёл посев (seeding) и НЕ рассылал приветствия по старым чатам!
+        if (safe.foxenAutoReplies && typeof safe.foxenAutoReplies === 'object') {
+            const ar = { ...safe.foxenAutoReplies };
+            delete ar.autoResponderSeeded;
+            delete ar.lastSeenMsgIds;
+            delete ar.lastHandledText;
+            delete ar.selfInitiatedChats;
+            delete ar.processedMessageIds;
+            safe.foxenAutoReplies = ar;
         }
 
         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set(safe);
 
         const cnt = Object.keys(safe).length;
-        const fromVer = obj._extVer ? ` из v${obj._extVer}` : '';
-        showNotification(`Импортировано ${cnt} разделов${fromVer} — перезагрузите страницу ✓`);
+        const fromVer = (obj && obj._extVer) ? ` из v${obj._extVer}` : '';
+        if (typeof showNotification === 'function') {
+            showNotification(`Импортировано ${cnt} разделов${fromVer} — перезагрузка... ✓`);
+        }
 
-        // Reload after 1.5s
-        setTimeout(() => window.location.reload(), 1500);
+        // Reload after 1.2s
+        setTimeout(() => window.location.reload(), 1200);
     } catch (e) {
-        showNotification(`Ошибка импорта: ${e.message}`, true);
+        console.error('Foxen Settings Import Error:', e);
+        if (typeof showNotification === 'function') {
+            showNotification(`Ошибка импорта: ${e.message}`, true);
+        } else {
+            alert(`Ошибка импорта: ${e.message}`);
+        }
     }
 }
 
 function initializeSettingsIO() {
-    const exportBtn = document.getElementById('fp-settings-export-btn');
-    const importBtn = document.getElementById('fp-settings-import-btn');
-    const importInput = document.getElementById('fp-settings-import-input');
+    // Используем делегирование событий на document, чтобы кнопки экспорта/импорта
+    // работали независимо от момента динамического рендеринга попапа/модального окна.
+    document.addEventListener('click', (e) => {
+        const exportBtn = e.target.closest('#fp-settings-export-btn');
+        if (exportBtn) {
+            e.preventDefault();
+            exportSettings();
+            return;
+        }
 
-    if (!exportBtn) return;
+        const importBtn = e.target.closest('#fp-settings-import-btn');
+        if (importBtn) {
+            e.preventDefault();
+            let importInput = document.getElementById('fp-settings-import-input');
+            if (!importInput) {
+                importInput = document.createElement('input');
+                importInput.type = 'file';
+                importInput.id = 'fp-settings-import-input';
+                importInput.accept = '.fpconfig,.json';
+                importInput.style.display = 'none';
+                document.body.appendChild(importInput);
+            }
+            importInput.click();
+        }
+    });
 
-    exportBtn.addEventListener('click', exportSettings);
-
-    importBtn?.addEventListener('click', () => importInput?.click());
-
-    importInput?.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) importSettings(file);
-        importInput.value = '';
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.id === 'fp-settings-import-input') {
+            const file = e.target.files[0];
+            if (file) {
+                importSettings(file);
+            }
+            e.target.value = '';
+        }
     });
 }

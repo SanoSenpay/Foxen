@@ -32,7 +32,7 @@
 
     if (!loggerPanel) {
         loggerPanel = document.createElement('div');
-        loggerPanel.className = 'fpt-raise-logger';
+        loggerPanel.className = 'fxn-raise-logger';
         loggerPanel.style.cssText = 'margin: 16px 0 24px 0; padding: 12px; background: rgba(15, 15, 15, 0.5); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; font-size: 13px; color: #eee; max-height: 200px; overflow-y: auto; text-align: left; box-shadow: 0 8px 32px rgba(0,0,0,0.4); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: none; width: 100%; box-sizing: border-box; text-shadow: 0 1px 2px rgba(0,0,0,0.8); font-family: monospace; line-height: 1.5;';
         // Append after the parent wrapper if possible, or append to parent
         btn.parentElement.parentElement.insertBefore(loggerPanel, btn.parentElement.nextSibling);
@@ -52,7 +52,7 @@
     };
     chrome.runtime.onMessage.addListener(logListener);
 
-    chrome.runtime.sendMessage({ action: 'fptRaiseAllNow' }, (res) => {
+    chrome.runtime.sendMessage({ action: 'fxnRaiseAllNow' }, (res) => {
       chrome.runtime.onMessage.removeListener(logListener);
       btn.removeAttribute('data-busy');
       btn.classList.remove('disabled');
@@ -91,16 +91,16 @@
     if (!pid) return false;
     const myId = getMyUserId();
     if (!myId || myId !== pid) return true; // не свой профиль — больше не пытаться
-    if (document.getElementById('fpt-raise-all-btn')) return true; // уже стоит
+    if (document.getElementById('fxn-raise-all-btn')) return true; // уже стоит
 
     // Ждём, пока появится кнопка «Выбрать» от lot_management — клонируем её стиль и место.
-    const selectBtn = document.getElementById('fp-tools-select-lots-btn');
+    const selectBtn = document.getElementById('foxen-select-lots-btn');
     if (!selectBtn) return false; // ещё не создана — попробуем позже
     if (!selectBtn.parentElement) return false;
 
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.id = 'fpt-raise-all-btn';
+    btn.id = 'fxn-raise-all-btn';
     btn.className = selectBtn.className; // тот же вид
     btn.textContent = 'Поднять все лоты';
     btn.style.marginRight = '6px';

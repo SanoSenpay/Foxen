@@ -34,8 +34,8 @@ const DEFAULT_STANDARD_TEMPLATES = {
 };
 
 async function loadTemplateSettings() {
-    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsTemplateSettings']);
-    const saved = data.fpToolsTemplateSettings || {};
+    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenTemplateSettings']);
+    const saved = data.foxenTemplateSettings || {};
     
     templateSettings.enabled = saved.enabled !== false;
     let pos = saved.buttonPosition || 'bottom';
@@ -56,7 +56,7 @@ async function loadTemplateSettings() {
 
 async function saveTemplateSettings() {
     if (!chrome.runtime?.id) return;
-    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsTemplateSettings: templateSettings });
+    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTemplateSettings: templateSettings });
 }
 
 function getWelcomeMessage() {
@@ -201,13 +201,13 @@ async function applyTemplateToInput(chatInput, templateContent, images, sendOrde
 
         const sendText = async () => {
             if (processedText && processedText.trim()) {
-                await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fptSendChatText', chatId, text: processedText.trim() });
+                await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fxnSendChatText', chatId, text: processedText.trim() });
                 await new Promise(r => setTimeout(r, 300));
             }
         };
         const sendImages = async () => {
             for (const dataUrl of imgs) {
-                const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fptSendImage', chatId, dataUrl, chatName });
+                const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fxnSendImage', chatId, dataUrl, chatName });
                 if (!resp || !resp.ok) showNotification('Не удалось отправить изображение: ' + (resp && resp.error || 'ошибка'), true);
                 await new Promise(r => setTimeout(r, 300));
             }
@@ -242,18 +242,18 @@ async function applyTemplateToInput(chatInput, templateContent, images, sendOrde
 
 
 function showEmptyTemplateModal(templateKey, isCustom) {
-    const existingOverlay = document.querySelector('.fp-tools-empty-template-overlay');
+    const existingOverlay = document.querySelector('.foxen-empty-template-overlay');
     if (existingOverlay) existingOverlay.remove();
 
-    const overlay = createElement('div', { class: 'fp-tools-empty-template-overlay' });
-    const modal = createElement('div', { class: 'fp-tools-empty-template-modal' });
+    const overlay = createElement('div', { class: 'foxen-empty-template-overlay' });
+    const modal = createElement('div', { class: 'foxen-empty-template-modal' });
     
     modal.innerHTML = `
         <h4>Шаблон пуст</h4>
         <p>Хотите добавить текст для этой кнопки прямо сейчас?</p>
         <div class="textarea-with-controls">
             <textarea class="template-input" placeholder="Введите текст шаблона..."></textarea>
-            <button class="btn add-image-btn fpt-img-btn" title="Добавить изображение"><span class="material-symbols-rounded">image</span></button>
+            <button class="btn add-image-btn fxn-img-btn" title="Добавить изображение"><span class="material-symbols-rounded">image</span></button>
         </div>
         <div class="modal-actions">
             <button class="btn" id="empty-template-save">Сохранить</button>
@@ -300,8 +300,8 @@ async function useTemplate(templateConfig) {
         return;
     }
     
-    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsTemplateSettings');
-    const sendTemplatesImmediately = data.fpToolsTemplateSettings?.sendTemplatesImmediately !== false;
+    const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTemplateSettings');
+    const sendTemplatesImmediately = data.foxenTemplateSettings?.sendTemplatesImmediately !== false;
 
     const chatInput = document.querySelector('.chat-form-input .form-control');
     if (!chatInput) return;
@@ -342,7 +342,7 @@ function createTemplateButton(config) {
         btn.style.backgroundColor = config.color;
     }
 
-    const labelEl = createElement('span', { class: 'fpt-btn-label' });
+    const labelEl = createElement('span', { class: 'fxn-btn-label' });
     labelEl.textContent = config.label;
     btn.appendChild(labelEl);
 
@@ -367,7 +367,7 @@ function createTemplateButton(config) {
         let tip = null;
         const show = () => {
             tip = document.createElement('div');
-            tip.className = 'fp-tools-template-preview fpt-preview-fixed';
+            tip.className = 'foxen-template-preview fxn-preview-fixed';
             tip.textContent = cleanText;
             tip.style.cssText = [
                 'position:fixed', 'left:0', 'top:0', 'margin:0',
@@ -413,23 +413,23 @@ function createTemplateButton(config) {
 
 function applyTemplateDisplayAttrs(container) {
     const d = { ...DEFAULT_TEMPLATE_DISPLAY, ...(templateSettings.display || {}) };
-    container.setAttribute('data-fpt-shape', d.shape);
-    container.setAttribute('data-fpt-size', d.size);
-    container.setAttribute('data-fpt-fill', d.fill);
-    container.setAttribute('data-fpt-fullwidth', d.fullWidth ? '1' : '0');
-    container.setAttribute('data-fpt-uppercase', d.uppercase ? '1' : '0');
-    container.setAttribute('data-fpt-compact', d.compact ? '1' : '0');
-    const isSidebar = container.classList.contains('fp-tools-template-sidebar');
+    container.setAttribute('data-fxn-shape', d.shape);
+    container.setAttribute('data-fxn-size', d.size);
+    container.setAttribute('data-fxn-fill', d.fill);
+    container.setAttribute('data-fxn-fullwidth', d.fullWidth ? '1' : '0');
+    container.setAttribute('data-fxn-uppercase', d.uppercase ? '1' : '0');
+    container.setAttribute('data-fxn-compact', d.compact ? '1' : '0');
+    const isSidebar = container.classList.contains('foxen-template-sidebar');
     if (isSidebar) {
-        container.setAttribute('data-fpt-density', d.sidebarDensity || 'normal');
-        container.setAttribute('data-fpt-layout', d.sidebarLayout || 'flow');
+        container.setAttribute('data-fxn-density', d.sidebarDensity || 'normal');
+        container.setAttribute('data-fxn-layout', d.sidebarLayout || 'flow');
     }
     // Alignment only has a visible effect on full-width buttons (otherwise buttons are
     // content-sized). The sidebar "list" layout is full-width so it always gets it.
     if (d.fullWidth || (isSidebar && (d.sidebarLayout || 'flow') === 'list')) {
-        container.setAttribute('data-fpt-align', d.align);
+        container.setAttribute('data-fxn-align', d.align);
     } else {
-        container.removeAttribute('data-fpt-align');
+        container.removeAttribute('data-fxn-align');
     }
 }
 
@@ -456,16 +456,16 @@ async function addChatTemplateButtons() {
         document.querySelector('.chat-empty-message') ||
         !document.querySelector('.chat-header, .chat-full-header, .chat-message-list')) return;
 
-    document.querySelectorAll('.chat-buttons-container, .fp-tools-template-sidebar').forEach(el => el.remove());
+    document.querySelectorAll('.chat-buttons-container, .foxen-template-sidebar').forEach(el => el.remove());
     // Remove any orphaned fixed preview tooltips left over from a previous render.
-    document.querySelectorAll('.fp-tools-template-preview.fpt-preview-fixed').forEach(el => el.remove());
+    document.querySelectorAll('.foxen-template-preview.fxn-preview-fixed').forEach(el => el.remove());
     // Clean up any popover trigger/panel/cell from a previous render or position.
-    document.querySelectorAll('.fpt-tpl-popover-cell').forEach(el => el.remove());
-    document.getElementById('fpt-tpl-popover-btn')?.remove();
-    document.getElementById('fpt-tpl-popover')?.remove();
+    document.querySelectorAll('.fxn-tpl-popover-cell').forEach(el => el.remove());
+    document.getElementById('fxn-tpl-popover-btn')?.remove();
+    document.getElementById('fxn-tpl-popover')?.remove();
     // Reset any bottom-pin padding we previously added to the right panel.
-    document.querySelectorAll('.chat-detail-list.fpt-has-bottom-binds').forEach(el => {
-        el.classList.remove('fpt-has-bottom-binds');
+    document.querySelectorAll('.chat-detail-list.fxn-has-bottom-binds').forEach(el => {
+        el.classList.remove('fxn-has-bottom-binds');
         el.style.paddingBottom = '';
     });
 
@@ -499,24 +499,24 @@ async function addChatTemplateButtons() {
                 return;
              }
         }
-        buttonsContainer = createElement('div', { class: 'fp-tools-template-sidebar' });
+        buttonsContainer = createElement('div', { class: 'foxen-template-sidebar' });
         applyTemplateDisplayAttrs(buttonsContainer);
-        const head = createElement('div', { class: 'fpt-sidebar-head' });
+        const head = createElement('div', { class: 'fxn-sidebar-head' });
         head.textContent = 'Быстрые ответы';
         buttonsContainer.appendChild(head);
         fillTemplateContainer(buttonsContainer);
 
         if (position === 'sidebar_top') {
-            buttonsContainer.setAttribute('data-fpt-pin', 'top');
+            buttonsContainer.setAttribute('data-fxn-pin', 'top');
             chatDetail.prepend(buttonsContainer);
         } else {
             // "В панели снизу" - pin to the very FLOOR of the right panel (like the
             // competitor's #bind-right: panel becomes position:relative and the strip is
             // absolutely anchored to bottom:0). Borderless/transparent per the screenshot.
-            buttonsContainer.setAttribute('data-fpt-pin', 'bottom');
+            buttonsContainer.setAttribute('data-fxn-pin', 'bottom');
             chatDetail.style.position = 'relative';
             // ensure the panel reserves room so pinned buttons don't overlap content
-            chatDetail.classList.add('fpt-has-bottom-binds');
+            chatDetail.classList.add('fxn-has-bottom-binds');
             chatDetail.appendChild(buttonsContainer);
             // reserve bottom padding equal to the strip height so info isn't covered
             requestAnimationFrame(() => {
@@ -544,13 +544,13 @@ async function addChatTemplateButtons() {
     }
 
     if (position === 'above') {
-        buttonsContainer.setAttribute('data-fpt-pos', 'above');
+        buttonsContainer.setAttribute('data-fxn-pos', 'above');
         // Insert as a sibling directly BEFORE the whole composer (.chat-form), exactly
         // mirroring how "below" inserts after it. This keeps it outside the composer's
         // inner padding so there's no phantom left gap.
         chatForm.parentNode.insertBefore(buttonsContainer, chatForm);
     } else {
-        buttonsContainer.setAttribute('data-fpt-pos', 'bottom');
+        buttonsContainer.setAttribute('data-fxn-pos', 'bottom');
         // Below the whole composer.
         chatForm.parentNode.insertBefore(buttonsContainer, chatForm.nextSibling);
     }
@@ -560,7 +560,7 @@ async function addChatTemplateButtons() {
     // Let the mouse wheel scroll the horizontal strip (only when it actually overflows
     // and we're not in full-width/column mode).
     buttonsContainer.addEventListener('wheel', (e) => {
-        if (buttonsContainer.getAttribute('data-fpt-fullwidth') === '1') return;
+        if (buttonsContainer.getAttribute('data-fxn-fullwidth') === '1') return;
         if (buttonsContainer.scrollWidth <= buttonsContainer.clientWidth) return;
         if (e.deltaY === 0) return;
         e.preventDefault();
@@ -568,18 +568,18 @@ async function addChatTemplateButtons() {
     }, { passive: false });
 }
 function setupTemplatePopover() {
-    document.querySelectorAll('.fpt-tpl-popover-cell').forEach(el => el.remove());
-    document.getElementById('fpt-tpl-popover-btn')?.remove();
-    document.getElementById('fpt-tpl-popover')?.remove();
+    document.querySelectorAll('.fxn-tpl-popover-cell').forEach(el => el.remove());
+    document.getElementById('fxn-tpl-popover-btn')?.remove();
+    document.getElementById('fxn-tpl-popover')?.remove();
 
-    const attachBtn = document.querySelector('.chat-btn-image:not(.fpt-tpl-popover-btn)');
+    const attachBtn = document.querySelector('.chat-btn-image:not(.fxn-tpl-popover-btn)');
     const attachWrap = attachBtn ? (attachBtn.closest('.chat-form-attach') || attachBtn.parentElement) : null;
     if (!attachWrap || !attachBtn) return;
 
     const trigger = createElement('button', {
         type: 'button',
-        id: 'fpt-tpl-popover-btn',
-        class: 'btn btn-default chat-btn-image fpt-tpl-popover-btn',
+        id: 'fxn-tpl-popover-btn',
+        class: 'btn btn-default chat-btn-image fxn-tpl-popover-btn',
         title: 'Шаблоны ответов'
     });
     trigger.innerHTML = '<span class="material-symbols-rounded">description</span>';
@@ -589,7 +589,7 @@ function setupTemplatePopover() {
     // so it visually appears to the left; otherwise insert before the attach button.
     if (attachBtn.closest('.chat-form-attach') === attachWrap && attachWrap.parentNode) {
         // make a tiny wrapper cell so flex layout keeps it inline to the left
-        const cell = createElement('div', { class: 'chat-form-attach fpt-tpl-popover-cell' });
+        const cell = createElement('div', { class: 'chat-form-attach fxn-tpl-popover-cell' });
         cell.appendChild(trigger);
         attachWrap.parentNode.insertBefore(cell, attachWrap);
     } else {
@@ -604,15 +604,15 @@ function setupTemplatePopover() {
 }
 
 function toggleTemplatePopover(trigger) {
-    const existing = document.getElementById('fpt-tpl-popover');
+    const existing = document.getElementById('fxn-tpl-popover');
     if (existing) { existing.remove(); return; }
 
-    const pop = createElement('div', { id: 'fpt-tpl-popover', class: 'fpt-tpl-popover' });
+    const pop = createElement('div', { id: 'fxn-tpl-popover', class: 'fxn-tpl-popover' });
 
-    const header = createElement('div', { class: 'fpt-tpl-popover-head' });
+    const header = createElement('div', { class: 'fxn-tpl-popover-head' });
     const title = createElement('span', {});
     title.textContent = 'Шаблоны';
-    const gear = createElement('button', { type: 'button', class: 'fpt-tpl-popover-gear', title: 'Настройки шаблонов' });
+    const gear = createElement('button', { type: 'button', class: 'fxn-tpl-popover-gear', title: 'Настройки шаблонов' });
     gear.innerHTML = '<span class="material-symbols-rounded">settings</span>';
     gear.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -623,12 +623,12 @@ function toggleTemplatePopover(trigger) {
     header.appendChild(gear);
     pop.appendChild(header);
 
-    const list = createElement('div', { class: 'fpt-tpl-popover-list custom-scroll' });
+    const list = createElement('div', { class: 'fxn-tpl-popover-list custom-scroll' });
     const addItem = (config) => {
-        const item = createElement('button', { type: 'button', class: 'fpt-tpl-popover-item' });
-        const dot = createElement('span', { class: 'fpt-tpl-popover-dot' });
+        const item = createElement('button', { type: 'button', class: 'fxn-tpl-popover-item' });
+        const dot = createElement('span', { class: 'fxn-tpl-popover-dot' });
         dot.style.backgroundColor = config.color;
-        const lbl = createElement('span', { class: 'fpt-tpl-popover-label' });
+        const lbl = createElement('span', { class: 'fxn-tpl-popover-label' });
         lbl.textContent = config.label;
         item.appendChild(dot);
         item.appendChild(lbl);
@@ -648,7 +648,7 @@ function toggleTemplatePopover(trigger) {
         if (c.enabled) { addItem({ ...c, isCustom: true }); any = true; }
     });
     if (!any) {
-        const empty = createElement('div', { class: 'fpt-tpl-popover-empty' });
+        const empty = createElement('div', { class: 'fxn-tpl-popover-empty' });
         empty.textContent = 'Нет активных шаблонов';
         list.appendChild(empty);
     }
@@ -687,9 +687,9 @@ async function openTemplateSettings() {
     try {
         if (typeof window.__fpEnsurePopup === 'function') await window.__fpEnsurePopup();
     } catch (_) {}
-    const popup = document.querySelector('.fp-tools-popup');
+    const popup = document.querySelector('.foxen-popup');
     if (!popup) return;
     popup.classList.add('active');
-    const navItem = popup.querySelector('.fp-tools-nav li[data-page="templates"]');
+    const navItem = popup.querySelector('.foxen-nav li[data-page="templates"]');
     if (navItem) navItem.click();
 }

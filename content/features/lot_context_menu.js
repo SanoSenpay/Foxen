@@ -6,14 +6,14 @@
     let pinnedLots    = [];
     let _ctxInverted  = false; // When true: Shift+RMB = this menu, plain RMB = browser
 
-    chrome.storage.local.get(['fpToolsPinnedLots', 'fpToolsCtxInverted'], d => {
-        pinnedLots   = d.fpToolsPinnedLots   || [];
-        _ctxInverted = d.fpToolsCtxInverted  || false;
+    chrome.storage.local.get(['foxenPinnedLots', 'foxenCtxInverted'], d => {
+        pinnedLots   = d.foxenPinnedLots   || [];
+        _ctxInverted = d.foxenCtxInverted  || false;
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', waitForLotsAndRender);
         else waitForLotsAndRender();
     });
 
-    function savePinned() { chrome.storage.local.set({ fpToolsPinnedLots: pinnedLots }); }
+    function savePinned() { chrome.storage.local.set({ foxenPinnedLots: pinnedLots }); }
 
     function parseLot(el) {
         const a = el.closest('a.tc-item') ||
@@ -118,7 +118,7 @@
         }
         if (action === 'toggle_ctx') {
             _ctxInverted = !_ctxInverted;
-            chrome.storage.local.set({ fpToolsCtxInverted: _ctxInverted });
+            chrome.storage.local.set({ foxenCtxInverted: _ctxInverted });
             const msg = _ctxInverted
                 ? 'Переключено: Shift+ПКМ = это меню'
                 : 'Переключено: ПКМ = это меню';

@@ -5,12 +5,12 @@
     let currentBuyerUsername = null;
 
     function injectStyles() {
-        if (document.getElementById('fpt-buyer-ratings-css')) return;
+        if (document.getElementById('fxn-buyer-ratings-css')) return;
         const s = document.createElement('style');
-        s.id = 'fpt-buyer-ratings-css';
+        s.id = 'fxn-buyer-ratings-css';
         s.textContent = `
             /* Badge styles */
-            .fpt-buyer-rating-badge {
+            .fxn-buyer-rating-badge {
                 display: inline-block;
                 position: relative;
                 font-size: 13px;
@@ -25,7 +25,7 @@
                 border: none !important;
                 box-shadow: none !important;
             }
-            .fpt-buyer-rating-badge::before {
+            .fxn-buyer-rating-badge::before {
                 content: '';
                 position: absolute;
                 bottom: 0;
@@ -37,33 +37,33 @@
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 border-radius: 2px;
             }
-            .fpt-buyer-rating-badge:hover::before {
+            .fxn-buyer-rating-badge:hover::before {
                 transform: scaleX(1);
                 transform-origin: left;
             }
-            .fpt-rating-positive {
+            .fxn-rating-positive {
                 color: #81c784 !important;
             }
-            .fpt-rating-positive::before {
+            .fxn-rating-positive::before {
                 background: #81c784 !important;
                 box-shadow: 0 0 8px rgba(129, 199, 132, 0.6);
             }
-            .fpt-rating-negative {
+            .fxn-rating-negative {
                 color: #e57373 !important;
             }
-            .fpt-rating-negative::before {
+            .fxn-rating-negative::before {
                 background: #e57373 !important;
                 box-shadow: 0 0 8px rgba(229, 115, 115, 0.6);
             }
-            .fpt-rating-neutral {
+            .fxn-rating-neutral {
                 color: #b0bec5 !important;
             }
-            .fpt-rating-neutral::before {
+            .fxn-rating-neutral::before {
                 background: #b0bec5 !important;
             }
 
             /* Modal layout */
-            .fp-tools-modal-overlay {
+            .foxen-modal-overlay {
                 position: fixed !important;
                 inset: 0 !important;
                 background: rgba(0,0,0,0.7) !important;
@@ -73,7 +73,7 @@
                 align-items: center !important;
                 justify-content: center !important;
             }
-            .fpt-modal {
+            .fxn-modal {
                 background: linear-gradient(135deg, #16181f 0%, #0e1018 100%);
                 border: 1px solid rgba(255,255,255,0.07);
                 border-radius: 16px;
@@ -84,13 +84,13 @@
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
-                animation: fpt-modal-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+                animation: fxn-modal-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
             }
-            @keyframes fpt-modal-in {
+            @keyframes fxn-modal-in {
                 from { opacity: 0; transform: scale(0.94) translateY(8px); }
                 to   { opacity: 1; transform: scale(1) translateY(0); }
             }
-            .fpt-modal-head {
+            .fxn-modal-head {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -98,22 +98,22 @@
                 border-bottom: 1px solid rgba(255,255,255,0.06);
                 flex-shrink: 0;
             }
-            .fpt-modal-head-info {
+            .fxn-modal-head-info {
                 display: flex;
                 flex-direction: column;
                 gap: 2px;
             }
-            .fpt-modal-title {
+            .fxn-modal-title {
                 font-size: 16px;
                 font-weight: 700;
                 color: #e8eaf0;
                 margin: 0;
             }
-            .fpt-modal-subtitle {
+            .fxn-modal-subtitle {
                 font-size: 12px;
                 color: rgba(255,255,255,0.35);
             }
-            .fpt-modal-close {
+            .fxn-modal-close {
                 width: 30px; height: 30px;
                 border-radius: 8px;
                 border: 1px solid rgba(255,255,255,0.08);
@@ -125,11 +125,11 @@
                 display: flex; align-items: center; justify-content: center;
                 transition: all 0.15s;
             }
-            .fpt-modal-close:hover {
+            .fxn-modal-close:hover {
                 background: rgba(255,255,255,0.1);
                 color: #fff;
             }
-            .fpt-modal-body {
+            .fxn-modal-body {
                 overflow-y: auto;
                 padding: 18px 22px;
                 display: flex;
@@ -137,11 +137,11 @@
                 gap: 16px;
                 flex: 1;
             }
-            .fpt-modal-body::-webkit-scrollbar { width: 4px; }
-            .fpt-modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+            .fxn-modal-body::-webkit-scrollbar { width: 4px; }
+            .fxn-modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
             /* Reviews list */
-            .fpt-reviews-list {
+            .fxn-reviews-list {
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
@@ -149,9 +149,9 @@
                 overflow-y: auto;
                 padding-right: 4px;
             }
-            .fpt-reviews-list::-webkit-scrollbar { width: 3px; }
-            .fpt-reviews-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-            .fpt-reviews-empty {
+            .fxn-reviews-list::-webkit-scrollbar { width: 3px; }
+            .fxn-reviews-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+            .fxn-reviews-empty {
                 text-align: center;
                 padding: 24px;
                 color: rgba(255,255,255,0.3);
@@ -159,27 +159,27 @@
                 border: 1px dashed rgba(255,255,255,0.07);
                 border-radius: 10px;
             }
-            .fpt-review-card {
+            .fxn-review-card {
                 background: rgba(255,255,255,0.03);
                 border: 1px solid rgba(255,255,255,0.06);
                 border-radius: 10px;
                 padding: 12px 14px;
             }
-            .fpt-review-header {
+            .fxn-review-header {
                 display: flex;
                 justify-content: space-between;
                 font-size: 11px;
                 color: rgba(255,255,255,0.35);
                 margin-bottom: 6px;
             }
-            .fpt-review-body {
+            .fxn-review-body {
                 font-size: 13px;
                 line-height: 1.5;
                 word-break: break-word;
                 color: rgba(255,255,255,0.75);
                 margin-bottom: 8px;
             }
-            .fpt-review-proof {
+            .fxn-review-proof {
                 width: 80px; height: 52px;
                 border-radius: 6px;
                 object-fit: cover;
@@ -187,10 +187,10 @@
                 border: 1px solid rgba(255,255,255,0.08);
                 transition: all 0.2s;
             }
-            .fpt-review-proof:hover { transform: scale(1.06); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+            .fxn-review-proof:hover { transform: scale(1.06); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 
             /* Zoom overlay */
-            .fpt-img-zoom-overlay {
+            .fxn-img-zoom-overlay {
                 position: fixed;
                 inset: 0;
                 background: rgba(0,0,0,0.88);
@@ -199,20 +199,20 @@
                 z-index: 100001;
                 cursor: zoom-out;
             }
-            .fpt-img-zoom-overlay img {
+            .fxn-img-zoom-overlay img {
                 max-width: 90%; max-height: 90%;
                 border-radius: 10px;
                 box-shadow: 0 16px 48px rgba(0,0,0,0.6);
             }
 
             /* Form divider */
-            .fpt-form-divider {
+            .fxn-form-divider {
                 height: 1px;
                 background: rgba(255,255,255,0.06);
             }
 
             /* Section label */
-            .fpt-form-label {
+            .fxn-form-label {
                 font-size: 11px;
                 font-weight: 600;
                 letter-spacing: 0.6px;
@@ -222,12 +222,12 @@
             }
 
             /* Tone buttons */
-            .fpt-tone-group {
+            .fxn-tone-group {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 8px;
             }
-            .fpt-tone-btn {
+            .fxn-tone-btn {
                 padding: 10px 12px;
                 border-radius: 10px;
                 border: 1.5px solid rgba(255,255,255,0.08);
@@ -239,20 +239,20 @@
                 transition: all 0.18s;
                 display: flex; align-items: center; justify-content: center; gap: 6px;
             }
-            .fpt-tone-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
-            .fpt-tone-btn.active-pos {
+            .fxn-tone-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
+            .fxn-tone-btn.active-pos {
                 background: rgba(46,125,50,0.18);
                 border-color: rgba(129,199,132,0.45);
                 color: #81c784;
             }
-            .fpt-tone-btn.active-neg {
+            .fxn-tone-btn.active-neg {
                 background: rgba(198,40,40,0.18);
                 border-color: rgba(229,115,115,0.45);
                 color: #e57373;
             }
 
             /* Textarea */
-            .fpt-textarea {
+            .fxn-textarea {
                 width: 100%;
                 min-height: 80px;
                 background: rgba(255,255,255,0.04);
@@ -268,11 +268,11 @@
                 box-sizing: border-box;
                 font-family: inherit;
             }
-            .fpt-textarea:focus { border-color: rgba(192,38,211,0.4); }
-            .fpt-textarea::placeholder { color: rgba(255,255,255,0.2); }
+            .fxn-textarea:focus { border-color: rgba(192,38,211,0.4); }
+            .fxn-textarea::placeholder { color: rgba(255,255,255,0.2); }
 
             /* Paste zone (multi) */
-            .fpt-paste-zone {
+            .fxn-paste-zone {
                 border: 1.5px dashed rgba(255,255,255,0.12);
                 border-radius: 10px;
                 padding: 16px;
@@ -291,23 +291,23 @@
                 gap: 6px;
                 margin-bottom: 12px;
             }
-            .fpt-paste-zone:hover {
+            .fxn-paste-zone:hover {
                 border-color: rgba(192,38,211,0.35);
                 background: rgba(192,38,211,0.04);
             }
-            .fpt-paste-zone.drag-over {
+            .fxn-paste-zone.drag-over {
                 border-color: rgba(192,38,211,0.6);
                 background: rgba(192,38,211,0.08);
             }
-            .fpt-paste-zone-icon { font-size: 22px; opacity: 0.5; }
+            .fxn-paste-zone-icon { font-size: 22px; opacity: 0.5; }
             /* Multi-image grid */
-            .fpt-img-grid {
+            .fxn-img-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
                 gap: 8px;
                 width: 100%;
             }
-            .fpt-img-thumb {
+            .fxn-img-thumb {
                 position: relative;
                 border-radius: 8px;
                 overflow: hidden;
@@ -316,14 +316,14 @@
                 aspect-ratio: 4/3;
                 cursor: zoom-in;
             }
-            .fpt-img-thumb img {
+            .fxn-img-thumb img {
                 width: 100%; height: 100%;
                 object-fit: cover;
                 display: block;
                 transition: opacity 0.15s;
             }
-            .fpt-img-thumb:hover img { opacity: 0.8; }
-            .fpt-img-thumb-rm {
+            .fxn-img-thumb:hover img { opacity: 0.8; }
+            .fxn-img-thumb-rm {
                 position: absolute; top: 4px; right: 4px;
                 width: 20px; height: 20px;
                 border-radius: 5px;
@@ -336,9 +336,9 @@
                 opacity: 0;
                 transition: opacity 0.15s;
             }
-            .fpt-img-thumb:hover .fpt-img-thumb-rm { opacity: 1; }
-            .fpt-img-thumb-rm:hover { background: rgba(220,50,50,0.8); color: #fff; }
-            .fpt-img-add-btn {
+            .fxn-img-thumb:hover .fxn-img-thumb-rm { opacity: 1; }
+            .fxn-img-thumb-rm:hover { background: rgba(220,50,50,0.8); color: #fff; }
+            .fxn-img-add-btn {
                 border-radius: 8px;
                 border: 1.5px dashed rgba(255,255,255,0.12);
                 background: rgba(255,255,255,0.03);
@@ -351,15 +351,15 @@
                 font-size: 11px;
                 transition: all 0.15s;
             }
-            .fpt-img-add-btn:hover {
+            .fxn-img-add-btn:hover {
                 border-color: rgba(192,38,211,0.4);
                 background: rgba(192,38,211,0.05);
                 color: rgba(255,255,255,0.5);
             }
-            .fpt-img-add-icon { font-size: 20px; opacity: 0.5; }
+            .fxn-img-add-icon { font-size: 20px; opacity: 0.5; }
 
             /* Submit button */
-            .fpt-submit-btn {
+            .fxn-submit-btn {
                 width: 100%;
                 padding: 12px;
                 border-radius: 10px;
@@ -373,11 +373,11 @@
                 box-shadow: 0 4px 16px rgba(192,38,211,0.3);
                 letter-spacing: 0.3px;
             }
-            .fpt-submit-btn:hover { filter: brightness(1.1); box-shadow: 0 6px 20px rgba(192,38,211,0.4); }
-            .fpt-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+            .fxn-submit-btn:hover { filter: brightness(1.1); box-shadow: 0 6px 20px rgba(192,38,211,0.4); }
+            .fxn-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
 
             /* Not verified banner */
-            .fpt-not-verified {
+            .fxn-not-verified {
                 padding: 14px 16px;
                 background: rgba(239,68,68,0.07);
                 border: 1px solid rgba(239,68,68,0.18);
@@ -389,7 +389,7 @@
             }
 
             /* Delete review button */
-            .fpt-rev-del-btn {
+            .fxn-rev-del-btn {
                 background: none;
                 border: none;
                 cursor: pointer;
@@ -403,14 +403,14 @@
                 line-height: 1;
                 flex-shrink: 0;
             }
-            .fpt-rev-del-btn:hover {
+            .fxn-rev-del-btn:hover {
                 background: rgba(239,68,68,0.15);
                 color: #ef4444;
             }
-            .fpt-rev-del-btn:disabled { cursor: default; opacity: 0.3; }
+            .fxn-rev-del-btn:disabled { cursor: default; opacity: 0.3; }
 
             /* Anonymous toggle container */
-            .fpt-anon-row {
+            .fxn-anon-row {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -420,23 +420,23 @@
                 border: 1px solid rgba(255,255,255,0.06);
                 border-radius: 10px;
             }
-            .fpt-anon-label {
+            .fxn-anon-label {
                 font-size: 13px;
                 color: rgba(255,255,255,0.7);
             }
-            .fpt-switch {
+            .fxn-switch {
                 position: relative;
                 display: inline-block;
                 width: 38px;
                 height: 20px;
                 flex-shrink: 0;
             }
-            .fpt-switch input {
+            .fxn-switch input {
                 opacity: 0;
                 width: 0;
                 height: 0;
             }
-            .fpt-slider {
+            .fxn-slider {
                 position: absolute;
                 cursor: pointer;
                 top: 0; left: 0; right: 0; bottom: 0;
@@ -444,7 +444,7 @@
                 transition: .3s;
                 border-radius: 20px;
             }
-            .fpt-slider:before {
+            .fxn-slider:before {
                 position: absolute;
                 content: "";
                 height: 14px;
@@ -455,10 +455,10 @@
                 transition: .3s;
                 border-radius: 50%;
             }
-            .fpt-switch input:checked + .fpt-slider {
+            .fxn-switch input:checked + .fxn-slider {
                 background-color: #c026d3;
             }
-            .fpt-switch input:checked + .fpt-slider:before {
+            .fxn-switch input:checked + .fxn-slider:before {
                 transform: translateX(18px);
                 background-color: #fff;
             }
@@ -469,7 +469,7 @@
     // --- Отображение красивого счетчика рейтинга рядом с ником ---
     async function loadAndInjectRatingBadge() {
         // Проверяем отключена ли фича в реестре настроек
-        if (window.fpToolsDisabledFeatures && window.fpToolsDisabledFeatures.includes('buyer_ratings_supabase')) {
+        if (window.foxenDisabledFeatures && window.foxenDisabledFeatures.includes('buyer_ratings_supabase')) {
             return;
         }
 
@@ -487,13 +487,13 @@
             }
 
             // Проверяем, есть ли старый бейдж от другого диалога
-            const existingBadge = chatHeader.querySelector('.fpt-buyer-rating-badge');
+            const existingBadge = chatHeader.querySelector('.fxn-buyer-rating-badge');
             if (existingBadge && existingBadge.dataset.userId !== String(buyerId)) {
                 existingBadge.remove();
             }
 
             // Рендерим новый бейдж, если его ещё нет
-            if (buyerId && !chatHeader.querySelector('.fpt-buyer-rating-badge')) {
+            if (buyerId && !chatHeader.querySelector('.fxn-buyer-rating-badge')) {
                 const nameEl = chatHeader.querySelector('.media-user-name');
                 if (nameEl && userLink) {
                     const buyerUsername = userLink.textContent.trim();
@@ -511,13 +511,13 @@
                 const buyerId = match[1];
 
                 // Проверяем, есть ли старый бейдж от другого профиля
-                const existingBadge = profileNameEl.querySelector('.fpt-buyer-rating-badge');
+                const existingBadge = profileNameEl.querySelector('.fxn-buyer-rating-badge');
                 if (existingBadge && existingBadge.dataset.userId !== String(buyerId)) {
                     existingBadge.remove();
                 }
 
                 // Рендерим бейдж, если его нет
-                if (!profileNameEl.querySelector('.fpt-buyer-rating-badge')) {
+                if (!profileNameEl.querySelector('.fxn-buyer-rating-badge')) {
                     const buyerUsername = profileNameEl.textContent.trim();
                     createAndInjectBadge(buyerId, buyerUsername, profileNameEl);
                 }
@@ -526,11 +526,11 @@
     }
 
     function createAndInjectBadge(buyerId, buyerUsername, targetEl) {
-        if (targetEl.querySelector('.fpt-buyer-rating-badge')) return;
+        if (targetEl.querySelector('.fxn-buyer-rating-badge')) return;
 
         // Создаем компактный красивый бейдж
         const badge = document.createElement('span');
-        badge.className = 'fpt-buyer-rating-badge fpt-rating-neutral';
+        badge.className = 'fxn-buyer-rating-badge fxn-rating-neutral';
         badge.style.display = 'inline-flex';
         badge.textContent = '...';
         badge.dataset.userId = String(buyerId);
@@ -544,15 +544,15 @@
             }
 
             const rating = res.rating || 0;
-            badge.classList.remove('fpt-rating-neutral');
+            badge.classList.remove('fxn-rating-neutral');
             if (rating > 0) {
-                badge.classList.add('fpt-rating-positive');
+                badge.classList.add('fxn-rating-positive');
                 badge.textContent = `+${rating}`;
             } else if (rating < 0) {
-                badge.classList.add('fpt-rating-negative');
+                badge.classList.add('fxn-rating-negative');
                 badge.textContent = `${rating}`;
             } else {
-                badge.classList.add('fpt-rating-neutral');
+                badge.classList.add('fxn-rating-neutral');
                 badge.textContent = '0';
             }
 
@@ -574,15 +574,15 @@
     // --- Окно просмотра и добавления отзывов ---
     const ADMIN_USER_ID = '15508026';
     function openReviewsModal(buyerId, buyerUsername, totalRating, reviews, currentUserId = '') {
-        document.getElementById('fpt-buyer-reviews-modal')?.remove();
+        document.getElementById('fxn-buyer-reviews-modal')?.remove();
 
         // Блокируем нативную кнопку прикрепления фото в чате FunPay
         const chatFileBtn = document.querySelector('.chat-form-btn .btn-file, .chat-file-input-btn, [class*="chat"] input[type="file"]');
         if (chatFileBtn) chatFileBtn.style.pointerEvents = 'none';
 
         const overlay = document.createElement('div');
-        overlay.id = 'fpt-buyer-reviews-modal';
-        overlay.className = 'fp-tools-modal-overlay';
+        overlay.id = 'fxn-buyer-reviews-modal';
+        overlay.className = 'foxen-modal-overlay';
 
         let ratingLabel = '0';
         let ratingColor = '#b0bec5';
@@ -590,18 +590,18 @@
         else if (totalRating < 0) { ratingLabel = String(totalRating); ratingColor = '#e57373'; }
 
         const modal = document.createElement('div');
-        modal.className = 'fpt-modal';
+        modal.className = 'fxn-modal';
         modal.innerHTML = `
-            <div class="fpt-modal-head">
-                <div class="fpt-modal-head-info">
-                    <div class="fpt-modal-title">${esc(buyerUsername)}</div>
-                    <div class="fpt-modal-subtitle">Рейтинг покупателя: <span style="color:${ratingColor};font-weight:700;">${ratingLabel}</span></div>
+            <div class="fxn-modal-head">
+                <div class="fxn-modal-head-info">
+                    <div class="fxn-modal-title">${esc(buyerUsername)}</div>
+                    <div class="fxn-modal-subtitle">Рейтинг покупателя: <span style="color:${ratingColor};font-weight:700;">${ratingLabel}</span></div>
                 </div>
-                <button class="fpt-modal-close" title="Закрыть">✕</button>
+                <button class="fxn-modal-close" title="Закрыть">✕</button>
             </div>
-            <div class="fpt-modal-body">
-                <div id="fpt-reviews-list-wrap"></div>
-                <div id="fpt-review-form-wrap"></div>
+            <div class="fxn-modal-body">
+                <div id="fxn-reviews-list-wrap"></div>
+                <div id="fxn-review-form-wrap"></div>
             </div>
         `;
 
@@ -616,25 +616,25 @@
             window.removeEventListener('paste', pasteHandler, true);
             if (removeDragBlocksFn) removeDragBlocksFn();
         };
-        modal.querySelector('.fpt-modal-close').onclick = closeModal;
+        modal.querySelector('.fxn-modal-close').onclick = closeModal;
         overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); }, { once: true });
 
         // 1. Список отзывов
-        const listWrap = modal.querySelector('#fpt-reviews-list-wrap');
+        const listWrap = modal.querySelector('#fxn-reviews-list-wrap');
         const isAdmin = currentUserId === ADMIN_USER_ID;
 
         function renderReviewsList(reviewsArr) {
             listWrap.innerHTML = '';
             if (!reviewsArr || reviewsArr.length === 0) {
-                listWrap.innerHTML = '<div class="fpt-reviews-empty">✦ Отзывов об этом покупателе ещё нет. Будьте первым!</div>';
+                listWrap.innerHTML = '<div class="fxn-reviews-empty">✦ Отзывов об этом покупателе ещё нет. Будьте первым!</div>';
                 return;
             }
             const list = document.createElement('div');
-            list.className = 'fpt-reviews-list';
+            list.className = 'fxn-reviews-list';
             reviewsArr.forEach(rev => {
                 const card = document.createElement('div');
-                card.className = 'fpt-review-card';
+                card.className = 'fxn-review-card';
                 const date = new Date(rev.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
                 const isPos = rev.rating_change > 0;
                 const badge = isPos
@@ -649,10 +649,10 @@
 
                 // Кнопка удаления — видна админу или автору отзыва
                 const canDelete = isAdmin || (currentUserId && String(rev.seller_id) === currentUserId);
-                const deleteBtn = canDelete ? `<button class="fpt-rev-del-btn" data-id="${rev.id}" title="Удалить отзыв"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>` : '';
+                const deleteBtn = canDelete ? `<button class="fxn-rev-del-btn" data-id="${rev.id}" title="Удалить отзыв"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>` : '';
 
                 card.innerHTML = `
-                    <div class="fpt-review-header" style="display:flex; justify-content:space-between; align-items:center; gap:12px; width:100%;">
+                    <div class="fxn-review-header" style="display:flex; justify-content:space-between; align-items:center; gap:12px; width:100%;">
                         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             ${badge}
                             <span style="font-weight:600;">${authorName}${authorSuffix}</span>
@@ -660,7 +660,7 @@
                         </div>
                         ${deleteBtn}
                     </div>
-                    <div class="fpt-review-body">${esc(rev.comment)}</div>
+                    <div class="fxn-review-body">${esc(rev.comment)}</div>
                 `;
 
                 // Добавляем скриншоты (поддержка массива proof_image_urls и обратная совместимость с одиночным proof_image_url)
@@ -677,7 +677,7 @@
 
                     urls.forEach(url => {
                         const img = document.createElement('img');
-                        img.className = 'fpt-review-proof';
+                        img.className = 'fxn-review-proof';
                         img.src = url;
                         img.title = 'Просмотреть скриншот';
                         img.onclick = () => openImageZoom(url);
@@ -688,7 +688,7 @@
 
                 // Обработчик удаления
                 if (canDelete) {
-                    const delBtn = card.querySelector('.fpt-rev-del-btn');
+                    const delBtn = card.querySelector('.fxn-rev-del-btn');
                     if (delBtn) {
                         delBtn.onclick = (e) => {
                             e.stopPropagation();
@@ -720,53 +720,53 @@
         renderReviewsList(reviews);
 
         // 2. Форма отзыва
-        const formWrap = modal.querySelector('#fpt-review-form-wrap');
+        const formWrap = modal.querySelector('#fxn-review-form-wrap');
         let pasteHandler = () => {};
         let capturedFiles = []; // массив { file, url }
 
         chrome.runtime.sendMessage({ action: 'supabaseGetStatus' }, (statusRes) => {
             if (!statusRes || !statusRes.isVerified) {
-                formWrap.innerHTML = `<div class="fpt-not-verified">🔐 Вы не можете оставить отзыв. Пожалуйста, пройдите однократную <strong>верификацию</strong> в настройках Foxen → «База отзывов».</div>`;
+                formWrap.innerHTML = `<div class="fxn-not-verified">🔐 Вы не можете оставить отзыв. Пожалуйста, пройдите однократную <strong>верификацию</strong> в настройках Foxen → «База отзывов».</div>`;
                 return;
             }
 
             let selectedRating = 1;
 
             formWrap.innerHTML = `
-                <div class="fpt-form-divider"></div>
+                <div class="fxn-form-divider"></div>
                 <div>
-                    <div class="fpt-form-label">Оценка</div>
-                    <div class="fpt-tone-group">
-                        <button type="button" class="fpt-tone-btn active-pos" id="fpt-btn-pos">👍 Положительный</button>
-                        <button type="button" class="fpt-tone-btn" id="fpt-btn-neg">👎 Отрицательный</button>
+                    <div class="fxn-form-label">Оценка</div>
+                    <div class="fxn-tone-group">
+                        <button type="button" class="fxn-tone-btn active-pos" id="fxn-btn-pos">👍 Положительный</button>
+                        <button type="button" class="fxn-tone-btn" id="fxn-btn-neg">👎 Отрицательный</button>
                     </div>
                 </div>
                 <div>
-                    <div class="fpt-form-label">Комментарий</div>
-                    <textarea class="fpt-textarea" id="fpt-review-comment" placeholder="Опишите детали сделки — что пошло не так или почему покупатель отличный (мин. 10 символов)…"></textarea>
+                    <div class="fxn-form-label">Комментарий</div>
+                    <textarea class="fxn-textarea" id="fxn-review-comment" placeholder="Опишите детали сделки — что пошло не так или почему покупатель отличный (мин. 10 символов)…"></textarea>
                 </div>
                 <div>
-                    <div class="fpt-form-label" id="fpt-screen-label">Скриншоты-доказательства (обязательно, до 5 шт.)</div>
-                    <div class="fpt-paste-zone" id="fpt-paste-zone">
-                        <div class="fpt-paste-zone-icon">🖼</div>
+                    <div class="fxn-form-label" id="fxn-screen-label">Скриншоты-доказательства (обязательно, до 5 шт.)</div>
+                    <div class="fxn-paste-zone" id="fxn-paste-zone">
+                        <div class="fxn-paste-zone-icon">🖼</div>
                         <div>Вставьте изображение <strong style="color:rgba(255,255,255,0.5);">Ctrl+V</strong> или перетащите сюда</div>
                         <div style="font-size:11px;opacity:0.4;">PNG, JPG, WebP · до 5 скриншотов</div>
                     </div>
                 </div>
-                <div class="fpt-anon-row">
-                    <span class="fpt-anon-label">Опубликовать анонимно</span>
-                    <label class="fpt-switch">
-                        <input type="checkbox" id="fpt-review-anon">
-                        <span class="fpt-slider"></span>
+                <div class="fxn-anon-row">
+                    <span class="fxn-anon-label">Опубликовать анонимно</span>
+                    <label class="fxn-switch">
+                        <input type="checkbox" id="fxn-review-anon">
+                        <span class="fxn-slider"></span>
                     </label>
                 </div>
-                <button type="button" id="fpt-btn-submit-review" class="fpt-submit-btn">Отправить отзыв</button>
+                <button type="button" id="fxn-btn-submit-review" class="fxn-submit-btn">Отправить отзыв</button>
             `;
 
-            const btnPos = formWrap.querySelector('#fpt-btn-pos');
-            const btnNeg = formWrap.querySelector('#fpt-btn-neg');
-            const pasteZone = formWrap.querySelector('#fpt-paste-zone');
-            const submitBtn = formWrap.querySelector('#fpt-btn-submit-review');
+            const btnPos = formWrap.querySelector('#fxn-btn-pos');
+            const btnNeg = formWrap.querySelector('#fxn-btn-neg');
+            const pasteZone = formWrap.querySelector('#fxn-paste-zone');
+            const submitBtn = formWrap.querySelector('#fxn-btn-submit-review');
 
             // btnPos/btnNeg - обработчики после объявления функций
             btnPos.onclick = () => {
@@ -782,12 +782,12 @@
 
             // --- Обновляем сетку превью ---
             function refreshGrid() {
-                const pasteZone = formWrap.querySelector('#fpt-paste-zone');
+                const pasteZone = formWrap.querySelector('#fxn-paste-zone');
                 if (!pasteZone) return;
 
                 if (capturedFiles.length === 0) {
                     pasteZone.innerHTML = `
-                        <div class="fpt-paste-zone-icon">🖼</div>
+                        <div class="fxn-paste-zone-icon">🖼</div>
                         <div>Вставьте изображение <strong style="color:rgba(255,255,255,0.5);">Ctrl+V</strong> или перетащите сюда</div>
                         <div style="font-size:11px;opacity:0.4;">PNG, JPG, WebP · до 5 скриншотов</div>
                     `;
@@ -800,16 +800,16 @@
                     pasteZone.onclick = null;
 
                     const grid = document.createElement('div');
-                    grid.className = 'fpt-img-grid';
+                    grid.className = 'fxn-img-grid';
 
                     capturedFiles.forEach((entry, idx) => {
                         const thumb = document.createElement('div');
-                        thumb.className = 'fpt-img-thumb';
+                        thumb.className = 'fxn-img-thumb';
                         const img = document.createElement('img');
                         img.src = entry.url;
                         img.onclick = () => openImageZoom(entry.url);
                         const rmBtn = document.createElement('button');
-                        rmBtn.className = 'fpt-img-thumb-rm';
+                        rmBtn.className = 'fxn-img-thumb-rm';
                         rmBtn.title = 'Удалить';
                         rmBtn.textContent = '✕';
                         rmBtn.onclick = (e) => {
@@ -826,8 +826,8 @@
                     // Кнопка «Добавить ещё» (если < 5)
                     if (capturedFiles.length < 5) {
                         const addBtn = document.createElement('div');
-                        addBtn.className = 'fpt-img-add-btn';
-                        addBtn.innerHTML = '<div class="fpt-img-add-icon">＋</div><div>Добавить</div>';
+                        addBtn.className = 'fxn-img-add-btn';
+                        addBtn.innerHTML = '<div class="fxn-img-add-icon">＋</div><div>Добавить</div>';
                         addBtn.onclick = pickFile;
                         grid.appendChild(addBtn);
                     }
@@ -858,7 +858,7 @@
 
             // Ctrl+V — перехватываем в capture-фазе, ДО чата FunPay
             pasteHandler = (e) => {
-                if (!document.getElementById('fpt-buyer-reviews-modal')) return;
+                if (!document.getElementById('fxn-buyer-reviews-modal')) return;
                 const items = e.clipboardData?.items;
                 if (!items) return;
                 let hasImage = false;
@@ -877,7 +877,7 @@
 
             // Drag & Drop — тоже перехватываем глобально чтобы чат не получил
             const _blockDragForChat = (e) => {
-                if (document.getElementById('fpt-buyer-reviews-modal')) e.stopImmediatePropagation();
+                if (document.getElementById('fxn-buyer-reviews-modal')) e.stopImmediatePropagation();
             };
             document.addEventListener('dragover', _blockDragForChat, true);
             document.addEventListener('drop', _blockDragForChat, true);
@@ -939,8 +939,8 @@
 
             // Отправка
             submitBtn.onclick = async () => {
-                const comment = formWrap.querySelector('#fpt-review-comment').value.trim();
-                const isAnonymous = formWrap.querySelector('#fpt-review-anon')?.checked || false;
+                const comment = formWrap.querySelector('#fxn-review-comment').value.trim();
+                const isAnonymous = formWrap.querySelector('#fxn-review-anon')?.checked || false;
                 if (comment.length < 10) {
                     if (typeof showNotification === 'function') showNotification('Комментарий должен быть длиннее 10 символов', true);
                     return;
@@ -980,7 +980,7 @@
                     }
                     if (typeof showNotification === 'function') showNotification('Отзыв успешно добавлен!');
                     closeModal();
-                    document.querySelectorAll('.fpt-buyer-rating-badge').forEach(b => b.remove());
+                    document.querySelectorAll('.fxn-buyer-rating-badge').forEach(b => b.remove());
                     loadAndInjectRatingBadge();
                 });
             }; // end submitBtn.onclick
@@ -990,7 +990,7 @@
     // Полноэкранный зум картинок пруфов
     function openImageZoom(src) {
         const overlay = document.createElement('div');
-        overlay.className = 'fpt-img-zoom-overlay';
+        overlay.className = 'fxn-img-zoom-overlay';
         const img = document.createElement('img');
         img.src = src;
         overlay.appendChild(img);
@@ -1005,10 +1005,10 @@
     // --- Инжекция настроек Supabase на вкладку settings_io ---
     async function injectSupabaseSettings(container) {
         if (!container) return;
-        if (container.querySelector('#fpt-supabase-settings')) return;
+        if (container.querySelector('#fxn-supabase-settings')) return;
 
         const sbDiv = document.createElement('div');
-        sbDiv.id = 'fpt-supabase-settings';
+        sbDiv.id = 'fxn-supabase-settings';
         sbDiv.style.marginTop = '24px';
         sbDiv.style.borderTop = '1px solid rgba(255,255,255,0.06)';
         sbDiv.style.paddingTop = '16px';
@@ -1016,13 +1016,13 @@
         sbDiv.innerHTML = `
             <h3>База отзывов о покупателях</h3>
             <p class="template-info">Вы можете подтвердить свой никнейм на FunPay, чтобы получить доступ к публикации отзывов и добавлению скриншотов сделок.</p>
-            <div id="fpt-sb-status-container" style="padding:12px; background:rgba(255,255,255,0.03); border-radius:6px; font-size:13px; margin-bottom:15px;">
+            <div id="fxn-sb-status-container" style="padding:12px; background:rgba(255,255,255,0.03); border-radius:6px; font-size:13px; margin-bottom:15px;">
                 Загрузка статуса...
             </div>
         `;
 
         container.appendChild(sbDiv);
-        const statusContainer = sbDiv.querySelector('#fpt-sb-status-container');
+        const statusContainer = sbDiv.querySelector('#fxn-sb-status-container');
 
         // Рендерим статус верификации
         updateVerificationStatusUI(statusContainer);
@@ -1088,10 +1088,10 @@
                 container.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="color:#81c784; font-weight:bold;">🟢 Верифицирован (аккаунт: ${displayUser})</span>
-                        <button type="button" id="fpt-sb-reset-verify" class="btn btn-default" style="padding:4px 8px; font-size:11px;">Сбросить</button>
+                        <button type="button" id="fxn-sb-reset-verify" class="btn btn-default" style="padding:4px 8px; font-size:11px;">Сбросить</button>
                     </div>
                 `;
-                container.querySelector('#fpt-sb-reset-verify').onclick = async () => {
+                container.querySelector('#fxn-sb-reset-verify').onclick = async () => {
                     await storageApi.remove('foxenSupabaseJwt');
                     if (typeof showNotification === 'function') showNotification('Верификация сброшена.');
                     updateVerificationStatusUI(container);
@@ -1110,11 +1110,11 @@
                 container.innerHTML = `
                     <div>
                         <div style="color:#e57373; font-weight:bold; margin-bottom:8px;">🔴 Не верифицирован</div>
-                        <button type="button" id="fpt-sb-verify-btn" class="btn btn-primary" style="width:100%;">Активировать базу отзывов</button>
+                        <button type="button" id="fxn-sb-verify-btn" class="btn btn-primary" style="width:100%;">Активировать базу отзывов</button>
                     </div>
                 `;
 
-                const verifyBtn = container.querySelector('#fpt-sb-verify-btn');
+                const verifyBtn = container.querySelector('#fxn-sb-verify-btn');
                 verifyBtn.onclick = () => {
                     verifyBtn.disabled = true;
                     verifyBtn.textContent = 'Активация...';
@@ -1149,7 +1149,7 @@
         loadAndInjectRatingBadge();
 
         // 2. Проверяем настройки
-        const settingsContainer = document.querySelector('.fp-tools-page-content[data-page="settings_io"]');
+        const settingsContainer = document.querySelector('.foxen-page-content[data-page="settings_io"]');
         if (settingsContainer) injectSupabaseSettings(settingsContainer);
     }
 
@@ -1162,8 +1162,8 @@
         loadAndInjectRatingBadge();
 
         // Настройки
-        const settingsContainer = document.querySelector('.fp-tools-page-content[data-page="settings_io"]');
-        if (settingsContainer && !settingsContainer.querySelector('#fpt-supabase-settings')) {
+        const settingsContainer = document.querySelector('.foxen-page-content[data-page="settings_io"]');
+        if (settingsContainer && !settingsContainer.querySelector('#fxn-supabase-settings')) {
             injectSupabaseSettings(settingsContainer);
         }
     }).observe(document.body, { childList: true, subtree: true });

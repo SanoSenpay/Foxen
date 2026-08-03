@@ -5,12 +5,12 @@
 //   diagrams (круговые: по категориям, по статусам, по валютам),
 //   detailed (топ покупателей/товаров/категорий - таблицы),
 //   full (всё сразу).
-// Цвета - из живой палитры (--fpt-*).
+// Цвета - из живой палитры (--fxn-*).
 
 (function () {
     'use strict';
 
-    const MODE_KEY = 'fpToolsStatsViewMode';
+    const MODE_KEY = 'foxenStatsViewMode';
     const PALETTE = ['#C026D3', '#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626', '#0891b2', '#db2777', '#65a30d', '#9333ea'];
 
     function esc(s) {
@@ -43,8 +43,8 @@
     // Глобальное состояние фильтров/сортировки (применяется во ВСЕХ режимах).
     // У продаж и покупок РАЗНЫЕ ключи и разные дефолты: для покупок возвраты по
     // умолчанию выключены (возвращённые деньги ты по факту не тратил).
-    const _cfg = (typeof window !== 'undefined' && window.fptStatsCfg) || null;
-    const FILTER_KEY = (_cfg && _cfg.filterKey) || 'fpToolsStatsFilters';
+    const _cfg = (typeof window !== 'undefined' && window.fxnStatsCfg) || null;
+    const FILTER_KEY = (_cfg && _cfg.filterKey) || 'foxenStatsFilters';
     const _defRefunded = _cfg ? false : true; // покупки: по умолчанию без возвратов
     let filters = { stClosed: true, stPaid: true, stRefunded: _defRefunded, sort: 'date-desc' };
     function loadFilters() {
@@ -78,7 +78,7 @@
 
     function getOrders(range) {
         return new Promise(async resolve => {
-            const all = await (window.fptOrdersDB || FPTSalesDB).getAllAsArray();
+            const all = await (window.fxnOrdersDB || FPTSalesDB).getAllAsArray();
             {
                 let filtered = all.filter(o => {
                     if (range.start && o.orderDate < range.start) return false;
@@ -94,7 +94,7 @@
 
     function countStoredOrders() {
         return new Promise(async resolve => {
-            try { resolve(await (window.fptOrdersDB || FPTSalesDB).count()); } catch (_) { resolve(0); }
+            try { resolve(await (window.fxnOrdersDB || FPTSalesDB).count()); } catch (_) { resolve(0); }
         });
     }
 
@@ -188,14 +188,14 @@
                 xlParts.push({ x, anchor: 'middle', label: day.slice(5) });
             }
         });
-        xL = xlParts.map(p => `<text x="${p.x}" y="${H - 8}" text-anchor="${p.anchor}" font-size="9" fill="var(--fpt-text-muted)">${esc(p.label)}</text>`).join('');
+        xL = xlParts.map(p => `<text x="${p.x}" y="${H - 8}" text-anchor="${p.anchor}" font-size="9" fill="var(--fxn-text-muted)">${esc(p.label)}</text>`).join('');
         const steps = 4;
         for (let i = 0; i <= steps; i++) {
             const y = PAD.t + ch - (i / steps) * ch;
             const rv = (maxV / steps) * i;
             const lbl = rv >= 1000 ? Math.round(rv / 1000) + 'к' : Math.round(rv);
-            yL += `<line x1="${PAD.l}" y1="${y}" x2="${W - PAD.r}" y2="${y}" stroke="var(--fpt-border)" stroke-width="1" opacity="0.5"/>`;
-            yL += `<text x="${PAD.l - 6}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--fpt-text-muted)">${lbl}</text>`;
+            yL += `<line x1="${PAD.l}" y1="${y}" x2="${W - PAD.r}" y2="${y}" stroke="var(--fxn-border)" stroke-width="1" opacity="0.5"/>`;
+            yL += `<text x="${PAD.l - 6}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--fxn-text-muted)">${lbl}</text>`;
         }
 
         return `
@@ -210,7 +210,7 @@
     function chartHTML(agg) {
         const days = Object.keys(agg.byDay).sort();
         if (!days.length) return emptyHTML('Нет данных за период');
-        const revChart = singleChart(((_cfg && _cfg.moneyByDayLabel) || 'Выручка по дням, ₽'), days, d => agg.byDay[d].revenue, v => money(v, 'RUB'), 'var(--fpt-accent)');
+        const revChart = singleChart(((_cfg && _cfg.moneyByDayLabel) || 'Выручка по дням, ₽'), days, d => agg.byDay[d].revenue, v => money(v, 'RUB'), 'var(--fxn-accent)');
         const cntChart = singleChart('Заказы по дням, шт.', days, d => agg.byDay[d].count, v => v + ' заказ.', '#2563eb');
         return `<div class="fp-sm-charts-stack">${revChart}${cntChart}</div>`;
     }
@@ -242,7 +242,7 @@
         <div class="fp-sm-card">
             <div class="fp-sm-card-title">${esc(title)}</div>
             <div class="fp-sm-donut-row">
-                <svg class="fp-sm-donut" viewBox="0 0 140 140" width="140" height="140" style="flex-shrink:0;overflow:visible;">${paths}<text x="70" y="74" text-anchor="middle" font-size="14" font-weight="700" fill="var(--fpt-text)">${total}</text></svg>
+                <svg class="fp-sm-donut" viewBox="0 0 140 140" width="140" height="140" style="flex-shrink:0;overflow:visible;">${paths}<text x="70" y="74" text-anchor="middle" font-size="14" font-weight="700" fill="var(--fxn-text)">${total}</text></svg>
                 <div class="fp-sm-legend">${legend}</div>
             </div>
         </div>`;
@@ -315,7 +315,7 @@
     }
 
     function emptyHTML(msg) {
-        return `<p style="color:var(--fpt-text-muted);font-size:12px;text-align:center;padding:18px;">${esc(msg)}</p>`;
+        return `<p style="color:var(--fxn-text-muted);font-size:12px;text-align:center;padding:18px;">${esc(msg)}</p>`;
     }
 
     // ── styles ──────────────────────────────────────────────────────────────────
@@ -325,156 +325,156 @@
         s.id = 'fp-sm-styles';
         s.textContent = `
         .fp-stats-modebar{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 4px;}
-        .fp-stats-mode-btn{display:inline-flex;align-items:center;gap:6px;background:var(--fpt-surface,#1a1c26);
-            border:1px solid var(--fpt-border,#22253a);color:var(--fpt-text-muted,#9099b8);border-radius:8px;
+        .fp-stats-mode-btn{display:inline-flex;align-items:center;gap:6px;background:var(--fxn-surface,#1a1c26);
+            border:1px solid var(--fxn-border,#22253a);color:var(--fxn-text-muted,#9099b8);border-radius:8px;
             padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;}
         .fp-stats-mode-btn .material-symbols-rounded{font-size:16px;}
-        .fp-stats-mode-btn:hover{border-color:var(--fpt-accent,#C026D3);color:var(--fpt-text,#d8dae8);}
-        .fp-stats-mode-btn.active{background:var(--fpt-accent-soft,rgba(192,38,211,0.18));border-color:var(--fpt-accent,#C026D3);color:var(--fpt-accent,#C026D3);}
+        .fp-stats-mode-btn:hover{border-color:var(--fxn-accent,#C026D3);color:var(--fxn-text,#d8dae8);}
+        .fp-stats-mode-btn.active{background:var(--fxn-accent-soft,rgba(192,38,211,0.18));border-color:var(--fxn-accent,#C026D3);color:var(--fxn-accent,#C026D3);}
         #fpTools-stats-modeview{margin-top:12px;}
         .fp-sm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
-        .fp-sm-card{background:var(--fpt-surface,#1a1c26);border:1px solid var(--fpt-border,#22253a);border-radius:10px;padding:14px;}
-        .fp-sm-card-title{font-size:12px;font-weight:700;color:var(--fpt-text,#d8dae8);margin-bottom:10px;}
+        .fp-sm-card{background:var(--fxn-surface,#1a1c26);border:1px solid var(--fxn-border,#22253a);border-radius:10px;padding:14px;}
+        .fp-sm-card-title{font-size:12px;font-weight:700;color:var(--fxn-text,#d8dae8);margin-bottom:10px;}
         .fp-sm-more-btn{margin-top:6px;padding:2px 0;background:none;border:none;cursor:pointer;
-            font-size:11px;color:var(--fpt-text-muted,#9099b8);opacity:.85;width:auto;}
-        .fp-sm-more-btn:hover{opacity:1;color:var(--fpt-accent,#C026D3);text-decoration:underline;}
+            font-size:11px;color:var(--fxn-text-muted,#9099b8);opacity:.85;width:auto;}
+        .fp-sm-more-btn:hover{opacity:1;color:var(--fxn-accent,#C026D3);text-decoration:underline;}
         .fp-sm-donut-row{display:flex;align-items:center;gap:14px;}
         .fp-sm-legend{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0;}
-        .fp-sm-leg{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--fpt-text-muted,#9099b8);}
+        .fp-sm-leg{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--fxn-text-muted,#9099b8);}
         .fp-sm-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
         .fp-sm-leg-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-        .fp-sm-leg-val{color:var(--fpt-text,#d8dae8);font-weight:600;flex-shrink:0;}
-        .fp-sm-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--fpt-border,#22253a);font-size:12px;}
+        .fp-sm-leg-val{color:var(--fxn-text,#d8dae8);font-weight:600;flex-shrink:0;}
+        .fp-sm-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--fxn-border,#22253a);font-size:12px;}
         .fp-sm-row:last-child{border-bottom:none;}
-        .fp-sm-row-rank{width:18px;text-align:center;color:var(--fpt-accent,#C026D3);font-weight:700;flex-shrink:0;}
-        .fp-sm-row-name{flex:1;color:var(--fpt-text,#d8dae8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-        .fp-sm-row-link{color:var(--fpt-text,#d8dae8);text-decoration:none;}
-        .fp-sm-row-link:hover{color:var(--fpt-accent,#C026D3);text-decoration:underline;}
-        .fp-sm-row-val{color:var(--fpt-text-muted,#9099b8);flex-shrink:0;}
+        .fp-sm-row-rank{width:18px;text-align:center;color:var(--fxn-accent,#C026D3);font-weight:700;flex-shrink:0;}
+        .fp-sm-row-name{flex:1;color:var(--fxn-text,#d8dae8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .fp-sm-row-link{color:var(--fxn-text,#d8dae8);text-decoration:none;}
+        .fp-sm-row-link:hover{color:var(--fxn-accent,#C026D3);text-decoration:underline;}
+        .fp-sm-row-val{color:var(--fxn-text-muted,#9099b8);flex-shrink:0;}
         button.fp-sm-row-valbtn{background:transparent;border:none;font:inherit;cursor:pointer;
-            color:var(--fpt-text-muted,#9099b8);padding:2px 6px;border-radius:6px;transition:color .12s,background .12s;}
-        button.fp-sm-row-valbtn:hover{color:var(--fpt-accent,#C026D3);background:var(--fpt-accent-soft,rgba(192,38,211,0.12));text-decoration:underline;}
-        .fp-sm-summary{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--fpt-text-muted,#9099b8);}
-        .fp-sm-summary strong{color:var(--fpt-text,#d8dae8);}
+            color:var(--fxn-text-muted,#9099b8);padding:2px 6px;border-radius:6px;transition:color .12s,background .12s;}
+        button.fp-sm-row-valbtn:hover{color:var(--fxn-accent,#C026D3);background:var(--fxn-accent-soft,rgba(192,38,211,0.12));text-decoration:underline;}
+        .fp-sm-summary{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--fxn-text-muted,#9099b8);}
+        .fp-sm-summary strong{color:var(--fxn-text,#d8dae8);}
         .fp-sm-charts-stack{display:flex;flex-direction:column;gap:12px;}
         .fp-sm-bar{cursor:pointer;transition:opacity .12s;outline:none;}
         .fp-sm-bar:hover,.fp-sm-bar:focus{opacity:0.78;}
         .fp-sm-seg{transition:opacity .12s;outline:none;}
         .fp-sm-seg:hover,.fp-sm-seg:focus{opacity:0.82;}
-        #fp-sm-tooltip{position:fixed;z-index:100001;pointer-events:none;background:var(--fpt-bg,#13141a);
-            border:1px solid var(--fpt-border,#22253a);border-radius:8px;padding:6px 10px;font-size:12px;
-            color:var(--fpt-text,#d8dae8);box-shadow:0 6px 18px var(--fpt-shadow,rgba(0,0,0,0.4));
+        #fp-sm-tooltip{position:fixed;z-index:100001;pointer-events:none;background:var(--fxn-bg,#13141a);
+            border:1px solid var(--fxn-border,#22253a);border-radius:8px;padding:6px 10px;font-size:12px;
+            color:var(--fxn-text,#d8dae8);box-shadow:0 6px 18px var(--fxn-shadow,rgba(0,0,0,0.4));
             font-family:Inter,'Segoe UI',sans-serif;white-space:nowrap;opacity:0;transition:opacity .1s;}
-        #fp-sm-tooltip .fp-sm-tt-label{color:var(--fpt-text-muted,#9099b8);font-size:10px;margin-bottom:2px;}
+        #fp-sm-tooltip .fp-sm-tt-label{color:var(--fxn-text-muted,#9099b8);font-size:10px;margin-bottom:2px;}
         #fp-sm-tooltip .fp-sm-tt-val{font-weight:700;}
         .fp-stats-searchbar{display:flex;align-items:center;gap:8px;margin:10px 0 4px;position:relative;}
-        .fp-stats-searchbar .fp-stats-search-ico{position:absolute;left:10px;font-size:18px;color:var(--fpt-text-muted,#9099b8);pointer-events:none;}
+        .fp-stats-searchbar .fp-stats-search-ico{position:absolute;left:10px;font-size:18px;color:var(--fxn-text-muted,#9099b8);pointer-events:none;}
         #fpTools-stats-search{flex:1;padding:8px 10px 8px 34px;border-radius:8px;font-size:13px;
-            background:var(--fpt-surface,#1a1c26);border:1px solid var(--fpt-border,#22253a);color:var(--fpt-text,#d8dae8);outline:none;}
-        #fpTools-stats-search:focus{border-color:var(--fpt-accent,#C026D3);}
-        #fpTools-stats-search-btn{padding:8px 14px;border-radius:8px;border:none;background:var(--fpt-accent,#C026D3);
+            background:var(--fxn-surface,#1a1c26);border:1px solid var(--fxn-border,#22253a);color:var(--fxn-text,#d8dae8);outline:none;}
+        #fpTools-stats-search:focus{border-color:var(--fxn-accent,#C026D3);}
+        #fpTools-stats-search-btn{padding:8px 14px;border-radius:8px;border:none;background:var(--fxn-accent,#C026D3);
             color:#fff;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;}
         #fpTools-stats-search-btn:hover{filter:brightness(1.1);}
-        #fpTools-stats-search-clear{width:34px;height:34px;border-radius:8px;border:1px solid var(--fpt-border,#22253a);
-            background:var(--fpt-surface,#1a1c26);color:var(--fpt-text-muted,#9099b8);font-size:18px;cursor:pointer;flex-shrink:0;line-height:1;}
-        #fpTools-stats-search-clear:hover{color:var(--fpt-text,#fff);border-color:var(--fpt-accent,#C026D3);}
+        #fpTools-stats-search-clear{width:34px;height:34px;border-radius:8px;border:1px solid var(--fxn-border,#22253a);
+            background:var(--fxn-surface,#1a1c26);color:var(--fxn-text-muted,#9099b8);font-size:18px;cursor:pointer;flex-shrink:0;line-height:1;}
+        #fpTools-stats-search-clear:hover{color:var(--fxn-text,#fff);border-color:var(--fxn-accent,#C026D3);}
         .fp-sm-sr-list{display:flex;flex-direction:column;gap:8px;}
-        .fp-sm-sr-row{display:block;text-decoration:none;background:var(--fpt-surface-2,#20222e);
-            border:1px solid var(--fpt-border,#22253a);border-radius:9px;padding:9px 11px;transition:border-color .15s;}
-        a.fp-sm-sr-row:hover{border-color:var(--fpt-accent,#C026D3);}
+        .fp-sm-sr-row{display:block;text-decoration:none;background:var(--fxn-surface-2,#20222e);
+            border:1px solid var(--fxn-border,#22253a);border-radius:9px;padding:9px 11px;transition:border-color .15s;}
+        a.fp-sm-sr-row:hover{border-color:var(--fxn-accent,#C026D3);}
         .fp-sm-sr-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
-        .fp-sm-sr-title{font-size:12.5px;color:var(--fpt-text,#d8dae8);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-        .fp-sm-sr-price{font-size:12.5px;font-weight:700;color:var(--fpt-accent,#C026D3);white-space:nowrap;}
-        .fp-sm-sr-meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;font-size:11px;color:var(--fpt-text-muted,#9099b8);}
+        .fp-sm-sr-title{font-size:12.5px;color:var(--fxn-text,#d8dae8);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .fp-sm-sr-price{font-size:12.5px;font-weight:700;color:var(--fxn-accent,#C026D3);white-space:nowrap;}
+        .fp-sm-sr-meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;font-size:11px;color:var(--fxn-text-muted,#9099b8);}
         .fp-sm-sr-status{font-weight:600;}
         .fp-sm-st-closed{color:#4caf82;}
         .fp-sm-st-paid{color:#f4c84a;}
         .fp-sm-st-refunded{color:#ff6b6b;}
         .fp-sm-day-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
-        .fp-sm-back{display:inline-flex;align-items:center;gap:4px;background:var(--fpt-surface-2,rgba(127,127,127,0.12));
-            border:1px solid var(--fpt-border,rgba(127,127,127,0.25));color:var(--fpt-text,#d8dae8);
+        .fp-sm-back{display:inline-flex;align-items:center;gap:4px;background:var(--fxn-surface-2,rgba(127,127,127,0.12));
+            border:1px solid var(--fxn-border,rgba(127,127,127,0.25));color:var(--fxn-text,#d8dae8);
             border-radius:7px;padding:4px 10px;font-size:12px;cursor:pointer;}
-        .fp-sm-back:hover{border-color:var(--fpt-accent,#C026D3);}
+        .fp-sm-back:hover{border-color:var(--fxn-accent,#C026D3);}
         .fp-sm-back .material-symbols-rounded{font-size:15px;}
-        .fp-stats-search-toggle.active{color:var(--fpt-accent,#C026D3);}
+        .fp-stats-search-toggle.active{color:var(--fxn-accent,#C026D3);}
         .fp-stats-filterbar{display:flex;flex-direction:column;gap:8px;margin:10px 0 4px;padding:10px 12px;
-            background:var(--fpt-surface,#1a1c26);border:1px solid var(--fpt-border,#22253a);border-radius:9px;}
+            background:var(--fxn-surface,#1a1c26);border:1px solid var(--fxn-border,#22253a);border-radius:9px;}
         .fp-stats-filter-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-        .fp-stats-filter-cap{font-size:12px;font-weight:700;color:var(--fpt-text,#d8dae8);}
+        .fp-stats-filter-cap{font-size:12px;font-weight:700;color:var(--fxn-text,#d8dae8);}
         .fp-stats-status-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
-            background:var(--fpt-surface-2,#20222e);border:1px solid var(--fpt-border,#22253a);
-            color:var(--fpt-text-muted,#9099b8);border-radius:7px;padding:5px 12px;cursor:pointer;
+            background:var(--fxn-surface-2,#20222e);border:1px solid var(--fxn-border,#22253a);
+            color:var(--fxn-text-muted,#9099b8);border-radius:7px;padding:5px 12px;cursor:pointer;
             transition:color .12s,border-color .12s,background .12s;font-family:inherit;}
-        .fp-stats-status-btn:hover{border-color:var(--fpt-text-muted,#8a8f9c);}
+        .fp-stats-status-btn:hover{border-color:var(--fxn-text-muted,#8a8f9c);}
         .fp-stats-status-btn.active{color:#4caf82;border-color:#4caf82;background:rgba(76,175,130,0.12);}
         .fp-stats-status-btn::before{content:'';width:7px;height:7px;border-radius:50%;flex-shrink:0;
-            background:var(--fpt-text-muted,#555);transition:background .12s;}
+            background:var(--fxn-text-muted,#555);transition:background .12s;}
         .fp-stats-status-btn.active::before{background:#4caf82;}
         .fp-stats-sort-select{width:auto;min-width:150px;height:32px;padding:4px 8px;font-size:12px;
-            background:var(--fpt-surface-2,#20222e);border:1px solid var(--fpt-border,#22253a);
-            color:var(--fpt-text,#d8dae8);border-radius:7px;}
+            background:var(--fxn-surface-2,#20222e);border:1px solid var(--fxn-border,#22253a);
+            color:var(--fxn-text,#d8dae8);border-radius:7px;}
         .fp-stats-sort-select option{background:#1a1c26;color:#d8dae8;}
-        .fp-stats-filter-reset{margin-left:auto;background:transparent;border:1px solid var(--fpt-border,#22253a);
-            color:var(--fpt-text-muted,#9099b8);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;}
-        .fp-stats-filter-reset:hover{color:var(--fpt-text,#fff);border-color:var(--fpt-accent,#C026D3);}
+        .fp-stats-filter-reset{margin-left:auto;background:transparent;border:1px solid var(--fxn-border,#22253a);
+            color:var(--fxn-text-muted,#9099b8);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;}
+        .fp-stats-filter-reset:hover{color:var(--fxn-text,#fff);border-color:var(--fxn-accent,#C026D3);}
 
         /* === При включённой кастомной теме делаем все панели полупрозрачными,
               как карточки (glassmorphism), чтобы не было чёрных блоков. === */
-        .fpt-custom-theme-on .fp-sm-card,
-        .fpt-custom-theme-on .fp-stats-filterbar{
+        .fxn-custom-theme-on .fp-sm-card,
+        .fxn-custom-theme-on .fp-stats-filterbar{
             background:rgba(255,255,255,0.05) !important;
             border:1px solid rgba(255,255,255,0.1) !important;
             backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
-        .fpt-custom-theme-on .fp-stats-mode-btn,
-        .fpt-custom-theme-on .fp-stats-status-btn,
-        .fpt-custom-theme-on .fp-stats-sort-select,
-        .fpt-custom-theme-on .fp-sm-back{
+        .fxn-custom-theme-on .fp-stats-mode-btn,
+        .fxn-custom-theme-on .fp-stats-status-btn,
+        .fxn-custom-theme-on .fp-stats-sort-select,
+        .fxn-custom-theme-on .fp-sm-back{
             background:rgba(255,255,255,0.06) !important;
             border:1px solid rgba(255,255,255,0.12) !important;}
-        .fpt-custom-theme-on .fp-stats-sort-select option{background:#15161c !important;color:#e8eaf2 !important;}
-        .fpt-custom-theme-on .fp-stats-mode-btn.active{
-            background:var(--fpt-accent-soft,rgba(192,38,211,0.25)) !important;
-            border-color:var(--fpt-accent,#C026D3) !important;}
-        .fpt-custom-theme-on .fp-stats-status-btn.active{
+        .fxn-custom-theme-on .fp-stats-sort-select option{background:#15161c !important;color:#e8eaf2 !important;}
+        .fxn-custom-theme-on .fp-stats-mode-btn.active{
+            background:var(--fxn-accent-soft,rgba(192,38,211,0.25)) !important;
+            border-color:var(--fxn-accent,#C026D3) !important;}
+        .fxn-custom-theme-on .fp-stats-status-btn.active{
             background:rgba(76,175,130,0.18) !important;border-color:#4caf82 !important;}
-        .fpt-custom-theme-on .fp-sm-sr-row{
+        .fxn-custom-theme-on .fp-sm-sr-row{
             background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.1) !important;}
-        .fpt-custom-theme-on #fp-sm-tooltip{
+        .fxn-custom-theme-on #fp-sm-tooltip{
             background:rgba(20,20,20,0.85) !important;border:1px solid rgba(255,255,255,0.15) !important;
             backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 
         /* === Кастомная тема ВЫКЛЮЧЕНА → ФИКСИРОВАННЫЕ светлые значения.
-              НЕ используем var(--fpt-*): палитра считается от фона страницы и может
+              НЕ используем var(--fxn-*): палитра считается от фона страницы и может
               стать тёмной (например при перемещении меню) → чёрные блоки. === */
-        .fpt-custom-theme-off .fp-sm-card,
-        .fpt-custom-theme-off .fp-stats-filterbar{
+        .fxn-custom-theme-off .fp-sm-card,
+        .fxn-custom-theme-off .fp-stats-filterbar{
             background:#ffffff !important;
             border:1px solid rgba(0,0,0,0.12) !important;
             backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
-        .fpt-custom-theme-off .fp-stats-mode-btn,
-        .fpt-custom-theme-off .fp-stats-status-btn,
-        .fpt-custom-theme-off .fp-stats-sort-select,
-        .fpt-custom-theme-off .fp-sm-back,
-        .fpt-custom-theme-off .fp-sm-sr-row{
+        .fxn-custom-theme-off .fp-stats-mode-btn,
+        .fxn-custom-theme-off .fp-stats-status-btn,
+        .fxn-custom-theme-off .fp-stats-sort-select,
+        .fxn-custom-theme-off .fp-sm-back,
+        .fxn-custom-theme-off .fp-sm-sr-row{
             background:#f4f4f6 !important;
             border:1px solid rgba(0,0,0,0.12) !important;
             color:#222 !important;}
-        .fpt-custom-theme-off .fp-stats-sort-select option{background:#ffffff !important;color:#222 !important;}
-        .fpt-custom-theme-off .fp-sm-card-title,
-        .fpt-custom-theme-off .fp-sm-row-name,
-        .fpt-custom-theme-off .fp-sm-row-link,
-        .fpt-custom-theme-off .fp-sm-summary strong,
-        .fpt-custom-theme-off .fp-sm-leg-val,
-        .fpt-custom-theme-off .fp-sm-sr-title{color:#222 !important;}
-        .fpt-custom-theme-off .fp-sm-summary,
-        .fpt-custom-theme-off .fp-sm-row-val,
-        .fpt-custom-theme-off .fp-sm-leg{color:#666 !important;}
-        .fpt-custom-theme-off .fp-stats-mode-btn.active{
+        .fxn-custom-theme-off .fp-stats-sort-select option{background:#ffffff !important;color:#222 !important;}
+        .fxn-custom-theme-off .fp-sm-card-title,
+        .fxn-custom-theme-off .fp-sm-row-name,
+        .fxn-custom-theme-off .fp-sm-row-link,
+        .fxn-custom-theme-off .fp-sm-summary strong,
+        .fxn-custom-theme-off .fp-sm-leg-val,
+        .fxn-custom-theme-off .fp-sm-sr-title{color:#222 !important;}
+        .fxn-custom-theme-off .fp-sm-summary,
+        .fxn-custom-theme-off .fp-sm-row-val,
+        .fxn-custom-theme-off .fp-sm-leg{color:#666 !important;}
+        .fxn-custom-theme-off .fp-stats-mode-btn.active{
             background:rgba(192,38,211,0.12) !important;
             border-color:#C026D3 !important;color:#C026D3 !important;}
-        .fpt-custom-theme-off .fp-stats-status-btn.active{
+        .fxn-custom-theme-off .fp-stats-status-btn.active{
             background:rgba(76,175,130,0.12) !important;border-color:#3a9e6e !important;color:#2e7d54 !important;}
-        .fpt-custom-theme-off #fp-sm-tooltip{
+        .fxn-custom-theme-off #fp-sm-tooltip{
             background:#ffffff !important;border:1px solid rgba(0,0,0,0.15) !important;color:#222 !important;
             backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
         `;
@@ -828,7 +828,7 @@
         // обновление данных
         if (chrome.storage && chrome.storage.onChanged) {
             chrome.storage.onChanged.addListener((changes, area) => {
-                const _luk = (window.fptStatsCfg && window.fptStatsCfg.lastUpdateKey) || 'fpToolsSalesLastUpdate';
+                const _luk = (window.fxnStatsCfg && window.fxnStatsCfg.lastUpdateKey) || 'foxenSalesLastUpdate';
                 if (area === 'local' && changes[_luk] && (currentMode !== 'cards' || searchQuery)) render();
             });
         }
@@ -907,8 +907,8 @@
             saveFilters();
             rerenderActive();
             // обновить и стандартные карточки (их считает ui_enhancements)
-            if (typeof window.fptRefreshStatsCards === 'function') {
-                try { window.fptRefreshStatsCards(); } catch (_) {}
+            if (typeof window.fxnRefreshStatsCards === 'function') {
+                try { window.fxnRefreshStatsCards(); } catch (_) {}
             }
         };
         [fClosed, fPaid, fRefunded].forEach(btn => {
@@ -935,8 +935,8 @@
     }
 
     // Экспортируем состояние фильтров, чтобы ui_enhancements мог учитывать его в карточках.
-    function fptGetStatsFilters() { return Object.assign({}, filters); }
-    if (typeof window !== 'undefined') window.fptGetStatsFilters = fptGetStatsFilters;
+    function fxnGetStatsFilters() { return Object.assign({}, filters); }
+    if (typeof window !== 'undefined') window.fxnGetStatsFilters = fxnGetStatsFilters;
 
     function initSalesModes() {
         const bar = document.getElementById('fpTools-stats-modebar');

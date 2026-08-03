@@ -1,20 +1,20 @@
 // content/features/feature_disabler.js
 // =============================================================================
-// Применяет список отключённых форс-элементов (fpToolsDisabledFeatures):
+// Применяет список отключённых форс-элементов (foxenDisabledFeatures):
 // внедряет/обновляет <style> со скрытием их селекторов - живо, без перезагрузки.
 // Раннее (document_start) скрытие делает theme_flash_fix.js, здесь - живое обновление.
 // =============================================================================
 
-const FPT_DISABLED_STYLE_ID = 'fp-tools-disabled-features';
+const FPT_DISABLED_STYLE_ID = 'foxen-disabled-features';
 
-function fptGetRegistry() {
+function fxnGetRegistry() {
     return (typeof FPT_FEATURE_REGISTRY !== 'undefined' && FPT_FEATURE_REGISTRY) ||
            (typeof window !== 'undefined' && window.FPT_FEATURE_REGISTRY) || [];
 }
 
 // Build/refresh the CSS that hides disabled features. Locked features are never hidden.
-function fptApplyDisabledCss(disabledIds) {
-    const reg = fptGetRegistry();
+function fxnApplyDisabledCss(disabledIds) {
+    const reg = fxnGetRegistry();
     const disabled = new Set(disabledIds || []);
     const selectors = [];
     reg.forEach(entry => {
@@ -36,31 +36,31 @@ function fptApplyDisabledCss(disabledIds) {
 }
 
 // Read state from storage and apply (CSS only - no settings are touched).
-async function fptApplyDisabledFeatures(disabledIds) {
+async function fxnApplyDisabledFeatures(disabledIds) {
     let ids = disabledIds;
     if (!Array.isArray(ids)) {
-        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsDisabledFeatures');
-        ids = Array.isArray(data.fpToolsDisabledFeatures) ? data.fpToolsDisabledFeatures : [];
+        const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenDisabledFeatures');
+        ids = Array.isArray(data.foxenDisabledFeatures) ? data.foxenDisabledFeatures : [];
     }
-    fptApplyDisabledCss(ids);
+    fxnApplyDisabledCss(ids);
 }
 
 // Live updates without reload.
 if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, area) => {
-        if (area !== 'local' || !changes.fpToolsDisabledFeatures) return;
-        const ids = Array.isArray(changes.fpToolsDisabledFeatures.newValue)
-            ? changes.fpToolsDisabledFeatures.newValue : [];
-        fptApplyDisabledCss(ids);
+        if (area !== 'local' || !changes.foxenDisabledFeatures) return;
+        const ids = Array.isArray(changes.foxenDisabledFeatures.newValue)
+            ? changes.foxenDisabledFeatures.newValue : [];
+        fxnApplyDisabledCss(ids);
     });
 }
 
 // Apply once on load.
 if (typeof window !== 'undefined') {
-    window.fptApplyDisabledFeatures = fptApplyDisabledFeatures;
+    window.fxnApplyDisabledFeatures = fxnApplyDisabledFeatures;
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => fptApplyDisabledFeatures());
+        document.addEventListener('DOMContentLoaded', () => fxnApplyDisabledFeatures());
     } else {
-        fptApplyDisabledFeatures();
+        fxnApplyDisabledFeatures();
     }
 }

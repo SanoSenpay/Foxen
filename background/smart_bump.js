@@ -13,8 +13,8 @@
 // Result: each category is raised as early as FunPay allows, with no wasted requests and no
 // rate-limit spam - exactly Foxen's behaviour, adapted to MV3.
 
-export const SMART_BUMP_ALARM = 'fpToolsSmartBump';
-const STATE_KEY = 'fpToolsSmartBumpState'; // { [categoryUrl]: { nextRaiseAt, name } }
+export const SMART_BUMP_ALARM = 'foxenSmartBump';
+const STATE_KEY = 'foxenSmartBumpState'; // { [categoryUrl]: { nextRaiseAt, name } }
 const OFFSCREEN_PATH = 'offscreen/offscreen.html';
 
 // Ported 1:1 from Foxen utils.parse_wait_time - returns seconds to wait.
@@ -148,8 +148,8 @@ export async function runSmartBumpCycle() {
         // FALLBACK: Arm a fallback alarm so if the service worker dies during the loop, it still recovers.
     await (typeof browser !== 'undefined' ? browser : chrome).alarms.create(SMART_BUMP_ALARM + '_fallback', { delayInMinutes: 10 });
 
-    const { fpToolsSelectiveBumpEnabled, fpToolsSelectedBumpCategories, fpToolsBumpOnlyAutoDelivery } =
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpToolsSelectiveBumpEnabled', 'fpToolsSelectedBumpCategories', 'fpToolsBumpOnlyAutoDelivery']);
+    const { foxenSelectiveBumpEnabled, foxenSelectedBumpCategories, foxenBumpOnlyAutoDelivery } =
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenSelectiveBumpEnabled', 'foxenSelectedBumpCategories', 'foxenBumpOnlyAutoDelivery']);
 
     const auth = await getAuth();
     if (!auth) { logToTabs('Умное поднятие: нет авторизации (golden_key/csrf).'); return; }
@@ -159,10 +159,10 @@ export async function runSmartBumpCycle() {
     let categories = await parseHtmlViaOffscreen(userHtml, 'parseUserCategories');
     if (!Array.isArray(categories)) categories = [];
 
-    if (fpToolsBumpOnlyAutoDelivery) categories = categories.filter(c => c.hasAutoDelivery);
-    if (fpToolsSelectiveBumpEnabled && fpToolsSelectedBumpCategories?.length) {
-        categories = categories.filter(c => fpToolsSelectedBumpCategories.includes(c.id));
-    } else if (fpToolsSelectiveBumpEnabled) {
+    if (foxenBumpOnlyAutoDelivery) categories = categories.filter(c => c.hasAutoDelivery);
+    if (foxenSelectiveBumpEnabled && foxenSelectedBumpCategories?.length) {
+        categories = categories.filter(c => foxenSelectedBumpCategories.includes(c.id));
+    } else if (foxenSelectiveBumpEnabled) {
         logToTabs('Умное поднятие: выборочный режим включён, но категории не выбраны.');
         return;
     }
@@ -199,7 +199,7 @@ export async function runSmartBumpCycle() {
     await setState(state);
     
     if (anyRaised) {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpToolsLastSmartBumpTime: Date.now() });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenLastSmartBumpTime: Date.now() });
     }
 
     // Arm the alarm to fire when the soonest category becomes due (min 1 min - MV3 floor).
@@ -220,29 +220,29 @@ export async function runSmartBumpCycle() {
 
 export async function startSmartBump() {
     const extApi = typeof browser !== 'undefined' ? browser : chrome;
-    await extApi.storage.local.set({ fpToolsSmartBumpRunning: true });
+    await extApi.storage.local.set({ foxenSmartBumpRunning: true });
     await extApi.alarms.create(SMART_BUMP_ALARM, { delayInMinutes: 0.1 });
     await runSmartBumpCycle();
 }
 
 export async function stopSmartBump() {
     const extApi = typeof browser !== 'undefined' ? browser : chrome;
-    await extApi.storage.local.set({ fpToolsSmartBumpRunning: false });
+    await extApi.storage.local.set({ foxenSmartBumpRunning: false });
     await extApi.alarms.clear(SMART_BUMP_ALARM);
     await extApi.storage.local.remove(STATE_KEY);
 }
 
 // Прослушивание пингов со страницы для стабильного интервала (как в AutoRaise.js)
 (typeof browser !== 'undefined' ? browser : chrome).runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === 'fptAutobumpPing') {
+    if (message.action === 'fxnAutobumpPing') {
         handleSmartBumpPing();
     }
 });
 
 async function handleSmartBumpPing() {
     const extApi = typeof browser !== 'undefined' ? browser : chrome;
-    const { fpToolsSmartBumpRunning } = await extApi.storage.local.get('fpToolsSmartBumpRunning');
-    if (!fpToolsSmartBumpRunning) return;
+    const { foxenSmartBumpRunning } = await extApi.storage.local.get('foxenSmartBumpRunning');
+    if (!foxenSmartBumpRunning) return;
     
     const state = await getState();
     const now = Date.now();

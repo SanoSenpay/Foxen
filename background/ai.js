@@ -6,7 +6,7 @@ const SYSTEM_PROMPT = 'You are a text editing model. Follow user instructions pr
 /**
  * Нормализация текста от ИИ: удаляет лишние пустые строки и обрезает пробелы.
  */
-function fptNorm(t) {
+function fxnNorm(t) {
     return typeof t === 'string'
         ? t.replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
         : t;
@@ -16,8 +16,8 @@ function fptNorm(t) {
 // USER PROVIDER: read settings from storage
 // ---------------------------------------------------------------------------
 async function getUserAIProvider() {
-    const { fpToolsAIProvider = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpToolsAIProvider');
-    return fpToolsAIProvider;
+    const { foxenAIProvider = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAIProvider');
+    return foxenAIProvider;
 }
 
 // ---------------------------------------------------------------------------
@@ -350,9 +350,9 @@ ${styleExamples}
 
     const _cleanGen = (obj) => {
         if (obj && typeof obj === 'object') {
-            if (obj.title) obj.title = fptNorm(obj.title);
-            if (obj.description) obj.description = fptNorm(obj.description);
-            if (obj.buyerMessage) obj.buyerMessage = fptNorm(obj.buyerMessage);
+            if (obj.title) obj.title = fxnNorm(obj.title);
+            if (obj.description) obj.description = fxnNorm(obj.description);
+            if (obj.buyerMessage) obj.buyerMessage = fxnNorm(obj.buyerMessage);
         }
         return obj;
     };
@@ -397,9 +397,9 @@ Output JSON:
 
     const _clean = (obj) => {
         if (obj && typeof obj === 'object') {
-            if (obj.title) obj.title = fptNorm(obj.title);
-            if (obj.description) obj.description = fptNorm(obj.description);
-            if (obj.buyerMessage) obj.buyerMessage = fptNorm(obj.buyerMessage);
+            if (obj.title) obj.title = fxnNorm(obj.title);
+            if (obj.description) obj.description = fxnNorm(obj.description);
+            if (obj.buyerMessage) obj.buyerMessage = fxnNorm(obj.buyerMessage);
         }
         return obj;
     };

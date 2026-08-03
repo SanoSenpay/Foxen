@@ -2,12 +2,12 @@
 
 /* FIX 2.9.1: кнопка ИИ-генерации - обычный клон "Импорт" (btn btn-default).
    Без теней, градиентов, трансформаций и частиц. */
-.fp-tools-ai-gen-btn {
+.foxen-ai-gen-btn {
     box-shadow: none !important;
 }
 
 /* Modal Styles */
-.fp-tools-ai-gen-modal {
+.foxen-ai-gen-modal {
     display: none;
     position: fixed;
     z-index: 10006;
@@ -20,7 +20,7 @@
     align-items: center;
 }
 
-.fp-tools-ai-gen-modal.active {
+.foxen-ai-gen-modal.active {
     display: flex;
     animation: ai-modal-fade-in 0.3s ease;
 }
@@ -30,7 +30,7 @@
     to { opacity: 1; }
 }
 
-.fp-tools-ai-gen-modal-content {
+.foxen-ai-gen-modal-content {
     --cw-bg: #1e1e1e; --cw-color: #e0e0e0; --cw-accent: #1b75bb;
     --cw-border: rgba(255,255,255,0.12); --cw-subtle: rgba(255,255,255,0.05);
     --cw-muted: rgba(255,255,255,0.55); --cw-field-bg: rgba(255,255,255,0.05);
@@ -48,35 +48,35 @@
     to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-.fp-tools-ai-gen-modal-header {
+.foxen-ai-gen-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 25px;
     border-bottom: 1px solid var(--cw-border, rgba(255,255,255,0.12));
 }
-.fp-tools-ai-gen-modal-header h3 { margin: 0; font-size: 18px; color: var(--cw-color, #e0e0e0); }
-.fp-tools-ai-gen-modal-header .close-btn { background: none; border: none; font-size: 28px; color: var(--cw-muted, #888); cursor: pointer; transition: color 0.2s; }
-.fp-tools-ai-gen-modal-header .close-btn:hover { color: var(--cw-color, #fff); }
+.foxen-ai-gen-modal-header h3 { margin: 0; font-size: 18px; color: var(--cw-color, #e0e0e0); }
+.foxen-ai-gen-modal-header .close-btn { background: none; border: none; font-size: 28px; color: var(--cw-muted, #888); cursor: pointer; transition: color 0.2s; }
+.foxen-ai-gen-modal-header .close-btn:hover { color: var(--cw-color, #fff); }
 
-.fp-tools-ai-gen-modal-body {
+.foxen-ai-gen-modal-body {
     padding: 25px;
 }
-.fp-tools-ai-gen-modal-body p {
+.foxen-ai-gen-modal-body p {
     font-size: 14px;
     color: var(--cw-muted, #aaa);
     margin-top: 0;
     margin-bottom: 20px;
     line-height: 1.5;
 }
-.fp-tools-ai-gen-modal-body label {
+.foxen-ai-gen-modal-body label {
     display: block;
     margin-bottom: 8px;
     font-size: 14px;
     color: var(--cw-color, #ccc);
 }
-.fp-tools-ai-gen-modal-body input[type="text"],
-.fp-tools-ai-gen-modal-body textarea {
+.foxen-ai-gen-modal-body input[type="text"],
+.foxen-ai-gen-modal-body textarea {
     width: 100%;
     box-sizing: border-box;
     background: var(--cw-field-bg, rgba(255,255,255,0.06));
@@ -89,28 +89,28 @@
     resize: vertical;
     transition: all 0.3s ease;
 }
-.fp-tools-ai-gen-modal-body input[type="text"]:focus,
-.fp-tools-ai-gen-modal-body textarea:focus {
+.foxen-ai-gen-modal-body input[type="text"]:focus,
+.foxen-ai-gen-modal-body textarea:focus {
     outline: none;
     box-shadow: 0 0 0 2px var(--cw-accent, #1b75bb);
     background: rgba(255, 255, 255, 0.15);
 }
 
-.fp-tools-ai-gen-options { margin-top: 15px; }
-.fp-tools-ai-gen-options label { 
+.foxen-ai-gen-options { margin-top: 15px; }
+.foxen-ai-gen-options label { 
     display: flex; 
     align-items: center; 
     margin-bottom: 10px; 
     cursor: pointer; 
     user-select: none;
 }
-.fp-tools-ai-gen-options span { font-size: 14px; }
+.foxen-ai-gen-options span { font-size: 14px; }
 
 /* Custom Checkbox */
-.fp-tools-ai-gen-options input[type="checkbox"] {
+.foxen-ai-gen-options input[type="checkbox"] {
     display: none;
 }
-.fp-tools-ai-gen-options .custom-checkbox {
+.foxen-ai-gen-options .custom-checkbox {
     width: 20px;
     height: 20px;
     background-color: rgba(255,255,255,0.1);
@@ -121,7 +121,7 @@
     transition: all 0.2s ease;
     flex-shrink: 0;
 }
-.fp-tools-ai-gen-options .custom-checkbox::after {
+.foxen-ai-gen-options .custom-checkbox::after {
     content: '✓';
     font-size: 16px;
     color: white;
@@ -132,22 +132,22 @@
     opacity: 0;
     transition: all 0.2s ease;
 }
-.fp-tools-ai-gen-options input[type="checkbox"]:checked + .custom-checkbox {
+.foxen-ai-gen-options input[type="checkbox"]:checked + .custom-checkbox {
     background-color: #8A2BE2;
     border-color: #a45eff;
 }
-.fp-tools-ai-gen-options input[type="checkbox"]:checked + .custom-checkbox::after {
+.foxen-ai-gen-options input[type="checkbox"]:checked + .custom-checkbox::after {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
 }
 
-.fp-tools-ai-gen-modal-footer {
+.foxen-ai-gen-modal-footer {
     padding: 15px 25px;
     text-align: right;
     border-top: 1px solid var(--cw-border, rgba(255,255,255,0.12));
 }
 
-.fp-tools-ai-gen-modal-footer .submit-btn {
+.foxen-ai-gen-modal-footer .submit-btn {
     background: var(--cw-accent, #1b75bb);
     color: #fff;
     border: none;
@@ -160,7 +160,7 @@
     min-width: 150px;
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
 }
-.fp-tools-ai-gen-modal-footer .submit-btn:hover:not(:disabled) {
+.foxen-ai-gen-modal-footer .submit-btn:hover:not(:disabled) {
     filter: brightness(1.08);
 }
 .submit-btn:disabled {
@@ -195,7 +195,7 @@
     to { transform: rotate(360deg); }
 }
 
-#fp-tools-translate-btn {
+#foxen-translate-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #ccc;
@@ -208,13 +208,13 @@
     transform: translateY(-3.5px);
 }
 
-#fp-tools-translate-btn:hover:not(:disabled) {
+#foxen-translate-btn:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.2);
     color: #fff;
     border-color: #E879F9;
 }
 
-#fp-tools-translate-btn:disabled {
+#foxen-translate-btn:disabled {
     opacity: 0.7;
     cursor: not-allowed;
 }

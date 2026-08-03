@@ -8,7 +8,7 @@ function initializeFontTools() {
     }
 
     // Проверяем, не были ли элементы управления добавлены ранее
-    if (document.querySelector('.fp-tools-font-controls')) {
+    if (document.querySelector('.foxen-font-controls')) {
         return;
     }
 
@@ -27,10 +27,10 @@ function initializeFontTools() {
     if (!controlBlock) return;
 
     const controlsHtml = `
-        <div class="form-group fp-tools-font-controls">
+        <div class="form-group foxen-font-controls">
             <div class="font-selector">
                 <label class="control-label" style="color:#000;">Шрифт</label>
-                <select class="form-control" id="fpToolsFontSelect">
+                <select class="form-control" id="foxenFontSelect">
                     <option value="">Стандартный</option>
                     <option value="small">ᴨоᴨᴩобуй ϶ᴛоᴛ ɯᴩиɸᴛ</option>
                     <option value="canad">ᴨᗝᴨᴩᗝᘜᎽᕫ ϶ᴛᗝᴛ ɯᴩᑌɸᴛ</option>
@@ -39,11 +39,11 @@ function initializeFontTools() {
                     <option value="angle">⧼п⧽⧼о⧽⧼п⧽⧼р⧽⧼о⧽⧼б⧽⧼у⧽⧼й⧽ ⧼э⧽⧼т⧽⧼о⧽⧼т⧽ ⧼ш⧽⧼р⧽⧼и⧽⧼ф⧽⧼т⧽</option>
                 </select>
             </div>
-            <button type="button" class="btn btn-default" id="fpToolsKeyboardToggleBtn">
+            <button type="button" class="btn btn-default" id="foxenKeyboardToggleBtn">
                 <i class="fa fa-keyboard-o" aria-hidden="true"></i> Клавиатура
             </button>
         </div>
-        <div class="fp-tools-symbols-panel" style="display: none;"></div>
+        <div class="foxen-symbols-panel" style="display: none;"></div>
     `;
     
     controlBlock.insertAdjacentHTML('beforeend', controlsHtml);
@@ -58,7 +58,7 @@ function initializeFontTools() {
     // Обработчик автозамены шрифта (теперь для всех полей .lot-field-input)
     document.querySelectorAll(".lot-field-input, input[name='fields[short_desc][ru]']").forEach(input => {
         input.addEventListener("input", function(event) {
-            const fontSelect = document.getElementById("fpToolsFontSelect");
+            const fontSelect = document.getElementById("foxenFontSelect");
             const selectedFont = fontSelect.value;
             if (!selectedFont || !event.data) return;
 
@@ -75,17 +75,17 @@ function initializeFontTools() {
     });
 
     // Обработчик для кнопки "Клавиатура"
-    document.getElementById("fpToolsKeyboardToggleBtn").addEventListener("click", function() {
-        const panel = document.querySelector(".fp-tools-symbols-panel");
+    document.getElementById("foxenKeyboardToggleBtn").addEventListener("click", function() {
+        const panel = document.querySelector(".foxen-symbols-panel");
         if (panel.innerHTML === '') {
-            panel.innerHTML = symbols.map(symbol => `<span class="fp-tools-symbol-char">${symbol}</span>`).join('');
+            panel.innerHTML = symbols.map(symbol => `<span class="foxen-symbol-char">${symbol}</span>`).join('');
         }
         panel.style.display = panel.style.display === 'none' ? 'grid' : 'none';
     });
 
     // Обработчик клика по символу
     document.addEventListener("click", function(event) {
-        if (!event.target.classList.contains('fp-tools-symbol-char')) return;
+        if (!event.target.classList.contains('foxen-symbol-char')) return;
         
         if (activeTextarea) {
             const currentVal = activeTextarea.value;

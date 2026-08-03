@@ -13,7 +13,7 @@ function initializeExactPrice() {
         header.textContent.includes('Добавление предложения')
     )) return;
 
-    if (document.querySelector('.fp-tools-buyer-price-container')) return;
+    if (document.querySelector('.foxen-buyer-price-container')) return;
 
     const inputPrice = document.querySelector('input[name="price"]');
     if (!inputPrice) return;
@@ -61,7 +61,7 @@ function initializeExactPrice() {
 
     // ─── Клонируем form-group и ОЧИЩАЕМ от нативных элементов ───────────────
     const buyerFormGroup = priceFormGroup.cloneNode(true);
-    buyerFormGroup.classList.add('fp-tools-buyer-price-container');
+    buyerFormGroup.classList.add('foxen-buyer-price-container');
     buyerFormGroup.classList.remove('has-feedback');
 
     // Удаляем все клонированные иконки валют/аддоны FunPay
@@ -79,17 +79,17 @@ function initializeExactPrice() {
 
     // ─── Плавный статус/логи ПОД полем ввода ─────────────────────────────────
     const statusText = document.createElement('div');
-    statusText.className = 'fpt-buyer-status';
+    statusText.className = 'fxn-buyer-status';
 
     let hideTimer = null;
     function showStatus(msg, type = 'info') {
         clearTimeout(hideTimer);
         statusText.textContent = msg;
-        statusText.className = 'fpt-buyer-status visible ' + type;
+        statusText.className = 'fxn-buyer-status visible ' + type;
     }
     function hideStatus() {
         clearTimeout(hideTimer);
-        statusText.className = 'fpt-buyer-status';
+        statusText.className = 'fxn-buyer-status';
         hideTimer = setTimeout(() => {
             if (!statusText.classList.contains('visible')) {
                 statusText.textContent = '';
@@ -106,26 +106,26 @@ function initializeExactPrice() {
     const SYM = Object.fromEntries(CURRENCIES.map(c => [c.code, c.symbol]));
 
     const dropWrapper = document.createElement('div');
-    dropWrapper.className = 'fpt-curr-wrap';
+    dropWrapper.className = 'fxn-curr-wrap';
 
     const trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.className = 'fpt-curr-trigger';
+    trigger.className = 'fxn-curr-trigger';
     trigger.title = 'Выбрать валюту покупателя';
 
     const trigLabel = document.createElement('span');
-    trigLabel.className = 'fpt-curr-label';
+    trigLabel.className = 'fxn-curr-label';
     trigLabel.textContent = SYM[currentCurrency] ?? '₽';
     trigger.appendChild(trigLabel);
 
     const flyout = document.createElement('div');
-    flyout.className = 'fpt-curr-flyout';
+    flyout.className = 'fxn-curr-flyout';
     flyout.hidden = true;
 
     CURRENCIES.forEach(({ code, symbol }) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'fpt-curr-opt' + (code === currentCurrency ? ' active' : '');
+        btn.className = 'fxn-curr-opt' + (code === currentCurrency ? ' active' : '');
         btn.textContent = symbol;
         btn.dataset.code = code;
         btn.title = code;
@@ -155,14 +155,14 @@ function initializeExactPrice() {
     });
 
     flyout.addEventListener('click', e => {
-        const btn = e.target.closest('.fpt-curr-opt');
+        const btn = e.target.closest('.fxn-curr-opt');
         if (!btn) return;
         const code = btn.dataset.code;
         const sym = SYM[code];
         if (!sym) return;
         currentCurrency = code;
         trigLabel.textContent = sym;
-        flyout.querySelectorAll('.fpt-curr-opt').forEach(b => b.classList.toggle('active', b === btn));
+        flyout.querySelectorAll('.fxn-curr-opt').forEach(b => b.classList.toggle('active', b === btn));
         closeFlyout();
         if (inputBuyer.value.trim()) runCalculation();
     });
@@ -178,14 +178,14 @@ function initializeExactPrice() {
     }
 
     const inputWrap = document.createElement('div');
-    inputWrap.className = 'fpt-input-wrap';
+    inputWrap.className = 'fxn-input-wrap';
     inputWrap.style.cssText = 'position:relative;flex:1;min-width:0;';
 
     inputBuyer.parentNode.insertBefore(inputWrap, inputBuyer);
     inputWrap.appendChild(inputBuyer);
 
     const rowWrap = document.createElement('div');
-    rowWrap.className = 'fpt-buyer-row';
+    rowWrap.className = 'fxn-buyer-row';
 
     inputWrap.parentNode.insertBefore(rowWrap, inputWrap);
     rowWrap.appendChild(inputWrap);
