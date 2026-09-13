@@ -130,10 +130,19 @@ async function setState(st) {
 
 function logToTabs(message) {
     const line = `[${new Date().toLocaleTimeString()}] ${message}`;
-    chrome.tabs.query({ url: 'https://funpay.com/*' }).then(tabs => {
-        tabs.forEach(t => chrome.tabs.sendMessage(t.id, { action: 'logToAutoBumpConsole', message: line }).catch(() => {}));
-    });
     console.log('[Foxen SmartBump]', line);
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    try {
+        extApi.tabs.query({ url: 'https://funpay.com/*' }, (tabs) => {
+            if (extApi.runtime?.lastError || !tabs || !Array.isArray(tabs)) return;
+            tabs.forEach(t => {
+                try {
+                    const p = extApi.tabs.sendMessage(t.id, { action: 'logToAutoBumpConsole', message: line });
+                    if (p && typeof p.catch === 'function') p.catch(() => {});
+                } catch (_) {}
+            });
+        });
+    } catch (_) {}
 }
 
 // Run one smart-bump pass. Raises only due categories, updates per-category nextRaiseAt,

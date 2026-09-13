@@ -13,6 +13,22 @@
             extApi.runtime.sendMessage({ action: 'fxnAutobumpPing' }).catch(() => {});
         } catch (_) {}
     }, 30000);
+
+    // --- ИНТЕГРАЦИЯ С САЙТОМ FOXEN (ОБЛАЧНЫЕ БЭКАПЫ СУПАБЕЙЗ) ---
+    window.addEventListener('message', async (event) => {
+        if (event.data && event.data.type === 'FOXEN_REQUEST_SETTINGS_EXPORT') {
+            try {
+                const extApi = typeof browser !== 'undefined' ? browser : chrome;
+                const allData = await extApi.storage.local.get(null);
+                window.postMessage({
+                    type: 'FOXEN_SETTINGS_EXPORT_RESPONSE',
+                    payload: allData
+                }, '*');
+            } catch (e) {
+                console.warn('[Foxen Extension] Ошибка выгрузки настроек:', e);
+            }
+        }
+    });
     
     // --- НОВЫЙ БЛОК: ФУНКЦИОНАЛ ОБЪЯВЛЕНИЙ ---
     function initializeAnnouncementsFeature() {
@@ -30,13 +46,15 @@
 
             contentArea.innerHTML = announcements.map(a => {
                 const date = new Date(a.id).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                const safeTitle = typeof escapeHtml === 'function' ? escapeHtml(a.title) : a.title;
+                const safeContent = typeof escapeHtml === 'function' ? escapeHtml(a.content).replace(/\n/g, '<br>') : String(a.content || '').replace(/\n/g, '<br>');
                 return `
                     <div class="announcement-item">
                         <div class="announcement-item-header">
-                            <h4>${a.title}</h4>
+                            <h4>${safeTitle}</h4>
                             <span class="announcement-date">${date}</span>
                         </div>
-                        <p>${a.content.replace(/\n/g, '<br>')}</p>
+                        <p>${safeContent}</p>
                     </div>
                 `;
             }).join('');
@@ -109,6 +127,114 @@
         document.head.appendChild(link);
     }
 
+    let __fpPopupBuilding = false;
+    function ensureFpToolsPopup() {
+        let toolsPopup = document.querySelector('.foxen-popup') || document.getElementById('foxenMainPopup');
+        if (!toolsPopup) {
+            if (typeof createMainPopup === 'function') {
+                toolsPopup = createMainPopup();
+            } else if (typeof window.createMainPopup === 'function') {
+                toolsPopup = window.createMainPopup();
+            }
+            if (toolsPopup && !document.body.contains(toolsPopup)) {
+                document.body.appendChild(toolsPopup);
+            }
+            if (typeof getModalOverlaysHTML === 'function') {
+                const modalsHTML = getModalOverlaysHTML();
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = modalsHTML;
+                while (tempDiv.firstChild) {
+                    document.body.appendChild(tempDiv.firstChild);
+                }
+            }
+        }
+
+        if (!__fpPopupBuilding && toolsPopup) {
+            __fpPopupBuilding = true;
+            (async () => {
+                const safeRun = async (fn) => {
+                    try { if (typeof fn === 'function') await fn(); } catch (err) { console.warn('[Foxen] Plugin init error:', err); }
+                };
+
+                if (typeof loadSavedSettings === 'function') await safeRun(loadSavedSettings);
+                if (typeof initializeToolsPopup === 'function') await safeRun(initializeToolsPopup);
+                if (typeof makePopupInteractive === 'function') {
+                    try { makePopupInteractive(toolsPopup); } catch (_) {}
+                }
+                if (typeof initializeImageGenerator === 'function') await safeRun(initializeImageGenerator);
+                if (typeof initializeCustomSound === 'function') await safeRun(initializeCustomSound);
+                if (typeof initializeCustomSoundEditor === 'function') await safeRun(initializeCustomSoundEditor);
+                if (typeof initializeMagicStickStyler === 'function') await safeRun(initializeMagicStickStyler);
+                if (typeof initializePiggyBank === 'function') await safeRun(initializePiggyBank);
+                if (typeof initializeHeaderButtonStyler === 'function') await safeRun(initializeHeaderButtonStyler);
+                if (typeof initializeAnnouncementsFeature === 'function') await safeRun(initializeAnnouncementsFeature);
+                if (typeof initializeLotIO === 'function') await safeRun(initializeLotIO);
+                if (typeof initializeAutoReview === 'function') await safeRun(initializeAutoReview);
+                if (typeof initializeAILotAudit === 'function') await safeRun(initializeAILotAudit);
+                if (typeof initializeAISettings === 'function') await safeRun(initializeAISettings);
+                if (typeof initTicketsTab === 'function') await safeRun(initTicketsTab);
+                if (typeof initializeSettingsIO === 'function') await safeRun(initializeSettingsIO);
+                if (typeof initBulkLotEditor === 'function') await safeRun(initBulkLotEditor);
+                if (typeof initAutoDeliveryUI === 'function') await safeRun(initAutoDeliveryUI);
+                if (typeof initializeResetButtons === 'function') await safeRun(initializeResetButtons);
+                if (typeof initializeOverviewTour === 'function') await safeRun(initializeOverviewTour);
+            })();
+        }
+
+        return toolsPopup;
+    }
+    window.__fpEnsurePopup = ensureFpToolsPopup;
+
+    // Dedicated, foolproof global popup toggle
+    window.__fpTogglePopup = function() {
+        let popup = document.querySelector('.foxen-popup') || document.getElementById('foxenMainPopup');
+        if (!popup) {
+            popup = ensureFpToolsPopup();
+        }
+        if (!popup) {
+            console.error('[Foxen] Cannot build popup');
+            return;
+        }
+
+        if (popup.classList.contains('active')) {
+            popup.classList.remove('active');
+            if (typeof window.closeFoxenMenuSettings === 'function') {
+                try { window.closeFoxenMenuSettings(); } catch (_) {}
+            }
+        } else {
+            popup.classList.add('active');
+            if (typeof window.switchFoxenPanel === 'function') {
+                try {
+                    const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                    if (storage && storage.local) {
+                        storage.local.get('foxenLastActivePage', (data) => {
+                            window.switchFoxenPanel(data?.foxenLastActivePage || 'general');
+                        });
+                    } else {
+                        window.switchFoxenPanel('general');
+                    }
+                } catch (_) {
+                    window.switchFoxenPanel('general');
+                }
+            }
+            if (typeof applyFptMenuTransparency === 'function') applyFptMenuTransparency();
+            if (typeof syncFptMenuControls === 'function') syncFptMenuControls();
+        }
+    };
+
+    // Global delegated capture listener (in case of dynamic navbar re-rendering)
+    if (!window.__fpButtonDelegatedListenerAdded) {
+        window.__fpButtonDelegatedListenerAdded = true;
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('#foxenButton');
+            if (btn) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.__fpTogglePopup();
+            }
+        }, true);
+    }
+
     function addFpToolsButton() {
         if (document.getElementById('foxenButton')) return true;
 
@@ -123,7 +249,7 @@
         }
 
         const toolsMenu = createElement('li');
-        toolsMenu.innerHTML = `<a style="font-weight: bold; cursor: pointer; user-select: none;" id="foxenButton">Foxen<span></span></a>`;
+        toolsMenu.innerHTML = `<a style="font-family: 'Jim Nightshade', cursive !important; font-size: 21px !important; font-weight: 700 !important; letter-spacing: 2px !important; line-height: 1 !important; cursor: pointer; user-select: none;" id="foxenButton">FOXEN<span></span></a>`;
         
         if (anchor.tagName && anchor.tagName.toLowerCase() === 'li') {
             anchor.insertAdjacentElement('afterend', toolsMenu);
@@ -137,18 +263,11 @@
             applyHeaderButtonStylesEarly();
         }
 
-        button?.addEventListener('click', async () => {
-            // Build the popup on first click (perf: avoids a permanent heavy DOM subtree).
-            if (typeof window.__fpEnsurePopup === 'function') {
-                await window.__fpEnsurePopup();
-            }
-            const popup = document.querySelector('.foxen-popup');
-            if (popup) {
-                await loadLastActivePage();
-                popup.classList.add('active');
-                if (typeof applyFptMenuTransparency === 'function') applyFptMenuTransparency();
-                if (typeof syncFptMenuControls === 'function') syncFptMenuControls();
-            }
+        // Direct listener
+        button?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.__fpTogglePopup();
         });
         
         let hoverTimeout;
@@ -169,9 +288,6 @@
 
         button?.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            if (typeof showButtonStyler === 'function') {
-                showButtonStyler(e.clientX, e.clientY);
-            }
         });
 
         console.log("Foxen: Кнопка в хедере успешно добавлена.");
@@ -364,69 +480,7 @@
         initializeDynamicFeatures();
         initializeQuickGamesMenu();
 
-        // ── LAZY POPUP BUILD (perf) ────────────────────────────────────────────
-        // The settings popup is a ~120KB DOM subtree with live animations, a sales
-        // canvas, theme previews and backdrop effects. Previously it was built and
-        // appended to <body> on every page load and merely hidden with
-        // visibility:hidden - so the browser kept laying out and compositing the whole
-        // thing forever, which made the site lag. Now we build it (and its modal
-        // overlays) + run all popup-bound initializers exactly once, on the first time
-        // the user opens it. After that it's cached and reused.
-        let __fpPopupReady = false;
-        let __fpPopupBuilding = null;
-        async function ensureFpToolsPopup() {
-            const existingPopup = document.querySelector('.foxen-popup');
-            if (existingPopup && !__fpPopupReady) {
-                existingPopup.remove();
-            }
-            if (__fpPopupReady && document.querySelector('.foxen-popup')) return document.querySelector('.foxen-popup');
-            if (__fpPopupBuilding) return __fpPopupBuilding;
-
-            __fpPopupBuilding = (async () => {
-                const oldP = document.querySelector('.foxen-popup');
-                if (oldP) oldP.remove();
-
-                const toolsPopup = createMainPopup();
-                document.body.appendChild(toolsPopup);
-
-                if (typeof getModalOverlaysHTML === 'function') {
-                    const modalsHTML = getModalOverlaysHTML();
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = modalsHTML;
-                    while (tempDiv.firstChild) {
-                        document.body.appendChild(tempDiv.firstChild);
-                    }
-                }
-
-                // All initializers that operate on popup-internal elements / settings UI.
-                await loadSavedSettings();
-                initializeToolsPopup();
-                makePopupInteractive(toolsPopup);
-                initializeImageGenerator();
-                initializeCustomSound();
-                if (typeof initializeCustomSoundEditor === 'function') initializeCustomSoundEditor();
-                initializeMagicStickStyler();
-                initializePiggyBank();
-                initializeHeaderButtonStyler();
-                initializeAnnouncementsFeature();
-                initializeLotIO();
-                initializeAutoReview();
-                initializeAILotAudit();
-                initializeSettingsIO();
-                initBulkLotEditor();
-                initAutoDeliveryUI();
-                initializeResetButtons();
-                initSalesChart();
-                if (typeof initializeOverviewTour === 'function') initializeOverviewTour();
-
-
-                __fpPopupReady = true;
-                return toolsPopup;
-            })();
-            return __fpPopupBuilding;
-        }
-        // Expose so the header-button click handler (defined earlier) can build on demand.
-        window.__fpEnsurePopup = ensureFpToolsPopup;
+        // Popup DOM and background initializers are handled on-demand by ensureFpToolsPopup / window.__fpTogglePopup
 
         const settings = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
             'enableRedesignedHomepage', 
@@ -502,6 +556,90 @@
                 }
                 return true;
             }
+            if (request.action === 'FOXEN_PARSE_ACTIVE_PROFILE') {
+                try {
+                    let userId = null;
+                    let username = '';
+                    let avatarUrl = '';
+                    let bannerUrl = '';
+                    let registeredAt = '';
+
+                    // 1. Ссылка на профиль в шапке FunPay
+                    const userLink = document.querySelector('.user-link-dropdown[href*="/users/"], .navbar-right a[href*="/users/"], a.user-link[href*="/users/"]');
+                    if (userLink) {
+                        const href = userLink.getAttribute('href') || '';
+                        const m = href.match(/\/users\/(\d+)/);
+                        if (m) userId = m[1];
+                    }
+
+                    // 2. data-app-data на body
+                    try {
+                        const raw = document.body?.dataset?.appData;
+                        if (raw) {
+                            const parsed = JSON.parse(raw);
+                            const d = Array.isArray(parsed) ? parsed[0] : parsed;
+                            if (!userId && d?.userId) userId = String(d.userId);
+                            if (d?.userName || d?.username) username = d.userName || d.username;
+                            if (d?.avatar) avatarUrl = d.avatar;
+                        }
+                    } catch (_) {}
+
+                    // 3. Никнейм из шапки
+                    if (!username) {
+                        const nameEl = document.querySelector('.user-link-name, .navbar-right .user-link-name, a.user-link-dropdown .user-link-name, .media-user-name');
+                        if (nameEl && nameEl.textContent.trim()) username = nameEl.textContent.trim();
+                    }
+
+                    // 4. Аватарка из шапки или страницы
+                    if (!avatarUrl) {
+                        const avEl = document.querySelector('.user-link-dropdown .avatar-photo, .navbar-right .avatar-photo, .avatar-photo');
+                        if (avEl) {
+                            const bg = avEl.style?.backgroundImage || window.getComputedStyle(avEl).backgroundImage;
+                            if (bg && bg !== 'none') {
+                                const m = bg.match(/url\(["']?([^"']+)["']?\)/);
+                                if (m) avatarUrl = m[1];
+                            }
+                            if (!avatarUrl && avEl.getAttribute('src')) avatarUrl = avEl.getAttribute('src');
+                        }
+                    }
+
+                    // 5. Баннер (если открыта страница профиля)
+                    const bannerAttr = document.querySelector('[data-fxn-banner]')?.getAttribute('data-fxn-banner');
+                    if (bannerAttr) {
+                        bannerUrl = bannerAttr;
+                    } else {
+                        const coverEl = document.querySelector('.fxn-cover-pic, .profile-cover-img');
+                        if (coverEl) {
+                            const coverBg = coverEl.style?.backgroundImage || window.getComputedStyle(coverEl).backgroundImage;
+                            const cMatch = coverBg?.match(/url\(["']?([^"']+)["']?\)/);
+                            if (cMatch) bannerUrl = cMatch[1];
+                        }
+                    }
+
+                    // 6. Дата регистрации (если на странице профиля)
+                    const regMatch = document.body?.textContent?.match(/(?:На сайте с|Зарегистрирован(?:а)?)\s+([0-9]+\s+[а-яА-Яa-zA-Z]+\s+[0-9]{4})/i);
+                    if (regMatch) registeredAt = regMatch[1];
+
+                    if (!userId) {
+                        sendResponse({ ok: false, error: 'Пользователь не авторизован во вкладке FunPay' });
+                    } else {
+                        sendResponse({
+                            ok: true,
+                            profile: {
+                                userId: String(userId),
+                                username: String(username || `User #${userId}`),
+                                avatarUrl: avatarUrl || '',
+                                bannerUrl: bannerUrl || '',
+                                registeredAt: registeredAt || '',
+                                url: window.location.href
+                            }
+                        });
+                    }
+                } catch(e) {
+                    sendResponse({ ok: false, error: e.message });
+                }
+                return true;
+            }
             if (request.action === 'foxenCheckRestoreLots') {
                 setTimeout(checkAndRestoreLots, 5000);
                 return true;
@@ -521,13 +659,15 @@
                         }
                         announcementsArea.innerHTML = announcements.map(a => {
                             const date = new Date(a.id).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                            const safeTitle = typeof escapeHtml === 'function' ? escapeHtml(a.title) : a.title;
+                            const safeContent = typeof escapeHtml === 'function' ? escapeHtml(a.content).replace(/\n/g, '<br>') : String(a.content || '').replace(/\n/g, '<br>');
                             return `
                                 <div class="announcement-item">
                                     <div class="announcement-item-header">
-                                        <h4>${a.title}</h4>
+                                        <h4>${safeTitle}</h4>
                                         <span class="announcement-date">${date}</span>
                                     </div>
-                                    <p>${a.content.replace(/\n/g, '<br>')}</p>
+                                    <p>${safeContent}</p>
                                 </div>
                             `;
                         }).join('');

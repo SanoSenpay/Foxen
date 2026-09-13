@@ -17,13 +17,13 @@
       'width:24px;height:24px;border-radius:6px;cursor:pointer;text-decoration:none;',
       'color:var(--fxn-text-muted,#9099b8);opacity:.55;transition:opacity .15s,background .15s,color .15s;',
       'font-size:16px;line-height:1;vertical-align:middle;}',
-      '.fxn-open-lot:hover{opacity:1;background:rgba(127,127,127,.15);color:var(--fxn-accent,#2563eb);}',
+      '.fxn-open-lot:hover{opacity:1;background:rgba(127,127,127,.15);color:var(--fxn-accent,#c026d3);}',
       '.fxn-open-lot .material-symbols-rounded,.fxn-open-lot .material-symbols-outlined{font-size:16px;}',
       // в таблице лотов — клик по иконке не должен открывать редактирование (родительская ссылка)
       '.tc-price .fxn-open-lot{margin-left:6px;}',
       // кликабельный заголовок «Редактирование предложения»
       '.fxn-head-link{cursor:pointer;transition:color .15s;}',
-      '.fxn-head-link:hover{color:var(--fxn-accent,#2563eb);}',
+      '.fxn-head-link:hover{color:var(--fxn-accent,#c026d3);}',
     ].join('');
     document.head.appendChild(s);
   }

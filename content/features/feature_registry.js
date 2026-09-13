@@ -114,6 +114,14 @@ const FPT_FEATURE_REGISTRY = [
         selector: '#foxen-filter-marked-btn',
         preview: { kind: 'html', html: '<div class="fxn-pv-toggle"><span class="fxn-pv-toggle-track"><span class="material-icons">label</span></span></div>' }
     },
+    {
+        id: 'chat_order_badge',
+        label: 'Плашка заказа в боковой панели чата',
+        desc: 'Отображает в боковой панели (.chat-detail-list) статус активного заказа, сумму, количество товаров, прямую ссылку на заказ и имя персонажа с кнопкой копирования в 1 клик.',
+        group: 'Чат: шапка диалога',
+        selector: '.fxn-order-badge-panel',
+        preview: { kind: 'html', html: '<div class="fxn-pv-menu" style="border-radius:8px;padding:6px 10px;background:rgba(124,92,255,0.1);border:1px solid rgba(124,92,255,0.3);"><span>📦 #ABC12345 · <span style="color:#22c55e;font-weight:bold;">Оплачен</span></span></div>' }
+    },
 
     // ───────────── Чат: выпадающее меню «⋮» ─────────────
     {

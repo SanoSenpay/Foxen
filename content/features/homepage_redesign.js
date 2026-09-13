@@ -206,7 +206,7 @@ function initializeRedesign() {
     const chatElement = originalContentContainer.querySelector('.js-main-chat');
     const headers = Array.from(document.querySelectorAll('.title-mini'));
     const yourGamesHeader = headers.find(h => h.textContent.trim() === 'Ваши игры');
-    const yourGamesContainer = yourGamesHeader ? yourGamesHeader.closest('.promo-game-list-header').nextElementSibling : null;
+    const yourGamesContainer = yourGamesHeader ? yourGamesHeader.closest('.promo-game-list-header')?.nextElementSibling : null;
     const allGamesContainer = document.querySelector('.promo-games-all');
     const allGamesData = extractGamesFromContainer(allGamesContainer);
     const yourGamesData = extractGamesFromContainer(yourGamesContainer);

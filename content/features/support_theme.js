@@ -91,7 +91,7 @@
         html, body { background: transparent !important; }
         body::before {
             content: ''; position: fixed; inset: 0; width: 100vw; height: 100vh;
-            background: ${bgImageUrl} no-repeat center center fixed; background-size: cover;
+            background: ${bgImageUrl} no-repeat center center; background-size: cover;
             filter: blur(${s.bgBlur}px) brightness(${s.bgBrightness}%);
             z-index: -1; transform: translateZ(0);
         }
@@ -202,6 +202,30 @@
         `;
     }
 
+    function getCachedThemeData() {
+        try {
+            const enabledStr = sessionStorage.getItem('foxen_theme_enabled') ?? localStorage.getItem('foxen_theme_enabled');
+            const cacheStr = sessionStorage.getItem('foxen_theme_cache') ?? localStorage.getItem('foxen_theme_cache');
+            const enabled = enabledStr === null ? true : enabledStr !== '0';
+            const theme = cacheStr ? JSON.parse(cacheStr) : null;
+            return { enabled, theme };
+        } catch (_) {
+            return { enabled: true, theme: null };
+        }
+    }
+
+    function setCachedThemeData(enabled, theme) {
+        try {
+            sessionStorage.setItem('foxen_theme_enabled', enabled ? '1' : '0');
+            localStorage.setItem('foxen_theme_enabled', enabled ? '1' : '0');
+            if (theme) {
+                const str = JSON.stringify(theme);
+                sessionStorage.setItem('foxen_theme_cache', str);
+                localStorage.setItem('foxen_theme_cache', str);
+            }
+        } catch (_) {}
+    }
+
     function ensureStyle() {
         let el = document.getElementById(STYLE_ID);
         if (!el) {
@@ -212,6 +236,15 @@
         return el;
     }
 
+    // Синхронное применение из кеша на document_start (0 мс)
+    const cached = getCachedThemeData();
+    if (cached.enabled !== false) {
+        const s = { ...DEFAULTS, ...(cached.theme || {}) };
+        manageFont(s.font);
+        const styleEl = ensureStyle();
+        styleEl.textContent = buildCss(s);
+    }
+
     async function apply() {
         let data = {};
         try { data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['enableCustomTheme', 'foxenTheme']); }
@@ -219,12 +252,14 @@
 
         const styleEl = ensureStyle();
         if (data.enableCustomTheme === false) {
+            setCachedThemeData(false, null);
             styleEl.textContent = '';
             const f = document.getElementById(FONT_ID);
             if (f) f.textContent = '';
             return;
         }
         const s = { ...DEFAULTS, ...(data.foxenTheme || {}) };
+        setCachedThemeData(true, s);
         manageFont(s.font);
         styleEl.textContent = buildCss(s);
     }

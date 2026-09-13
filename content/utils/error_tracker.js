@@ -13,19 +13,16 @@
     // -------------------------------------------------------------------------
     // 1. Конфигурация прокси-эндпоинта (Open-Source Webhook Endpoint)
     // -------------------------------------------------------------------------
-    const TELEMETRY_WEBHOOK_URL = 'https://foxen-telemetry.sanosenpay.workers.dev';
-
-    const DEV_TELEGRAM_BOT_TOKEN = '';
-    const DEV_TELEGRAM_CHAT_ID = '';
+    const TELEMETRY_WEBHOOK_URL = 'https://api.foxen.site/api/telemetry';
 
     // ID веток (message_thread_id) в Telegram-супергруппе разработчика
     const DEV_TELEGRAM_TOPICS = {
-        storage: null, // ID топика для ошибок IndexedDB / хранилища (напр. 2)
-        network: null, // ID топика для сетевых ошибок / API FunPay (напр. 4)
-        engine:  null, // ID топика для ошибок движка / автоподнятия (напр. 6)
-        ai:      null, // ID топика для ошибок нейросетей (напр. 8)
-        auth:    null, // ID топика для ошибок авторизации / CSRF (напр. 10)
-        general: null  // ID топика для общих ошибок (напр. 12)
+        storage: null,
+        network: null,
+        engine:  null,
+        ai:      null,
+        auth:    null,
+        general: null
     };
 
     const MAX_CONSOLE_LOGS = 20;
@@ -43,7 +40,7 @@
     let reportsSentToday = 0;
     let lastDayReset = Date.now();
 
-    let telemetryEnabled = true;
+    let telemetryEnabled = false;
 
     // -------------------------------------------------------------------------
     // 2. Вспомогательные функции хранения, хеширования и категоризации
@@ -57,8 +54,10 @@
             const api = getStorageApi();
             if (!api) return;
             const res = await new Promise((resolve) => api.get(['foxen_telemetry_enabled', 'fpt_telemetry_enabled'], (r) => resolve(r || {})));
-            telemetryEnabled = (res.foxen_telemetry_enabled !== false) && (res.fpt_telemetry_enabled !== false);
-        } catch (_) {}
+            telemetryEnabled = (res.foxen_telemetry_enabled === true) || (res.fpt_telemetry_enabled === true);
+        } catch (_) {
+            telemetryEnabled = false;
+        }
     }
 
     loadTelemetryConfig();
@@ -167,7 +166,12 @@
                 return String(a);
             }).join(' ');
 
-            if (!msg || msg.includes('[Foxen Error Tracker]') || msg.includes('[FXN Error Tracker]') || msg.includes('[FPT Error Tracker]')) {
+            if (!msg || 
+                msg.includes('[Foxen Error Tracker]') || 
+                msg.includes('[FXN Error Tracker]') || 
+                msg.includes('[FPT Error Tracker]') || 
+                msg.includes('Webhook error') ||
+                msg.includes('миграция заказов')) {
                 return;
             }
 
@@ -308,7 +312,7 @@
         if (!url) return false;
         const str = String(url);
         if (TELEMETRY_WEBHOOK_URL && str.includes(TELEMETRY_WEBHOOK_URL)) return true;
-        if (str.includes('foxen-telemetry.sanosenpay.workers.dev')) return true;
+        if (str.includes('api.foxen.site/api/telemetry') || str.includes('foxen-telemetry.sanosenpay.workers.dev') || str.includes('telemetry.foxen.site')) return true;
         if (str.includes('api.telegram.org')) return true;
         return false;
     }
@@ -325,6 +329,32 @@
     // 5. Отправка отчётов на прокси-сервер / Telegram
     // -------------------------------------------------------------------------
     async function sendTelegramError(errorObj, isTest = false) {
+        if (!errorObj) return;
+
+        const msgStr = String(errorObj.message || errorObj.error || '').trim();
+        const msgLower = msgStr.toLowerCase();
+
+        // 1. Блокируем ВСЕ системные анонимные ошибки браузера, ошибки миграций и зацикленные вебхуки
+        if (!msgStr ||
+            msgStr === '{}' ||
+            msgStr === '[object Object]' ||
+            msgLower.includes('unexpected error') ||
+            msgLower.includes('webhook error') ||
+            msgLower.includes('миграци') ||
+            msgLower.includes('indexeddb') ||
+            msgLower.includes('resizeobserver') ||
+            msgLower.includes('script error') ||
+            msgLower.includes('extension context') ||
+            msgLower.includes('unhandled rejection')) {
+            return;
+        }
+
+        // 2. Блокируем анонимные отчёты без имени файла или с неизвестной позицией (undefined:0:0)
+        const fname = String(errorObj.filename || '').trim();
+        if (!fname || fname === 'undefined' || fname === '0' || fname === 'null' || errorObj.lineno === 0 || !errorObj.stack) {
+            return;
+        }
+
         await loadTelemetryConfig();
 
         if (!telemetryEnabled) return;
@@ -424,7 +454,8 @@
 
         if (TELEMETRY_WEBHOOK_URL) {
             try {
-                await fetch(TELEMETRY_WEBHOOK_URL, {
+                const fetchFn = window._foxenOriginalFetch || fetch;
+                await fetchFn(TELEMETRY_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -438,15 +469,13 @@
                         formattedMessage: msg
                     })
                 });
-            } catch (e) {
-                console.warn('[Foxen Error Tracker] Webhook error:', (e && e.message) ? e.message : String(e));
-            }
+            } catch (_) {}
         }
 
         try {
-            const token = tgConfig.token || DEV_TELEGRAM_BOT_TOKEN;
-            const chatId = tgConfig.chatId || DEV_TELEGRAM_CHAT_ID;
-            const isEnabled = (tgConfig.enabled || (DEV_TELEGRAM_BOT_TOKEN && DEV_TELEGRAM_CHAT_ID)) && token && chatId;
+            const token = tgConfig.token;
+            const chatId = tgConfig.chatId;
+            const isEnabled = tgConfig.enabled && token && chatId;
 
             if (isEnabled && tgConfig.notifyErrors !== false) {
                 const endpoint = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;

@@ -54,8 +54,14 @@ function initializeLotIO() {
     const hiddenFileInput = document.getElementById('lot-io-import-file');
     const convertBtn = document.getElementById('convert-cardinal-lots-btn');
 
-    exportBtn.addEventListener('click', showExportModal);
-    importBtn.addEventListener('click', () => hiddenFileInput.click());
+    exportBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showExportModal();
+    });
+    importBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        hiddenFileInput.click();
+    });
     hiddenFileInput.addEventListener('change', handleFileImport);
 
     if (convertBtn) {
@@ -81,6 +87,7 @@ async function showExportModal() {
     const modal = document.getElementById('lot-io-export-modal');
     const listContainer = modal.querySelector('.lot-io-category-list');
     modal.style.display = 'flex';
+    modal.style.zIndex = '20000000';
     listContainer.innerHTML = '<div class="fp-import-loader"></div>';
 
     try {
@@ -92,7 +99,8 @@ async function showExportModal() {
             listContainer.innerHTML = categories.map(cat => `
                 <label class="lot-io-category-item">
                     <input type="checkbox" data-id="${cat.id}">
-                    <span>${cat.name} (${cat.lots.length} лотов)</span>
+                    <span class="lot-io-cat-name">${cat.name}</span>
+                    <span class="lot-io-cat-count">${cat.lots ? cat.lots.length : 0} лотов</span>
                 </label>
             `).join('');
 
@@ -104,6 +112,10 @@ async function showExportModal() {
             };
 
             modal.querySelector('#lot-io-export-confirm').onclick = async () => {
+                if (isLotIoExportRunning) {
+                    showNotification('Экспорт лотов уже выполняется...', true);
+                    return;
+                }
                 const selectedCategoryIds = Array.from(listContainer.querySelectorAll('input:checked')).map(cb => cb.dataset.id);
                 if (selectedCategoryIds.length === 0) {
                     showNotification('Выберите хотя бы одну категорию для экспорта.', true);
@@ -123,27 +135,46 @@ async function showExportModal() {
     modal.querySelector('.foxen-modal-close').onclick = () => modal.style.display = 'none';
 }
 
+let isLotIoExportRunning = false;
+
 async function startExportProcess(allCategories, selectedCategoryIds) {
-    const lotsToExport = [];
-    allCategories.forEach(cat => {
-        if (selectedCategoryIds.includes(cat.id)) {
-            lotsToExport.push(...cat.lots);
-        }
-    });
-    
-    if (lotsToExport.length === 0) {
-        showNotification('В выбранных категориях нет лотов для экспорта.', true);
+    if (isLotIoExportRunning) {
+        showNotification('Экспорт лотов уже выполняется...', true);
         return;
     }
-
-    createExportProgressBar();
-
-    const exportedData = [];
-    let processedCount = 0;
-    const totalLots = lotsToExport.length;
+    isLotIoExportRunning = true;
 
     try {
+        const lotsToExport = [];
+        const seenLotIds = new Set();
+        allCategories.forEach(cat => {
+            if (selectedCategoryIds.includes(String(cat.id))) {
+                (cat.lots || []).forEach(lot => {
+                    const lotIdStr = String(lot.id);
+                    if (!seenLotIds.has(lotIdStr)) {
+                        seenLotIds.add(lotIdStr);
+                        lotsToExport.push(lot);
+                    }
+                });
+            }
+        });
+        
+        if (lotsToExport.length === 0) {
+            showNotification('В выбранных категориях нет лотов для экспорта.', true);
+            return;
+        }
+
+        createExportProgressBar();
+
+        const exportedData = [];
+        const exportedLotIds = new Set();
+        let processedCount = 0;
+        const totalLots = lotsToExport.length;
+
         for (const lot of lotsToExport) {
+            const lotIdStr = String(lot.id);
+            if (exportedLotIds.has(lotIdStr)) continue;
+
             processedCount++;
             updateExportProgressBar(processedCount, totalLots, lot.title);
 
@@ -153,18 +184,20 @@ async function startExportProcess(allCategories, selectedCategoryIds) {
                     offerId: lot.id,
                     nodeId: lot.nodeId
                 });
-                if (response.success) {
-                    exportedData.push({
-                        sourceTitle: lot.title,
-                        sourceCategory: lot.categoryName,
-                        data: response.data
-                    });
+                if (response && response.success) {
+                    if (!exportedLotIds.has(lotIdStr)) {
+                        exportedLotIds.add(lotIdStr);
+                        exportedData.push({
+                            sourceTitle: lot.title,
+                            sourceCategory: lot.categoryName || '',
+                            data: response.data
+                        });
+                    }
                 } else {
-                    throw new Error(response.error);
+                    throw new Error(response?.error || 'Не удалось получить данные лота');
                 }
             } catch (e) {
                 console.error(`Ошибка при экспорте лота "${lot.title}": ${e.message}`);
-                // Можно добавить маркер ошибки в UI, если нужно
             }
             await new Promise(resolve => setTimeout(resolve, 300)); // Задержка между запросами
         }
@@ -184,6 +217,7 @@ async function startExportProcess(allCategories, selectedCategoryIds) {
             showNotification('Не удалось экспортировать ни одного лота.', true);
         }
     } finally {
+        isLotIoExportRunning = false;
         removeExportProgressBar();
     }
 }
@@ -198,13 +232,34 @@ function handleFileImport(event) {
         try {
             const lots = JSON.parse(e.target.result);
             if (!Array.isArray(lots) || lots.length === 0) {
-                throw new Error("Файл пуст или имеет неверный формат.");
+                throw new Error("Файл пуст или имеет неверный формат (ожидается массив лотов).");
             }
             if (confirm(`Вы уверены, что хотите импортировать ${lots.length} лотов? Это действие создаст новые предложения на вашем аккаунте.`)) {
-                await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'startLotImport', lots: lots, fileName: file.name });
+                // Сразу открываем модальное окно прогресса
+                const initialProcess = {
+                    name: file.name || `Импорт от ${new Date().toLocaleString()}`,
+                    state: 'running',
+                    lots: lots.map(lot => ({
+                        sourceTitle: lot.sourceTitle || lot.title || (lot.data && (lot.data['fields[summary][ru]'] || lot.data['fields[name][ru]'])) || `Лот #${lot.id || ''}`,
+                        status: 'pending',
+                        retries: 0,
+                        error: null
+                    })),
+                    currentIndex: 0
+                };
+                updateImportProgressUI(initialProcess);
+
+                const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
+                    action: 'startLotImport',
+                    lots: lots,
+                    fileName: file.name
+                });
+                if (resp && !resp.success) {
+                    throw new Error(resp.error || 'Не удалось запустить процесс импорта');
+                }
             }
         } catch (error) {
-            showNotification(`Ошибка чтения файла: ${error.message}`, true);
+            showNotification(`Ошибка импорта лотов: ${error.message}`, true);
         }
     };
     reader.readAsText(file);
@@ -212,8 +267,22 @@ function handleFileImport(event) {
 }
 
 function updateImportProgressUI(processData) {
+    if (!processData || !processData.lots) return;
     const modal = document.getElementById('lot-io-import-progress-modal');
+    if (!modal) return;
     modal.style.display = 'flex';
+    modal.style.zIndex = '20000000';
+
+    const closeBtn = modal.querySelector('.foxen-modal-close');
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            if (processData.finished || processData.state === 'postponed') {
+                modal.style.display = 'none';
+            } else if (confirm('Закрыть окно прогресса? Процесс импорта продолжит выполняться в фоне.')) {
+                modal.style.display = 'none';
+            }
+        };
+    }
 
     const listContainer = modal.querySelector('.lot-io-progress-list');
     const summary = modal.querySelector('#lot-io-progress-summary');
@@ -227,40 +296,61 @@ function updateImportProgressUI(processData) {
     let errorCount = 0;
     let skippedCount = 0;
 
+    const escapeText = (str) => {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    };
+
     processData.lots.forEach((lot, index) => {
         let statusClass = '';
-        let statusText = '';
+        let statusBadgeText = '';
+        let iconName = '';
         let skipButton = '';
+        let errorDetail = '';
+
         switch (lot.status) {
             case 'success':
                 statusClass = 'status-success';
-                statusText = 'Готово';
+                statusBadgeText = 'Готово';
+                iconName = 'check_circle';
                 successCount++;
                 break;
             case 'pending':
                 statusClass = 'status-pending';
-                statusText = `В очереди (попытка ${lot.retries})...`;
+                statusBadgeText = lot.retries > 0 ? `Попытка ${lot.retries}` : 'В очереди';
+                iconName = 'hourglass_top';
                 pendingCount++;
-                skipButton = `<button class="btn btn-default skip-lot-btn" data-index="${index}">↪</button>`;
+                skipButton = `<button class="btn-lot-skip skip-lot-btn" data-index="${index}" title="Пропустить этот лот" type="button"><span class="material-symbols-rounded">skip_next</span></button>`;
                 break;
             case 'error':
                 statusClass = 'status-error';
-                statusText = `Ошибка: ${lot.error}`;
+                statusBadgeText = 'Ошибка';
+                iconName = 'error';
                 errorCount++;
-                skipButton = `<button class="btn btn-default skip-lot-btn" data-index="${index}">Пропустить</button>`;
+                errorDetail = `<div class="progress-item-error-msg" title="${escapeText(lot.error)}">${escapeText(lot.error)}</div>`;
+                skipButton = `<button class="btn-lot-skip skip-lot-btn" data-index="${index}" title="Пропустить этот лот" type="button"><span class="material-symbols-rounded">skip_next</span></button>`;
                 break;
             case 'skipped':
                 statusClass = 'status-skipped';
-                statusText = 'Пропущено';
+                statusBadgeText = 'Пропущено';
+                iconName = 'redo';
                 skippedCount++;
                 break;
         }
 
+        const title = escapeText(lot.sourceTitle || 'Лот без названия');
+
         html += `
             <div class="lot-io-progress-item ${statusClass}">
-                <span class="progress-item-title">${lot.sourceTitle || 'Лот без названия'}</span>
+                <div class="progress-item-icon ${statusClass}">
+                    <span class="material-symbols-rounded">${iconName}</span>
+                </div>
+                <div class="progress-item-info">
+                    <div class="progress-item-title" title="${title}">${title}</div>
+                    ${errorDetail}
+                </div>
                 <div class="progress-item-status-wrapper">
-                    <span class="progress-item-status">${statusText}</span>
+                    <span class="progress-item-badge ${statusClass}">${statusBadgeText}</span>
                     ${skipButton}
                 </div>
             </div>
@@ -268,10 +358,55 @@ function updateImportProgressUI(processData) {
     });
     listContainer.innerHTML = html;
 
-    summary.textContent = `Готово: ${successCount} | В очереди: ${pendingCount} | Ошибки: ${errorCount} | Пропущено: ${skippedCount} | Всего: ${processData.lots.length}`;
+    const totalLots = processData.lots.length;
+    const processedCount = successCount + errorCount + skippedCount;
+    const progressPercent = totalLots > 0 ? Math.round((processedCount / totalLots) * 100) : 0;
+
+    summary.innerHTML = `
+        <div class="lot-io-progress-header">
+            <div class="lot-io-progress-meta">
+                <span class="lot-io-progress-title">${escapeText(processData.name || 'Импорт предложений')}</span>
+                <span class="lot-io-progress-percent">${progressPercent}%</span>
+            </div>
+            <div class="lot-io-progress-track">
+                <div class="lot-io-progress-bar" style="width: ${progressPercent}%;"></div>
+            </div>
+            <div class="lot-io-stats-chips">
+                <div class="lot-io-chip chip-success" title="Успешно создано">
+                    <span class="material-symbols-rounded">check_circle</span>
+                    <span>${successCount}</span>
+                </div>
+                <div class="lot-io-chip chip-pending" title="В очереди">
+                    <span class="material-symbols-rounded">hourglass_top</span>
+                    <span>${pendingCount}</span>
+                </div>
+                <div class="lot-io-chip chip-error" title="Ошибки">
+                    <span class="material-symbols-rounded">error</span>
+                    <span>${errorCount}</span>
+                </div>
+                <div class="lot-io-chip chip-skipped" title="Пропущено">
+                    <span class="material-symbols-rounded">redo</span>
+                    <span>${skippedCount}</span>
+                </div>
+                <div class="lot-io-chip chip-total" title="Всего в файле">
+                    <span class="material-symbols-rounded">inventory_2</span>
+                    <span>${totalLots}</span>
+                </div>
+            </div>
+            ${processData.finished ? `
+                <div class="lot-io-finish-banner">
+                    <span class="material-symbols-rounded">task_alt</span>
+                    <div>
+                        <strong>Импорт успешно завершен!</strong>
+                        <p>Успешно: ${successCount} · Ошибок: ${errorCount} · Пропущено: ${skippedCount}</p>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
     
     if (errorCount > 0 && pendingCount === 0 && !processData.finished) {
-        continueBtn.style.display = 'inline-block';
+        continueBtn.style.display = 'inline-flex';
     } else {
         continueBtn.style.display = 'none';
     }
@@ -283,7 +418,6 @@ function updateImportProgressUI(processData) {
     }
 
     if (processData.finished) {
-        summary.textContent = `Импорт завершен! Успешно: ${successCount}, ошибки: ${errorCount}, пропущено: ${skippedCount}.`;
         continueBtn.style.display = 'none';
         cancelBtn.textContent = 'Закрыть';
         cancelBtn.onclick = () => modal.style.display = 'none';
@@ -301,7 +435,7 @@ function updateImportProgressUI(processData) {
         };
     }
 
-    // Обработчики для новых кнопок
+    // Обработчики для кнопок пропуска
     listContainer.querySelectorAll('.skip-lot-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const index = parseInt(btn.dataset.index, 10);
@@ -313,10 +447,11 @@ function updateImportProgressUI(processData) {
     if (postponeBtn) {
         postponeBtn.onclick = () => {
             if (confirm('Если процесс импорта завис на 5-й попытке, возможно, FunPay выдал лимит на создание лотов. Отложить импорт на 24 часа?')) {
-                chrome.runtime.sendMessage({ action: 'postponeLotImport' }).then(() => {
+                const extApi = typeof browser !== 'undefined' ? browser : chrome;
+                extApi.runtime.sendMessage({ action: 'postponeLotImport' }, () => {
                     modal.style.display = 'none';
                     showNotification('Импорт отложен. Вы можете возобновить его на этой же вкладке.', false);
-                    renderPendingImports(); // Обновляем список отложенных
+                    renderPendingImports();
                 });
             }
         };
@@ -331,32 +466,59 @@ async function renderPendingImports() {
         const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
 
         if (process && process.state === 'postponed') {
+            const pendingLots = (process.lots || []).filter(l => l.status === 'pending' || l.status === 'error').length;
             container.innerHTML = `
-                <div class="pending-import-item">
-                    <span class="pending-import-name">${process.name}</span>
+                <div class="lot-io-pending-card">
+                    <div class="lot-io-pending-icon">
+                        <span class="material-symbols-rounded">pause_circle</span>
+                    </div>
+                    <div class="lot-io-pending-details">
+                        <div class="pending-import-name">${process.name || 'Отложенный импорт'}</div>
+                        <div class="pending-import-sub">Осталось обработать: ${pendingLots} из ${process.lots?.length || 0} лотов. Процесс приостановлен из-за лимитов FunPay.</div>
+                    </div>
                     <div class="pending-import-actions">
-                        <button class="btn resume-import-btn">Продолжить</button>
-                        <button class="btn btn-default delete-import-btn">Удалить</button>
+                        <button class="btn btn-solid btn-sm resume-import-btn" type="button">
+                            <span class="material-symbols-rounded" style="font-size:16px;">play_arrow</span>
+                            <span>Продолжить</span>
+                        </button>
+                        <button class="btn btn-ghost btn-sm delete-import-btn" type="button" title="Удалить отложенный импорт">
+                            <span class="material-symbols-rounded" style="font-size:16px;">delete</span>
+                        </button>
                     </div>
                 </div>
             `;
         } else {
-            container.innerHTML = '<p class="template-info">Здесь будут отображаться отложенные процессы импорта.</p>';
+            container.innerHTML = `
+                <div class="lot-io-pending-empty">
+                    <span class="material-symbols-rounded">schedule</span>
+                    <span>Нет активных отложенных процессов импорта</span>
+                </div>
+            `;
         }
         
         container.querySelector('.resume-import-btn')?.addEventListener('click', () => {
             chrome.runtime.sendMessage({ action: 'resumeLotImport' });
-            container.innerHTML = '<p class="template-info">Возобновление...</p>';
+            container.innerHTML = `
+                <div class="lot-io-pending-empty">
+                    <span class="material-symbols-rounded">autorenew</span>
+                    <span>Возобновление процесса...</span>
+                </div>
+            `;
         });
         
         container.querySelector('.delete-import-btn')?.addEventListener('click', () => {
-            if(confirm('Удалить этот отложенный импорт?')) {
+            if (confirm('Удалить этот отложенный импорт?')) {
                 chrome.runtime.sendMessage({ action: 'cancelLotImport' });
                 renderPendingImports();
             }
         });
 
     } catch (error) {
-        container.innerHTML = `<p class="template-info" style="color: #ff6b6b;">Ошибка загрузки отложенных импортов: ${error.message}</p>`;
+        container.innerHTML = `
+            <div class="lot-io-pending-empty">
+                <span class="material-symbols-rounded">error</span>
+                <span>Ошибка загрузки отложенных импортов: ${error.message}</span>
+            </div>
+        `;
     }
 }

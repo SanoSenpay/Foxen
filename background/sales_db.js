@@ -174,43 +174,68 @@
     }
 
     // Однократный перенос старых данных из chrome.storage.local в IndexedDB.
-    // Возвращает число перенесённых заказов. Если в IndexedDB уже что-то есть
-    // или мигрировать нечего — возвращает 0 и ничего не трогает.
     async function migrateFromLocalStorage() {
         if (_migrationAttempted) return 0;
         _migrationAttempted = true;
 
         try {
-            const flag = await getMeta('migratedFromLocal');
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                chrome.storage.local.set({ foxenSalesMigrated: true });
+            }
+        } catch (_) {}
+
+        try {
+            const flag = await getMeta('migratedFromLocal').catch(() => true);
             if (flag) return 0;
 
-            const already = await count();
-            if (already > 0) { await setMeta('migratedFromLocal', true); return 0; }
+            const already = await count().catch(() => 1);
+            if (already > 0) {
+                await setMeta('migratedFromLocal', true).catch(() => {});
+                return 0;
+            }
 
-            const data = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
-                'foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId', 'foxenSalesLastUpdate'
-            ]);
-            const old = data.foxenSalesData;
-            if (!old || typeof old !== 'object') { await setMeta('migratedFromLocal', true); return 0; }
+            let data = {};
+            try {
+                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                    data = await new Promise((resolve) => {
+                        chrome.storage.local.get(
+                            ['foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId', 'foxenSalesLastUpdate'],
+                            (res) => resolve(res || {})
+                        );
+                    });
+                } else if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
+                    data = await browser.storage.local.get([
+                        'foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId', 'foxenSalesLastUpdate'
+                    ]);
+                }
+            } catch (_) {
+                data = {};
+            }
+
+            const old = data ? data.foxenSalesData : null;
+            if (!old || typeof old !== 'object') {
+                await setMeta('migratedFromLocal', true).catch(() => {});
+                return 0;
+            }
 
             const orders = Object.values(old).filter(o => o && typeof o.orderId === 'string');
             if (orders.length) await putOrders(orders);
 
-            if (data.foxenFirstOrderId) await setMeta('firstOrderId', data.foxenFirstOrderId);
-            if (data.foxenLastOrderId) await setMeta('lastOrderId', data.foxenLastOrderId);
-            if (data.foxenSalesLastUpdate) await setMeta('lastUpdate', data.foxenSalesLastUpdate);
-            await setMeta('migratedFromLocal', true);
+            if (data.foxenFirstOrderId) await setMeta('firstOrderId', data.foxenFirstOrderId).catch(() => {});
+            if (data.foxenLastOrderId) await setMeta('lastOrderId', data.foxenLastOrderId).catch(() => {});
+            if (data.foxenSalesLastUpdate) await setMeta('lastUpdate', data.foxenSalesLastUpdate).catch(() => {});
+            await setMeta('migratedFromLocal', true).catch(() => {});
 
-            // Освобождаем квоту: убираем гигантский объект из storage.local.
-            // Оставляем lastUpdate как маленькое значение для обратной совместимости UI.
             try {
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId']);
+                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                    chrome.storage.local.remove(['foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId']);
+                } else if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
+                    await browser.storage.local.remove(['foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId']);
+                }
             } catch (_) {}
 
-            console.log(`Foxen: перенесено ${orders.length} заказов из storage.local в IndexedDB. Квота освобождена.`);
             return orders.length;
         } catch (e) {
-            console.warn('Foxen: миграция заказов в IndexedDB не удалась:', e && e.message);
             return 0;
         }
     }

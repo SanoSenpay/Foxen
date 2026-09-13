@@ -8,7 +8,7 @@
 .foxen-popup {
     /* Premium macOS Vibrancy Effect */
     --bg-window: rgba(30, 30, 30, 0.75);
-    --backdrop-blur: blur(40px) saturate(200%);
+    --backdrop-blur: blur(16px) saturate(140%);
 
     --bg-sidebar: rgba(0, 0, 0, 0.15);
     --bg-content: transparent;
@@ -16,10 +16,9 @@
     --bg-hover: rgba(255, 255, 255, 0.1);
     --bg-active: rgba(255, 255, 255, 0.15);
 
-    --accent: #0A84FF;
-    /* iOS System Blue */
-    --accent-hover: #007AFF;
-    --accent-soft: rgba(10, 132, 255, 0.15);
+    --accent: var(--fxn-accent, #c026d3);
+    --accent-hover: var(--fxn-accent-hover, #a21caf);
+    --accent-soft: var(--fxn-accent-soft, rgba(192, 38, 211, 0.18));
 
     --text-primary: #FFFFFF;
     --text-secondary: rgba(255, 255, 255, 0.65);
@@ -55,9 +54,9 @@
     --bg-hover: rgba(0, 0, 0, 0.06);
     --bg-active: rgba(0, 0, 0, 0.1);
 
-    --accent: #007AFF;
-    --accent-hover: #0062CC;
-    --accent-soft: rgba(0, 122, 255, 0.1);
+    --accent: var(--fxn-accent, #c026d3);
+    --accent-hover: var(--fxn-accent-hover, #a21caf);
+    --accent-soft: var(--fxn-accent-soft, rgba(192, 38, 211, 0.1));
 
     --text-primary: #000000;
     --text-secondary: rgba(0, 0, 0, 0.6);
@@ -420,7 +419,7 @@
 .foxen-popup .btn:hover {
     background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+    box-shadow: none;
 }
 
 .foxen-popup button:active,
@@ -720,7 +719,7 @@
 }
 
 .chat-template-btn {
-    background: #0A84FF;
+    background: var(--fxn-accent, #c026d3);
 }
 
 .custom-chat-template-btn:hover {
@@ -817,7 +816,7 @@
 }
 
 .foxen-ad-popup .btn {
-    background: #0A84FF;
+    background: var(--fxn-accent, #c026d3);
     color: white;
 }
 
@@ -2248,7 +2247,7 @@
 }
 
 .foxen-radio-option input[type="radio"] {
-    accent-color: #0A84FF;
+    accent-color: var(--fxn-accent, #c026d3);
 }
 
 .template-container {

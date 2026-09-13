@@ -68,30 +68,114 @@ function getWelcomeMessage() {
 
 async function replaceTemplateVariables(template) {
     const now = new Date();
-    const dateStr = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    const buyerNameElement = document.querySelector('.media-user-name a');
+    const pad = n => String(n).padStart(2, '0');
+    const dateStr = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    
+    // Buyer Name (the other party in chat)
+    const buyerNameElement = document.querySelector('.media-user-name a, .chat-header .user-link-name, .contact-item.active .media-user-name, .chat-header a[href*="/users/"]');
+    let buyerName = buyerNameElement ? buyerNameElement.textContent.trim() : 'покупатель';
+
+    // Seller Name (the logged in account)
+    let sellerName = '';
+    const popupName = document.querySelector('#fxnSidebarUsername')?.textContent?.trim();
+    if (popupName && popupName !== 'Загрузка...' && popupName !== 'Foxen User') {
+        sellerName = popupName;
+    }
+    if (!sellerName) {
+        const navName = document.querySelector('.navbar .user-link-dropdown .user-link-name, .navbar-right .user-link-name, .nav-profile .user-link-name, a.user-link-dropdown .user-link-name, .navbar a[href*="/users/"] .user-link-name');
+        if (navName?.textContent?.trim()) sellerName = navName.textContent.trim();
+    }
+    if (!sellerName) {
+        try {
+            const d = JSON.parse(document.body.dataset.appData || '{}');
+            const un = (Array.isArray(d) ? d[0] : d)?.userName;
+            if (un) sellerName = un;
+        } catch (_) {}
+    }
+    if (!sellerName && typeof window !== 'undefined' && window.FunPayUser?.name) {
+        sellerName = window.FunPayUser.name;
+    }
+    if (!sellerName) sellerName = 'продавец';
+
+    // Balance & Active sells
     const balElement = document.querySelector('.badge-balance');
     const activeSellsElement = document.querySelector('.badge-trade');
-    let result = template;
-    result = result.replace(/{welcome}/g, getWelcomeMessage());
-    result = result.replace(/{date}/g, dateStr);
-    result = result.replace(/{buyername}/g, buyerNameElement ? buyerNameElement.textContent.trim() : 'покупатель');
-    result = result.replace(/{bal}/g, balElement ? balElement.textContent.trim() : 'N/A');
-    result = result.replace(/{activesells}/g, activeSellsElement ? activeSellsElement.textContent.trim() : 'N/A');
 
-    let lotName = 'лот';
-    const lotNameInChat = document.querySelector('.deal-desc-lot a');
-    if(lotNameInChat) lotName = lotNameInChat.textContent.trim();
-    result = result.replace(/{lotname}/g, lotName);
+    // Lot Name & Category
+    let lotName = '';
+    let category = '';
 
+    const isGarbageText = (s) => {
+        if (!s || typeof s !== 'string') return true;
+        const t = s.trim();
+        if (t.length < 2) return true;
+        return /управление метками|был\s+\d+|онлайн|online|open_in_new|открыть заказ|заказ\s*#|foxen|написать|сообщение/i.test(t);
+    };
+
+    if (window.location.pathname.includes('/orders/')) {
+        const paramItems = document.querySelectorAll('.param-item');
+        paramItems.forEach(item => {
+            const h = item.querySelector('h5, .name, .param-title')?.textContent?.toLowerCase() || '';
+            const valEl = item.querySelector('div.text-bold, div:not(h5), .text-nowrap');
+            const val = valEl ? valEl.textContent.trim() : '';
+            if (/игра|категория|game|category/i.test(h) && val && !isGarbageText(val)) {
+                category = val;
+            } else if (/краткое описание|описание|название|лот|title|desc/i.test(h) && val && !isGarbageText(val)) {
+                lotName = val;
+            }
+        });
+        if (!lotName) {
+            const descEl = document.querySelector('.param-item-value, .order-desc, .order-title, .table-orders-desc');
+            if (descEl && !isGarbageText(descEl.textContent)) lotName = descEl.textContent.trim();
+        }
+        if (!category) {
+            const catEl = document.querySelector('.breadcrumb a:nth-last-child(2), .breadcrumb a:last-child');
+            if (catEl && !isGarbageText(catEl.textContent)) category = catEl.textContent.trim();
+        }
+    }
+
+    if (!lotName || !category) {
+        // 1. Panel "Покупатель смотрит" or lot offer link in chat sidebar
+        const lotOfferLink = document.querySelector('a[href*="lots/offer?id="], .chat-panel[data-type="c-p-u"] a[href*="lots/"], .chat-detail a[href*="lots/"], .chat-detail-list a[href*="lots/"]');
+        if (lotOfferLink && !isGarbageText(lotOfferLink.textContent)) {
+            lotName = lotOfferLink.textContent.trim();
+        }
+
+        // 2. Chat detail list items
+        const chatParams = document.querySelectorAll('.chat-detail-list .param-item, .chat-detail .param-item');
+        chatParams.forEach(item => {
+            const h = item.querySelector('h5')?.textContent?.toLowerCase() || '';
+            const val = item.querySelector('div:not(h5), a')?.textContent?.trim() || '';
+            if (/игра|категория|раздел/i.test(h) && val && !isGarbageText(val)) {
+                category = val;
+            } else if (/лот|товар|предложение/i.test(h) && val && !lotName && !isGarbageText(val)) {
+                lotName = val;
+            }
+        });
+
+        // 3. Category / Game links in chat detail
+        if (!category) {
+            const gameLink = document.querySelector('.chat-detail a[href*="/chips/"], .chat-detail a[href*="/lots/"], .chat-detail-list a[href*="/chips/"], .chat-detail-list a[href*="/lots/"]');
+            if (gameLink && !isGarbageText(gameLink.textContent)) {
+                category = gameLink.textContent.trim();
+            }
+        }
+    }
+
+    if (isGarbageText(lotName)) lotName = '';
+    if (isGarbageText(category)) category = '';
+
+    lotName = (lotName || 'лот').replace(/\s*open_in_new\s*/g, '').replace(/Открыть заказ/g, '').trim() || 'лот';
+    category = (category || 'категория').replace(/\s*open_in_new\s*/g, '').replace(/Открыть заказ/g, '').trim() || 'категория';
+
+    // Order ID & Order Link
     let orderLink = '';
     let orderId = '';
     if (window.location.pathname.match(/\/orders\/[A-Z0-9]{8}\//i)) {
         orderLink = window.location.href;
         const idMatch = window.location.pathname.match(/\/orders\/([A-Z0-9]+)/i);
-        if (idMatch) {
-            orderId = idMatch[1];
-        }
+        if (idMatch) orderId = idMatch[1];
     } else {
         let orderLinkEl = document.querySelector('.deal-desc a[href*="/orders/"], .deal-header a[href*="/orders/"], .deal-desc-status a[href*="/orders/"]');
         if (!orderLinkEl) {
@@ -102,18 +186,39 @@ async function replaceTemplateVariables(template) {
             });
         }
         if (orderLinkEl) {
-            orderLink = orderLinkEl.getAttribute('href');
-            if (orderLink.startsWith('/')) {
-                orderLink = 'https://funpay.com' + orderLink;
-            }
+            orderLink = orderLinkEl.getAttribute('href') || '';
+            if (orderLink.startsWith('/')) orderLink = 'https://funpay.com' + orderLink;
             const idMatch = orderLink.match(/\/orders\/([A-Z0-9]+)/i);
-            if (idMatch) {
-                orderId = idMatch[1];
-            }
+            if (idMatch) orderId = idMatch[1];
         }
     }
-    result = result.replace(/{orderlink}/g, orderLink);
-    result = result.replace(/{orderid}/g, orderId);
+    if (!orderId) {
+        const dealHeaderText = document.querySelector('.deal-header, .deal-desc, .chat-header')?.textContent || '';
+        const m = dealHeaderText.match(/#([A-Z0-9]{8})/i);
+        if (m) {
+            orderId = m[1];
+            if (!orderLink) orderLink = `https://funpay.com/orders/${orderId}/`;
+        }
+    }
+
+    // Rating
+    let ratingStr = '⭐⭐⭐⭐⭐';
+    const ratingEl = document.querySelector('.rating .rating-value, .stars, .review-rating');
+    if (ratingEl) ratingStr = ratingEl.textContent.trim();
+
+    let result = template;
+    result = result.replace(/\{welcome\}/gi, getWelcomeMessage());
+    result = result.replace(/\{date\}/gi, dateStr);
+    result = result.replace(/\{time\}/gi, timeStr);
+    result = result.replace(/\{buyername\}|\{buyer_name\}|\{username\}/gi, buyerName);
+    result = result.replace(/\{sellername\}|\{seller_name\}/gi, sellerName);
+    result = result.replace(/\{lotname\}|\{lot_name\}/gi, lotName);
+    result = result.replace(/\{category\}|\{game\}/gi, category);
+    result = result.replace(/\{orderid\}|\{order_id\}/gi, orderId || '#00000000');
+    result = result.replace(/\{orderlink\}|\{order_link\}/gi, orderLink);
+    result = result.replace(/\{rating\}|\{stars\}/gi, ratingStr);
+    result = result.replace(/\{bal\}/gi, balElement ? balElement.textContent.trim() : 'N/A');
+    result = result.replace(/\{activesells\}/gi, activeSellsElement ? activeSellsElement.textContent.trim() : 'N/A');
 
     const aiRegex = /\{ai:([^}]+)\}/g;
     let match;

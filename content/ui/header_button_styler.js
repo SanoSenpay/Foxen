@@ -81,20 +81,22 @@ function applyButtonStyles(settings) {
         document.head.appendChild(styleTag);
     }
 
-    // Drive everything through a single CSS variable that the base stylesheet reads
-    // (var(--fxn-btn-color)). The old code injected a gradient + background-clip:text,
-    // but a later rule in content_styles.css forced `color:#C026D3 !important`, so the
-    // user's custom colour was always ignored. Setting the variable + plain color avoids
-    // the specificity fight entirely and the colour now actually changes.
+    const color = settings.color || '#C026D3';
+    window.__foxenAccentColor = color;
+    document.documentElement.style.setProperty('--fxn-accent', color);
+    document.documentElement.style.setProperty('--fxn-btn-color', color);
+
     styleTag.textContent = `
         #foxenButton {
-            --fxn-btn-color: ${settings.color};
-            color: ${settings.color} !important;
-            font-size: ${settings.size}px !important;
-            opacity: ${settings.opacity / 100} !important;
+            --fxn-btn-color: ${color} !important;
+            color: ${color} !important;
+            font-family: 'Jim Nightshade', cursive !important;
+            font-size: 21px !important;
+            letter-spacing: 2px !important;
+            opacity: ${(settings.opacity || 100) / 100} !important;
         }
         #foxenButton::before {
-            background: ${settings.color} !important;
+            background: ${color} !important;
         }
     `;
 

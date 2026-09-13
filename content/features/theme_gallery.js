@@ -1,101 +1,87 @@
 // ============================================================================
-//  Foxen — Каталог готовых тем (.fptheme) из GitHub
+//  Foxen — Динамическая загрузка закладок из GitHub index.json (16:9 Aspect Ratio)
 // ----------------------------------------------------------------------------
-//  Зачем GitHub raw, а не Telegram/Vercel:
-//    • Telegram CDN заблокирован в РФ → ссылки на file_id не грузятся у россиян.
-//    • Vercel free — жалко лимиты.
-//    • raw.githubusercontent.com бесплатный, грузит в РФ, файлы 5-10 МБ ок,
-//      свой сервер не нужен. Темы и превью лежат в публичном репозитории,
-//      каталог описан в index.json.
-//
-//  Структура репозитория (заполняется вручную владельцем):
-//    index.json                 — манифест: [{id,name,desc,author,file,preview,size}]
-//    themes/<id>.fptheme        — сами темы
-//    previews/<id>.jpg          — превью-картинки
-//
-//  index.json — пример одной записи:
-//    {
-//      "id": "cyberpunk_neon",
-//      "name": "Cyberpunk Neon",
-//      "desc": "Неоновый киберпанк",
-//      "author": "sDimosX",
-//      "file": "themes/cyberpunk_neon.fptheme",
-//      "preview": "previews/cyberpunk_neon.jpg"
-//    }
-//  Поля file/preview можно указывать относительными (тогда достроятся от RAW_BASE)
-//  или абсолютными ссылками (http...). size — необязательно, для подписи.
+//  При сохранении темы на сайте отправляется её id. Расширение запрашивает
+//  актуальный манифест index.json с GitHub, находит прямые ссылки на preview/file
+//  и рендерит правильное изображение без обрезки и мыла.
+//  Включает гибкое сопоставление matchThemeId для устранения расхождений в префиксах.
 // ============================================================================
 
 (() => {
     'use strict';
 
-    // --- Настройки репозитория (поменяй под свой) -----------------------------
     const GH_USER   = 'SanoSenpay';
     const GH_REPO   = 'FoxenThemes';
     const GH_BRANCH = 'main';
     const RAW_BASE  = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/${GH_BRANCH}/`;
     const INDEX_URL = RAW_BASE + 'index.json';
 
-    let _themes = [];        // загруженный каталог
-    let _index = 0;          // текущая карточка в карусели
-    let _loaded = false;     // каталог уже грузили?
-    let _loading = false;    // идёт загрузка каталога
-    let _applying = false;   // идёт применение темы (защита от даблкликов)
+    let _bookmarkIndex = 0;
+    let _githubCatalogCache = null;
 
-    // Достраивает относительную ссылку из index.json до полного RAW-URL.
-    function resolveUrl(u) {
-        if (!u) return '';
-        if (/^https?:\/\//i.test(u)) return u;
-        return RAW_BASE + String(u).replace(/^\/+/, '');
+    function matchThemeId(id1, id2) {
+        if (!id1 || !id2) return false;
+        if (id1 === id2) return true;
+        const clean1 = String(id1).toLowerCase().replace(/^the_/i, '').replace(/[\s_-]+/g, '');
+        const clean2 = String(id2).toLowerCase().replace(/^the_/i, '').replace(/[\s_-]+/g, '');
+        return clean1 === clean2;
     }
 
-    // --- Вёрстка контейнера каталога ------------------------------------------
+    function createElement(tag, attrs = {}, children = []) {
+        const el = document.createElement(tag);
+        for (const [k, v] of Object.entries(attrs)) {
+            if (k === 'class') el.className = v;
+            else if (k === 'style') el.style.cssText = v;
+            else el.setAttribute(k, v);
+        }
+        (Array.isArray(children) ? children : [children]).forEach(c => {
+            if (typeof c === 'string') el.appendChild(document.createTextNode(c));
+            else if (c) el.appendChild(c);
+        });
+        return el;
+    }
+
     function ensureStyles() {
         if (document.getElementById('fxn-theme-gallery-styles')) return;
         const css = `
-        #fxn-theme-gallery { margin: 14px 0 12px; }
+        #fxn-theme-gallery { margin: 14px 0 14px; }
         #fxn-theme-gallery .fptg-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
         #fxn-theme-gallery .fptg-title { font-size:15px; font-weight:600; display:flex; align-items:center; gap:6px; color:#fff; }
-        #fxn-theme-gallery .fptg-counter { font-size:12px; opacity:.6; }
+        #fxn-theme-gallery .fptg-counter { font-size:12px; opacity:.6; font-family: monospace; }
         #fxn-theme-gallery .fptg-card {
             position:relative; border-radius:12px; overflow:hidden;
-            background:rgba(20,22,35,0.6); border:1px solid rgba(255,255,255,.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            background:rgba(20,22,35,0.6); border:1px solid rgba(255,255,255,.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         #fxn-theme-gallery .fptg-preview-container {
-            position:relative; width:100%; aspect-ratio:16/9; background:#0e0f16;
+            position:relative; width:100%; aspect-ratio:16/9; background:#000000;
+            overflow:hidden; border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         #fxn-theme-gallery .fptg-preview {
-            width:100%; height:100%; object-fit:cover; display:block;
-        }
-        #fxn-theme-gallery .fptg-preview-empty {
-            width:100%; height:100%; display:flex; align-items:center; justify-content:center;
-            color:#5a5f7a; font-size:13px;
+            width:100%; height:100%; object-fit:cover; object-position:top; display:block;
         }
         #fxn-theme-gallery .fptg-arrow { 
             position:absolute; top:50%; transform:translateY(-50%);
-            background:rgba(0,0,0,.6); border:none; color:#fff; font-size:24px;
-            width:32px; height:32px; border-radius:50%; cursor:pointer; z-index:2;
+            background:rgba(0,0,0,.75); border:1px solid rgba(255,255,255,.2); color:#fff; font-size:22px;
+            width:34px; height:34px; border-radius:50%; cursor:pointer; z-index:5;
             display:flex; align-items:center; justify-content:center; line-height:1;
             transition: background 0.2s, transform 0.1s; user-select:none;
         }
-        #fxn-theme-gallery .fptg-arrow:hover { background:rgba(0,0,0,.9); transform:translateY(-50%) scale(1.05); }
+        #fxn-theme-gallery .fptg-arrow:hover { background:rgba(0,0,0,.95); transform:translateY(-50%) scale(1.05); }
         #fxn-theme-gallery .fptg-arrow:active { transform:translateY(-50%) scale(0.95); }
-        #fxn-theme-gallery .fptg-arrow[disabled] { opacity:.2; pointer-events:none; }
         #fxn-theme-gallery .fptg-prev-btn { left:8px; }
         #fxn-theme-gallery .fptg-next-btn { right:8px; }
-        #fxn-theme-gallery .fptg-meta { padding:14px; display:flex; flex-direction:column; gap:4px; }
+        #fxn-theme-gallery .fptg-meta { padding:14px; display:flex; flex-direction:column; gap:6px; }
         #fxn-theme-gallery .fptg-name { font-size:16px; font-weight:600; margin:0; color:#fff; }
         #fxn-theme-gallery .fptg-desc { font-size:13px; color:#b4b8cc; margin:0; line-height:1.4; }
-        #fxn-theme-gallery .fptg-author { font-size:12px; color:#7a7e8f; margin-bottom:12px; }
+        #fxn-theme-gallery .fptg-author { font-size:12px; color:#7a7e8f; margin-bottom:6px; }
         #fxn-theme-gallery .fptg-apply { 
             width:100%; display:flex; align-items:center; justify-content:center; gap:8px; 
             padding:10px; font-size:14px; font-weight:600; border-radius:8px; border:none; cursor:pointer;
-            background: linear-gradient(135deg, #a855f7, #d946ef); color:#fff; transition: opacity 0.2s, transform 0.1s;
+            background: #ffffff; color:#000000; transition: opacity 0.2s, transform 0.1s;
         }
         #fxn-theme-gallery .fptg-apply:hover { opacity: 0.9; transform: translateY(-1px); }
         #fxn-theme-gallery .fptg-apply:active { transform: translateY(1px); }
-        #fxn-theme-gallery .fptg-apply[disabled] { opacity:.5; pointer-events:none; cursor:not-allowed; }
         #fxn-theme-gallery .fptg-state { font-size:13px; opacity:.7; padding:20px; text-align:center; }
         `;
         const tag = document.createElement('style');
@@ -104,7 +90,40 @@
         document.head.appendChild(tag);
     }
 
-    // Находит вкладку «Кастомизация» и вставляет туда контейнер каталога.
+    // Fetches index.json directly from GitHub to get absolute URLs for files & previews
+    async function fetchGithubIndex() {
+        if (_githubCatalogCache) return _githubCatalogCache;
+        try {
+            const resp = await fetch(INDEX_URL, { cache: 'no-store' });
+            if (resp.ok) {
+                const data = await resp.json();
+                const list = Array.isArray(data) ? data : (Array.isArray(data.themes) ? data.themes : []);
+                _githubCatalogCache = list.map(t => ({
+                    id: t.id || t.name,
+                    name: t.name || 'Без названия',
+                    desc: t.desc || t.description || '',
+                    author: t.author || 'SanoSenpay',
+                    fileUrl: /^https?:\/\//i.test(t.file) ? t.file : RAW_BASE + String(t.file || '').replace(/^\/+/, ''),
+                    previewUrl: /^https?:\/\//i.test(t.preview) ? t.preview : RAW_BASE + String(t.preview || '').replace(/^\/+/, '')
+                }));
+                return _githubCatalogCache;
+            }
+        } catch (e) {
+            console.warn('Foxen theme gallery: failed to fetch GitHub index.json', e);
+        }
+
+        // Fallback map matching GitHub repo structure
+        return [
+            { id: 'endless_void', name: 'Endless Void', desc: 'Темная космическая тема с матовым фоном.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Endless_Void.fptheme', previewUrl: RAW_BASE + 'previews/Endless_void_preview.png' },
+            { id: 'smile_of_the_abyss', name: 'Smile of the Abyss', desc: 'Багрово-темная тема с бордовыми акцентами.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Smile_of_the_Abyss.fptheme', previewUrl: RAW_BASE + 'previews/Smile_of_the_Abyss_preview.png' },
+            { id: 'gravitys_embrace', name: 'Gravity’s Embrace', desc: 'Элегантный тёмный стиль с золотыми ссылками.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Gravitys_Embrace.fptheme', previewUrl: RAW_BASE + 'previews/gravitys_embrace_preview.png' },
+            { id: 'midnight_bloom', name: 'Midnight Bloom', desc: 'Яркая фиолетовая неоновая тема в стиле Cyberpunk.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Midnight_Bloom.fptheme', previewUrl: RAW_BASE + 'previews/midnight_bloom_preview.png' },
+            { id: 'silent_peak', name: 'Silent Peak', desc: 'Нежный закатный градиент с пастельно-розовыми деталями.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Silent_Peak.fptheme', previewUrl: RAW_BASE + 'previews/silentpeakpreview.png' },
+            { id: 'lone_lanterns_haven', name: 'The Lone Lantern’s Haven', desc: 'Глубокая ночная синева со стеклянным размытием.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/The_Lone_Lanterns_Haven.fptheme', previewUrl: RAW_BASE + 'previews/the_lone_lanterns_haven_preview.png' }
+        ];
+    }
+
+    // Находит вкладку «Кастомизация» и вставляет блок перехода в Foxen Hub и карусель закладок
     function mountContainer() {
         if (document.getElementById('fxn-theme-gallery')) return true;
         
@@ -116,11 +135,25 @@
         const box = createElement('div', { id: 'fxn-theme-gallery' });
         box.innerHTML = `
             <div class="fptg-head">
-                <div class="fptg-title"><span class="material-icons" style="font-size:18px;">palette</span>Готовые темы</div>
+                <div class="fptg-title"><span class="material-icons" style="font-size:18px;">storefront</span>Каталог тем и звуков</div>
+            </div>
+            <div class="fptg-card" style="padding: 16px; margin-bottom: 16px;">
+                <div style="font-size: 13px; color: #b4b8cc; margin-bottom: 12px; line-height: 1.45;">
+                    Официальный веб-каталог <b>Foxen Hub</b> предлагает HD-просмотр скриншотов, прослушивание звуков и моментальное добавление новых тем.
+                </div>
+                <button id="btn-open-foxen-web-hub" class="fptg-apply" style="background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2);">
+                    <span class="material-icons" style="font-size:18px; color: #ffffff;">open_in_new</span>
+                    Открыть Foxen Hub
+                </button>
+            </div>
+
+            <!-- Bookmarked Themes Selective Carousel -->
+            <div class="fptg-head">
+                <div class="fptg-title"><span class="material-icons" style="font-size:18px;">bookmark</span>Мои Закладки</div>
                 <div class="fptg-counter" id="fptg-counter"></div>
             </div>
             <div id="fptg-body">
-                <div class="fptg-state">Загружаю темы...</div>
+                <div class="fptg-state">Загружаю закладки...</div>
             </div>
         `;
         
@@ -130,218 +163,111 @@
             grid.parentNode.insertBefore(box, grid);
         }
 
-        // Используем делегирование событий на #fptg-body
-        box.querySelector('#fptg-body').addEventListener('click', (e) => {
-            const loadBtn = e.target.closest('#fptg-load');
-            const prevBtn = e.target.closest('#fptg-prev');
-            const nextBtn = e.target.closest('#fptg-next');
-            
-            if (loadBtn && !loadBtn.disabled) onLoadOrApply();
-            if (prevBtn && !prevBtn.disabled) move(-1);
-            if (nextBtn && !nextBtn.disabled) move(1);
+        box.querySelector('#btn-open-foxen-web-hub')?.addEventListener('click', () => {
+            window.open('https://web.foxen.site/catalog.html', '_blank');
         });
 
-        if (_loaded && _themes.length > 0) {
-            renderCard();
-        } else if (!_loaded && !_loading) {
-            loadCatalog();
-        }
+        renderBookmarksInExtension(box);
 
         return true;
     }
 
-    // --- Загрузка каталога ------------------------------------------------------
-    async function loadCatalog() {
-        if (_loading) return;
-        _loading = true;
-        renderState('Загружаю каталог тем…');
-        try {
-            const resp = await fetch(INDEX_URL, { cache: 'no-store' });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const data = await resp.json();
-            const list = Array.isArray(data) ? data : (Array.isArray(data.themes) ? data.themes : []);
-            _themes = list.filter(t => t && t.file).map(t => ({
-                id: t.id || t.name || Math.random().toString(36).slice(2),
-                name: t.name || 'Без названия',
-                desc: t.desc || t.description || '',
-                author: t.author || '',
-                fileUrl: resolveUrl(t.file),
-                previewUrl: resolveUrl(t.preview || ''),
-                size: t.size || ''
-            }));
-            _loaded = true;
-            _index = 0;
-            if (!_themes.length) {
-                renderState('Каталог пуст. Темы ещё не добавлены.');
-                setLoadButton(false);
-            } else {
-                renderCard();
-            }
-        } catch (e) {
-            renderState('Не удалось загрузить каталог. Проверьте соединение и попробуйте снова.');
-            setLoadButton(true, true); // показать кнопку повтора
-            console.error('Foxen theme gallery: load error', e);
-        } finally {
-            _loading = false;
+    async function renderBookmarksInExtension(box) {
+        const api = typeof browser !== 'undefined' ? browser : chrome;
+        const { foxenBookmarkedThemeIds = [] } = await api.storage.local.get('foxenBookmarkedThemeIds');
+
+        const catalog = await fetchGithubIndex();
+        const savedThemes = catalog.filter(item => 
+            foxenBookmarkedThemeIds.some(bId => matchThemeId(item.id, bId))
+        );
+
+        const bodyEl = box.querySelector('#fptg-body');
+        const counterEl = box.querySelector('#fptg-counter');
+        if (!bodyEl) return;
+
+        if (savedThemes.length === 0) {
+            if (counterEl) counterEl.textContent = '';
+            bodyEl.innerHTML = `
+                <div class="fptg-state">
+                    Закладок пока нет.<br>Нажимайте <b style="color:#fff;">🔖</b> у тем на <b style="color:#fff;">web.foxen.site</b>, чтобы добавить их сюда!
+                </div>
+            `;
+            return;
         }
-    }
 
-    function setLoadButton(visible, isRetry) {
-        const body = document.getElementById('fptg-body');
-        if (!body) return;
-        if (visible) {
-            const existingBtn = document.getElementById('fptg-load');
-            if (existingBtn) existingBtn.remove();
-            
-            const btnHtml = `<button class="btn fptg-apply" id="fptg-load" style="margin-top:12px;width:auto;display:inline-flex;padding:8px 16px;"><span class="material-icons" style="font-size:18px;">${isRetry ? 'refresh' : 'cloud_download'}</span>${isRetry ? 'Повторить' : 'Загрузить каталог'}</button>`;
-            
-            const stateDiv = body.querySelector('.fptg-state');
-            if (stateDiv) {
-                stateDiv.innerHTML += '<br>' + btnHtml;
-            } else {
-                body.innerHTML += btnHtml;
-            }
-        }
-    }
+        if (_bookmarkIndex >= savedThemes.length) _bookmarkIndex = 0;
+        if (_bookmarkIndex < 0) _bookmarkIndex = savedThemes.length - 1;
 
-    // --- Рендер -----------------------------------------------------------------
-    function renderState(msg) {
-        const body = document.getElementById('fptg-body');
-        if (body) body.innerHTML = `<div class="fptg-state">${msg}</div>`;
-        const counter = document.getElementById('fptg-counter');
-        if (counter) counter.textContent = '';
-    }
+        if (counterEl) counterEl.textContent = `${_bookmarkIndex + 1} / ${savedThemes.length}`;
 
-    function renderCard() {
-        const body = document.getElementById('fptg-body');
-        if (!body) return;
-        const t = _themes[_index];
-        if (!t) { renderState('Тема не найдена.'); return; }
+        const t = savedThemes[_bookmarkIndex];
+        const hasMultiple = savedThemes.length > 1;
 
-        const preview = t.previewUrl
-            ? `<img class="fptg-preview" data-fptg-img src="${t.previewUrl}" alt="" loading="lazy">`
-            : `<div class="fptg-preview-empty">Без превью</div>`;
-
-        const author = t.author ? `<div class="fptg-author">Автор: ${escapeHtml(t.author)}</div>` : '';
-        const desc = t.desc ? `<div class="fptg-desc">${escapeHtml(t.desc)}</div>` : '';
-        
-        const hasMultiple = _loaded && _themes.length > 1;
-        const prevBtn = hasMultiple ? `<button class="fptg-arrow fptg-prev-btn" id="fptg-prev">‹</button>` : '';
-        const nextBtn = hasMultiple ? `<button class="fptg-arrow fptg-next-btn" id="fptg-next">›</button>` : '';
-
-        const applyBtnText = _applying ? 'Применяю…' : 'Применить тему';
-
-        body.innerHTML = `
+        bodyEl.innerHTML = `
             <div class="fptg-card">
                 <div class="fptg-preview-container">
-                    ${preview}
-                    ${prevBtn}
-                    ${nextBtn}
+                    <img class="fptg-preview" src="${t.previewUrl}" alt="${escapeHtml(t.name)}" onerror="this.src='https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/previews/Endless_void_preview.png'">
+                    ${hasMultiple ? `
+                        <button class="fptg-arrow fptg-prev-btn" id="fptg-prev">‹</button>
+                        <button class="fptg-arrow fptg-next-btn" id="fptg-next">›</button>
+                    ` : ''}
                 </div>
                 <div class="fptg-meta">
                     <div class="fptg-name">${escapeHtml(t.name)}</div>
-                    ${desc}
-                    ${author}
-                    <button class="fptg-apply" id="fptg-load" ${_applying ? 'disabled' : ''}>
-                        <span class="material-icons" style="font-size:18px;">check_circle</span>${applyBtnText}
+                    <div class="fptg-desc">${escapeHtml(t.desc)}</div>
+                    <div class="fptg-author">Автор: ${escapeHtml(t.author)}</div>
+                    <button class="fptg-apply" id="fptg-apply-btn" data-url="${t.fileUrl}">
+                        <span class="material-icons" style="font-size:18px; color:#000;">check_circle</span>Применить тему
                     </button>
                 </div>
             </div>
         `;
 
-        const counter = document.getElementById('fptg-counter');
-        if (counter) counter.textContent = `${_index + 1} / ${_themes.length}`;
-
-        // обработчик ошибки превью вешаем через JS
-        const img = body.querySelector('img[data-fptg-img]');
-        if (img) {
-            img.addEventListener('error', () => {
-                const ph = document.createElement('div');
-                ph.className = 'fptg-preview-empty';
-                ph.textContent = 'Превью недоступно';
-                img.replaceWith(ph);
-            }, { once: true });
+        if (hasMultiple) {
+            bodyEl.querySelector('#fptg-prev')?.addEventListener('click', () => {
+                _bookmarkIndex--;
+                renderBookmarksInExtension(box);
+            });
+            bodyEl.querySelector('#fptg-next')?.addEventListener('click', () => {
+                _bookmarkIndex++;
+                renderBookmarksInExtension(box);
+            });
         }
-    }
 
+        bodyEl.querySelector('#fptg-apply-btn')?.addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const fileUrl = btn.dataset.url;
+            btn.innerHTML = `<span class="material-icons" style="font-size:18px; color:#000;">sync</span> Применяю...`;
+            btn.disabled = true;
 
-
-    function move(dir) {
-        if (!_themes.length) return;
-        _index = (_index + dir + _themes.length) % _themes.length;
-        renderCard();
-    }
-
-    // --- Клик по главной кнопке -------------------------------------------------
-    async function onLoadOrApply() {
-        if (!_loaded) {
-            await loadCatalog();
-        } else {
-            await applyCurrent();
-        }
-    }
-
-    // --- Применение темы --------------------------------------------------------
-    async function applyCurrent() {
-        if (_applying) return;
-        const t = _themes[_index];
-        if (!t || !t.fileUrl) return;
-        _applying = true;
-        renderCard(); // покажет «Применяю…»
-        try {
-            const resp = await fetch(t.fileUrl, { cache: 'no-store' });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const text = await resp.text();
-            let theme;
-            try { theme = JSON.parse(text); }
-            catch { throw new Error('файл темы повреждён'); }
-
-            // Тот же контракт, что и при ручном импорте .fptheme.
-            if (!theme || !theme.bgColor1 || !theme.font) {
-                throw new Error('неверный формат темы');
+            try {
+                const res = await fetch(fileUrl);
+                if (res.ok) {
+                    const themeObj = await res.json();
+                    await api.storage.local.set({ foxenTheme: themeObj });
+                    if (typeof applyCustomTheme === 'function') await applyCustomTheme();
+                    if (typeof showNotification === 'function') showNotification(`Тема «${t.name}» успешно применена!`);
+                }
+            } catch (err) {
+                console.error('Foxen: Failed to apply theme from GitHub fileUrl', err);
+            } finally {
+                btn.innerHTML = `<span class="material-icons" style="font-size:18px; color:#000;">check_circle</span>Применить тему`;
+                btn.disabled = false;
             }
-
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenTheme: theme });
-            // Применяем теми же функциями, что использует ручной импорт.
-            if (typeof applyCustomTheme === 'function') await applyCustomTheme();
-            if (typeof applyHeaderPosition === 'function') await applyHeaderPosition();
-            if (typeof updateThemePreview === 'function') await updateThemePreview();
-
-            if (typeof showNotification === 'function') {
-                showNotification(`Тема «${t.name}» применена!`);
-            }
-        } catch (e) {
-            if (typeof showNotification === 'function') {
-                showNotification(`Не удалось применить тему: ${e.message}`, true);
-            }
-            console.error('Foxen theme gallery: apply error', e);
-        } finally {
-            _applying = false;
-            renderCard();
-        }
+        });
     }
 
-    // --- Утилиты ----------------------------------------------------------------
-    function escapeHtml(s) {
-        return String(s)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    // --- Инициализация: ждём, пока попап с вкладкой темы появится в DOM ----------
-    function tryMount() {
-        return mountContainer();
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     function init() {
-        if (tryMount()) return;
-        // Попап Foxen монтируется не сразу — ждём появления .theme-actions-grid.
-        const obs = new MutationObserver(() => {
-            if (tryMount()) obs.disconnect();
-        });
-        obs.observe(document.documentElement, { childList: true, subtree: true });
-        // Подстраховка: остановить наблюдение через 30с, чтобы не висеть вечно.
-        setTimeout(() => obs.disconnect(), 30000);
+        let attempts = 0;
+        const timer = setInterval(() => {
+            attempts++;
+            if (mountContainer() || attempts > 30) clearInterval(timer);
+        }, 200);
     }
 
     if (document.readyState === 'loading') {

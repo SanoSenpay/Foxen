@@ -1459,7 +1459,7 @@ export default {
                 if (fp_user) subLookups.push(`fp_user=eq.${encodeURIComponent(fp_user)}`);
 
                 if (subLookups.length > 0) {
-                  const curSubRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?or=(${subLookups.join(',')})&select=*&order=created_at.desc&limit=1`, {
+                  const curSubRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?or=(${subLookups.join(',')})&select=*&order=starts_at.desc&limit=1`, {
                     headers: { "apikey": apiKey, "Authorization": `Bearer ${apiKey}` }
                   });
                   if (curSubRes.ok) {
@@ -1486,11 +1486,10 @@ export default {
                   user_id: user_id || existingSub?.user_id || null,
                   foxen_id: foxen_id || existingSub?.foxen_id || null,
                   fp_user: fp_user || existingSub?.fp_user || null,
-                  is_active: true,
+                  status: 'active',
                   is_lifetime: isLifetime,
                   plan_id: isLifetime ? 'lifetime' : `${daysToAdd}_days`,
-                  expires_at: newExpiresAt,
-                  updated_at: now.toISOString()
+                  expires_at: isLifetime ? null : newExpiresAt
                 };
 
                 if (existingSub && existingSub.id) {
@@ -1500,7 +1499,7 @@ export default {
                     body: JSON.stringify(subPayload)
                   });
                 } else {
-                  subPayload.created_at = now.toISOString();
+                  subPayload.starts_at = now.toISOString();
                   await fetch(`${supabaseUrl}/rest/v1/subscriptions`, {
                     method: "POST",
                     headers: { "apikey": apiKey, "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -1682,7 +1681,7 @@ export default {
 
           let existingSub = null;
           if (subLookups.length > 0) {
-            const curSubRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?or=(${subLookups.join(',')})&select=*&order=created_at.desc&limit=1`, {
+            const curSubRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?or=(${subLookups.join(',')})&select=*&order=starts_at.desc&limit=1`, {
               headers: { "apikey": apiKey, "Authorization": `Bearer ${apiKey}` }
             });
             if (curSubRes.ok) {
@@ -1707,13 +1706,10 @@ export default {
             user_id: userId || existingSub?.user_id || null,
             foxen_id: foxenId || existingSub?.foxen_id || null,
             fp_user: fpUser || existingSub?.fp_user || null,
-            is_active: true,
             status: 'active',
             is_lifetime: isLifetime || Boolean(existingSub?.is_lifetime),
-            auto_renew: isLifetime ? false : (details.autoRenew !== undefined ? Boolean(details.autoRenew) : Boolean(existingSub?.auto_renew)),
             plan_id: isLifetime ? 'lifetime' : `${daysToAdd}_days`,
-            expires_at: isLifetime ? null : newExpiresAt,
-            updated_at: now.toISOString()
+            expires_at: isLifetime ? null : newExpiresAt
           };
 
           if (existingSub && existingSub.id) {
@@ -1723,7 +1719,7 @@ export default {
               body: JSON.stringify(subPayload)
             });
           } else {
-            subPayload.created_at = now.toISOString();
+            subPayload.starts_at = now.toISOString();
             await fetch(`${supabaseUrl}/rest/v1/subscriptions`, {
               method: "POST",
               headers: { "apikey": apiKey, "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },

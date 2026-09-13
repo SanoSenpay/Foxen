@@ -83,7 +83,13 @@ function renderNavbarIcon() {
 
     document.getElementById('manage-piggy-banks-link').addEventListener('click', (e) => {
         e.preventDefault();
-        document.querySelector('.foxen-nav li[data-page="piggy_banks"] a')?.click();
+        const hubLi = document.querySelector('.foxen-nav li[data-page="finances_hub"] a');
+        if (hubLi) {
+            hubLi.click();
+            if (typeof switchFinancesSubtab === 'function') switchFinancesSubtab('piggy_banks');
+        } else {
+            document.querySelector('.foxen-nav li[data-page="piggy_banks"] a')?.click();
+        }
         document.querySelector('.foxen-popup')?.classList.add('active');
     });
 }

@@ -1,19 +1,18 @@
 // content/features/custom_sound_editor.js
-// Загрузка своей мелодии для уведомлений + обрезка до 5 секунд (перетаскиваемое
-// выделение по волне, прослушивание, сохранение). Сохранённый отрезок кодируется
-// в WAV (data URL) и хранится в chrome.storage.local.foxenCustomSoundData.
+// Загрузка своей мелодии для уведомлений + свободная обрезка отрезка (перетаскиваемые
+// границы по волне, свободный выбор длительности, прослушивание, сохранение).
+// Сохранённый отрезок кодируется в WAV (data URL) и хранится в chrome.storage.local.foxenCustomSoundData.
 
 (function () {
     'use strict';
 
-    const MAX_CLIP = 5;
-    let clipSeconds = 5;        // 1..5, по умолчанию 5
     const STORE_DATA = 'foxenCustomSoundData'; // data:audio/wav;base64,...
     const STORE_META = 'foxenCustomSoundMeta'; // { length }
 
     let audioCtx = null;
     let decodedBuffer = null;   // AudioBuffer всего загруженного файла
     let selStart = 0;           // секунда начала выделения
+    let selEnd = 5;             // секунда конца выделения
     let previewSource = null;   // текущий проигрываемый источник
     let playRAF = null;
 
@@ -28,7 +27,8 @@
         sec = Math.max(0, sec);
         const m = Math.floor(sec / 60);
         const s = Math.floor(sec % 60);
-        return `${m}:${String(s).padStart(2, '0')}`;
+        const ms = Math.floor((sec % 1) * 10);
+        return `${m}:${String(s).padStart(2, '0')}.${ms}`;
     }
 
     // ── waveform ────────────────────────────────────────────────────────────────
@@ -44,12 +44,13 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
 
+        const isLight = document.querySelector('.fxn-popup.light-theme, .foxen-popup.light-theme, .fxn-popup .window.light-theme, .foxen-popup .window.light-theme');
         const data = decodedBuffer.getChannelData(0);
         const step = Math.max(1, Math.floor(data.length / w));
         const mid = h / 2;
 
-        ctx.strokeStyle = 'rgba(144,153,184,0.65)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = isLight ? 'rgba(39, 39, 42, 0.75)' : 'rgba(161, 161, 170, 0.75)';
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         for (let x = 0; x < w; x++) {
             let min = 1, max = -1;
@@ -73,59 +74,128 @@
         if (!wrap || !sel || !decodedBuffer) return;
 
         const dur = decodedBuffer.duration;
-        const clip = Math.min(clipSeconds, dur);
-        // фиксируем длину окна = clip, двигаем только начало
-        selStart = Math.max(0, Math.min(selStart, dur - clip));
+        selStart = Math.max(0, Math.min(selStart, dur - 0.2));
+        selEnd = Math.max(selStart + 0.2, Math.min(selEnd, dur));
+        const clip = selEnd - selStart;
+
         const w = wrap.clientWidth;
         const left = (selStart / dur) * w;
-        const width = (clip / dur) * w;
+        const right = (selEnd / dur) * w;
+        const width = Math.max(2, right - left);
 
         sel.style.left = left + 'px';
         sel.style.width = width + 'px';
-        hL.style.left = left + 'px';
-        hR.style.left = (left + width) + 'px';
+        if (hL) hL.style.left = left + 'px';
+        if (hR) hR.style.left = right + 'px';
 
-        if (rangeEl) rangeEl.textContent = `${fmtTime(selStart)} - ${fmtTime(selStart + clip)} (${clip.toFixed(1)} сек)`;
+        if (rangeEl) {
+            rangeEl.textContent = `${fmtTime(selStart)} - ${fmtTime(selEnd)} (${clip.toFixed(1)} сек)`;
+        }
     }
 
     // ── drag selection ──────────────────────────────────────────────────────────
     function bindDrag() {
         const wrap = $('fxnWaveWrap');
+        const sel = $('fxnWaveSel');
+        const hL = $('fxnWaveSelHandleL');
+        const hR = $('fxnWaveSelHandleR');
         if (!wrap || wrap.dataset.dragBound) return;
         wrap.dataset.dragBound = '1';
 
-        let dragging = false;
+        let dragMode = null; // 'left' | 'right' | 'move'
+        let dragStartPosSec = 0;
+        let origSelStart = 0;
+        let origSelEnd = 0;
 
         const posToSec = (clientX) => {
             const rect = wrap.getBoundingClientRect();
             const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-            return (x / rect.width) * decodedBuffer.duration;
+            return (x / rect.width) * (decodedBuffer ? decodedBuffer.duration : 1);
         };
 
-        const startDrag = (clientX) => {
+        const onStart = (e, mode) => {
             if (!decodedBuffer) return;
-            dragging = true;
-            const clip = Math.min(clipSeconds, decodedBuffer.duration);
-            // центрируем окно по точке клика
-            selStart = posToSec(clientX) - clip / 2;
+            e.preventDefault();
+            e.stopPropagation();
+            dragMode = mode;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            dragStartPosSec = posToSec(clientX);
+            origSelStart = selStart;
+            origSelEnd = selEnd;
+            document.body.style.userSelect = 'none';
+        };
+
+        if (hL) {
+            hL.addEventListener('mousedown', (e) => onStart(e, 'left'));
+            hL.addEventListener('touchstart', (e) => onStart(e, 'left'), { passive: false });
+        }
+        if (hR) {
+            hR.addEventListener('mousedown', (e) => onStart(e, 'right'));
+            hR.addEventListener('touchstart', (e) => onStart(e, 'right'), { passive: false });
+        }
+        if (sel) {
+            sel.addEventListener('mousedown', (e) => onStart(e, 'move'));
+            sel.addEventListener('touchstart', (e) => onStart(e, 'move'), { passive: false });
+        }
+
+        // Клик по фону таймлайна
+        wrap.addEventListener('mousedown', (e) => {
+            if (e.target === hL || e.target === hR || e.target === sel) return;
+            if (!decodedBuffer) return;
+            e.preventDefault();
+            const clientX = e.clientX;
+            const clickSec = posToSec(clientX);
+            const distL = Math.abs(clickSec - selStart);
+            const distR = Math.abs(clickSec - selEnd);
+
+            if (distL < 0.2) {
+                onStart(e, 'left');
+            } else if (distR < 0.2) {
+                onStart(e, 'right');
+            } else {
+                // Центрируем выделение по точке клика
+                const len = selEnd - selStart;
+                let newStart = clickSec - len / 2;
+                newStart = Math.max(0, Math.min(newStart, decodedBuffer.duration - len));
+                selStart = newStart;
+                selEnd = newStart + len;
+                updateSelectionUI();
+                onStart(e, 'move');
+            }
+        });
+
+        const onMove = (e) => {
+            if (!dragMode || !decodedBuffer) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const currentSec = posToSec(clientX);
+            const dur = decodedBuffer.duration;
+
+            if (dragMode === 'left') {
+                selStart = Math.max(0, Math.min(currentSec, selEnd - 0.2));
+            } else if (dragMode === 'right') {
+                selEnd = Math.min(dur, Math.max(currentSec, selStart + 0.2));
+            } else if (dragMode === 'move') {
+                const len = origSelEnd - origSelStart;
+                const delta = currentSec - dragStartPosSec;
+                let newStart = origSelStart + delta;
+                newStart = Math.max(0, Math.min(newStart, dur - len));
+                selStart = newStart;
+                selEnd = newStart + len;
+            }
             updateSelectionUI();
         };
-        const moveDrag = (clientX) => {
-            if (!dragging || !decodedBuffer) return;
-            const clip = Math.min(clipSeconds, decodedBuffer.duration);
-            selStart = posToSec(clientX) - clip / 2;
-            updateSelectionUI();
+
+        const onEnd = () => {
+            if (dragMode) {
+                dragMode = null;
+                document.body.style.userSelect = '';
+            }
         };
-        const endDrag = () => { dragging = false; };
 
-        wrap.addEventListener('mousedown', (e) => { e.preventDefault(); startDrag(e.clientX); });
-        window.addEventListener('mousemove', (e) => moveDrag(e.clientX));
-        window.addEventListener('mouseup', endDrag);
-
-        // touch
-        wrap.addEventListener('touchstart', (e) => { if (e.touches[0]) startDrag(e.touches[0].clientX); }, { passive: true });
-        wrap.addEventListener('touchmove', (e) => { if (e.touches[0]) moveDrag(e.touches[0].clientX); }, { passive: true });
-        wrap.addEventListener('touchend', endDrag);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onMove, { passive: false });
+        window.addEventListener('touchend', onEnd);
     }
 
     // ── preview selected clip ─────────────────────────────────────────────────────
@@ -142,12 +212,11 @@
         const ctx = getCtx();
         if (ctx.state === 'suspended') await ctx.resume();
 
-        const clip = Math.min(clipSeconds, decodedBuffer.duration);
+        const clip = Math.max(0.1, selEnd - selStart);
         const src = ctx.createBufferSource();
         src.buffer = decodedBuffer;
 
         const gain = ctx.createGain();
-        // громкость из настроек
         const { notificationVolume } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('notificationVolume');
         gain.gain.value = (typeof notificationVolume === 'number') ? Math.max(0, Math.min(1, notificationVolume)) : 1;
 
@@ -177,7 +246,7 @@
     // ── encode selected clip to WAV ───────────────────────────────────────────────
     function sliceToWav() {
         const dur = decodedBuffer.duration;
-        const clip = Math.min(clipSeconds, dur);
+        const clip = Math.max(0.1, selEnd - selStart);
         const rate = decodedBuffer.sampleRate;
         const startSample = Math.floor(selStart * rate);
         const clipSamples = Math.floor(clip * rate);
@@ -241,6 +310,7 @@
             const ctx = getCtx();
             decodedBuffer = await ctx.decodeAudioData(arrBuf.slice(0));
             selStart = 0;
+            selEnd = Math.min(5, decodedBuffer.duration);
             if (editor) editor.style.display = 'block';
             drawWave();
             updateSelectionUI();
@@ -257,15 +327,21 @@
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Сохраняю…'; }
         try {
             const dataUrl = sliceToWav();
-            const clip = Math.min(clipSeconds, decodedBuffer.duration);
+            const clip = Math.max(0.1, selEnd - selStart);
             await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
                 [STORE_DATA]: dataUrl,
                 [STORE_META]: { length: clip },
                 notificationSound: 'custom'
             });
-            // отметить радио «Своя мелодия»
-            const radio = document.querySelector('input[name="notificationSound"][value="custom"]');
-            if (radio) radio.checked = true;
+            // отметить кнопку «Своя мелодия»
+            const customChip = document.querySelector('.fxn-vireon-sound-chip[data-sound="custom"], .fxn-sound-chip[data-sound="custom"]');
+            if (customChip) {
+                document.querySelectorAll('.fxn-sound-chip, .fxn-vireon-sound-chip').forEach(c => c.classList.remove('active'));
+                customChip.classList.add('active');
+            }
+            const soundInput = document.getElementById('notificationSound');
+            if (soundInput) soundInput.value = 'custom';
+
             const savedEl = $('fxnCustomSoundSaved');
             const lenEl = $('fxnCustomSoundSavedLen');
             if (lenEl) lenEl.textContent = clip.toFixed(1);
@@ -278,13 +354,20 @@
         }
     }
 
-    // ── visibility toggle (radio = custom) ────────────────────────────────────────
+    // ── visibility toggle (chip = custom) ─────────────────────────────────────────
     async function syncCustomBlockVisibility() {
         const block = $('fxnCustomSoundBlock');
         if (!block) return;
-        const selected = document.querySelector('input[name="notificationSound"]:checked');
-        const isCustom = selected && selected.value === 'custom';
-        block.style.display = isCustom ? 'block' : 'none';
+        const activeChip = document.querySelector('.fxn-vireon-sound-chip.active, .fxn-sound-chip.active');
+        let isCustom = false;
+        if (activeChip) {
+            isCustom = (activeChip.dataset.sound === 'custom');
+        } else {
+            const { notificationSound } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('notificationSound');
+            isCustom = (notificationSound === 'custom');
+        }
+        block.style.setProperty('display', isCustom ? 'flex' : 'none', 'important');
+        block.classList.toggle('fxn-hidden', !isCustom);
 
         // показать «сохранено», если уже есть сохранённый клип
         const { [STORE_META]: meta, [STORE_DATA]: data } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([STORE_META, STORE_DATA]);
@@ -298,7 +381,7 @@
             if (data) {
                 const len = (meta && meta.length) ? Number(meta.length).toFixed(1) : '5.0';
                 nameEl.textContent = `Установлена своя мелодия (${len} сек). Выберите файл, чтобы заменить.`;
-                nameEl.style.color = 'var(--fxn-text,#cfd2dc)';
+                nameEl.style.color = 'var(--fxn-text-desc, #71717a)';
             } else {
                 nameEl.textContent = 'Файл не выбран';
                 nameEl.style.color = '';
@@ -315,9 +398,11 @@
         }
         block.dataset.init = '1';
 
-        // реагируем на выбор радио
-        document.querySelectorAll('input[name="notificationSound"]').forEach(r => {
-            r.addEventListener('change', syncCustomBlockVisibility);
+        // реагируем на выбор чипов/кнопок звука
+        document.querySelectorAll('.fxn-vireon-sound-chip, .fxn-sound-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                setTimeout(syncCustomBlockVisibility, 0);
+            });
         });
 
         const uploadBtn = $('fxnCustomSoundUploadBtn');
@@ -330,40 +415,6 @@
 
         $('fxnCustomSoundPreviewBtn') && $('fxnCustomSoundPreviewBtn').addEventListener('click', previewSelection);
         $('fxnCustomSoundSaveBtn') && $('fxnCustomSoundSaveBtn').addEventListener('click', saveClip);
-
-        // крутилка длительности (1..5 сек)
-        const secInput = $('fxnClipSeconds');
-        const setSeconds = (v) => {
-            clipSeconds = Math.max(1, Math.min(MAX_CLIP, v));
-            if (secInput) secInput.value = String(clipSeconds);
-            if (decodedBuffer) updateSelectionUI();
-        };
-        $('fxnClipSecUp') && $('fxnClipSecUp').addEventListener('click', () => setSeconds(clipSeconds + 1));
-        $('fxnClipSecDown') && $('fxnClipSecDown').addEventListener('click', () => setSeconds(clipSeconds - 1));
-        // ручной ввод: можно кликнуть и вписать свою цифру; >MAX_CLIP заменяется на MAX_CLIP
-        if (secInput) {
-            secInput.addEventListener('input', () => {
-                const digits = secInput.value.replace(/[^0-9]/g, '');
-                if (!digits) return; // дать стереть/перепечатать
-                let n = parseInt(digits, 10);
-                if (isNaN(n)) return;
-                if (n > MAX_CLIP) n = MAX_CLIP;
-                if (n < 1) n = 1;
-                setSeconds(n);
-            });
-            secInput.addEventListener('blur', () => {
-                const n = parseInt(secInput.value, 10);
-                setSeconds(isNaN(n) ? clipSeconds : n);
-            });
-            secInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); secInput.blur(); }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); setSeconds(clipSeconds + 1); }
-                else if (e.key === 'ArrowDown') { e.preventDefault(); setSeconds(clipSeconds - 1); }
-            });
-        }
-        // колесо мыши над крутилкой
-        const spin = secInput && secInput.closest('.fxn-sec-spin');
-        spin && spin.addEventListener('wheel', (e) => { e.preventDefault(); setSeconds(clipSeconds + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
 
         window.addEventListener('resize', () => { if (decodedBuffer) { drawWave(); updateSelectionUI(); } });
 

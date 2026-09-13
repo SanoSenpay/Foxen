@@ -115,11 +115,33 @@ function parseFinancePage(html) {
             try {
                 const id = row.getAttribute("data-transaction") || "";
                 if (!id) return;
-                // статус: complete / cancel (по классу строки)
-                let status = "complete";
-                if (row.classList.contains("transaction-status-cancel")) status = "cancel";
-                else if (row.classList.contains("transaction-status-waiting")) status = "waiting";
                 const title = row.querySelector(".tc-title")?.textContent.trim() || "";
+                // статус: complete / cancel / waiting (по классам и тексту в строке)
+                let status = "complete";
+                const rowClasses = Array.from(row.classList).join(' ').toLowerCase();
+                const statusText = row.querySelector(".tc-status, .tc-state")?.textContent.trim() || "";
+                const fullText = (row.textContent || "").toLowerCase();
+
+                if (
+                    rowClasses.includes("transaction-status-cancel") ||
+                    rowClasses.includes("transaction-status-canceled") ||
+                    rowClasses.includes("transaction-status-refunded") ||
+                    rowClasses.includes("cancel") ||
+                    rowClasses.includes("canceled") ||
+                    rowClasses.includes("refunded") ||
+                    rowClasses.includes("disabled") ||
+                    /\b(отменено|отменен|отмена|canceled|cancelled|refunded)\b/i.test(statusText) ||
+                    (!/^Отмена вывода/i.test(title) && /\b(отменено|отменен|canceled|cancelled|refunded)\b/i.test(fullText))
+                ) {
+                    status = "cancel";
+                } else if (
+                    rowClasses.includes("transaction-status-waiting") ||
+                    rowClasses.includes("waiting") ||
+                    rowClasses.includes("pending") ||
+                    /\b(ожидание|в обработке|waiting|pending)\b/i.test(statusText)
+                ) {
+                    status = "waiting";
+                }
                 // тип операции по тексту описания
                 let type = "other";
                 if (/^Заказ\s/i.test(title)) type = "order";
@@ -212,9 +234,9 @@ function parseSalesPage(html) {
 function parseLotEditPage(html) {
     try {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const form = doc.querySelector('form.form-offer-editor');
+        const form = doc.querySelector('form.form-offer-editor, form[action*="offerSave"], form[action*="offerEdit"], form#offer-edit, form.lot-edit-form');
         if (!form) {
-            throw new Error('Форма редактирования лота не найдена на странице.');
+            return null;
         }
 
         const formData = new FormData(form);
@@ -248,6 +270,18 @@ function parseLotEditPage(html) {
         // keep csrf_token for saving; remove only location
         delete dataObject.location;
 
+        if (!dataObject.node_id && dataObject.node) dataObject.node_id = dataObject.node;
+        if (!dataObject.node_id && dataObject.nodeId) dataObject.node_id = dataObject.nodeId;
+        if (!dataObject.node_id) {
+            const backLink = doc.querySelector('a.js-back-link, a[href*="/lots/"], a[href*="/chips/"]');
+            const m = backLink?.getAttribute('href')?.match(/\/(?:lots|chips)\/(\d+)/i);
+            if (m) dataObject.node_id = m[1];
+        }
+        if (!dataObject.node_id) {
+            const nodeInp = doc.querySelector('input[name="node_id"], input[name="node"], input[name="nodeId"], [data-node-id]');
+            if (nodeInp) dataObject.node_id = nodeInp.value || nodeInp.getAttribute('data-node-id') || '';
+        }
+
         // FIX 3.2: Зависимые поля (например, "Название игры" при выборе "Прочие") 
         // подгружаются FunPay через AJAX, поэтому их нет в чистом HTML формы.
         // Вытаскиваем их из встроенного JSON или data-атрибутов.
@@ -271,15 +305,73 @@ function parseLotEditPage(html) {
             // Проверяем data-offer на любых элементах
             const offerEl = doc.querySelector('[data-offer]');
             if (offerEl) {
-                processOfferData(JSON.parse(offerEl.getAttribute('data-offer')));
+                try { processOfferData(JSON.parse(offerEl.getAttribute('data-offer'))); } catch (_) {}
             }
 
-            // Проверяем inline-скрипты
+            // Проверяем inline-скрипты с поиском полных вложенных JSON-структур
             doc.querySelectorAll('script').forEach(script => {
                 const text = script.textContent;
-                if (text && text.includes('fields')) {
-                    const match = text.match(/(?:var|let|const)\s+(?:offer|offerData|lotData|data)\s*=\s*(\{.*?\});/);
-                    if (match) processOfferData(JSON.parse(match[1]));
+                if (!text || !text.includes('fields')) return;
+
+                const varMatches = text.matchAll(/(?:var|let|const)\s+(?:offer|offerData|lotData|data)\s*=\s*\{/g);
+                for (const match of varMatches) {
+                    const startIdx = match.index + match[0].length - 1;
+                    let depth = 0;
+                    let endIdx = -1;
+                    let inString = false;
+                    let quoteChar = '';
+                    let isEscaped = false;
+
+                    for (let i = startIdx; i < text.length; i++) {
+                        const char = text[i];
+                        if (isEscaped) {
+                            isEscaped = false;
+                            continue;
+                        }
+                        if (char === '\\') {
+                            isEscaped = true;
+                            continue;
+                        }
+                        if (inString) {
+                            if (char === quoteChar) {
+                                inString = false;
+                            }
+                            continue;
+                        }
+                        if (char === '"' || char === "'") {
+                            inString = true;
+                            quoteChar = char;
+                            continue;
+                        }
+                        if (char === '{') {
+                            depth++;
+                        } else if (char === '}') {
+                            depth--;
+                            if (depth === 0) {
+                                endIdx = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (endIdx > startIdx) {
+                        try {
+                            const jsonStr = text.slice(startIdx, endIdx + 1);
+                            let parsed = null;
+                            try {
+                                parsed = JSON.parse(jsonStr);
+                            } catch (_) {
+                                try {
+                                    // Безопасная нормализация relaxed JSON без eval / new Function
+                                    const normalized = jsonStr
+                                        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+                                        .replace(/'/g, '"');
+                                    parsed = JSON.parse(normalized);
+                                } catch (_) {}
+                            }
+                            if (parsed) processOfferData(parsed);
+                        } catch (_) {}
+                    }
                 }
             });
         } catch (err) {
@@ -301,6 +393,11 @@ function parseLotEditPage(html) {
         const autoDelivToggle = form.querySelector('input[name="auto_delivery"], input[name="fields[auto_delivery]"]');
         if (autoDelivToggle) {
             dataObject[autoDelivToggle.getAttribute('name')] = autoDelivToggle.checked ? (autoDelivToggle.value || 'on') : '';
+        }
+
+        // Ensure deleted is never empty string in dataObject
+        if (dataObject.deleted === '' || dataObject.deleted === '0' || !dataObject.deleted) {
+            delete dataObject.deleted;
         }
 
         // 3.0 FIX: normalize multi-line text fields so export/import doesn't accumulate
@@ -368,17 +465,18 @@ function parsePublicLotForClone(html) {
         const backLink = doc.querySelector('a.js-back-link');
         if (backLink) {
             const href = backLink.getAttribute('href') || '';
-            const parts = href.split('/').filter(Boolean); // [..., 'lots', '<node>'] или [..., 'chips', '<node>']
-            const nodeCand = parts[parts.length - 1];
-            if (nodeCand && /^\d+$/.test(nodeCand)) nodeId = nodeCand;
-            isChips = href.includes('/chips/');
+            const m = href.match(/\/(?:lots|chips)\/(\d+)/i);
+            if (m) {
+                nodeId = m[1];
+                isChips = href.includes('/chips/');
+            }
             categoryName = backLink.textContent.trim();
         }
         // запасные селекторы, если разметка изменится
         if (!nodeId) {
-            const alt = doc.querySelector('a[href*="/lots/"][href$="/"], a[href*="/chips/"][href$="/"]');
-            const m = alt?.getAttribute('href')?.match(/\/(lots|chips)\/(\d+)\//);
-            if (m) { nodeId = m[2]; isChips = m[1] === 'chips'; categoryName = categoryName || alt.textContent.trim(); }
+            const alt = doc.querySelector('a[href*="/lots/"], a[href*="/chips/"]');
+            const m = alt?.getAttribute('href')?.match(/\/(?:lots|chips)\/(\d+)/i);
+            if (m) { nodeId = m[1]; isChips = (alt.getAttribute('href') || '').includes('/chips/'); categoryName = categoryName || alt.textContent.trim(); }
         }
 
         const SUMMARY_H = ['краткое описание', 'короткий опис', 'short description'];
@@ -503,10 +601,10 @@ function parsePublicLotForClone(html) {
 function parseOfferEditPrice(html) {
     try {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const form = doc.querySelector('form.form-offer-editor');
+        const form = doc.querySelector('form.form-offer-editor, form[action*="offerSave"], form[action*="offerEdit"], form#offer-edit, form.lot-edit-form');
         if (!form) return null;
         const priceInput = form.querySelector('input[name="price"]');
-        const nodeInput = form.querySelector('input[name="node_id"]');
+        const nodeInput = form.querySelector('input[name="node_id"], input[name="node"], input[name="nodeId"]');
         const nodeId = nodeInput ? (nodeInput.getAttribute('value') || '') : '';
         let price = priceInput ? (priceInput.getAttribute('value') || '').trim().replace(/\s/g, '').replace(',', '.') : '';
         // валюта из подписи рядом с полем цены (₽ / $ / €)
@@ -570,8 +668,14 @@ function parseSellerLotPrice(html, offerId) {
 function solveCloneForm(html, attributes, attributePairs) {
     try {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const form = doc.querySelector('form.form-offer-editor');
-        if (!form) throw new Error('Форма создания лота не найдена (offerEdit).');
+        const form = doc.querySelector('form.form-offer-editor, form[action*="offerSave"], form[action*="offerEdit"], form#offer-edit, form.lot-edit-form');
+        if (!form) {
+            const isLogin = doc.querySelector('input[name="login"], form.form-signin, a[href*="/account/login"]');
+            if (isLogin) {
+                throw new Error('Сессия не авторизована на FunPay (перенаправление на страницу входа). Проверьте golden_key.');
+            }
+            throw new Error('Форма создания лота не найдена (offerEdit).');
+        }
 
         const attrs = (attributes || []).map(a => String(a).toLowerCase());
         // Пары «заголовок параметра → значение» с публичной страницы лота
@@ -816,11 +920,14 @@ function parseChatList(html) {
             const nodeMsg = parseInt(item.dataset.nodeMsg, 10);   // last message id in the chat
             const userMsg = parseInt(item.dataset.userMsg, 10);   // last message id the user has read
             const rawMsg = item.querySelector('.contact-item-message')?.textContent || '';
+            const authorEl = item.querySelector('.contact-item-author, .author, span.contact-item-author');
+            const authorText = authorEl ? authorEl.textContent.trim() : '';
+            const hasAuthorMe = /^(?:Вы|You)\b/i.test(authorText);
             const lastByBot = rawMsg.includes(BOT_MARKER) || rawMsg.includes(OLD_BOT_MARKER);
             // strip marker + zero-width chars for clean text used in matching
-            const cleanMsg = rawMsg.replace(/[\u2061\u2064]/g, '').trim();
+            const cleanMsg = rawMsg.replace(/[\u200B-\u200D\uFEFF\u2060\u2061\u2064]/g, '').trim();
             // lastByMe: true when the last message was sent BY the current user (manual or bot).
-            const isOutPrefix = /^(?:Вы|You):\s*/i.test(cleanMsg) || /^(?:Вы|You):\s*/i.test(rawMsg);
+            const isOutPrefix = hasAuthorMe || /^(?:Вы|You)\s*:/i.test(cleanMsg) || /^\s*(?:Вы|You)\s*:/i.test(rawMsg);
             const lastByMe = lastByBot || isOutPrefix;
             const nodeMsgVal = Number.isNaN(nodeMsg) ? null : nodeMsg;
             const userMsgVal = Number.isNaN(userMsg) ? null : userMsg;
@@ -830,7 +937,7 @@ function parseChatList(html) {
                 msgId: item.dataset.nodeMsg,
                 nodeMsg: nodeMsgVal,
                 userMsg: userMsgVal,
-                messageText: cleanMsg.replace(/^(?:Вы|You):\s*/i, '').trim(),
+                messageText: cleanMsg.replace(/^(?:Вы|You)\s*:\s*/i, '').trim(),
                 lastByBot,
                 lastByMe,
                 isUnread: item.classList.contains('unread'),
@@ -935,11 +1042,15 @@ function parseUserCategories(html) {
     try {
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const categories = [];
+        const seenCatIds = new Set();
         const offerBlocks = doc.querySelectorAll('.offer');
         
-        offerBlocks.forEach(block => {
+        offerBlocks.forEach((block, idx) => {
+            if (block.id === 'foxen-pinned-lots-container') return;
+
             // Ищем правильную ссылку для поднятия (`.../trade`)
-            const managementLink = block.querySelector('a.btn-plus') || block.querySelector('a.edit') || block.querySelector('a[href*="/trade"]');
+            const tradeLink = block.querySelector('a[href*="/trade"]');
+            const managementLink = tradeLink || block.querySelector('a.btn-plus') || block.querySelector('a.edit');
             // Ищем ссылку с названием для отображения
             let titleLink = block.querySelector('.offer-list-title h3 a');
             // Если ссылка не внутри h3, ищем просто в заголовке
@@ -951,24 +1062,47 @@ function parseUserCategories(html) {
                 
                 const lotItems = block.querySelectorAll('.tc-item');
                 const publicUrl = new URL(titleLink.href, 'https://funpay.com/');
-                const nodeIdMatch = publicUrl.pathname.match(/\/lots\/(\d+)/);
+                const nodeIdMatch = publicUrl.pathname.match(/\/(?:lots|chips)\/(\d+)/);
 
-                const lots = Array.from(lotItems).map(item => {
-                    const idMatch = item.getAttribute('href')?.match(/id=(\d+)/);
-                    // FIX: track auto-delivery per individual lot, not just category-wide
+                // Формируем уникальный и валидный URL категории для поднятия и идентификации
+                let catId;
+                if (tradeLink) {
+                    catId = tradeLink.getAttribute('href');
+                } else if (nodeIdMatch) {
+                    catId = `${publicUrl.pathname.replace(/\/+$/, '')}/trade`;
+                } else {
+                    catId = url.pathname + (url.search || `?idx=${idx}`);
+                }
+
+                if (seenCatIds.has(catId)) return;
+                seenCatIds.add(catId);
+
+                const seenLotsInCat = new Set();
+                const lots = [];
+                lotItems.forEach(item => {
+                    if (item.classList.contains('fp-pinned-row')) return;
+                    const href = item.getAttribute('href') || '';
+                    const idMatch = href.match(/[?&]id=(\d+)/) || href.match(/offer=(\d+)/) || (item.getAttribute('data-offer') ? [null, item.getAttribute('data-offer')] : null);
+                    if (!idMatch || !idMatch[1]) return;
+                    const lotId = String(idMatch[1]);
+                    if (seenLotsInCat.has(lotId)) return;
+                    seenLotsInCat.add(lotId);
+
                     const lotHasAutoDelivery = !!item.querySelector('i.auto-dlv-icon, .sc-auto-delivery, [class*="auto-dlv"]');
-                    return {
-                        id: idMatch ? idMatch[1] : null,
-                        nodeId: nodeIdMatch ? nodeIdMatch[1] : null,
-                        title: item.querySelector('.tc-desc-text')?.textContent.trim() || 'Без названия',
+                    const lotTitle = item.querySelector('.tc-desc-text, .tc-title')?.textContent.trim() || `Лот #${lotId}`;
+                    lots.push({
+                        id: lotId,
+                        nodeId: nodeIdMatch ? nodeIdMatch[1] : (url.searchParams.get('node') || null),
+                        categoryName: name,
+                        title: lotTitle,
                         hasAutoDelivery: lotHasAutoDelivery
-                    };
-                }).filter(lot => lot.id && lot.nodeId);
+                    });
+                });
 
-                // FIX: category has auto-delivery only if AT LEAST ONE lot has it
+                // category has auto-delivery only if AT LEAST ONE lot has it
                 const categoryHasAutoDelivery = lots.some(l => l.hasAutoDelivery);
                 
-                categories.push({ id: url.pathname, name: name, lots: lots, hasAutoDelivery: categoryHasAutoDelivery });
+                categories.push({ id: catId, name: name, lots: lots, hasAutoDelivery: categoryHasAutoDelivery });
             }
         });
         return categories;
@@ -1398,6 +1532,9 @@ function parseAccountSnapshot(html) {
         if (!out.avatar) {
             const img = photo.querySelector('img');
             if (img) out.avatar = img.getAttribute('src') || '';
+        }
+        if (out.avatar && out.avatar.startsWith('/')) {
+            out.avatar = 'https://funpay.com' + out.avatar;
         }
     }
 

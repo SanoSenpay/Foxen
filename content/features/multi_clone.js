@@ -240,40 +240,50 @@
         const s = src.source;
         const fields = { ...src.fields };
         fields['offer_id'] = '0';
-        fields['fields[summary][ru]'] = s.summary || '';
-        fields['fields[desc][ru]'] = s.description || '';
+        if (s.nodeId) fields['node_id'] = String(s.nodeId);
+        fields['fields[summary][ru]'] = s.summary_ru || s.summary || fields['fields[summary][ru]'] || '';
+        fields['fields[desc][ru]'] = s.desc_ru || s.description || fields['fields[desc][ru]'] || '';
         // EN: только если реально отличается, иначе оставляем пустым
-        fields['fields[summary][en]'] = (s.enDiffers && s.summary_en) ? s.summary_en : '';
-        fields['fields[desc][en]'] = (s.enDiffers && s.desc_en) ? s.desc_en : '';
+        fields['fields[summary][en]'] = (s.enDiffers && s.summary_en) ? s.summary_en : (fields['fields[summary][en]'] || '');
+        fields['fields[desc][en]'] = (s.enDiffers && s.desc_en) ? s.desc_en : (fields['fields[desc][en]'] || '');
+        if (s.payment_msg_ru) fields['fields[payment_msg][ru]'] = s.payment_msg_ru;
+        if (s.payment_msg_en) fields['fields[payment_msg][en]'] = s.payment_msg_en;
+        if (s.secrets) fields['secrets'] = s.secrets;
         if (s.finalPrice != null && !Number.isNaN(s.finalPrice) && s.finalPrice > 0) fields['price'] = String(s.finalPrice);
         else if (s.rawPrice) fields['price'] = String(s.rawPrice);
         fields['amount'] = (s.amount && /^\d+$/.test(s.amount)) ? s.amount : (fields['amount'] || '1');
         fields['active'] = 'on';
         fields['secrets'] = fields['secrets'] || '';
         fields['fields[images]'] = fields['fields[images]'] || '';
+        if (!fields['location']) fields['location'] = 'offer';
 
         return {
-            sourceTitle: s.summary || `Лот #${offerId}`,
+            sourceTitle: s.summary_ru || s.summary || `Лот #${offerId}`,
             sourceCategory: s.categoryName || 'Неизвестная категория',
             data: fields
         };
     }
 
     async function runBatchExport() {
-        if (isExportRunning && activeExportLogger) {
-            activeExportLogger.show();
+        if (isExportRunning) {
+            if (activeExportLogger) activeExportLogger.show();
             return;
         }
 
         const selectedCheckboxes = document.querySelectorAll('.tc-item .lot-box input:checked');
         const items = [];
+        const seenLotIds = new Set();
         selectedCheckboxes.forEach(chk => {
             const a = chk.closest('a.tc-item');
             if (!a) return;
             const href = a.getAttribute('href') || '';
             const m = href.match(/[?&]id=(\d+)/) || href.match(/offer=(\d+)/) || (a.getAttribute('data-offer') ? [null, a.getAttribute('data-offer')] : null);
-            const title = a.querySelector('.tc-title')?.textContent?.trim() || `Лот #${m ? m[1] : ''}`;
-            if (m && m[1]) items.push({ id: m[1], title });
+            if (!m || !m[1]) return;
+            const lotId = String(m[1]);
+            if (seenLotIds.has(lotId)) return;
+            seenLotIds.add(lotId);
+            const title = a.querySelector('.tc-title')?.textContent?.trim() || `Лот #${lotId}`;
+            items.push({ id: lotId, title });
         });
 
         const logEl = document.querySelector('.actions .log');
@@ -297,10 +307,15 @@
             return;
         }
 
-        if (!confirm(`Экспортировать ${items.length} лот(ов) в JSON для последующего импорта?`)) return;
-
         isExportRunning = true;
         toggleActions(true);
+
+        const shouldExport = confirm(`Экспортировать ${items.length} лот(ов) в JSON для последующего импорта?`);
+        if (!shouldExport) {
+            isExportRunning = false;
+            toggleActions(false);
+            return;
+        }
 
         let logger = activeExportLogger;
         if (!logger) {
@@ -314,92 +329,105 @@
 
         let ok = 0, fail = 0;
         const exportedData = [];
+        const exportedLotIds = new Set();
         const failedLotIds = [];
 
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            const id = item.id;
-            logger.updateProgress(i, items.length, `Обработка лота ${i + 1} из ${items.length}...`);
-            updateLog(`Экспорт ${i + 1}/${items.length} (#${id})…`);
-            
-            let attempts = 0;
-            let success = false;
-            
-            while (attempts < 2 && !success) {
-                attempts++;
-                try {
-                    const data = await getExportDataOne(id);
-                    exportedData.push(data);
-                    ok++;
-                    success = true;
-                    logger.addLog(`Лот #${id} (${item.title}): обработан успешно`, 'success');
-                } catch (e) {
-                    console.error(`[Foxen Batch Export Error] Lot #${id}:`, e);
-                    const errMsg = String(e.message || e);
-                    const isNetworkErr = errMsg.includes('NetworkError') || errMsg.includes('Failed to fetch') || errMsg.includes('Network request failed') || errMsg.includes('Превышено время ожидания');
-                    
-                    if (errMsg.includes('429')) {
-                        logger.addLog(`Лот #${id}: Лимит запросов (429). Ждём 10 секунд перед повтором...`, 'warning');
-                        updateLog(`⚠ #${id}: Слишком много запросов (429). Ждём 10 сек...`, true);
-                        await new Promise(resolve => setTimeout(resolve, 10000));
-                        if (attempts === 2) {
-                            fail++;
-                            failedLotIds.push(id);
-                            logger.addLog(`Лот #${id}: Пропущен из-за превышения лимита 429`, 'error');
+        try {
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const id = String(item.id);
+                if (exportedLotIds.has(id)) continue;
+
+                logger.updateProgress(i, items.length, `Обработка лота ${i + 1} из ${items.length}...`);
+                updateLog(`Экспорт ${i + 1}/${items.length} (#${id})…`);
+                
+                let attempts = 0;
+                let success = false;
+                
+                while (attempts < 2 && !success) {
+                    attempts++;
+                    try {
+                        const data = await getExportDataOne(id);
+                        if (!exportedLotIds.has(id)) {
+                            exportedLotIds.add(id);
+                            exportedData.push(data);
                         }
-                    } else if (isNetworkErr) {
-                        if (attempts < 2) {
-                            logger.addLog(`Лот #${id}: ${errMsg.includes('Превышено') ? 'Таймаут ожидания (45с)' : 'Сетевой сбой'}. Повторная попытка через 5 сек...`, 'warning');
-                            await new Promise(resolve => setTimeout(resolve, 5000));
+                        ok++;
+                        success = true;
+                        logger.addLog(`Лот #${id} (${item.title}): обработан успешно`, 'success');
+                    } catch (e) {
+                        console.error(`[Foxen Batch Export Error] Lot #${id}:`, e);
+                        const errMsg = String(e.message || e);
+                        const isNetworkErr = errMsg.includes('NetworkError') || errMsg.includes('Failed to fetch') || errMsg.includes('Network request failed') || errMsg.includes('Превышено время ожидания');
+                        
+                        if (errMsg.includes('429')) {
+                            logger.addLog(`Лот #${id}: Лимит запросов (429). Ждём 10 секунд перед повтором...`, 'warning');
+                            updateLog(`⚠ #${id}: Слишком много запросов (429). Ждём 10 сек...`, true);
+                            await new Promise(resolve => setTimeout(resolve, 10000));
+                            if (attempts === 2) {
+                                fail++;
+                                failedLotIds.push(id);
+                                logger.addLog(`Лот #${id}: Пропущен из-за превышения лимита 429`, 'error');
+                            }
+                        } else if (isNetworkErr) {
+                            if (attempts < 2) {
+                                logger.addLog(`Лот #${id}: ${errMsg.includes('Превышено') ? 'Таймаут ожидания (45с)' : 'Сетевой сбой'}. Повторная попытка через 5 сек...`, 'warning');
+                                await new Promise(resolve => setTimeout(resolve, 5000));
+                            } else {
+                                fail++;
+                                failedLotIds.push(id);
+                                logger.addLog(`Лот #${id} (${item.title}): Не удалось получить данные (${errMsg})`, 'error');
+                            }
                         } else {
                             fail++;
                             failedLotIds.push(id);
-                            logger.addLog(`Лот #${id} (${item.title}): Не удалось получить данные (${errMsg})`, 'error');
+                            logger.addLog(`Лот #${id} (${item.title}): ${errMsg}`, 'error');
+                            break;
                         }
-                    } else {
-                        fail++;
-                        failedLotIds.push(id);
-                        logger.addLog(`Лот #${id} (${item.title}): ${errMsg}`, 'error');
-                        break;
                     }
+                }
+                
+                logger.updateProgress(i + 1, items.length, `Обработано ${i + 1} из ${items.length}`);
+
+                if (i < items.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 5500));
                 }
             }
             
-            logger.updateProgress(i + 1, items.length, `Обработано ${i + 1} из ${items.length}`);
-
-            if (i < items.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 5500));
+            if (exportedData.length > 0) {
+                logger.addLog(`Формирование JSON файла...`, 'info');
+                const blob = new Blob([JSON.stringify(exportedData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `funpay_lots_cloned_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                logger.addLog(`Файл экспорта сохранён в загрузки!`, 'success');
             }
+            
+            const finalText = `Экспорт завершён: ${ok} экспортировано, ${fail} с ошибкой.`;
+            updateLog(finalText, fail > 0);
+            logger.finish(finalText, failedLotIds);
+            if (typeof showNotification === 'function') showNotification(finalText, fail > 0);
+        } finally {
+            isExportRunning = false;
+            toggleActions(false);
         }
-        
-        if (exportedData.length > 0) {
-            logger.addLog(`Формирование JSON файла...`, 'info');
-            const blob = new Blob([JSON.stringify(exportedData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `funpay_lots_cloned_${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            logger.addLog(`Файл экспорта сохранён в загрузки!`, 'success');
-        }
-        
-        const finalText = `Экспорт завершён: ${ok} экспортировано, ${fail} с ошибкой.`;
-        updateLog(finalText, fail > 0);
-        logger.finish(finalText, failedLotIds);
-        if (typeof showNotification === 'function') showNotification(finalText, fail > 0);
-        isExportRunning = false;
-        toggleActions(false);
     }
 
     function init() {
+        if (window.__foxenBatchExportInit) return;
+        window.__foxenBatchExportInit = true;
+
         // Навешиваем обработчик на клик по кнопке .export-lots в панели действий
         document.addEventListener('click', function (e) {
             const btn = e.target.closest('.actions .export-lots');
             if (btn) {
                 e.preventDefault();
+                e.stopImmediatePropagation();
                 runBatchExport();
             }
         });

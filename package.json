@@ -1,4 +1,19 @@
 {
+  "name": "foxen",
+  "version": "3.4.0",
+  "description": "Foxen - Extension and Web Platform for FunPay Sellers",
+  "scripts": {
+    "build": "node build.js",
+    "fx-build": "node build.js",
+    "build-for-amo": "npm run fx-build",
+    "build:lint": "node build.js --lint",
+    "build:patch": "node build.js --bump=patch",
+    "build:minor": "node build.js --bump=minor",
+    "build:major": "node build.js --bump=major",
+    "check:git": "node check-git.js",
+    "check:git:fix": "node check-git.js --fix",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
   "dependencies": {
     "jsdom": "^29.1.1"
   }

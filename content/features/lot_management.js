@@ -362,8 +362,16 @@ function setupActionProcessing() {
             return;
         }
         let activeSel = 0, inactiveSel = 0;
+        const countedOfferIds = new Set();
         $('.tc-item .lot-box input:checked').each(function() {
             const row = $(this).closest('.tc-item');
+            const href = row.attr('href') || '';
+            const m = href.match(/(?:offer=|id=)(\d+)/) || (row.data('offer') ? [null, row.data('offer')] : null);
+            const id = m ? String(m[1]) : null;
+            if (id) {
+                if (countedOfferIds.has(id)) return;
+                countedOfferIds.add(id);
+            }
             if (row.hasClass('warning')) inactiveSel++; else activeSel++;
         });
         const $act = $('.actions .activate-lot');
@@ -565,6 +573,7 @@ function setupActionProcessing() {
         let errorCount = 0;
 
         const isProfileSalesPage = window.location.pathname.includes('/users/');
+        const processedOfferIds = new Set();
         
         for (const checkbox of selectedCheckboxes) {
             const $lotLink = $(checkbox).closest('a.tc-item');
@@ -585,6 +594,9 @@ function setupActionProcessing() {
 
             const offerIdMatch = offerLink.match(/(?:offer=|id=)(\d+)/);
             const offerId = offerIdMatch ? offerIdMatch[1] : $lotLink.data('offer');
+
+            if (!offerId || processedOfferIds.has(String(offerId))) continue;
+            processedOfferIds.add(String(offerId));
             
             let nodeId;
             if (isProfileSalesPage) {

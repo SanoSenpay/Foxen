@@ -1,19 +1,23 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "3.3.0",
+    "version": "3.4.0",
     "description": "300+ инструментов для FunPay: ИИ-помощник, автоматизация, аналитика, кастомизация и телеметрия.",
     "homepage_url": "https://github.com/SanoSenpay/Foxen",
     "developer": {
         "name": "SanoSenpay",
-        "url": "https://github.com/SanoSenpay/Foxen/blob/main/PRIVACY_POLICY.md"
+        "url": "https://web.foxen.site/"
     },
     "permissions": [
         "storage",
+        "unlimitedStorage",
         "tabs",
         "cookies",
         "alarms",
         "notifications",
+        "https://api.foxen.site/*",
+        "https://*.foxen.site/*",
+        "https://foxen.site/*",
         "https://fptools-ai-server.vercel.app/*",
         "https://fptools.onrender.com/*",
         "https://funpay.com/*",
@@ -28,7 +32,9 @@
         "https://fonts.gstatic.com/*",
         "https://support.funpay.com/*",
         "https://api.telegram.org/*",
-        "https://translate.googleapis.com/*"
+        "https://translate.googleapis.com/*",
+        "https://*.supabase.co/*",
+        "https://yoacfrbedwksnfksjjmv.supabase.co/*"
     ],
     "icons": {
         "128": "icons/icon128.png"
@@ -49,7 +55,26 @@
         },
         {
             "matches": [
-                "https://funpay.com/*"
+                "https://funpay.com/*",
+                "https://*.funpay.com/*",
+                "https://web.foxen.site/*",
+                "https://foxen.site/*",
+                "https://*.foxen.site/*",
+                "http://localhost/*",
+                "http://127.0.0.1/*",
+                "*://localhost/*",
+                "*://127.0.0.1/*",
+                "*://*.localhost/*"
+            ],
+            "js": [
+                "content/features/web_bridge.js"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "matches": [
+                "https://funpay.com/*",
+                "https://*.funpay.com/*"
             ],
             "js": [
                 "content/theme_flash_fix.js"
@@ -59,7 +84,8 @@
         },
         {
             "matches": [
-                "https://funpay.com/*"
+                "https://funpay.com/*",
+                "https://*.funpay.com/*"
             ],
             "js": [
                 "content/scripts/jquery.js",
@@ -74,6 +100,7 @@
                 "content/ui/settings_loader.js",
                 "content/features/font_tools.js",
                 "content/features/accounts.js",
+                "content/features/supabase_client.js",
                 "content/features/ai_chat.js",
                 "content/features/auto_delivery.js",
                 "content/features/homepage_redesign.js",
@@ -124,6 +151,7 @@
                 "content/features/profile_raise_all.js",
                 "content/features/support.js",
                 "content/features/chat_lot_note.js",
+                "content/features/chat_order_badge.js",
                 "content/features/discord.js",
                 "content/features/finance.js",
                 "content/features/lot_notes.js",
@@ -148,6 +176,7 @@
                 "content/features/new_chat_starter.js",
                 "content/features/particle_fx.js",
                 "content/features/news_tab.js",
+                "content/features/nickname_fx_renderer.js",
                 "content/error_page_reload.js"
             ],
             "css": [
@@ -155,8 +184,7 @@
                 "css/main_popup.css",
                 "css/image_generator.css",
                 "css/ai_creator.css",
-                "css/live_styler.css",
-                "css/fpt_icons_theme.css"
+                "css/live_styler.css"
             ],
             "run_at": "document_idle"
         }
@@ -177,17 +205,20 @@
         "default_title": "Foxen"
     },
     "browser_specific_settings": {
-    "gecko": {
-        "id": "funpay-tools-firefox@sanosenpay",
-        "strict_min_version": "109.0",
-        "data_collection_permissions": {
-            "required": [
-                "none"
-            ],
-            "optional": [
-                "technicalAndInteraction"
-            ]
+        "gecko": {
+            "id": "funpay-tools-firefox@sanosenpay",
+            "strict_min_version": "140.0",
+            "data_collection_permissions": {
+                "required": [
+                    "none"
+                ],
+                "optional": [
+                    "technicalAndInteraction"
+                ]
+            }
+        },
+        "gecko_android": {
+            "strict_min_version": "142.0"
         }
     }
-}
 }

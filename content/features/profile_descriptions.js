@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const SERVER = 'https://foxen-profiles.sanosenpay.workers.dev';
+  const SERVER = 'https://api.foxen.site';
   const SHARED_KEY = 'fptoolsdim';
   const VERIFY_NODE_ID = '2046';
   const VERIFY_TITLE = 'FPT Verify';
@@ -41,6 +41,11 @@
   }
   function toast(msg, isError) {
     if (typeof showNotification === 'function') showNotification(msg, !!isError);
+  }
+  function hasProhibitedContacts(text) {
+    if (!text || typeof text !== 'string') return false;
+    const re = /@([a-zA-Z0-9_]{3,32})|(?:t\.me|telegram\.me|tg:\/\/|discord\.(?:gg|com\/invite)|vk\.com|wa\.me|viber\:\/\/)\/[^\s\n]+|\b(?:тг|tg|telegram|дискорд|discord|вк|vk|вайбер|viber|ватсап|whatsapp)\b|(?:\+?7|8)[\s\-\(]*\d{3}[\s\-\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}/i;
+    return re.test(text);
   }
 
   function waitFor(selector, timeout) {
@@ -180,11 +185,14 @@
    * Загрузка свежего каталога баннеров с удаленного сервера
    */
   async function fetchServerCatalog() {
-    // 1. Попытка загрузки актуального каталога с GitHub Raw
+    // 1. Попытка загрузки актуального каталога с GitHub Raw (с тэг-параметром против кэширования браузера)
+    const t = Date.now();
     const ghUrls = [
-      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners-catalog.json',
-      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/banners-catalog.json',
-      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners.json'
+      `https://cdn.jsdelivr.net/gh/SanoSenpay/FoxenThemes@main/banners-catalog.json?_t=${t}`,
+      `https://cdn.jsdelivr.net/gh/SanoSenpay/FoxenThemes@main/banners/banners-catalog.json?_t=${t}`,
+      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners-catalog.json?_t=${t}`,
+      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/banners-catalog.json?_t=${t}`,
+      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners.json?_t=${t}`
     ];
     for (const url of ghUrls) {
       try {
@@ -230,24 +238,26 @@
   /**
    * Полный цикл получения каталога (Локальный кэш -> Сервер -> Резервный файл расширения)
    */
-  async function loadCatalog() {
-    if (_catalog && Array.isArray(_catalog.banners) && _catalog.banners.length > 0) return _catalog;
+  async function loadCatalog(forceRefresh = false) {
+    if (!forceRefresh && _catalog && Array.isArray(_catalog.banners) && _catalog.banners.length > 5) return _catalog;
 
-    // 1. Быстрое чтение из локального кэша для моментального отображения
-    try {
-      const cached = (await storageGet([CATALOG_CACHE_KEY]))[CATALOG_CACHE_KEY];
-      if (cached && cached.catalog && Array.isArray(cached.catalog.banners) && cached.catalog.banners.length > 0) {
-        _catalog = cached.catalog;
-        if (Date.now() - (cached.t || 0) > CATALOG_CACHE_TTL) {
+    // 1. Быстрое чтение из локального кэша только если там больше 5 баннеров
+    if (!forceRefresh) {
+      try {
+        const cached = (await storageGet([CATALOG_CACHE_KEY]))[CATALOG_CACHE_KEY];
+        if (cached && cached.catalog && Array.isArray(cached.catalog.banners) && cached.catalog.banners.length > 5) {
+          _catalog = cached.catalog;
           refreshCatalogBackground();
+          return _catalog;
         }
-        return _catalog;
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
 
     // 2. Запрос актуального каталога с бэкенда
     const fetched = await fetchServerCatalog();
     if (fetched) return fetched;
+
+    if (_catalog && Array.isArray(_catalog.banners) && _catalog.banners.length > 0) return _catalog;
 
     // 3. Запасной вариант: локальный встроенный файл
     try {
@@ -458,12 +468,15 @@
     s.textContent =
       '.' + CARD + '{background:rgba(18,18,18,0.4);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:16px;overflow:hidden;margin-bottom:24px;box-shadow:0 12px 40px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.06);position:relative;}' +
       '.' + CARD + ' .profile.fxn-profile-body{padding:80px 28px 32px;text-align:center;background:transparent;position:relative;}' +
-      '.' + CARD + ' .profile > h1.mb40{display:none !important;}' +
+      '.' + CARD + ' .profile h1, .' + CARD + ' h1.mb40, .' + CARD + ' .media-body > h1, .' + CARD + ' .profile > h1{display:none !important;}' +
       '.' + IDENTITY + '{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}' +
       '.fxn-profile-name{font-size:26px;font-weight:700;color:#fff;line-height:1.2;}' +
       '.fxn-profile-status{font-size:14px;font-weight:500;color:#888;line-height:1.2;}' +
       '.fxn-profile-status.fxn-online{color:#22c55e;}' +
       '.' + IDENTITY + ' .user-badges{margin:0;}' +
+      '.fxn-avatar-status{position:absolute !important;bottom:3px !important;right:3px !important;width:20px !important;height:20px !important;border-radius:50% !important;background-color:#23a55a !important;border:3.5px solid #121318 !important;box-sizing:border-box !important;z-index:15 !important;pointer-events:auto !important;box-shadow:0 2px 6px rgba(0,0,0,0.4) !important;}' +
+      '.fxn-avatar-status.fxn-status-online{background-color:#23a55a !important;}' +
+      '.fxn-avatar-status.fxn-status-offline{background-color:#80848e !important;}' +
       '.fxn-profile-rating{display:inline-flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:24px;cursor:pointer;position:relative;z-index:20;}' +
       '.fxn-stars-wrapper{position:relative;display:inline-flex;}' +
       '.fxn-stars-bg, .fxn-stars-fg{display:flex;gap:4px;}' +
@@ -573,17 +586,24 @@
     card.classList.add(CARD);
     profile.classList.add('fxn-profile-body');
 
+    // Always hide native h1 in FunPay profile to prevent duplicate nickname behind avatar
+    const allH1 = card.querySelectorAll('h1, h1.mb40, .media-body > h1, .profile h1');
+    allH1.forEach(h => {
+      h.style.setProperty('display', 'none', 'important');
+    });
+
     if (!profile.querySelector('.' + IDENTITY)) {
-      const h1 = profile.querySelector('h1.mb40');
+      const h1 = profile.querySelector('h1.mb40, .media-body > h1, h1') || card.querySelector('h1');
       if (h1) {
+        h1.style.setProperty('display', 'none', 'important');
         const identity = document.createElement('div');
         identity.className = IDENTITY;
 
-        const nameSrc = h1.querySelector('.mr4') || h1.querySelector('a');
+        const nameSrc = h1.querySelector('.mr4') || h1.querySelector('a') || h1;
         if (nameSrc) {
           const name = document.createElement('span');
           name.className = 'fxn-profile-name';
-          name.textContent = nameSrc.textContent.trim();
+          name.textContent = (nameSrc.textContent || '').trim();
           identity.appendChild(name);
         }
 
@@ -592,15 +612,33 @@
 
         const statusEl = h1.querySelector('.media-user-status');
         const st = parseProfileStatus(h1, statusEl);
-        if (st.text) {
+        if (st.text && !st.online) {
           const status = document.createElement('span');
-          status.className = 'fxn-profile-status' + (st.online ? ' fxn-online' : '');
+          status.className = 'fxn-profile-status';
           status.textContent = st.text;
           identity.appendChild(status);
         }
 
-        profile.insertBefore(identity, h1);
+        if (h1.parentNode) {
+          h1.parentNode.insertBefore(identity, h1);
+        } else {
+          profile.prepend(identity);
+        }
       }
+    }
+
+    // Attach Discord-style status circle to avatar
+    const avatarEl = card.querySelector('.avatar') || document.querySelector('.container.profile-header .avatar');
+    if (avatarEl) {
+      let statusBadge = avatarEl.querySelector('.fxn-avatar-status');
+      if (!statusBadge) {
+        statusBadge = document.createElement('div');
+        statusBadge.className = 'fxn-avatar-status';
+        avatarEl.appendChild(statusBadge);
+      }
+      const st = parseProfileStatus(profile.querySelector('h1.mb40') || card.querySelector('h1.mb40'), profile.querySelector('.media-user-status') || card.querySelector('.media-user-status'));
+      statusBadge.className = 'fxn-avatar-status ' + (st.online ? 'fxn-status-online' : 'fxn-status-offline');
+      statusBadge.title = st.online ? 'Онлайн' : (st.text || 'Не в сети');
     }
 
     const identity = profile.querySelector('.' + IDENTITY);
@@ -765,6 +803,11 @@
     save.addEventListener('click', async () => {
       const text = ta.value;
       if (text === state.description) { renderView(root, state); return; }
+
+      if (hasProhibitedContacts(text)) {
+        toast('В описании обнаружены контакты (Telegram / ссылки / телефон). Указывать контакты запрещено.', true);
+        return;
+      }
       
       const now = Date.now();
       const lastUpdate = state.lastDescUpdate || 0;
@@ -1066,7 +1109,7 @@
   async function openBannerCatalog(cover, profileId, state) {
     if (document.querySelector('.fxn-banner-catalog')) return;
 
-    const catalog = await loadCatalog();
+    const catalog = await loadCatalog(true);
 
     const modal = document.createElement('div');
     modal.className = 'fxn-banner-catalog';
@@ -1217,13 +1260,15 @@
           </div>
 
           <div class="fxn-grid">
-            ${catalog.banners.map((b, i) => `
-              <div class="fxn-swatch fxn-banner-item ${state.bannerId === b.id ? 'selected' : ''}" style="animation-delay: ${i*0.02}s;" data-id="${b.id}" data-cat="${b.category}" data-url="${b.url}" data-name="${b.title}">
-                <div style="position: absolute; inset: 0; background-image: url('${b.url}'); background-size: cover; background-position: center; pointer-events: none;"></div>
+            ${catalog.banners.map((b, i) => {
+              const catStr = Array.isArray(b.category) ? b.category.join(', ') : (b.category || '');
+              return `
+              <div class="fxn-swatch fxn-banner-item ${state.bannerId === b.id ? 'selected' : ''}" style="animation-delay: ${i*0.02}s;" data-id="${b.id}" data-cat="${catStr}" data-url="${b.url}" data-name="${b.title}">
+                <img src="${b.preview || b.url}" loading="lazy" decoding="async" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; border-radius: inherit;" />
                 <span class="label">${b.title}</span>
                 <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></span>
               </div>
-            `).join('')}
+            `;}).join('')}
             ${catalog.banners.length === 0 ? '<div style="grid-column: 1 / -1; text-align: center; color: var(--ink-45); padding: 40px;">Каталог пуст</div>' : ''}
           </div>
         </div>
@@ -1307,8 +1352,13 @@
         
         const cat = btn.getAttribute('data-cat');
         items.forEach(item => {
-          if (cat === 'all' || item.getAttribute('data-cat') === cat) item.style.display = 'block';
-          else item.style.display = 'none';
+          const rawCat = item.getAttribute('data-cat') || '';
+          const itemCats = rawCat.split(',').map(s => s.trim().toLowerCase());
+          if (cat === 'all' || itemCats.includes(cat.toLowerCase()) || rawCat === cat) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
         });
       });
     });

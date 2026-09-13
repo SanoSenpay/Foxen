@@ -1,8 +1,8 @@
 function getModalOverlaysHTML() {
     return `
-        <div class="foxen-modal-overlay" id="autobump-category-modal-overlay" style="display: none;"><div class="foxen-modal-content"><div class="foxen-modal-header"><h3>Выберите категории для поднятия</h3><button class="foxen-modal-close">&times;</button></div><div class="foxen-modal-body"><div class="autobump-modal-controls"><input type="text" id="autobump-category-search" placeholder="Поиск по категориям..."><button id="autobump-select-all" class="btn btn-default" style="padding: 6px 12px; font-size: 13px;">Выбрать всё</button></div><div id="autobump-category-list" class="autobump-category-list"></div></div><div class="foxen-modal-footer"><button id="autobump-category-save" class="btn">Сохранить</button></div></div></div>
+        <div class="foxen-modal-overlay" id="autobump-category-modal-overlay" style="display: none; z-index: 20000000;"><div class="foxen-modal-content"><div class="foxen-modal-header"><h3>Выберите категории для поднятия</h3><button class="foxen-modal-close">&times;</button></div><div class="foxen-modal-body"><div class="autobump-modal-controls"><input type="text" id="autobump-category-search" placeholder="Поиск по категориям..."><button id="autobump-select-all" class="btn btn-default" style="padding: 6px 12px; font-size: 13px;">Выбрать всё</button></div><div id="autobump-category-list" class="autobump-category-list"></div></div><div class="foxen-modal-footer"><button id="autobump-category-save" class="btn">Сохранить</button></div></div></div>
 
-        <div class="foxen-modal-overlay" id="lot-io-export-modal" style="display: none;">
+        <div class="foxen-modal-overlay" id="lot-io-export-modal" style="display: none; z-index: 20000000;">
             <div class="foxen-modal-content">
                 <div class="foxen-modal-header">
                     <h3>Экспорт лотов</h3>
@@ -24,7 +24,7 @@ function getModalOverlaysHTML() {
                 </div>
             </div>
         </div>
-        <div class="foxen-modal-overlay" id="lot-io-import-progress-modal" style="display: none;">
+        <div class="foxen-modal-overlay" id="lot-io-import-progress-modal" style="display: none; z-index: 20000000;">
             <div class="foxen-modal-content">
                 <div class="foxen-modal-header">
                     <h3>Прогресс импорта</h3>
@@ -61,6 +61,7 @@ function getMainPopupHTML() {
                     <div class="fxn-nav-group">
                         <div class="fxn-nav-group-title">ОСНОВНОЕ</div>
                         <ul class="fxn-nav-vertical-list">
+                            <!-- <li data-page="profile"><a><span class="material-symbols-rounded nav-list-icon">person</span><span>Профиль & Подписка</span></a></li> -->
                             <li data-page="general" class="active"><a><span class="material-symbols-rounded nav-list-icon">settings</span><span>Общие настройки</span></a></li>
                             <li data-page="needs"><a><span class="material-symbols-rounded nav-list-icon">tune</span><span>Что тебе нужно</span></a></li>
                             <li data-page="accounts"><a><span class="material-symbols-rounded nav-list-icon">group</span><span>Аккаунты</span></a></li>
@@ -97,33 +98,18 @@ function getMainPopupHTML() {
                     </div>
 
                     <div class="fxn-nav-group">
-                        <div class="fxn-nav-group-title">ФИНАНСЫ & ИНСТРУМЕНТЫ</div>
+                        <div class="fxn-nav-group-title">ПРОЧЕЕ</div>
                         <ul class="fxn-nav-vertical-list">
-                            <li data-page="piggy_banks"><a><span class="material-symbols-rounded nav-list-icon">savings</span><span>Копилки</span></a></li>
-                            <li data-page="calculator"><a><span class="material-symbols-rounded nav-list-icon">calculate</span><span>Калькулятор</span></a></li>
-                            <li data-page="currency_calc"><a><span class="material-symbols-rounded nav-list-icon">currency_exchange</span><span>Валюты</span></a></li>
-                            <li data-page="notes"><a><span class="material-symbols-rounded nav-list-icon">edit_note</span><span>Заметки</span></a></li>
+                            <li data-page="finances_hub"><a><span class="material-symbols-rounded nav-list-icon">construction</span><span>Инструменты</span></a></li>
+                            <li data-page="tickets"><a><span class="material-symbols-rounded nav-list-icon">confirmation_number</span><span>Тикеты FunPay</span></a></li>
                             <li data-page="settings_io"><a><span class="material-symbols-rounded nav-list-icon">database</span><span>Импорт / Экспорт</span></a></li>
                         </ul>
                     </div>
                 </div>
 
-                <!-- Footer Buttons Stack (Sidebar style) -->
+                <!-- Информационная плашка Foxen Аккаунта в футере сайдбара -->
                 <div class="fxn-sidebar-footer">
-                    <ul class="fxn-footer-nav-list">
-                        <li>
-                            <a href="https://t.me/FoxenFF" target="_blank" rel="noopener" class="fxn-footer-nav-item fxn-footer-btn-tg">
-                                <span class="material-symbols-rounded nav-list-icon">send</span>
-                                <span>Telegram канал</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://github.com/SanoSenpay/Foxen/issues/new" target="_blank" rel="noopener" class="fxn-footer-nav-item fxn-footer-btn-bug">
-                                <span class="material-symbols-rounded nav-list-icon">bug_report</span>
-                                <span>Сообщить об ошибке</span>
-                            </a>
-                        </li>
-                    </ul>
+                    <div id="fxnSidebarAccountWidget" class="fxn-sidebar-account-widget"></div>
                 </div>
             </nav>
             <main class="foxen-content">
@@ -249,6 +235,7 @@ function getMainPopupHTML() {
                     <label class="checkbox-label-inline"><input type="checkbox" id="showSalesStatsCheckbox"><span>Статистика продаж в "Продажи"</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="hideBalanceCheckbox"><span>Скрыть баланс</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="viewSellersPromoCheckbox"><span>Отображение иконок промо-лотов</span></label>
+                    <label class="checkbox-label-inline"><input type="checkbox" id="enableRedesignedHomepageGeneral"><span>Кастомная главная страница</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="foxenShowPaymentType" checked><span>Показывать тип оплаты в списке заказов</span></label>
                     <label class="checkbox-label-inline"><input type="checkbox" id="foxenBuyerHistory" checked><span>Показывать историю покупок в чате</span></label>
                 </div>
@@ -420,13 +407,13 @@ function getMainPopupHTML() {
                     <h4 style="margin-top: 30px;">Экспорт и импорт лотов</h4>
                     <p class="template-info">Создайте полную резервную копию всех ваших лотов в файл JSON. Этот файл можно использовать для переноса лотов на другой аккаунт или для восстановления.</p>
                     <div class="lot-io-buttons">
-                        <button id="lot-io-export-btn" class="btn"><span class="material-icons">file_upload</span>Экспорт</button>
-                        <button id="lot-io-import-btn" class="btn btn-default"><span class="material-icons">file_download</span>Импорт</button>
+                        <button id="lot-io-export-btn" type="button" class="btn"><span class="material-icons">file_upload</span>Экспорт</button>
+                        <button id="lot-io-import-btn" type="button" class="btn btn-default"><span class="material-icons">file_download</span>Импорт</button>
                         <input type="file" id="lot-io-import-file" accept=".json" style="display: none;">
                     </div>
                     <h4 style="margin-top: 30px;">Массовое редактирование</h4>
                     <p class="template-info">Измените название, описание или сообщение покупателю сразу у нескольких лотов.</p>
-                    <button id="fp-bulk-edit-btn" class="btn btn-default" style="width:auto;padding:8px 16px;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></span> Массово изменить лоты</button>
+                    <button id="fp-bulk-edit-btn" type="button" class="fxn-btn-accent" style="width:100%;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>Массово изменить лоты</button>
 
                     <a href="#" id="convert-cardinal-lots-btn" style="display: block; text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 13px; color: #a0a0a0; text-decoration: underline;">Конвертер Cardinal-лотов в наш формат</a>
 
@@ -435,11 +422,54 @@ function getMainPopupHTML() {
                         <p class="template-info">Здесь будут отображаться отложенные процессы импорта.</p>
                     </div>
                 </div>
-                <div class="foxen-page-content" data-page="piggy_banks">
-                    <h3>Управление копилками</h3>
-                    <p class="template-info">Создавайте копилки для отслеживания прогресса к вашим финансовым целям. Основная копилка будет отображаться при наведении на баланс в шапке сайта.</p>
-                    <button id="create-piggy-bank-btn" class="btn">+ Создать новую копилку</button>
-                    <div id="piggy-banks-list-container" class="piggy-banks-list-container"></div>
+                <div class="foxen-page-content" data-page="finances_hub">
+                    <!-- Minimalist Sub-Navbar -->
+                    <div class="fxn-tools-subnav">
+                        <button type="button" class="fxn-tools-subnav-item active" data-subtab="piggy_banks">
+                            <span class="material-symbols-rounded">savings</span>
+                            <span>Копилки</span>
+                        </button>
+                        <button type="button" class="fxn-tools-subnav-item" data-subtab="calculator">
+                            <span class="material-symbols-rounded">calculate</span>
+                            <span>Калькулятор</span>
+                        </button>
+                        <button type="button" class="fxn-tools-subnav-item" data-subtab="currency_calc">
+                            <span class="material-symbols-rounded">currency_exchange</span>
+                            <span>Валюты</span>
+                        </button>
+                        <button type="button" class="fxn-tools-subnav-item" data-subtab="notes">
+                            <span class="material-symbols-rounded">edit_note</span>
+                            <span>Заметки</span>
+                        </button>
+                    </div>
+
+                    <!-- Sub-tab 1: Копилки -->
+                    <div class="fxn-subtab-content active" data-subtab-page="piggy_banks">
+                        <h3>Управление копилками</h3>
+                        <p class="template-info">Создавайте копилки для отслеживания прогресса к вашим финансовым целям. Основная копилка будет отображаться при наведении на баланс в шапке сайта.</p>
+                        <button id="create-piggy-bank-btn" class="btn">+ Создать новую копилку</button>
+                        <div id="piggy-banks-list-container" class="piggy-banks-list-container"></div>
+                    </div>
+
+                    <!-- Sub-tab 2: Калькулятор -->
+                    <div class="fxn-subtab-content" data-subtab-page="calculator" style="display: none;">
+                        <h3>Калькулятор</h3>
+                        <div class="calculator-container"><div class="calculator-display"><span id="calcDisplay">0</span></div><div class="calculator-buttons"><button class="calc-btn calc-btn-light" data-action="clear">AC</button><button class="calc-btn calc-btn-light" data-action="toggle-sign">+/-</button><button class="calc-btn calc-btn-light" data-action="percentage">%</button><button class="calc-btn calc-btn-operator" data-action="divide">÷</button><button class="calc-btn" data-key="7">7</button><button class="calc-btn" data-key="8">8</button><button class="calc-btn" data-key="9">9</button><button class="calc-btn calc-btn-operator" data-action="multiply">×</button><button class="calc-btn" data-key="4">4</button><button class="calc-btn" data-key="5">5</button><button class="calc-btn" data-key="6">6</button><button class="calc-btn calc-btn-operator" data-action="subtract">−</button><button class="calc-btn" data-key="1">1</button><button class="calc-btn" data-key="2">2</button><button class="calc-btn" data-key="3">3</button><button class="calc-btn calc-btn-operator" data-action="add">+</button><button class="calc-btn calc-btn-zero" data-key="0">0</button><button class="calc-btn" data-action="decimal">.</button><button class="calc-btn calc-btn-operator" data-action="calculate">=</button></div></div>
+                    </div>
+
+                    <!-- Sub-tab 3: Валюты -->
+                    <div class="fxn-subtab-content" data-subtab-page="currency_calc" style="display: none;">
+                        <h3>Калькулятор валют</h3>
+                        <p class="template-info">Курсы обновляются раз в день. Используется открытый API.</p>
+                        <div class="currency-converter-container"><div class="currency-input-group"><input type="number" id="currencyAmountFrom" class="template-input currency-input" value="100"><select id="currencySelectFrom" class="template-input currency-select"></select></div><div class="currency-swap-container"><button id="currencySwapBtn" class="currency-swap-btn">⇅</button><div id="currencyRateDisplay" class="currency-rate-display"></div></div><div class="currency-input-group"><input type="text" id="currencyAmountTo" class="template-input currency-input" readonly><select id="currencySelectTo" class="template-input currency-select"></select></div></div><div id="currency-error-display" class="currency-error"></div>
+                    </div>
+
+                    <!-- Sub-tab 4: Заметки -->
+                    <div class="fxn-subtab-content" data-subtab-page="notes" style="display: none;">
+                        <h3>Заметки</h3>
+                        <p class="template-info">Это ваш личный блокнот. Текст сохраняется автоматически при вводе и доступен между сессиями браузера.</p>
+                        <textarea id="foxenNotesArea" class="template-input" style="height: 80%; resize: none; min-height: 400px;" placeholder="Запишите сюда что-нибудь важное: список дел, временные данные для покупателя, идеи для новых лотов..."></textarea>
+                    </div>
                 </div>
                 <div class="foxen-page-content" data-page="theme">
                     <h3>Кастомизация темы</h3>
@@ -487,20 +517,7 @@ function getMainPopupHTML() {
                     <label style="margin-top: 20px;">Консоль логов:</label>
                     <div id="autoBumpConsole" class="foxen-console"></div>
                 </div>
-                <div class="foxen-page-content" data-page="notes">
-                    <h3>Заметки</h3>
-                    <p class="template-info">Это ваш личный блокнот. Текст сохраняется автоматически при вводе и доступен между сессиями браузера.</p>
-                    <textarea id="foxenNotesArea" class="template-input" style="height: 80%; resize: none; min-height: 400px;" placeholder="Запишите сюда что-нибудь важное: список дел, временные данные для покупателя, идеи для новых лотов..."></textarea>
-                </div>
-                <div class="foxen-page-content" data-page="calculator">
-                    <h3>Калькулятор</h3>
-                    <div class="calculator-container"><div class="calculator-display"><span id="calcDisplay">0</span></div><div class="calculator-buttons"><button class="calc-btn calc-btn-light" data-action="clear">AC</button><button class="calc-btn calc-btn-light" data-action="toggle-sign">+/-</button><button class="calc-btn calc-btn-light" data-action="percentage">%</button><button class="calc-btn calc-btn-operator" data-action="divide">÷</button><button class="calc-btn" data-key="7">7</button><button class="calc-btn" data-key="8">8</button><button class="calc-btn" data-key="9">9</button><button class="calc-btn calc-btn-operator" data-action="multiply">×</button><button class="calc-btn" data-key="4">4</button><button class="calc-btn" data-key="5">5</button><button class="calc-btn" data-key="6">6</button><button class="calc-btn calc-btn-operator" data-action="subtract">−</button><button class="calc-btn" data-key="1">1</button><button class="calc-btn" data-key="2">2</button><button class="calc-btn" data-key="3">3</button><button class="calc-btn calc-btn-operator" data-action="add">+</button><button class="calc-btn calc-btn-zero" data-key="0">0</button><button class="calc-btn" data-action="decimal">.</button><button class="calc-btn calc-btn-operator" data-action="calculate">=</button></div></div>
-                </div>
-                <div class="foxen-page-content" data-page="currency_calc">
-                    <h3>Калькулятор валют</h3>
-                    <p class="template-info">Курсы обновляются раз в день. Используется открытый API.</p>
-                    <div class="currency-converter-container"><div class="currency-input-group"><input type="number" id="currencyAmountFrom" class="template-input currency-input" value="100"><select id="currencySelectFrom" class="template-input currency-select"></select></div><div class="currency-swap-container"><button id="currencySwapBtn" class="currency-swap-btn">⇅</button><div id="currencyRateDisplay" class="currency-rate-display"></div></div><div class="currency-input-group"><input type="text" id="currencyAmountTo" class="template-input currency-input" readonly><select id="currencySelectTo" class="template-input currency-select"></select></div></div><div id="currency-error-display" class="currency-error"></div>
-                </div>
+
                 <div class="foxen-page-content" data-page="effects">
                     <h3>Эффекты частиц</h3>
                     <label class="checkbox-label-inline"><input type="checkbox" id="cursorFxEnabled"><span>Включить эффекты частиц</span></label>
@@ -528,217 +545,365 @@ function getMainPopupHTML() {
                             <span><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .34 2.02 1 2.8.76.76 1.23 1.52 1.41 2.5"></path><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="8" x2="12" y2="10"></line></svg></span></span>
                             <span>Вопросы будут именно о ваших лотах — ИИ внимательно их изучит перед генерацией.</span>
                         </div>
-                        <button id="fp-audit-start-btn" class="btn" style="width:100%;padding:12px;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span> Начать аудит</button>
+                            <button id="fp-audit-start-btn" class="btn" style="width:100%;padding:12px;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span> Начать аудит</button>
                         <p id="fp-audit-cooldown-msg" style="display:none;text-align:center;font-size:12px;color:#5a5f7a;margin-top:8px;"></p>
                     </div>
 
                     <!-- LOADING STATE -->
                     <div id="fp-audit-loading" style="display:none;font-size:13px;color:#5a5f7a;margin-top:10px;white-space:pre-line;text-align:center;line-height:1.7;padding:20px 0;"></div>
-
-                    <!-- SURVEY STATE -->
-                    <div id="fp-audit-survey" style="display:none;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                            <span id="fp-audit-q-num" style="font-size:12px;color:#5a5f7a;"></span>
-                            <span id="fp-audit-skip" style="font-size:11px;color:#3a3d52;cursor:pointer;">Пропустить →</span>
-                        </div>
-                        <div style="height:4px;background:#1e2030;border-radius:2px;margin-bottom:16px;overflow:hidden;">
-                            <div id="fp-audit-progress-bar" style="height:100%;background:#6B66FF;width:0;transition:width .3s;border-radius:2px;"></div>
-                        </div>
-                        <div id="fp-audit-q-container" style="min-height:120px;"></div>
-                        <div style="display:flex;gap:8px;margin-top:16px;">
-                            <button id="fp-audit-prev-btn" class="btn btn-default" style="flex:1;">← Назад</button>
-                            <button id="fp-audit-next-btn" class="btn" style="flex:2;">Далее →</button>
-                        </div>
-                    </div>
-
-                    <!-- PROCESSING STATE -->
-                    <div id="fp-audit-processing" style="display:none;text-align:center;padding:30px 0;color:#5a5f7a;font-size:13px;">
-                        <span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg></span> ИИ анализирует ваши ответы и готовит рекомендации...
-                    </div>
-
-                    <!-- RESULTS STATE -->
-                    <div id="fp-audit-results" style="display:none;overflow-y:auto;max-height:460px;padding-right:4px;"></div>
                 </div>
 
-                <div class="foxen-page-content" data-page="settings_io">
-                    <h3>Импорт и экспорт настроек</h3>
-                    <p class="template-info">Сохраните все настройки Foxen в файл и восстановите на другом устройстве или аккаунте.</p>
-                    <div style="display:flex;gap:12px;margin-bottom:10px;">
-                        <button id="fp-settings-export-btn" class="btn btn-default" style="flex:1;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></span> Экспортировать настройки</button>
-                        <button id="fp-settings-import-btn" class="btn btn-default" style="flex:1;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg></span> Импортировать настройки</button>
-                        <input type="file" id="fp-settings-import-input" accept=".fpconfig,.json" style="display:none;">
-                    </div>
-                    <button id="fp-settings-export-all-btn" class="btn" style="width:100%;margin-bottom:20px;display:flex;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span> Экспортировать ВСЁ</button>
-                    <p class="template-info">Файл сохраняется с расширением <code>.fpconfig</code>. Импорт перезагрузит страницу.</p>
-                    <p class="template-info" style="margin-top:-10px;">Экспорт “ВСЁ” не включает чувствительные данные (сессии/куки/аккаунты) и технические/временные данные (тэги, обработанные ID, кэш статистики).</p>
-
-                    <h3 style="margin-top:24px;">Сброс данных</h3>
-                    <p class="template-info">Удалить только определённые данные, не затрагивая остальные настройки.</p>
-                    <div style="display:flex;flex-direction:column;gap:8px;">
-                        <button id="fp-reset-autoresponder-btn" class="btn btn-default" style="width:auto;padding:8px 14px;">Сбросить данные автоответчика (обработанные ID)</button>
-                        <button id="fp-reset-pinned-btn" class="btn btn-default" style="width:auto;padding:8px 14px;">Очистить закреплённые лоты</button>
-                        <button id="fp-reset-greeted-btn" class="btn btn-default" style="width:auto;padding:8px 14px;">Сбросить список поприветствованных чатов</button>
-                        <button id="fp-reset-april-btn" class="btn btn-default" style="width:auto;padding:8px 14px;">Сбросить счётчик даты</button>
-                    </div>
-                    <div style="margin-top:24px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
-                        <a href="https://funpay.tools" target="_blank" class="fp-site-footer-link"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></span> funpay.tools</a>
-                    </div>
-                </div>
-
-                <div class="foxen-page-content" data-page="blacklist">
-                    <h3>Чёрный список покупателей</h3>
-                    <p class="template-info">Добавьте ненадёжных покупателей. Вы сможете заблокировать на них автоматизаию и уведомления.</p>
-                    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
-                        <input type="text" id="fp-bl-name-input" placeholder="Имя пользователя FunPay" style="background:#0e0f16;border:1px solid #22253a;border-radius:6px;padding:8px;color:#d8dae8;font-size:13px;outline:none;">
-                        <input type="text" id="fp-bl-note-input" placeholder="Причина (необязательно)" style="background:#0e0f16;border:1px solid #22253a;border-radius:6px;padding:8px;color:#d8dae8;font-size:13px;outline:none;">
-                        <button id="fp-bl-add-btn" class="btn btn-default">+ Добавить в ЧС</button>
-                    </div>
-                    <div id="fp-bl-list"></div>
-                </div>
-
-                <div class="foxen-page-content" data-page="auto_delivery">
-                    <h3>Авто-выдача товаров</h3>
-                    <p class="template-info">При новом заказе расширение автоматически отправит покупателю товар. Укажите что именно отправлять для каждого лота, или используйте поле «Секреты» лота как источник.</p>
-                    <div class="support-promo" style="background:rgba(107,102,255,0.07);border-color:rgba(107,102,255,0.2);margin-bottom:16px;">
-                        <span><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .34 2.02 1 2.8.76.76 1.23 1.52 1.41 2.5"></path><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="8" x2="12" y2="10"></line></svg></span></span>
-                        <span>Используйте переменные: <code>{buyername}</code>, <code>{orderid}</code>, <code>{orderlink}</code>, <code>$username</code>, <code>$order_link</code>, <code>$order_id</code>, <code>$sleep=3</code> (пауза в секундах).</span>
-                    </div>
-
-                    <div class="checkbox-label-inline" style="margin-bottom:12px;">
-                        <input type="checkbox" id="fpAutoRestoreEnabled">
-                        <label for="fpAutoRestoreEnabled" style="margin-bottom:0;"><span>Авто-восстановление лотов после деактивации</span></label>
-                    </div>
-                    <div class="checkbox-label-inline" style="margin-bottom:16px;">
-                        <input type="checkbox" id="fpAutoDisableEnabled">
-                        <label for="fpAutoDisableEnabled" style="margin-bottom:0;"><span>Авто-деактивация лотов при пустом складе</span></label>
-                    </div>
-
-                    <h4>Настройка авто-выдачи по лотам</h4>
-                    <p class="template-info">Выберите лот для настройки авто-выдачи. Если лот не настроен — отправляется содержимое поля «Секреты» автоматически.</p>
-                    <button id="fp-load-delivery-lots-btn" class="btn btn-default" style="margin-bottom:12px;">Загрузить список лотов</button>
-                    <div id="fp-delivery-lots-list"></div>
-                </div>
-
-                <div class="foxen-page-content" data-page="tickets" style="position:relative;">
+                <div class="foxen-page-content" data-page="tickets" style="position:relative; padding:0;">
                     <style>
+                        .fxn-tkt-container {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 14px;
+                            padding: 16px;
+                            background: #0d0e14;
+                            min-height: 100%;
+                            box-sizing: border-box;
+                            -webkit-font-smoothing: antialiased;
+                        }
+
+                        .fxn-tkt-header {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            background: #12141d;
+                            border: 1px solid #202432;
+                            border-radius: 12px;
+                            padding: 12px 16px;
+                        }
+
+                        .fxn-tkt-header-left {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        }
+
+                        .fxn-tkt-header-icon {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 10px;
+                            background: var(--fxn-accent-soft, rgba(192, 38, 211, 0.18));
+                            border: 1px solid var(--fxn-accent-border, rgba(192, 38, 211, 0.35));
+                            color: var(--fxn-accent, #c026d3);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 22px;
+                        }
+
+                        .fxn-tkt-header-title h3 {
+                            margin: 0 !important;
+                            font-size: 15px !important;
+                            font-weight: 700 !important;
+                            color: #ffffff !important;
+                        }
+
+                        .fxn-tkt-header-title p {
+                            margin: 2px 0 0 !important;
+                            font-size: 12px !important;
+                            color: #8a93a6 !important;
+                        }
+
+                        .fxn-tkt-refresh-btn {
+                            width: 34px !important;
+                            height: 34px !important;
+                            border-radius: 8px !important;
+                            border: 1px solid #232736 !important;
+                            background: #171924 !important;
+                            color: #8a93a6 !important;
+                            cursor: pointer !important;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            transition: all 0.2s ease !important;
+                        }
+
+                        .fxn-tkt-refresh-btn:hover {
+                            color: #ffffff !important;
+                            background: #1f2232 !important;
+                            border-color: var(--fxn-accent-border, rgba(192, 38, 211, 0.45)) !important;
+                        }
+
+                        .fxn-tkt-segment {
+                            display: flex;
+                            background: #12141d;
+                            border: 1px solid #202432;
+                            padding: 4px;
+                            border-radius: 10px;
+                            gap: 6px;
+                        }
+
+                        .fxn-tkt-segment-btn {
+                            flex: 1 !important;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            gap: 8px !important;
+                            padding: 8px 12px !important;
+                            border-radius: 7px !important;
+                            border: 1px solid transparent !important;
+                            background: transparent !important;
+                            color: #8a93a6 !important;
+                            font-size: 13px !important;
+                            font-weight: 600 !important;
+                            text-transform: none !important;
+                            letter-spacing: normal !important;
+                            cursor: pointer !important;
+                            transition: all 0.2s ease !important;
+                            transform: none !important;
+                            box-shadow: none !important;
+                        }
+
+                        .fxn-tkt-segment-btn .material-symbols-rounded {
+                            font-size: 18px !important;
+                            color: #6c768e !important;
+                            transition: color 0.2s ease !important;
+                        }
+
+                        .fxn-tkt-segment-btn:hover {
+                            color: #ffffff !important;
+                            background: #171924 !important;
+                        }
+
+                        .fxn-tkt-segment-btn.active {
+                            background: var(--fxn-accent-soft, rgba(192, 38, 211, 0.18)) !important;
+                            border: 1px solid var(--fxn-accent-border, rgba(192, 38, 211, 0.45)) !important;
+                            color: #ffffff !important;
+                            font-weight: 700 !important;
+                        }
+
+                        .fxn-tkt-segment-btn.active .material-symbols-rounded {
+                            color: var(--fxn-accent, #c026d3) !important;
+                        }
+
+                        .fxn-tkt-pane {
+                            display: none;
+                            opacity: 0;
+                        }
+
+                        .fxn-tkt-pane.active {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 14px;
+                            animation: fxnTktFade 0.15s ease-out forwards;
+                        }
+
+                        @keyframes fxnTktFade {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+
+                        .fxn-tkt-metrics {
+                            display: grid;
+                            grid-template-columns: repeat(3, 1fr);
+                            gap: 10px;
+                        }
+
+                        .fxn-tkt-metric-card {
+                            background: #12141d;
+                            border: 1px solid #202432;
+                            border-radius: 10px;
+                            padding: 10px 12px;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 4px;
+                        }
+
+                        .fxn-tkt-metric-label {
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: #8a93a6;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        }
+
+                        .fxn-tkt-metric-val {
+                            font-size: 18px;
+                            font-weight: 700;
+                            color: #ffffff;
+                        }
+
+                        .fxn-tkt-actions-bar {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 10px;
+                        }
+
+                        .fxn-tkt-create-btn {
+                            display: inline-flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            gap: 6px !important;
+                            padding: 8px 14px !important;
+                            border-radius: 8px !important;
+                            border: none !important;
+                            background: var(--fxn-accent, #c026d3) !important;
+                            color: #ffffff !important;
+                            font-size: 12px !important;
+                            font-weight: 700 !important;
+                            cursor: pointer !important;
+                            transition: opacity 0.2s ease !important;
+                        }
+
+                        .fxn-tkt-create-btn:hover {
+                            opacity: 0.9 !important;
+                        }
+
+                        .fxn-tkt-filter-grid {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 8px;
+                        }
+
+                        .fp-field-input {
+                            width: 100%;
+                            background: #12141d !important;
+                            border: 1px solid #202432 !important;
+                            border-radius: 8px !important;
+                            color: #e2e8f0 !important;
+                            padding: 8px 12px !important;
+                            font-size: 13px !important;
+                            box-sizing: border-box !important;
+                            outline: none !important;
+                            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+                        }
+
+                        .fp-field-input:focus {
+                            border-color: var(--fxn-accent, #c026d3) !important;
+                            box-shadow: 0 0 0 2px var(--fxn-accent-soft, rgba(192, 38, 211, 0.25)) !important;
+                        }
+
+                        .fp-tkt-card {
+                            background: #12141d !important;
+                            border: 1px solid #202432 !important;
+                            border-radius: 10px !important;
+                            padding: 12px 14px !important;
+                            cursor: pointer !important;
+                            transition: all 0.2s ease !important;
+                            border-left: 3px solid transparent !important;
+                        }
+
+                        .fp-tkt-card:hover {
+                            border-color: #2e3448 !important;
+                            border-left-color: var(--fxn-accent, #c026d3) !important;
+                            background: #171a26 !important;
+                        }
+
+                        .fp-tkt-status {
+                            display: inline-block !important;
+                            padding: 3px 9px !important;
+                            border-radius: 6px !important;
+                            font-size: 11px !important;
+                            font-weight: 700 !important;
+                            letter-spacing: 0.3px !important;
+                        }
+
+                        .fxn-tkt-detail-overlay {
+                            display: none;
+                            position: absolute;
+                            inset: 0;
+                            background: #0d0e14;
+                            z-index: 20;
+                            box-sizing: border-box;
+                            flex-direction: column;
+                            overflow: hidden;
+                            border-radius: 12px;
+                        }
+
                         #fp-tickets-list::-webkit-scrollbar{width:4px}
                         #fp-tickets-list::-webkit-scrollbar-track{background:transparent}
-                        #fp-tickets-list::-webkit-scrollbar-thumb{background:#2a2d44;border-radius:4px}
+                        #fp-tickets-list::-webkit-scrollbar-thumb{background:#2d303e;border-radius:4px}
                         #fp-ticket-confirm-text::-webkit-scrollbar{width:4px}
-                        #fp-ticket-confirm-text::-webkit-scrollbar-thumb{background:#2a2d44;border-radius:4px}
+                        #fp-ticket-confirm-text::-webkit-scrollbar-thumb{background:#2d303e;border-radius:4px}
                         #fp-ticket-age-hours::-webkit-inner-spin-button,#fp-ticket-age-hours::-webkit-outer-spin-button,
                         #fp-ticket-max-orders::-webkit-inner-spin-button,#fp-ticket-max-orders::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
                         #fp-ticket-age-hours,#fp-ticket-max-orders{-moz-appearance:textfield}
-                        .fp-tkt-card{background:#0d0e18;border:1px solid #1a1c2e;border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .15s;}
-                        .fp-tkt-card:hover{border-color:#6B66FF;background:#11122a;}
-                        .fp-tkt-status{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.3px;}
                         #fp-new-ticket-fields::-webkit-scrollbar{width:4px}
                         #fp-new-ticket-fields::-webkit-scrollbar-track{background:transparent}
-                        #fp-new-ticket-fields::-webkit-scrollbar-thumb{background:#2a2d44;border-radius:4px}
-                        .fp-field-input{width:100%;background:#0d0e18;border:1px solid #1a1c2e;border-radius:6px;color:#d8dae8;padding:7px 10px;font-size:13px;box-sizing:border-box;outline:none;transition:border-color .15s;}
-                        .fp-field-input:focus{border-color:#6B66FF;}
-                        .fp-field-input option{background:#0d0e18;color:#d8dae8;}
+                        #fp-new-ticket-fields::-webkit-scrollbar-thumb{background:#2d303e;border-radius:4px}
                     </style>
 
-                    <!-- Header -->
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                        <h3 style="margin:0;font-size:15px;">Техподдержка FunPay</h3>
-                        <button id="fp-ticket-refresh-btn" title="Обновить" style="background:none;border:none;color:#5a5f7a;cursor:pointer;font-size:16px;padding:2px 6px;transition:color .15s;">↻</button>
-                    </div>
-
-                    <!-- Auto ticket block -->
-                    <div style="background:rgba(107,102,255,0.06);border:1px solid rgba(107,102,255,0.18);border-radius:8px;padding:11px 12px;margin-bottom:12px;">
-                        <div style="font-weight:600;font-size:13px;margin-bottom:4px;color:#c8c4ff;"><span class="nav-icon" style="display:inline-flex;margin:0 6px 0 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span> Подтверждение заказов</div>
-                        <p style="font-size:12px;color:#6a7090;margin:0 0 10px;line-height:1.5;">FunPay не всегда подтверждает заказы автоматически. Кнопка ниже соберёт все ваши неподтверждённые заказы и отправит заявку в ТП с просьбой их подтвердить — вручную делать не надо.</p>
-                        <div style="display:flex;gap:10px;margin-bottom:10px;">
-                            <label style="font-size:11px;color:#6a7090;display:flex;flex-direction:column;gap:3px;flex:1;">
-                                Возраст заказа (ч)
-                                <input type="number" id="fp-ticket-age-hours" min="1" max="168" value="24" class="fp-field-input" style="padding:5px 8px;font-size:12px;">
-                            </label>
-                            <label style="font-size:11px;color:#6a7090;display:flex;flex-direction:column;gap:3px;flex:1;">
-                                Заказов в заявке (макс)
-                                <input type="number" id="fp-ticket-max-orders" min="1" max="20" value="5" class="fp-field-input" style="padding:5px 8px;font-size:12px;">
-                            </label>
+                                <option value="newest_first" selected>Сначала новые</option>
+                                <option value="oldest_first">Сначала старые</option>
+                                <option value="last_answered">Последние отвеченные</option>
+                            </select>
                         </div>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <button id="fp-send-auto-ticket-btn" class="btn" style="padding:6px 14px;font-size:12px;">Отправить заявку в ТП</button>
-                            <span id="fp-auto-ticket-status" style="font-size:11px;color:#5a5f7a;"></span>
-                        </div>
+                        <div id="fp-tickets-count" style="font-size:11px;color:#94a3b8;font-weight:500;"></div>
                     </div>
 
-                    <!-- Tickets list header -->
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                        <span style="font-size:11px;font-weight:600;color:#3a3d52;text-transform:uppercase;letter-spacing:.5px;">Ваши заявки</span>
-                        <button id="fp-create-ticket-btn" class="btn btn-default" style="padding:3px 10px;font-size:11px;">+ Создать заявку</button>
-                    </div>
+                    <!-- List Container -->
+                    <div id="fp-tickets-list" style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;"></div>
+                    <div id="fp-tickets-empty" style="display:none;text-align:center;color:#94a3b8;font-size:13px;padding:24px 0;background:#111216;border:1px solid #232530;border-radius:10px;">Заявок не найдено</div>
+                    <div id="fp-tickets-loading" style="text-align:center;color:#94a3b8;font-size:13px;padding:20px 0;">Загрузка обращений...</div>
 
-                    <!-- List -->
-                    <div id="fp-tickets-list" style="display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto;"></div>
-                    <div id="fp-tickets-empty" style="display:none;text-align:center;color:#3a3d52;font-size:13px;padding:18px 0;">Заявок нет</div>
-                    <div id="fp-tickets-loading" style="text-align:center;color:#3a3d52;font-size:12px;padding:14px 0;">Загрузка...</div>
-
-                    <!-- Ticket detail panel -->
-                    <div id="fp-ticket-detail-panel" style="display:none;position:absolute;inset:0;background:#111318;z-index:20;box-sizing:border-box;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+                    <!-- Ticket Detail Panel (Full view overlay) -->
+                    <div id="fp-ticket-detail-panel" style="display:none;position:absolute;inset:0;background:#111216;z-index:20;box-sizing:border-box;flex-direction:column;overflow:hidden;border-radius:12px;border:1px solid #232530;">
                         <style>
-                            #fp-tdm::-webkit-scrollbar{width:3px}
-                            #fp-tdm::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:3px}
-                            #fp-tri{outline:none;caret-color:#6B66FF;background:#23243a !important;border:none !important;box-shadow:none !important;border-radius:0 !important;padding:0 !important;margin:0 !important;}
-                            #fp-tri::-webkit-scrollbar{width:2px}
-                            #fp-tri::-webkit-scrollbar-thumb{background:#2a2d3a;}
-                            .fp-msg-img{max-width:100%;border-radius:8px;margin-top:4px;display:block;cursor:pointer;}
+                            #fp-tdm::-webkit-scrollbar{width:4px}
+                            #fp-tdm::-webkit-scrollbar-thumb{background:#2d303e;border-radius:4px}
+                            #fp-tri{outline:none;caret-color:var(--fxn-accent, #c026d3);background:#16171d !important;border:none !important;box-shadow:none !important;border-radius:0 !important;padding:0 !important;margin:0 !important;}
+                            #fp-tri::-webkit-scrollbar{width:3px}
+                            #fp-tri::-webkit-scrollbar-thumb{background:#2d303e;}
+                            .fp-msg-img{max-width:100%;border-radius:8px;margin-top:6px;display:block;cursor:pointer;}
                         </style>
                         <!-- Top bar -->
-                        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#1a1b22;flex-shrink:0;border-bottom:1px solid #0d0e14;">
-                            <button id="fp-ticket-detail-back" style="all:unset;position:relative;overflow:hidden;color:#6B66FF;cursor:pointer;font-size:22px;line-height:1;padding:2px 6px 2px 0;flex-shrink:0;">&#8249;</button>
-                            <div id="fp-tkt-av" style="width:32px;height:32px;border-radius:50%;background:#23243a;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#6B66FF;overflow:hidden;"></div>
+                        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#16171d;flex-shrink:0;border-bottom:1px solid #232530;">
+                            <button id="fp-ticket-detail-back" style="all:unset;color:var(--fxn-accent, #c026d3);cursor:pointer;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:var(--fxn-accent-soft, rgba(192, 38, 211, 0.15));">&#8249;</button>
+                            <div id="fp-tkt-av" style="width:34px;height:34px;border-radius:50%;background:var(--fxn-accent-soft, rgba(192, 38, 211, 0.18));border:1px solid var(--fxn-accent-border, rgba(192, 38, 211, 0.35));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--fxn-accent, #c026d3);overflow:hidden;"></div>
                             <div style="flex:1;min-width:0;">
-                                <div id="fp-ticket-detail-title" style="font-size:14px;font-weight:600;color:#e8eaf0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;"></div>
-                                <div id="fp-ticket-detail-status" style="font-size:11px;margin-top:1px;line-height:1;"></div>
+                                <div id="fp-ticket-detail-title" style="font-size:14px;font-weight:700;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;"></div>
+                                <div id="fp-ticket-detail-status" style="font-size:11px;margin-top:2px;line-height:1;"></div>
                             </div>
                         </div>
-                        <!-- Messages -->
-                        <div id="fp-tdm" style="flex:1;overflow-y:auto;padding:10px 10px 6px;display:flex;flex-direction:column;gap:3px;background:#111318;"></div>
+                        <!-- Messages list -->
+                        <div id="fp-tdm" style="flex:1;overflow-y:auto;padding:14px 14px 10px;display:flex;flex-direction:column;gap:8px;background:#111216;"></div>
                         <!-- Attach preview -->
-                        <div id="fp-tapr" style="display:none;flex-shrink:0;padding:6px 12px 0;background:#1a1b22;">
+                        <div id="fp-tapr" style="display:none;flex-shrink:0;padding:8px 16px 0;background:#16171d;">
                             <div style="position:relative;display:inline-block;">
-                                <img id="fp-tath" style="height:48px;border-radius:6px;border:1px solid #2a2d3a;display:block;" src="" alt="">
-                                <button id="fp-tarm" style="all:unset;position:absolute;top:-5px;right:-5px;background:#2a2d3a;border-radius:50%;width:16px;height:16px;color:#9099b8;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">&#x2715;</button>
+                                <img id="fp-tath" style="height:52px;border-radius:8px;border:1px solid #232530;display:block;" src="" alt="">
+                                <button id="fp-tarm" style="all:unset;position:absolute;top:-6px;right:-6px;background:#232530;border-radius:50%;width:18px;height:18px;color:#94a3b8;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">&#x2715;</button>
                             </div>
                         </div>
                         <!-- Input bar -->
-                        <div id="fp-tria" style="display:none;flex-shrink:0;align-items:flex-end;gap:6px;padding:6px 10px 8px;background:#111318;">
-                            <label id="fp-attach-lbl" style="all:unset;display:flex;align-items:center;justify-content:center;width:34px;height:34px;cursor:pointer;color:#4a4f6a;flex-shrink:0;" title="Прикрепить">
+                        <div id="fp-tria" style="display:none;flex-shrink:0;align-items:flex-end;gap:8px;padding:10px 14px;background:#16171d;border-top:1px solid #232530;">
+                            <label id="fp-attach-lbl" style="all:unset;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#111216;border:1px solid #232530;cursor:pointer;color:#94a3b8;flex-shrink:0;transition:all 0.2s ease;" title="Прикрепить изображение">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
                                 <input type="file" id="fp-ticket-attach-input" accept="image/*" style="display:none;">
                             </label>
-                            <div style="flex:1;background:#23243a;border-radius:20px;padding:7px 14px;display:flex;align-items:flex-end;min-height:36px;box-sizing:border-box;">
-                                <textarea id="fp-tri" placeholder="Сообщение..." style="all:unset;-webkit-appearance:none;appearance:none;width:100%;color:#e8eaf0;font-size:13px;line-height:1.45;height:20px;max-height:90px;overflow-y:hidden;font-family:inherit;display:block;resize:none;background:#23243a !important;" rows="1"></textarea>
+                            <div style="flex:1;background:#111216;border:1px solid #232530;border-radius:20px;padding:8px 14px;display:flex;align-items:flex-end;min-height:38px;box-sizing:border-box;">
+                                <textarea id="fp-tri" placeholder="Напишите ответ..." style="all:unset;-webkit-appearance:none;appearance:none;width:100%;color:#ffffff;font-size:13px;line-height:1.45;height:20px;max-height:90px;overflow-y:hidden;font-family:inherit;display:block;resize:none;background:transparent !important;" rows="1"></textarea>
                             </div>
-                            <button id="fp-ticket-reply-btn" style="all:unset;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#6B66FF;cursor:pointer;flex-shrink:0;">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" style="margin-left:2px;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                            <button id="fp-ticket-reply-btn" style="all:unset;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--fxn-accent, #c026d3);color:#fff;cursor:pointer;flex-shrink:0;transition:opacity 0.2s ease;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" style="margin-left:2px;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                             </button>
                         </div>
                     </div>
-                    <!-- Confirm overlay -->
-                    <div id="fp-ticket-confirm-overlay" style="display:none;position:absolute;inset:0;background:rgba(5,6,12,0.96);z-index:10;border-radius:8px;padding:18px;box-sizing:border-box;flex-direction:column;gap:10px;">
-                        <div style="font-weight:600;font-size:14px;">Проверьте заявку перед отправкой</div>
-                        <div style="font-size:11px;color:#6a7090;">Именно это будет отправлено в техподдержку FunPay:</div>
-                        <div id="fp-ticket-confirm-text" style="background:#0d0e18;border:1px solid #1a1c2e;border-radius:6px;padding:10px;font-size:12px;color:#c8cadc;white-space:pre-wrap;flex:1;overflow-y:auto;min-height:80px;max-height:180px;line-height:1.5;"></div>
-                        <div style="display:flex;gap:8px;margin-top:2px;">
-                            <button id="fp-ticket-confirm-yes" class="btn" style="flex:1;font-size:13px;">Отправить</button>
-                            <button id="fp-ticket-confirm-no" class="btn btn-default" style="flex:1;font-size:13px;">Отмена</button>
+
+                    <!-- Confirm Overlay -->
+                    <div id="fp-ticket-confirm-overlay" style="display:none;position:absolute;inset:0;background:rgba(15, 16, 22, 0.96);z-index:30;border-radius:12px;padding:20px;box-sizing:border-box;flex-direction:column;gap:12px;backdrop-filter:blur(6px);">
+                        <div style="font-weight:700;font-size:15px;color:#ffffff;">Проверьте заявку перед отправкой</div>
+                        <div style="font-size:12px;color:#94a3b8;">Этот текст будет отправлен напрямую в техподдержку FunPay:</div>
+                        <div id="fp-ticket-confirm-text" style="background:#111216;border:1px solid #232530;border-radius:8px;padding:12px;font-size:13px;color:#e2e8f0;white-space:pre-wrap;flex:1;overflow-y:auto;min-height:80px;max-height:180px;line-height:1.5;"></div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
+                            <button id="fp-ticket-confirm-yes" class="btn" style="background:var(--fxn-accent, #c026d3);color:#fff;border:none;padding:9px;font-weight:600;">Отправить</button>
+                            <button id="fp-ticket-confirm-no" class="btn btn-default" style="padding:9px;font-weight:600;">Отмена</button>
                         </div>
                     </div>
 
-                    <!-- New ticket panel (slides in from bottom) -->
-                    <div id="fp-new-ticket-panel" style="display:none;position:absolute;inset:0;background:#0a0b14;z-index:20;border-radius:0;box-sizing:border-box;flex-direction:column;overflow:hidden;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;border-bottom:1px solid #1a1c2e;flex-shrink:0;">
-                            <span style="font-weight:600;font-size:14px;">Новая заявка</span>
-                            <button id="fp-new-ticket-close" style="background:none;border:none;color:#5a5f7a;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;">✕</button>
+                    <!-- New ticket panel -->
+                    <div id="fp-new-ticket-panel" style="display:none;position:absolute;inset:0;background:#111216;z-index:25;border-radius:12px;box-sizing:border-box;flex-direction:column;overflow:hidden;border:1px solid #232530;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #232530;flex-shrink:0;background:#16171d;">
+                            <span style="font-weight:700;font-size:15px;color:#ffffff;">Новая заявка в ТП</span>
+                            <button id="fp-new-ticket-close" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1;">✕</button>
                         </div>
-                        <div id="fp-new-ticket-fields" style="display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;padding:10px 14px;"></div>
-                        <div style="flex-shrink:0;padding:8px 14px 12px;border-top:1px solid #1a1c2e;background:#0a0b14;">
-                            <button id="fp-new-ticket-submit" class="btn" style="width:100%;font-size:13px;">Далее →</button>
+                        <div id="fp-new-ticket-fields" style="display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;padding:16px;"></div>
+                        <div style="flex-shrink:0;padding:12px 16px;border-top:1px solid #232530;background:#16171d;">
+                            <button id="fp-new-ticket-submit" class="btn" style="width:100%;background:var(--fxn-accent, #c026d3);color:#fff;border:none;padding:10px;font-weight:600;font-size:13px;">Далее →</button>
                         </div>
                     </div>
                 </div>

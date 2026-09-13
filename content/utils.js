@@ -62,6 +62,16 @@ function throttle(func, limit) {
     }
 }
 
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function createElement(tag, attributes = {}, styles = {}, innerHTML = '') {
     const element = document.createElement(tag);
     for (const [key, value] of Object.entries(attributes)) {
@@ -97,154 +107,372 @@ function waitForElementToBeEnabled(element, timeout = 2000) {
  * @param {string} message - Текст для отображения.
  * @param {boolean} isError - Если true, уведомление будет в стиле ошибки.
  */
+/**
+ * Modern Foxen Toast Notification V5
+ * High z-index (2147483647), glassmorphism card, status icons, micro-header, progress bar, close button.
+ */
 function showNotification(message, isError = false) {
-    const NOTIFICATION_DURATION = 7000;
-    const PARTICLE_ANIMATION_DURATION = 1000;
-    const NOTIFICATION_APPEAR_DELAY = 500;
-    const PARTICLE_COUNT = 25;
+    const NOTIFICATION_DURATION = 4000;
 
-    const particleContainer = createElement('div', { 'aria-hidden': 'true' });
-    const animationId = `foxenParticleAnimation-${Date.now()}`;
-    const styleTagId = `foxen-particle-style-${Date.now()}`;
+    let container = document.getElementById('foxen-notification-container');
+    if (!container) {
+        container = createElement('div', { id: 'foxen-notification-container' }, {
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: '2147483647',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            alignItems: 'flex-end',
+            pointerEvents: 'none',
+            maxWidth: '420px'
+        });
+        document.body.appendChild(container);
+    }
 
-    const startX = window.innerWidth / 2;
-    const startY = window.innerHeight / 2;
-    const targetX = window.innerWidth - 150;
-    const targetY = window.innerHeight - 60;
+    const toast = createElement('div', { className: 'fxn-toast' }, {
+        position: 'relative',
+        background: 'rgba(18, 18, 22, 0.94)',
+        border: isError ? '1px solid rgba(239, 68, 68, 0.45)' : '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        webkitBackdropFilter: 'blur(20px) saturate(180%)',
+        borderRadius: '14px',
+        padding: '14px 16px 14px 14px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        minWidth: '280px',
+        maxWidth: '380px',
+        pointerEvents: 'auto',
+        overflow: 'hidden',
+        animation: 'fxnToastIn 0.35s cubic-bezier(0.19, 1, 0.22, 1) forwards',
+        userSelect: 'none',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif'
+    });
 
-    const keyframes = `
-        @keyframes ${animationId} {
-            0% {
-                transform: translate(var(--startX), var(--startY)) scale(var(--startScale));
-                opacity: 1;
-            }
-            70% {
-                opacity: 1;
-            }
-            100% {
-                transform: translate(${targetX - startX}px, ${targetY - startY}px) scale(0);
-                opacity: 0;
-            }
-        }
+    const activeAccent = (!isError && (window.__foxenAccentColor || document.querySelector('.foxen-popup')?.style.getPropertyValue('--fxn-accent')?.trim() || '#c026d3')) || '#ef4444';
+    const iconBg = isError ? 'rgba(239, 68, 68, 0.18)' : (activeAccent.startsWith('#') ? activeAccent + '24' : 'rgba(192, 38, 211, 0.18)');
+    const iconBorder = isError ? 'rgba(239, 68, 68, 0.4)' : (activeAccent.startsWith('#') ? activeAccent + '55' : 'rgba(192, 38, 211, 0.4)');
+    const iconColor = isError ? '#ef4444' : activeAccent;
+    const iconSymbol = isError ? '✕' : '✓';
+    const headerTitle = isError ? 'FOXEN // ОШИБКА' : 'FOXEN // СИСТЕМА';
+    const progressColor = isError ? '#ef4444' : activeAccent;
+
+    toast.innerHTML = `
+        <div style="width: 32px; height: 32px; border-radius: 9px; background: ${iconBg}; border: 1px solid ${iconBorder}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: ${iconColor}; font-size: 15px; font-weight: 800;">
+            ${iconSymbol}
+        </div>
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 10px; font-weight: 700; color: ${isError ? '#f87171' : 'rgba(255, 255, 255, 0.45)'}; letter-spacing: 0.08em; text-transform: uppercase; font-family: ui-monospace, 'JetBrains Mono', monospace; margin-bottom: 3px;">
+                ${headerTitle}
+            </div>
+            <div style="font-size: 13px; font-weight: 500; color: #f4f4f3; line-height: 1.4; word-break: break-word;">
+                ${message}
+            </div>
+        </div>
+        <div class="fxn-toast-close" style="cursor: pointer; opacity: 0.45; transition: opacity 0.15s; font-size: 12px; color: #ffffff; padding: 2px 4px; border-radius: 4px;" title="Закрыть">
+            ✕
+        </div>
+        <div style="position: absolute; bottom: 0; left: 0; height: 2.5px; background: ${progressColor}; width: 100%; animation: fxnToastProgress ${NOTIFICATION_DURATION}ms linear forwards; border-radius: 0 0 14px 14px;"></div>
     `;
 
-    const styleTag = createElement('style', { id: styleTagId }, {}, keyframes);
-    document.head.appendChild(styleTag);
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = Math.random() * 150 + 50;
-        const particleSize = Math.random() * 8 + 6;
-
-        const particle = createElement('div', {}, {
-            '--startX': `${Math.cos(angle) * radius}px`,
-            '--startY': `${Math.sin(angle) * radius}px`,
-            '--startScale': `${Math.random() * 0.5 + 0.8}`,
-            position: 'fixed',
-            top: `${startY}px`,
-            left: `${startX}px`,
-            width: `${particleSize}px`,
-            height: `${particleSize}px`,
-            background: isError ? '#FF8A80' : '#A259FF',
-            borderRadius: '50%',
-            zIndex: '20001',
-            pointerEvents: 'none',
-            opacity: '0',
-            transform: `translate(var(--startX), var(--startY)) scale(0)`,
-            animation: `${animationId} ${PARTICLE_ANIMATION_DURATION}ms cubic-bezier(0.5, 0.05, 0.6, 1) forwards`,
-            animationDelay: `${Math.random() * 200}ms`,
-        });
-        
-        const tail = createElement('div', {}, {
-             width: '150%', height: '150%', position: 'absolute', top: '-25%', left: '-25%',
-             borderRadius: '50%', background: isError ? '#FF8A80' : '#A259FF',
-             filter: 'blur(8px)', opacity: '0.7'
-        });
-        particle.appendChild(tail);
-
-        particleContainer.appendChild(particle);
+    if (!document.querySelector('style[data-foxen-toast-styles]')) {
+        const styleEl = document.createElement('style');
+        styleEl.setAttribute('data-foxen-toast-styles', 'true');
+        styleEl.textContent = `
+            @keyframes fxnToastIn {
+                from { opacity: 0; transform: translateY(16px) scale(0.95); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            @keyframes fxnToastOut {
+                from { opacity: 1; transform: translateY(0) scale(1); }
+                to { opacity: 0; transform: translateY(10px) scale(0.92); }
+            }
+            @keyframes fxnToastProgress {
+                from { width: 100%; }
+                to { width: 0%; }
+            }
+            .fxn-toast-close:hover { opacity: 1 !important; background: rgba(255,255,255,0.1); }
+        `;
+        document.head.appendChild(styleEl);
     }
-    document.body.appendChild(particleContainer);
-    
-    requestAnimationFrame(() => {
-        Array.from(particleContainer.children).forEach(p => {
-            p.style.transition = 'transform 0.4s cubic-bezier(0.1, 0.8, 0.7, 1), opacity 0.3s ease';
-            p.style.transform = `translate(var(--startX), var(--startY)) scale(var(--startScale))`;
-            p.style.opacity = '1';
+
+    const closeBtn = toast.querySelector('.fxn-toast-close');
+    const dismiss = () => {
+        toast.style.animation = 'fxnToastOut 0.25s ease forwards';
+        setTimeout(() => toast.remove(), 250);
+    };
+    if (closeBtn) closeBtn.addEventListener('click', dismiss);
+
+    container.appendChild(toast);
+    setTimeout(dismiss, NOTIFICATION_DURATION);
+}
+
+/**
+ * Modern Unified Foxen Pro Color Picker (2D HSV Canvas + Hue Slider + Hex + 16 Curated Presets)
+ */
+function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange) {
+    // Remove any open picker first
+    document.querySelector('.fxn-pro-color-picker')?.remove();
+
+    let hex = initialColor.startsWith('#') ? initialColor : '#' + initialColor;
+    if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) hex = '#C026D3';
+
+    // Convert Hex -> RGB -> HSV
+    function hexToHsv(h) {
+        let r = parseInt(h.slice(1, 3), 16) / 255;
+        let g = parseInt(h.slice(3, 5), 16) / 255;
+        let b = parseInt(h.slice(5, 7), 16) / 255;
+        let max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let d = max - min;
+        let hVal = 0;
+        if (d !== 0) {
+            if (max === r) hVal = ((g - b) / d) % 6;
+            else if (max === g) hVal = (b - r) / d + 2;
+            else hVal = (r - g) / d + 4;
+            hVal = Math.round(hVal * 60);
+            if (hVal < 0) hVal += 360;
+        }
+        let sVal = max === 0 ? 0 : d / max;
+        let vVal = max;
+        return { h: hVal, s: sVal, v: vVal };
+    }
+
+    // Convert HSV -> RGB -> Hex
+    function hsvToHex(h, s, v) {
+        let f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+        let r = Math.round(f(5) * 255).toString(16).padStart(2, '0');
+        let g = Math.round(f(3) * 255).toString(16).padStart(2, '0');
+        let b = Math.round(f(1) * 255).toString(16).padStart(2, '0');
+        return `#${r}${g}${b}`.toUpperCase();
+    }
+
+    let hsv = hexToHsv(hex);
+
+    const picker = document.createElement('div');
+    picker.className = 'fxn-pro-color-picker';
+    const isLight = !!document.querySelector('.window.light-theme, .foxen-popup.light-theme, .fxn-popup.light-theme');
+    if (isLight) {
+        picker.classList.add('light-theme');
+    }
+
+    const presets = [
+        '#C026D3', '#EC4899', '#8B5CF6', '#6366F1',
+        '#3B82F6', '#06B6D4', '#10B981', '#84CC16',
+        '#EAB308', '#F97316', '#EF4444', '#F43F5E',
+        '#64748B', '#94A3B8', '#E2E8F0', '#FFFFFF'
+    ];
+
+    const presetsHtml = presets.map(p => `
+        <div class="fxn-picker-swatch ${p.toLowerCase() === hex.toLowerCase() ? 'active' : ''}" style="background:${p};" data-color="${p}"></div>
+    `).join('');
+
+    picker.innerHTML = `
+        <div class="fxn-picker-header">
+            <span class="fxn-picker-title">Палитра цветов</span>
+            <div class="fxn-picker-preview" id="fxnPickerDot" style="background:${hex}; color:${hex};"></div>
+        </div>
+        <div class="fxn-picker-canvas-wrap" id="fxnCanvasWrap">
+            <canvas id="fxnPickerCanvas" width="216" height="120"></canvas>
+            <div class="fxn-picker-handle" id="fxnPickerHandle"></div>
+        </div>
+        <div class="fxn-picker-controls">
+            <input type="range" min="0" max="360" value="${hsv.h}" class="fxn-picker-hue" id="fxnPickerHue">
+        </div>
+        <div class="fxn-picker-inputs">
+            <div class="fxn-picker-hex-wrap">
+                <span class="fxn-picker-hash">#</span>
+                <input type="text" class="fxn-picker-hex" id="fxnPickerHex" value="${hex.replace('#', '')}" maxlength="6" spellcheck="false">
+            </div>
+            <button class="fxn-picker-copy" id="fxnPickerCopy" title="Скопировать HEX" type="button">
+                <span class="material-icons" style="font-size:15px;">content_copy</span>
+            </button>
+        </div>
+        <div class="fxn-picker-presets">
+            ${presetsHtml}
+        </div>
+    `;
+
+    document.body.appendChild(picker);
+
+    // Position popover
+    if (anchorEl) {
+        const rect = anchorEl.getBoundingClientRect();
+        let top = rect.bottom + 8;
+        let left = rect.left;
+        if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
+        if (top + 340 > window.innerHeight) top = Math.max(10, rect.top - 340);
+        if (top < 10) top = 10;
+        if (left < 10) left = 10;
+        picker.style.top = top + 'px';
+        picker.style.left = left + 'px';
+    } else {
+        picker.style.top = '50%';
+        picker.style.left = '50%';
+        picker.style.transform = 'translate(-50%, -50%)';
+    }
+
+    const canvas = picker.querySelector('#fxnPickerCanvas');
+    const ctx = canvas.getContext('2d');
+    const handle = picker.querySelector('#fxnPickerHandle');
+    const dot = picker.querySelector('#fxnPickerDot');
+    const hexInput = picker.querySelector('#fxnPickerHex');
+    const hueSlider = picker.querySelector('#fxnPickerHue');
+
+    function drawCanvas() {
+        const w = canvas.width, h = canvas.height;
+        // Base hue
+        ctx.fillStyle = `hsl(${hsv.h}, 100%, 50%)`;
+        ctx.fillRect(0, 0, w, h);
+
+        // White gradient (left to right)
+        let whiteGrad = ctx.createLinearGradient(0, 0, w, 0);
+        whiteGrad.addColorStop(0, '#ffffff');
+        whiteGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = whiteGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Black gradient (top to bottom)
+        let blackGrad = ctx.createLinearGradient(0, 0, 0, h);
+        blackGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        blackGrad.addColorStop(1, '#000000');
+        ctx.fillStyle = blackGrad;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    function updateHandlePosition() {
+        handle.style.left = `${Math.max(0, Math.min(100, hsv.s * 100))}%`;
+        handle.style.top = `${Math.max(0, Math.min(100, (1 - hsv.v) * 100))}%`;
+    }
+
+    let lastHueDrawn = -1;
+    function updateColor(newHex, triggerCallback = true, hueChanged = true) {
+        hex = newHex.toUpperCase();
+        const nextHsv = hexToHsv(hex);
+        if (nextHsv.s > 0 && nextHsv.v > 0) {
+            hsv.h = nextHsv.h;
+        }
+        hsv.s = nextHsv.s;
+        hsv.v = nextHsv.v;
+
+        if (hueChanged || lastHueDrawn !== hsv.h) {
+            lastHueDrawn = hsv.h;
+            drawCanvas();
+        }
+        updateHandlePosition();
+        if (dot) {
+            dot.style.background = hex;
+            dot.style.color = hex;
+        }
+        if (hexInput && hexInput.value.toUpperCase() !== hex.replace('#', '')) {
+            hexInput.value = hex.replace('#', '');
+        }
+        if (hueSlider && Number(hueSlider.value) !== hsv.h) {
+            hueSlider.value = hsv.h;
+        }
+        picker.querySelectorAll('.fxn-picker-swatch').forEach(sw => {
+            sw.classList.toggle('active', sw.dataset.color.toUpperCase() === hex);
+        });
+        if (triggerCallback && typeof onChange === 'function') {
+            onChange(hex, isFinal);
+        }
+    }
+
+    lastHueDrawn = hsv.h;
+    drawCanvas();
+    updateHandlePosition();
+
+    // Fast 2D Canvas Dragging with zero lag
+    const canvasWrap = picker.querySelector('#fxnCanvasWrap');
+    let isDraggingCanvas = false;
+
+    function handleCanvasMove(e, isFinal = false) {
+        const rect = canvas.getBoundingClientRect();
+        let x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+        let y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+        hsv.s = rect.width ? (x / rect.width) : 0;
+        hsv.v = rect.height ? (1 - (y / rect.height)) : 0;
+        const newHex = hsvToHex(hsv.h, hsv.s, hsv.v);
+        updateColor(newHex, true, false, isFinal);
+    }
+
+    const onMouseDown = (e) => {
+        e.preventDefault();
+        isDraggingCanvas = true;
+        handleCanvasMove(e, false);
+    };
+    canvasWrap.addEventListener('mousedown', onMouseDown);
+
+    const onMouseMove = (e) => {
+        if (isDraggingCanvas) handleCanvasMove(e, false);
+    };
+    const onMouseUp = () => {
+        if (isDraggingCanvas) {
+            isDraggingCanvas = false;
+            if (typeof onChange === 'function') onChange(hex, true);
+        }
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+
+    // Hue Slider
+    hueSlider.addEventListener('input', (e) => {
+        hsv.h = Number(e.target.value);
+        const newHex = hsvToHex(hsv.h, hsv.s, hsv.v);
+        updateColor(newHex, true, true, false);
+    });
+    hueSlider.addEventListener('change', () => {
+        if (typeof onChange === 'function') onChange(hex, true);
+    });
+
+    // Hex Input
+    hexInput.addEventListener('input', (e) => {
+        let val = e.target.value.trim().replace('#', '');
+        if (/^[0-9A-Fa-f]{6}$/.test(val)) {
+            updateColor('#' + val, true, true, false);
+        } else if (/^[0-9A-Fa-f]{3}$/.test(val)) {
+            const expanded = val.split('').map(c => c + c).join('');
+            updateColor('#' + expanded, true, true, false);
+        }
+    });
+    hexInput.addEventListener('change', () => {
+        if (typeof onChange === 'function') onChange(hex, true);
+    });
+
+    // Copy Button
+    picker.querySelector('#fxnPickerCopy').addEventListener('click', () => {
+        navigator.clipboard.writeText(hex);
+        if (typeof showNotification === 'function') showNotification('HEX скопирован: ' + hex);
+    });
+
+    // Presets
+    picker.querySelectorAll('.fxn-picker-swatch').forEach(sw => {
+        sw.addEventListener('click', () => {
+            updateColor(sw.dataset.color, true, true, true);
         });
     });
 
+    // Close on outside click & cleanup listeners
     setTimeout(() => {
-        let container = document.getElementById('foxen-notification-container');
-        if (!container) {
-            container = createElement('div', { id: 'foxen-notification-container' }, {
-                position: 'fixed',
-                bottom: '20px',
-                right: '20px',
-                zIndex: '20000',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                alignItems: 'flex-end',
-                pointerEvents: 'none'
-            });
-            document.body.appendChild(container);
-        }
-
-        const FADE_OUT_DELAY = NOTIFICATION_DURATION - 500;
-
-        const notification = createElement('div', {}, {
-            position: 'relative',
-            background: isError ? 'rgba(194, 57, 42, 0.92)' : 'var(--fxn-surface-2, rgba(44, 47, 51, 0.9))',
-            color: isError ? '#fff' : 'var(--fxn-text, #A259FF)',
-            padding: '14px 22px',
-            borderRadius: '8px',
-            fontSize: '15px',
-            fontWeight: '500',
-            boxShadow: '0 5px 25px var(--fxn-shadow, rgba(0, 0, 0, 0.3))',
-            border: '1px solid var(--fxn-border, rgba(255, 255, 255, 0.1))',
-            backdropFilter: 'blur(8px)',
-            webkitBackdropFilter: 'blur(8px)',
-            pointerEvents: 'auto',
-            transform: 'scale(0.8)',
-            opacity: '0',
-            animation: `foxenEmerge 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards, foxenFadeOut 0.5s ${FADE_OUT_DELAY / 1000}s forwards`
-        }, message);
-
-        if (!document.querySelector('style[data-foxen-notify-keyframes]')) {
-            const keyframesStyle = `
-                @keyframes foxenEmerge {
-                    from { opacity: 0; transform: scale(0.8) translateY(20px); }
-                    to { opacity: 1; transform: scale(1) translateY(0); }
-                }
-                @keyframes foxenFadeOut {
-                    from { opacity: 1; transform: scale(1); margin-top: 0; margin-bottom: 0; } 
-                    to { opacity: 0; transform: scale(0.9); margin-top: -20px; margin-bottom: -20px; }
-                }
-            `;
-            const keyframesStyleSheet = createElement("style", { 'data-foxen-notify-keyframes': 'true' }, {}, keyframesStyle);
-            document.head.appendChild(keyframesStyleSheet);
-        }
-
-        container.appendChild(notification);
-        
-        setTimeout(() => {
-            if (container.contains(notification)) {
-                container.removeChild(notification);
+        const closeHandler = (e) => {
+            if (!picker.contains(e.target) && (!anchorEl || !anchorEl.contains(e.target))) {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+                document.removeEventListener('click', closeHandler);
+                if (typeof onChange === 'function') onChange(hex, true);
+                picker.remove();
             }
-        }, NOTIFICATION_DURATION);
+        };
+        document.addEventListener('click', closeHandler);
+    }, 50);
 
-    }, NOTIFICATION_APPEAR_DELAY);
+    return picker;
+}
 
-
-    setTimeout(() => {
-        if (document.body.contains(particleContainer)) {
-            document.body.removeChild(particleContainer);
-        }
-        if (document.head.contains(styleTag)) {
-            document.head.removeChild(styleTag);
-        }
-    }, PARTICLE_ANIMATION_DURATION + 300);
+if (typeof window !== 'undefined') {
+    window.foxenOpenColorPicker = foxenOpenColorPicker;
 }
 
 // === ВЛОЖЕНИЯ ИЗОБРАЖЕНИЙ (отдельно от текста) ===
@@ -527,8 +755,9 @@ function fxnComputePalette() {
     const hover    = fxnMix(bg, dark ? 'white' : 'black', dark ? 0.14 : 0.08);
     const text     = textRaw;
     const textMuted = dark ? fxnMix(textRaw, 'black', 0.35) : fxnMix(textRaw, 'white', 0.35);
-    // акцент берём фирменный фанпеевский, но это можно переопределить
-    const accent = [193, 38, 211, 1]; // #C026D3 - но используем умеренно
+    // акцент берём из настроек пользователя (bgColor2/bgColor1) или фолбэк #C026D3
+    let customAccentHex = (window._foxenThemeSettings && (window._foxenThemeSettings.bgColor2 || window._foxenThemeSettings.bgColor1)) || null;
+    let accent = customAccentHex ? (fxnParseRGB(customAccentHex) || [193, 38, 211, 1]) : [193, 38, 211, 1];
 
     return {
         dark,
@@ -546,9 +775,18 @@ function fxnComputePalette() {
 }
 
 // Выставляет CSS-переменные --fxn-* на :root.
+let _fxnThemeApplying = false;
+let _fxnLastPaletteJson = '';
+
 function fxnApplyThemeVars() {
+    if (_fxnThemeApplying) return;
+    _fxnThemeApplying = true;
     try {
         const p = fxnComputePalette();
+        const pJson = JSON.stringify(p);
+        if (pJson === _fxnLastPaletteJson) return;
+        _fxnLastPaletteJson = pJson;
+
         const r = document.documentElement.style;
         r.setProperty('--fxn-bg',         p.bg);
         r.setProperty('--fxn-surface',    p.surface);
@@ -563,6 +801,9 @@ function fxnApplyThemeVars() {
         document.documentElement.classList.toggle('fxn-theme-dark', p.dark);
         document.documentElement.classList.toggle('fxn-theme-light', !p.dark);
     } catch (e) { /* noop */ }
+    finally {
+        _fxnThemeApplying = false;
+    }
 }
 
 // Инициализация + реакция на смену темы (FunPay-тема, наша кастомная тема, смена страницы).
@@ -575,14 +816,15 @@ function fxnInitThemeEngine() {
     if (document.readyState !== 'complete') {
         window.addEventListener('load', fxnApplyThemeVars, { once: true });
     }
-    // следим за сменой темы: класс/стиль на <html>/<body>
+    // следим за сменой темы: класс на <html>/<body> (НЕ style, чтобы не зацикливать при выставлении CSS-переменных)
     try {
         const mo = new MutationObserver(() => {
+            if (_fxnThemeApplying) return;
             clearTimeout(window.__fptThemeT);
-            window.__fptThemeT = setTimeout(fxnApplyThemeVars, 80);
+            window.__fptThemeT = setTimeout(fxnApplyThemeVars, 150);
         });
-        mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
-        mo.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
+        mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     } catch (_) {}
 }
 

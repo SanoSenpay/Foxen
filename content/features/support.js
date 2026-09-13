@@ -84,6 +84,13 @@ function _applyTicketFilters() {
 
     if (countEl) countEl.textContent = `Показано: ${result.length} из ${_allTickets.length}`;
 
+    const totalValEl = document.getElementById('fp-tkt-metric-total');
+    const activeValEl = document.getElementById('fp-tkt-metric-active');
+    const solvedValEl = document.getElementById('fp-tkt-metric-solved');
+    if (totalValEl) totalValEl.textContent = _allTickets.length;
+    if (activeValEl) activeValEl.textContent = _allTickets.filter(t => isActiveStatus(t.status)).length;
+    if (solvedValEl) solvedValEl.textContent = _allTickets.filter(t => isSolvedStatus(t.status)).length;
+
     list.innerHTML = '';
     if (!result.length) { empty.style.display = 'block'; return; }
     empty.style.display = 'none';
@@ -517,15 +524,37 @@ async function _buildAndConfirmAutoTicket() {
 let _currentTicketId = null;
 let _currentReplyToken = null;
 
-function _renderBubble(c, myUsername) {
-    const isMe = c.author === myUsername;
-    const wrap = document.createElement('div');
-    wrap.style.cssText = `display:flex;flex-direction:${isMe ? 'row-reverse' : 'row'};align-items:flex-end;gap:8px;`;
+function _cleanTicketHtml(rawHtml) {
+    if (!rawHtml) return '';
+    try {
+        const doc = new DOMParser().parseFromString(`<div>${rawHtml}</div>`, 'text/html');
+        const root = doc.body.firstElementChild || doc.body;
+        root.querySelectorAll('style, script, link, iframe').forEach(el => el.remove());
+        root.querySelectorAll('*').forEach(el => {
+            el.removeAttribute('class');
+            el.removeAttribute('style');
+            el.removeAttribute('color');
+            el.removeAttribute('bgcolor');
+        });
+        return root.innerHTML;
+    } catch (_) {
+        return rawHtml;
+    }
+}
 
-    // Avatar (only for others)
+function _renderBubble(c, myUsername) {
+    const myLower = (myUsername || '').trim().toLowerCase();
+    const authorLower = (c.author || '').trim().toLowerCase();
+    const isMe = authorLower && myLower && (authorLower === myLower || authorLower.includes(myLower) || myLower.includes(authorLower));
+    
+    const wrap = document.createElement('div');
+    wrap.className = 'fp-bubble-row ' + (isMe ? 'fp-bubble-me' : 'fp-bubble-other');
+    wrap.style.cssText = `display:flex;flex-direction:${isMe ? 'row-reverse' : 'row'};align-items:flex-end;gap:10px;margin-bottom:8px;width:100%;box-sizing:border-box;`;
+
+    // Avatar (for support agents / others)
     if (!isMe) {
         const av = document.createElement('div');
-        av.style.cssText = `width:28px;height:28px;border-radius:50%;flex-shrink:0;background:#1a1c2e;font-size:11px;font-weight:600;color:#C026D3;display:flex;align-items:center;justify-content:center;`;
+        av.style.cssText = `width:32px;height:32px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);font-size:12px;font-weight:700;color:#ffffff;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,0.3);`;
         if (c.avatarUrl) {
             av.style.backgroundImage = `url('${c.avatarUrl}')`;
             av.style.backgroundSize = 'cover';
@@ -538,34 +567,52 @@ function _renderBubble(c, myUsername) {
     }
 
     const col = document.createElement('div');
-    col.style.cssText = `display:flex;flex-direction:column;gap:3px;max-width:78%;align-items:${isMe ? 'flex-end' : 'flex-start'};`;
+    col.style.cssText = `display:flex;flex-direction:column;gap:4px;max-width:85%;align-items:${isMe ? 'flex-end' : 'flex-start'};`;
 
-    // Name + time (only for others, or own first)
+    // Name + time
     const meta = document.createElement('div');
-    meta.style.cssText = `font-size:10px;color:#3a3d52;padding:0 4px;`;
-    meta.textContent = (!isMe ? c.author + '  ' : '') + (c.timestamp || '');
+    meta.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);padding:0 4px;font-weight:500;`;
+    meta.textContent = (!isMe ? c.author + '  ·  ' : '') + (c.timestamp || '');
     col.appendChild(meta);
 
     // Bubble
     const bubble = document.createElement('div');
-    if (isMe) {
-        bubble.style.cssText = `background:linear-gradient(135deg,#5a56e8,#7b77ff);border-radius:16px 16px 4px 16px;padding:8px 12px;font-size:13px;color:#fff;line-height:1.55;word-break:break-word;`;
-    } else {
-        bubble.style.cssText = `background:#12131f;border:1px solid #1a1c2e;border-radius:16px 16px 16px 4px;padding:8px 12px;font-size:13px;color:#d8dae8;line-height:1.55;word-break:break-word;`;
-    }
+    bubble.className = `fp-tkt-bubble ${isMe ? 'is-me' : 'is-other'}`;
+    bubble.style.cssText = isMe 
+        ? `background:#222736 !important;color:#ffffff !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px 14px 2px 14px;padding:12px 16px;font-size:13.5px;line-height:1.6;word-break:break-word;box-shadow:0 4px 16px rgba(0,0,0,0.35);box-sizing:border-box;`
+        : `background:#15161c !important;color:#e2e8f0 !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:14px 14px 14px 2px;padding:12px 16px;font-size:13.5px;line-height:1.6;word-break:break-word;box-shadow:0 4px 16px rgba(0,0,0,0.35);box-sizing:border-box;`;
 
-    // Parse text: images inline, links clickable
-    const rawHtml = c.text || '';
+    // Clean HTML content
     const tmp = document.createElement('div');
-    tmp.innerHTML = rawHtml;
+    tmp.style.cssText = 'background:transparent !important;color:inherit !important;';
+    tmp.innerHTML = _cleanTicketHtml(c.text || '');
+
+    // Strip any lingering background / color from all descendant nodes
+    tmp.querySelectorAll('*').forEach(el => {
+        el.removeAttribute('class');
+        el.removeAttribute('style');
+        el.removeAttribute('color');
+        el.removeAttribute('bgcolor');
+        el.style.setProperty('background', 'transparent', 'important');
+        el.style.setProperty('background-color', 'transparent', 'important');
+        el.style.setProperty('color', 'inherit', 'important');
+    });
 
     // Make images real img tags with click-to-open
     tmp.querySelectorAll('img').forEach(img => {
         img.className = 'fp-msg-img';
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '8px';
+        img.style.cursor = 'pointer';
+        img.style.marginTop = '6px';
         img.addEventListener('click', () => window.open(img.src, '_blank'));
     });
     // Make links open in new tab
-    tmp.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.style.color = isMe ? 'rgba(255,255,255,0.85)' : '#7b77ff'; });
+    tmp.querySelectorAll('a').forEach(a => {
+        a.target = '_blank';
+        a.style.color = '#7c9eff';
+        a.style.textDecoration = 'underline';
+    });
 
     bubble.appendChild(tmp);
     col.appendChild(bubble);
@@ -577,8 +624,6 @@ async function _openTicket(ticketId) {
     _currentTicketId = ticketId;
 
     const panel = document.getElementById('fp-ticket-detail-panel');
-    const body = document.querySelector('.foxen-body');
-    if (body && panel && panel.parentElement !== body) body.appendChild(panel);
     if (!panel) return;
     panel.style.display = 'flex';
 
@@ -645,6 +690,22 @@ async function _sendTicketReply() {
 
 // ── init ──────────────────────────────────────────────────────────────────────
 
+// Глобальная делегация кликов по сегментам («Мои обращения» / «Авто-подтверждение»)
+if (!window._fxnTktGlobalSubtabDelegate) {
+    window._fxnTktGlobalSubtabDelegate = true;
+    document.addEventListener('click', (e) => {
+        const segBtn = e.target.closest('.fxn-tkt-segment-btn');
+        if (!segBtn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const tab = segBtn.dataset.tktTab;
+        const container = segBtn.closest('.foxen-page-content[data-page="tickets"]');
+        if (!container) return;
+        container.querySelectorAll('.fxn-tkt-segment-btn').forEach(b => b.classList.toggle('active', b === segBtn));
+        container.querySelectorAll('.fxn-tkt-pane').forEach(p => p.classList.toggle('active', p.dataset.tktPane === tab));
+    });
+}
+
 function initTicketsTab() {
     if (_ticketsInited) { _loadTickets(); return; }
     _ticketsInited = true;
@@ -667,18 +728,25 @@ function initTicketsTab() {
         _showConfirm(preview, { categoryId, fieldValues, message });
     });
 
-    document.getElementById('fp-ticket-detail-back')?.addEventListener('click', () => {
+    document.getElementById('fp-ticket-detail-back')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const panel = document.getElementById('fp-ticket-detail-panel');
         if (panel) panel.style.display = 'none';
         _currentTicketId = null;
+    });
+
+    // Изоляция кликов внутри панели чата, чтобы клик не закрывал модалку
+    document.getElementById('fp-ticket-detail-panel')?.addEventListener('click', (e) => {
+        e.stopPropagation();
     });
     document.getElementById('fp-ticket-reply-btn')?.addEventListener('click', _sendTicketReply);
     const replyInput = document.getElementById('fp-tri');
 
     // Hover effects via JS - inline onmouseover breaks HTML in template literals
     const replyBtn = document.getElementById('fp-ticket-reply-btn');
-    replyBtn?.addEventListener('mouseenter', () => replyBtn.style.background = '#5752e8');
-    replyBtn?.addEventListener('mouseleave', () => replyBtn.style.background = '#C026D3');
+    replyBtn?.addEventListener('mouseenter', () => replyBtn.style.opacity = '0.85');
+    replyBtn?.addEventListener('mouseleave', () => replyBtn.style.opacity = '1');
     const attachLbl = document.getElementById('fp-attach-lbl');
     attachLbl?.addEventListener('mouseenter', () => attachLbl.style.color = '#9099b8');
     attachLbl?.addEventListener('mouseleave', () => attachLbl.style.color = '#4a4f6a');

@@ -225,17 +225,19 @@ const cursorFx = new CursorFX();
 function setupCursorFxHandlers() {
     const settingsToUpdate = {};
     const inputs = {
-        cursorFxEnabled: (e) => settingsToUpdate.enabled = e.target.checked,
+        cursorFxEnabled: (e) => settingsToUpdate.enabled = e.target.checked ?? e.target.classList.contains('on'),
         cursorFxType: (e) => settingsToUpdate.type = e.target.value,
         cursorFxColor1: (e) => settingsToUpdate.color1 = e.target.value,
         cursorFxColor2: (e) => settingsToUpdate.color2 = e.target.value,
-        cursorFxRgb: (e) => settingsToUpdate.rgb = e.target.checked,
+        cursorFxRgb: (e) => settingsToUpdate.rgb = e.target.checked ?? e.target.classList.contains('on'),
         cursorFxCount: (e) => {
             settingsToUpdate.count = e.target.value;
-            document.getElementById('cursorFxCountValue').textContent = `${e.target.value}%`;
+            const valEl = document.getElementById('cursorFxCountValue');
+            if (valEl) valEl.textContent = `${e.target.value}%`;
         },
     };
     const handler = async (e) => {
+        if (!inputs[e.target.id]) return;
         inputs[e.target.id](e);
         const currentSettings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCursorFx')).foxenCursorFx || {};
         const newSettings = { ...currentSettings, ...settingsToUpdate };
@@ -250,71 +252,210 @@ function setupCursorFxHandlers() {
 
     const countSlider = document.getElementById('cursorFxCount');
     if (countSlider) countSlider.addEventListener('input', handler);
+
+    // Toggle sub-panels visibility
+    const cursorFxEnabledCheckbox = document.getElementById('cursorFxEnabled');
+    const cursorFxControls = document.getElementById('cursorFxControls');
+    if (cursorFxEnabledCheckbox) {
+        const updateFxControls = () => {
+            const on = cursorFxEnabledCheckbox.classList.contains('on') || cursorFxEnabledCheckbox.checked;
+            if (cursorFxControls) cursorFxControls.style.display = on ? 'flex' : 'none';
+        };
+        cursorFxEnabledCheckbox.addEventListener('change', updateFxControls);
+        cursorFxEnabledCheckbox.addEventListener('click', () => setTimeout(updateFxControls, 20));
+        updateFxControls();
+    }
+
+    const pEnabledCheckbox = document.getElementById('foxenParticleEnabled');
+    const pControls = document.getElementById('foxenParticleControls');
+    if (pEnabledCheckbox) {
+        const updatePControls = () => {
+            const on = pEnabledCheckbox.classList.contains('on') || pEnabledCheckbox.checked;
+            if (pControls) pControls.style.display = on ? 'flex' : 'none';
+        };
+        pEnabledCheckbox.addEventListener('change', updatePControls);
+        pEnabledCheckbox.addEventListener('click', () => setTimeout(updatePControls, 20));
+        updatePControls();
+    }
+
+    const pCountSlider = document.getElementById('foxenParticleCount');
+    if (pCountSlider) {
+        const valEl = document.getElementById('foxenParticleCountValue');
+        pCountSlider.addEventListener('input', (e) => {
+            if (valEl) valEl.textContent = e.target.value;
+            (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenParticleCount: Number(e.target.value) });
+        });
+    }
+    const pSpeedSlider = document.getElementById('foxenParticleSpeed');
+    if (pSpeedSlider) {
+        const valEl = document.getElementById('foxenParticleSpeedValue');
+        pSpeedSlider.addEventListener('input', (e) => {
+            if (valEl) valEl.textContent = `${e.target.value}x`;
+            (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenParticleSpeed: Number(e.target.value) });
+        });
+    }
+    const pPresetSelect = document.getElementById('foxenParticlePreset');
+    if (pPresetSelect) {
+        pPresetSelect.addEventListener('change', (e) => {
+            (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenParticlePreset: e.target.value });
+        });
+    }
     
     const customCursorEnabledCheckbox = document.getElementById('customCursorEnabled');
     const customCursorControls = document.getElementById('customCursorControls');
 
-    customCursorEnabledCheckbox.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        customCursorControls.style.display = enabled ? 'block' : 'none';
-        
-        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-        const newSettings = { ...settings, enabled };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
-        cursorFx.updateCustomCursor(newSettings);
-    });
-
-    document.getElementById('uploadCursorImageBtn').addEventListener('click', () => {
-        document.getElementById('cursorImageInput').click();
-    });
-
-    document.getElementById('cursorImageInput').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (readEvent) => {
-            const imageDataUrl = readEvent.target.result;
-            const preview = document.getElementById('cursor-image-preview');
-            preview.style.backgroundImage = `url(${imageDataUrl})`;
-            preview.textContent = '';
-
+    if (customCursorEnabledCheckbox) {
+        const updateCurControls = () => {
+            const enabled = customCursorEnabledCheckbox.classList.contains('on') || customCursorEnabledCheckbox.checked;
+            if (customCursorControls) customCursorControls.style.display = enabled ? 'flex' : 'none';
+        };
+        customCursorEnabledCheckbox.addEventListener('change', async (e) => {
+            const enabled = e.target.checked ?? customCursorEnabledCheckbox.classList.contains('on');
+            updateCurControls();
+            
             const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-            const newSettings = { ...settings, image: imageDataUrl };
+            const newSettings = { ...settings, enabled };
             await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
-        };
-        reader.readAsDataURL(file);
+        });
+        customCursorEnabledCheckbox.addEventListener('click', () => setTimeout(updateCurControls, 20));
+        updateCurControls();
+    }
+
+    const presetSVGs = {
+        'default': null,
+        'neon-dot': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="%23c026d3"/><circle cx="12" cy="12" r="8" fill="none" stroke="%23c026d3" stroke-width="1.5" opacity="0.6"/></svg>',
+        'crosshair': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke="%2338bdf8" stroke-width="2" fill="none"><circle cx="12" cy="12" r="7"/><line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/></svg>',
+        'sword': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 17.5L3 6V3h3l11.5 11.5-3 3z" fill="%23f87171" stroke="%23b91c1c" stroke-width="1"/><path d="M13 19l2 2 4-4-2-2" stroke="%23ef4444" stroke-width="1.5" fill="none"/><line x1="19" y1="19" x2="22" y2="22" stroke="%23ef4444" stroke-width="2"/></svg>',
+        'wand': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M15 4l5 5L7 21l-5-5L15 4z" fill="%23a855f7" stroke="%239333ea" stroke-width="1"/><circle cx="19" cy="3" r="2" fill="%23fbbf24"/><circle cx="22" cy="7" r="1.5" fill="%23fbbf24"/><circle cx="16" cy="1" r="1" fill="%23fbbf24"/></svg>'
+    };
+
+    const presetCards = document.querySelectorAll('#fxnCursorPresets .fxn-cursor-card');
+    presetCards.forEach(card => {
+        card.addEventListener('click', async () => {
+            const cursorKey = card.dataset.cursor;
+            presetCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+
+            const uploadWrap = document.getElementById('customCursorUploadWrap');
+            if (cursorKey === 'custom') {
+                if (uploadWrap) uploadWrap.style.display = 'block';
+                return;
+            } else {
+                if (uploadWrap) uploadWrap.style.display = 'none';
+            }
+
+            const imgUri = presetSVGs[cursorKey] || null;
+            const preview = document.getElementById('cursor-image-preview');
+            if (preview) {
+                if (imgUri) {
+                    preview.style.backgroundImage = `url("${imgUri}")`;
+                    preview.textContent = '';
+                } else {
+                    preview.style.backgroundImage = 'none';
+                    preview.textContent = 'Нет';
+                }
+            }
+
+            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
+            const newSettings = { ...settings, image: imgUri, preset: cursorKey };
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
+            cursorFx.updateCustomCursor(newSettings);
+        });
     });
+
+    const customCursorUrlInput = document.getElementById('customCursorUrl');
+    if (customCursorUrlInput) {
+        customCursorUrlInput.addEventListener('change', async (e) => {
+            const url = e.target.value.trim();
+            if (!url) return;
+            const preview = document.getElementById('cursor-image-preview');
+            if (preview) {
+                preview.style.backgroundImage = `url("${url}")`;
+                preview.textContent = '';
+            }
+            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
+            const newSettings = { ...settings, image: url, preset: 'custom' };
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
+            cursorFx.updateCustomCursor(newSettings);
+        });
+    }
+
+    const uploadCursorBtn = document.getElementById('uploadCursorImageBtn');
+    const cursorInput = document.getElementById('cursorImageInput');
+    if (uploadCursorBtn && cursorInput) {
+        uploadCursorBtn.addEventListener('click', () => {
+            cursorInput.click();
+        });
+    }
+
+    if (cursorInput) {
+        cursorInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (readEvent) => {
+                const imageDataUrl = readEvent.target.result;
+                const preview = document.getElementById('cursor-image-preview');
+                if (preview) {
+                    preview.style.backgroundImage = `url(${imageDataUrl})`;
+                    preview.textContent = '';
+                }
+
+                const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
+                const newSettings = { ...settings, image: imageDataUrl, preset: 'custom' };
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
+                cursorFx.updateCustomCursor(newSettings);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
     
-    document.getElementById('removeCursorImageBtn').addEventListener('click', async () => {
-        const preview = document.getElementById('cursor-image-preview');
-        preview.style.backgroundImage = 'none';
-        preview.textContent = 'Нет';
+    const removeCursorBtn = document.getElementById('removeCursorImageBtn');
+    if (removeCursorBtn) {
+        removeCursorBtn.addEventListener('click', async () => {
+            const preview = document.getElementById('cursor-image-preview');
+            if (preview) {
+                preview.style.backgroundImage = 'none';
+                preview.textContent = 'Нет';
+            }
 
-        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-        const newSettings = { ...settings, image: null };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
-        cursorFx.updateCustomCursor(newSettings);
-    });
+            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
+            const newSettings = { ...settings, image: null, preset: 'default' };
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
+            cursorFx.updateCustomCursor(newSettings);
 
-    document.getElementById('hideSystemCursor').addEventListener('change', async (e) => {
-        const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-        const newSettings = { ...settings, hideSystem: e.target.checked };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
-        cursorFx.updateCustomCursor(newSettings);
-    });
+            presetCards.forEach(c => c.classList.remove('active'));
+            const defaultCard = document.querySelector('#fxnCursorPresets .fxn-cursor-card[data-cursor="default"]');
+            if (defaultCard) defaultCard.classList.add('active');
+        });
+    }
+
+    const hideSysCursor = document.getElementById('hideSystemCursor');
+    if (hideSysCursor) {
+        hideSysCursor.addEventListener('change', async (e) => {
+            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
+            const newSettings = { ...settings, hideSystem: e.target.checked ?? hideSysCursor.classList.contains('on') };
+            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
+            cursorFx.updateCustomCursor(newSettings);
+        });
+    }
 
     ['customCursorSize', 'customCursorOpacity'].forEach(id => {
-        document.getElementById(id).addEventListener('input', async (e) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', async (e) => {
             const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
             let newSettings;
 
             if (id === 'customCursorSize') {
-                document.getElementById('customCursorSizeValue').textContent = `${e.target.value}px`;
+                const valEl = document.getElementById('customCursorSizeValue');
+                if (valEl) valEl.textContent = `${e.target.value}px`;
                 newSettings = { ...settings, size: parseInt(e.target.value, 10) };
             } else {
-                document.getElementById('customCursorOpacityValue').textContent = `${e.target.value}%`;
+                const valEl = document.getElementById('customCursorOpacityValue');
+                if (valEl) valEl.textContent = `${e.target.value}%`;
                 newSettings = { ...settings, opacity: parseInt(e.target.value, 10) };
             }
             

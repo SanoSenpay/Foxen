@@ -958,25 +958,31 @@ function initializeLotCloning() {
     }
     
     if (!document.querySelector('.foxen-clone-btn')) {
-        const cloneButton = createElement('button', { class: 'btn btn-default foxen-clone-btn' }, {}, 'Копировать');
+        const cloneButton = createElement('button', { class: 'btn btn-default foxen-clone-btn', type: 'button' }, {}, 'Копировать');
         actionsContainer.appendChild(cloneButton);
         const popupMenu = createElement('div', { class: 'fp-clone-popup' }, {}, `
             <h3>Клонирование лота</h3>
-            <button id="fullClone">Скопировать полностью</button>
-            <button id="changeCategoryClone">Поменять категорию и скопировать</button>
-            <button id="closePopup" class="btn-default-custom" style="margin-top: 15px;">Закрыть</button>`);
+            <button id="fullClone" type="button">Скопировать полностью</button>
+            <button id="changeCategoryClone" type="button">Поменять категорию и скопировать</button>
+            <button id="closePopup" class="btn-default-custom" type="button" style="margin-top: 15px;">Закрыть</button>`);
         document.body.appendChild(popupMenu);
 
-        cloneButton.addEventListener('click', () => { popupMenu.classList.add('active'); });
+        cloneButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            popupMenu.classList.add('active');
+        });
 
-        document.getElementById('fullClone')?.addEventListener('click', () => {
+        document.getElementById('fullClone')?.addEventListener('click', (e) => {
+            e.preventDefault();
             popupMenu.classList.remove('active');
             const form = document.querySelector('form.form-offer-editor');
             if (!form) { showNotification('Форма редактирования лота не найдена!', true); return; }
             submitForm(new FormData(form));
         });
 
-        document.getElementById('changeCategoryClone')?.addEventListener('click', () => {
+        document.getElementById('changeCategoryClone')?.addEventListener('click', (e) => {
+            e.preventDefault();
             popupMenu.classList.remove('active');
             const selects = document.querySelectorAll('select.form-control.lot-field-input, select.form-control[name="server_id"]');
             const categoryData = {};
@@ -1002,8 +1008,8 @@ function initializeLotCloning() {
             }
             htmlContent += `<div id="cloneWarning"></div>`;
             htmlContent += `<div class="actions-bar">
-                                <button id="copyWithCategory">Копировать выбранные</button>
-                                <button id="closeCategoryMenu" class="btn-default-custom">Закрыть</button>
+                                <button id="copyWithCategory" type="button">Копировать выбранные</button>
+                                <button id="closeCategoryMenu" class="btn-default-custom" type="button">Закрыть</button>
                             </div>`;
             categoryMenu.innerHTML = htmlContent;
             document.body.appendChild(categoryMenu);
@@ -1038,7 +1044,8 @@ function initializeLotCloning() {
                 });
             });
 
-            document.getElementById('copyWithCategory')?.addEventListener('click', async () => {
+            document.getElementById('copyWithCategory')?.addEventListener('click', async (e) => {
+                e.preventDefault();
                 const form = document.querySelector('form.form-offer-editor');
                 if (!form) { showNotification('Форма редактирования лота не найдена!', true); return; }
                 const baseFormData = new FormData(form); let combinations = [{}]; let hasCategorySelections = false;
@@ -1067,19 +1074,22 @@ function initializeLotCloning() {
                 }
                 showNotification(`Копирование ${combinations.length} лотов завершено!`, false);
             });
-            document.getElementById('closeCategoryMenu')?.addEventListener('click', () => {
+            document.getElementById('closeCategoryMenu')?.addEventListener('click', (e) => {
+                e.preventDefault();
                 categoryMenu.classList.remove('active');
                 setTimeout(() => { if (document.body.contains(categoryMenu)) document.body.removeChild(categoryMenu); }, 500);
             });
         });
-        document.getElementById('closePopup')?.addEventListener('click', () => { popupMenu.classList.remove('active'); });
+        document.getElementById('closePopup')?.addEventListener('click', (e) => { e.preventDefault(); popupMenu.classList.remove('active'); });
     }
 
     if (!document.querySelector('.foxen-import-btn')) {
-        const importButton = createElement('button', { class: 'btn btn-default foxen-import-btn' }, {}, 'Импорт');
+        const importButton = createElement('button', { class: 'btn btn-default foxen-import-btn', type: 'button' }, {}, 'Импорт');
         actionsContainer.appendChild(importButton);
 
-        importButton.addEventListener('click', async () => {
+        importButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             openImportWizard();
         });
     }

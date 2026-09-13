@@ -171,6 +171,22 @@ function initializeCalculatorLogic() {
         updateDisplay();
     });
 
+    calculator.querySelectorAll('.fxn-calc-preset-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const fee = parseFloat(btn.dataset.fee) || 0;
+            const current = parseFloat(state.displayValue) || 0;
+            if (current !== 0) {
+                const net = current * (1 - (fee / 100));
+                state.displayValue = fmtResult(net);
+                updateDisplay();
+                if (typeof showNotification === 'function') {
+                    showNotification(`Вычтена комиссия ${fee}%: чистыми ${state.displayValue} ₽`);
+                }
+            }
+        });
+    });
+
     resetCalculator();
     calculator.dataset.initialized = 'true';
 
@@ -180,7 +196,7 @@ function initializeCalculatorLogic() {
 // 3.0: подвкладки калькулятора (Обычный / Временной) + «временной» режим.
 // Подаётся как калькулятор: никаких упоминаний ИИ в интерфейсе.
 function initializeCalcSubtabs() {
-    const page = document.querySelector('.foxen-page-content[data-page="calculator"]');
+    const page = document.querySelector('.foxen-page-content[data-page="calculator"]') || document.querySelector('.fxn-subtab-content[data-subtab-page="calculator"]');
     if (!page || page.dataset.subtabsInit) return;
 
     const tabs = page.querySelectorAll('.calc-subtab');
@@ -260,13 +276,13 @@ function initializeToolsPopup() {
         try {
             const selectedSound = document.querySelector('input[name="notificationSound"]:checked');
             
-            // --- ИСПРАВЛЕНО: Добавлено считывание настроек авто-ответов ---
+            // --- Считывание настроек авто-ответов ---
             const reviewTemplates = {
-                '5': document.getElementById('fxn-review-5').value,
-                '4': document.getElementById('fxn-review-4').value,
-                '3': document.getElementById('fxn-review-3').value,
-                '2': document.getElementById('fxn-review-2').value,
-                '1': document.getElementById('fxn-review-1').value
+                '5': document.getElementById('fxn-review-5')?.value || '',
+                '4': document.getElementById('fxn-review-4')?.value || '',
+                '3': document.getElementById('fxn-review-3')?.value || '',
+                '2': document.getElementById('fxn-review-2')?.value || '',
+                '1': document.getElementById('fxn-review-1')?.value || ''
             };
 
             // helper: read attached images from a textarea (stored on dataset by the chip UI)
@@ -285,42 +301,57 @@ function initializeToolsPopup() {
                 '3': readImgs('fxn-review-3'), '2': readImgs('fxn-review-2'), '1': readImgs('fxn-review-1')
             };
 
+            const sndSelect = document.getElementById('notificationSound');
+            const soundVal = sndSelect ? sndSelect.value : (selectedSound ? selectedSound.value : 'default');
+
             const settingsToSave = {
                 // Общие настройки
-                showSalesStats: document.getElementById('showSalesStatsCheckbox').checked,
+                showSalesStats: document.getElementById('showSalesStatsCheckbox')?.checked !== false,
                 showFinanceStats: document.getElementById('showFinanceStatsCheckbox')?.checked !== false,
-                hideBalance: document.getElementById('hideBalanceCheckbox').checked,
-                viewSellersPromo: document.getElementById('viewSellersPromoCheckbox').checked,
-                notificationSound: selectedSound ? selectedSound.value : 'default',
+                hideBalance: document.getElementById('hideBalanceCheckbox')?.checked ?? false,
+                viewSellersPromo: document.getElementById('viewSellersPromoCheckbox')?.checked !== false,
+                notificationSound: soundVal,
                 notificationVolume: (function(){ const v = document.getElementById('notificationVolume'); return v ? (parseInt(v.value,10)/100) : 1; })(),
 
                 // Авто-поднятие
-                autoBumpEnabled: document.getElementById('autoBumpEnabled').checked,
-                autoBumpCooldown: parseInt(document.getElementById('autoBumpCooldown').value, 10) || 245,
-                foxenSelectiveBumpEnabled: document.getElementById('selectiveBumpEnabled').checked,
-                foxenBumpOnlyAutoDelivery: document.getElementById('bumpOnlyAutoDelivery').checked,
-                foxenSmartBumpEnabled: (document.getElementById('foxenSmartBumpEnabled') ? document.getElementById('foxenSmartBumpEnabled').checked : false),
+                autoBumpEnabled: document.getElementById('autoBumpEnabled')?.checked ?? false,
+                autoBumpCooldown: parseInt(document.getElementById('autoBumpCooldown')?.value, 10) || 245,
+                foxenSelectiveBumpEnabled: document.getElementById('selectiveBumpEnabled')?.checked ?? false,
+                foxenBumpOnlyAutoDelivery: document.getElementById('bumpOnlyAutoDelivery')?.checked ?? false,
+                foxenSmartBumpEnabled: document.getElementById('foxenSmartBumpEnabled')?.checked ?? false,
 
-                // Авто-ответы (добавленный блок)
-                autoReviewEnabled: document.getElementById('autoReviewEnabled').checked,
+                // Авто-ответы
+                autoReviewEnabled: document.getElementById('autoReviewEnabled')?.checked ?? false,
                 reviewTemplates: reviewTemplates,
                 reviewTemplateImages: reviewTemplateImages,
-                greetingEnabled: document.getElementById('greetingEnabled').checked,
-                greetingText: document.getElementById('greetingText').value,
+                greetingEnabled: document.getElementById('greetingEnabled')?.checked ?? false,
+                greetingText: document.getElementById('greetingText')?.value || '',
                 greetingImages: readImgs('greetingText'),
                 greetingSendOrder: readOrder('greetingText'),
-                keywordsEnabled: document.getElementById('keywordsEnabled').checked,
-                // 'keywords' сохраняются отдельно при добавлении/удалении и здесь не нужны
+                keywordsEnabled: document.getElementById('keywordsEnabled')?.checked ?? false,
 
-                // 2.8: Identifier toggle
+                // Торговля, чат & Identifier
                 foxenIdentifierEnabled: document.getElementById('fxnIdentifierEnabled')?.checked !== false,
-
-                // 2.9: New toggles
                 foxenBuyerHistory:     document.getElementById('foxenBuyerHistory')?.checked !== false,
-                foxenShowUnconfirmed:  document.getElementById('foxenShowUnconfirmed')?.checked !== false
+                foxenShowPaymentType:  document.getElementById('foxenShowPaymentType')?.checked !== false,
+                foxenShowUnconfirmed:  document.getElementById('foxenShowUnconfirmed')?.checked !== false,
+                foxenOrderTimer:       document.getElementById('foxenOrderTimer')?.checked !== false,
+                foxenLotCopy:          document.getElementById('foxenLotCopy')?.checked !== false,
+                foxenBuyerRatings:     document.getElementById('foxenBuyerRatings')?.checked !== false,
+                foxenInlinePriceEditor:document.getElementById('foxenInlinePriceEditor')?.checked !== false,
+                foxenSectionCommission:document.getElementById('foxenSectionCommission')?.checked !== false,
+                foxenChatReply:        document.getElementById('foxenChatReply')?.checked !== false,
+                foxenChatLotNotes:     document.getElementById('foxenChatLotNotes')?.checked !== false,
+                foxenQuickLotSearch:   document.getElementById('foxenQuickLotSearch')?.checked !== false,
+
+                // Экранные частицы
+                foxenParticleEnabled: document.getElementById('foxenParticleEnabled')?.classList.contains('on') || document.getElementById('foxenParticleEnabled')?.checked || false,
+                foxenParticlePreset:  document.getElementById('foxenParticlePreset')?.value || 'snow',
+                foxenParticleCount:   Number(document.getElementById('foxenParticleCount')?.value) || 40,
+                foxenParticleSpeed:   Number(document.getElementById('foxenParticleSpeed')?.value) || 1.0
             };
 
-            // 3.0: Extended autoresponder settings
+            // Extended autoresponder settings
             const existingAR = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies')).foxenAutoReplies || {};
             const arExtras = {
                 ...existingAR,
@@ -339,7 +370,7 @@ function initializeToolsPopup() {
             };
             chrome.storage.local.set({ foxenAutoReplies: arExtras });
 
-            // 3.0: Auto-restore/disable, review request template
+            // Auto-restore/disable, review request template
             const reviewTpl = document.getElementById('reviewRequestTemplate')?.value || '';
             chrome.storage.local.set({
                 foxenAutoRestoreEnabled: document.getElementById('fpAutoRestoreEnabled')?.checked ?? false,
@@ -347,7 +378,7 @@ function initializeToolsPopup() {
                 foxenReviewRequestTemplate: reviewTpl
             });
 
-            // Save review request template separately (it's in auto_review section)
+            // Save review request template separately
             const rrTemplate = document.getElementById('fp-review-request-template')?.value?.trim();
             if (rrTemplate !== undefined) {
                 const { foxenAutoReplies: curAR = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies');
@@ -356,10 +387,10 @@ function initializeToolsPopup() {
             }
 
             settingsToSave.foxenDiscord = {
-                enabled: document.getElementById('discordLogEnabled').checked,
-                webhookUrl: document.getElementById('discordWebhookUrl').value.trim(),
-                pingEveryone: document.getElementById('discordPingEveryone').checked,
-                pingHere: document.getElementById('discordPingHere').checked
+                enabled: document.getElementById('discordLogEnabled')?.checked ?? false,
+                webhookUrl: document.getElementById('discordWebhookUrl')?.value?.trim() || '',
+                pingEveryone: document.getElementById('discordPingEveryone')?.checked ?? false,
+                pingHere: document.getElementById('discordPingHere')?.checked ?? false
             };
             
             await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set(settingsToSave);
@@ -455,37 +486,41 @@ function initializeToolsPopup() {
     const configureBtn = document.getElementById('configureSelectiveBumpBtn');
     const modalOverlay = document.getElementById('autobump-category-modal-overlay');
 
-    configureBtn.addEventListener('click', async () => {
-        modalOverlay.style.display = 'flex';
-        const listContainer = document.getElementById('autobump-category-list');
-        listContainer.innerHTML = '<div class="fp-import-loader"></div>';
+    if (configureBtn && modalOverlay) {
+        configureBtn.addEventListener('click', async () => {
+            modalOverlay.style.display = 'flex';
+            const listContainer = document.getElementById('autobump-category-list');
+            if (listContainer) listContainer.innerHTML = '<div class="fp-import-loader"></div>';
 
-        try {
-            const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getUserCategories' });
-            if (!response.success) throw new Error(response.error);
-            const categories = response.data;
-            const { foxenSelectedBumpCategories = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenSelectedBumpCategories');
-            
-            if (categories && categories.length > 0) {
-                listContainer.innerHTML = categories.map(cat => `
-                    <label class="autobump-category-item">
-                        <input type="checkbox" data-id="${cat.id}" ${foxenSelectedBumpCategories.includes(cat.id) ? 'checked' : ''}>
-                        <span>${cat.name}</span>
-                    </label>
-                `).join('');
-            } else {
-                listContainer.innerHTML = '<div class="fp-import-empty">Не найдено категорий на вашем профиле.</div>';
+            try {
+                const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'getUserCategories' });
+                if (!response.success) throw new Error(response.error);
+                const categories = response.data;
+                const { foxenSelectedBumpCategories = [] } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenSelectedBumpCategories');
+                
+                if (listContainer) {
+                    if (categories && categories.length > 0) {
+                        listContainer.innerHTML = categories.map(cat => `
+                            <label class="autobump-category-item">
+                                <input type="checkbox" data-id="${cat.id}" ${foxenSelectedBumpCategories.includes(cat.id) ? 'checked' : ''}>
+                                <span>${cat.name}</span>
+                            </label>
+                        `).join('');
+                    } else {
+                        listContainer.innerHTML = '<div class="fp-import-empty">Не найдено категорий на вашем профиле.</div>';
+                    }
+                }
+            } catch (error) {
+                if (listContainer) listContainer.innerHTML = `<div class="fp-import-empty">Ошибка загрузки: ${error.message}</div>`;
             }
-        } catch (error) {
-            listContainer.innerHTML = `<div class="fp-import-empty">Ошибка загрузки: ${error.message}</div>`;
-        }
-    });
+        });
 
-    modalOverlay.querySelector('.foxen-modal-close').addEventListener('click', () => {
-        modalOverlay.style.display = 'none';
-    });
+        modalOverlay.querySelector('.foxen-modal-close')?.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+        });
+    }
 
-    document.getElementById('autobump-select-all').addEventListener('click', () => {
+    document.getElementById('autobump-select-all')?.addEventListener('click', () => {
         const firstVisibleCheckbox = document.querySelector('#autobump-category-list .autobump-category-item:not([style*="display: none"]) input');
         if (!firstVisibleCheckbox) return;
         const isChecked = !firstVisibleCheckbox.checked;
@@ -496,19 +531,19 @@ function initializeToolsPopup() {
         });
     });
 
-    document.getElementById('autobump-category-search').addEventListener('input', (e) => {
+    document.getElementById('autobump-category-search')?.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
         document.querySelectorAll('.autobump-category-item').forEach(item => {
-            const name = item.querySelector('span').textContent.toLowerCase();
+            const name = item.querySelector('span')?.textContent.toLowerCase() || '';
             item.style.display = name.includes(query) ? 'flex' : 'none';
         });
     });
 
-    document.getElementById('autobump-category-save').addEventListener('click', async () => {
+    document.getElementById('autobump-category-save')?.addEventListener('click', async () => {
         const selectedIds = Array.from(document.querySelectorAll('#autobump-category-list input:checked'))
                                 .map(cb => cb.dataset.id);
         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenSelectedBumpCategories: selectedIds });
-        modalOverlay.style.display = 'none';
+        if (modalOverlay) modalOverlay.style.display = 'none';
         showNotification('Список категорий для поднятия сохранен!', false);
     });
     
@@ -783,12 +818,14 @@ function initializeMarkAllAsRead() {
 
         filterCheckbox.addEventListener('change', async () => {
             if (!fxnExtAlive()) return;
-            await fxnSafe(() => chrome.storage.local.set({ foxenIsMarkedFilterActive: filterCheckbox.checked }));
+            const extApi = typeof browser !== 'undefined' ? browser : chrome;
+            await fxnSafe(() => extApi.storage.local.set({ foxenIsMarkedFilterActive: filterCheckbox.checked }));
             applyMarkedFilter();
         });
 
         if (fxnExtAlive()) {
-            fxnSafe(() => chrome.storage.local.get('foxenIsMarkedFilterActive'), {}).then(data => {
+            const extApi = typeof browser !== 'undefined' ? browser : chrome;
+            fxnSafe(() => extApi.storage.local.get('foxenIsMarkedFilterActive'), {}).then(data => {
                 if (data && data.foxenIsMarkedFilterActive) {
                     filterCheckbox.checked = true;
                     applyMarkedFilter();

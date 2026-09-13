@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="popup.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jim+Nightshade&family=Inter:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="popup-wrapper">
@@ -11,7 +11,7 @@
             <div class="header-logo">
                 <img src="../icons/icon128.png" alt="Foxen" width="28" height="28">
                 <div class="header-text">
-                    <h1>Foxen</h1>
+                    <h1 class="brand-title">FOXEN</h1>
                     <span id="version-display"></span>
                 </div>
             </div>
@@ -20,7 +20,7 @@
 
         <main>
             <p class="instruction-text">
-                Все настройки находятся прямо на сайте FunPay - ищите кнопку в шапке.
+                Все настройки и инструменты находятся прямо на сайте <b>FunPay</b> в шапке сайта.
             </p>
 
             <div class="visual-guide">
@@ -28,6 +28,7 @@
             </div>
 
             <a id="goToFunPayBtn" class="cta-button" href="https://funpay.com" target="_blank">
+                <span class="material-symbols-rounded">open_in_new</span>
                 Открыть FunPay
             </a>
         </main>
@@ -48,30 +49,20 @@
         <footer>
             <div class="quick-links">
                 <a href="#" id="telegramBtn" title="Telegram-канал">
-                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-1.37.2-1.64l16.44-5.99c.73-.27 1.36.17 1.15.99l-2.28 10.82c-.15.71-.56 1.01-1.2 1.01l-4.82-.01-1.15 4.35c-.32.74-1.23.46-1.42-.47z"/></svg>
-                    Сообщество
+                    <span class="material-symbols-rounded">forum</span>
+                    Канал
                 </a>
                 <a href="#" id="reviewBtn" title="Оставить отзыв">
-                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    <span class="material-symbols-rounded">rate_review</span>
                     Оценить
                 </a>
-                <a href="https://github.com/SanoSenpay/Foxen" id="changelogBtn" title="Что нового">
-                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.5 7.54L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.94-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h5v-5l-2.5 2.47C6.81 18 5 15.21 5 12c0-4.08 3.05-7.44 7-7.93V2.05z"/></svg>
-                    Что нового
+                <a href="https://github.com/SanoSenpay/Foxen" id="changelogBtn" title="GitHub">
+                    <span class="material-symbols-rounded">star</span>
+                    GitHub
                 </a>
             </div>
             <div class="credits">Fork by SanoSenpay · v<span id="footer-version"></span></div>
         </footer>
-    </div>
-
-    <div id="changelog-panel" class="changelog-panel" style="display:none">
-        <div class="changelog-header">
-            <strong>Что нового в 3.2.0</strong>
-            <button id="changelog-close">✕</button>
-        </div>
-                <ul class="changelog-list">
-            <li><span class="tag new">Новое</span> Вы можете посмотреть всегда на сайте GitHub: <a href="https://github.com/SanoSenpay/Foxen" target="_blank" style="color:#1b75bb;text-decoration:none;">https://github.com/SanoSenpay/Foxen</a></li>
-        </ul>
     </div>
 
     <script src="popup.js"></script>

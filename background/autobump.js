@@ -259,18 +259,20 @@ export async function stopAutoBump() {
 
 async function handleAutobumpPing() {
     const extApi = typeof browser !== 'undefined' ? browser : chrome;
-    const { foxenAutoBumpRunning, foxenBumpInterval, foxenLastAutoBumpTime } = await extApi.storage.local.get([
-        'foxenAutoBumpRunning', 'foxenBumpInterval', 'foxenLastAutoBumpTime'
+    const { foxenAutoBumpRunning, foxenBumpInterval, autoBumpCooldown, foxenLastAutoBumpTime } = await extApi.storage.local.get([
+        'foxenAutoBumpRunning', 'foxenBumpInterval', 'autoBumpCooldown', 'foxenLastAutoBumpTime'
     ]);
     
     if (!foxenAutoBumpRunning) return;
     
-    const intervalMs = (foxenBumpInterval || 15) * 60 * 1000;
+    const minutes = parseInt(autoBumpCooldown, 10) || parseInt(foxenBumpInterval, 10) || 245;
+    const intervalMs = Math.max(10, minutes) * 60 * 1000;
     const last = foxenLastAutoBumpTime || 0;
     const diff = intervalMs - (Date.now() - last);
     
     // Если время вышло и цикл ещё не запущен, стартуем его
     if (diff <= 0 && !_isBumpCycleRunning) {
+        await extApi.storage.local.set({ foxenLastAutoBumpTime: Date.now() });
         runBumpCycle();
     }
 }

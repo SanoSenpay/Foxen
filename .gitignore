@@ -1,36 +1,94 @@
-# Инструкции и вспомогательные директории
+# ==========================================
+# СЕКРЕТЫ, ТОКЕНЫ И ПРИВАТНЫЕ КЛЮЧИ
+# ==========================================
+background/secrets.js
+secrets.js
+secrets.json
+*.local.js
+*.local.json
+.env
+.env.*
+!.env.example
+.dev.vars
+credentials*.json
+*.pem
+*.key
+
+# ==========================================
+# ЗАВИСИМОСТИ И ПАКЕТЫ
+# ==========================================
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# ==========================================
+# СБОРКИ, АРХИВЫ И АРТЕФАКТЫ
+# ==========================================
+dist/
+build/
+web-ext-artifacts/
+out/
+*.zip
+*.xpi
+*.crx
+*.tar
+*.tar.gz
+
+# ==========================================
+# CLOUDFLARE WORKER / WRANGLER КЭШ
+# ==========================================
+.wrangler/
+**/.wrangler/
+.mf/
+**/.mf/
+
+# ==========================================
+# ВРЕМЕННЫЕ ФАЙЛЫ, ЧЕРНОВИКИ И ОТЧЕТЫ ЛИНТЕРОВ
+# ==========================================
+errors.txt
+*.errors.txt
+AI_IMPLEMENTATION_PLAN.md
+*PLAN*.md
+scratch/
+test_build/
+
+# ==========================================
+# ЛОГИ И ВРЕМЕННЫЕ ФАЙЛЫ
+# ==========================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# ==========================================
+# СИСТЕМНЫЙ МУСОР И IDE
+# ==========================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ==========================================
+# ВСПОМОГАТЕЛЬНЫЕ РЕСУРСЫ
+# ==========================================
 mozilla-instruction.md
+CHANGELOG.md
 website/
 supabase/
 bot/
-
-# Секреты и ключи
-background/secrets.js
-.env
-.env.local
-.dev.vars
-
-# Cloudflare Worker / Wrangler
-.wrangler/
-**/node_modules/
-
-# Логи и временные файлы
-npm-debug.log*
-yarn-debug.log*
-*.log
-*.tmp
-*.swp
-
-# Файлы ОС и IDE
-.DS_Store
-Thumbs.db
-desktop.ini
-.vscode/
-.idea/
-
-# Сборки расширения
-*.xpi
-*.zip
-*.crx
-dist/
-build/
+other_assets/

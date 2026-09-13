@@ -278,8 +278,14 @@
             for (const t of rows) {
                 if (t.status !== 'complete') continue;
                 const cur = t.currency || 'UNKNOWN';
-                if (t.signed >= 0) inByCur[cur] = (inByCur[cur] || 0) + Math.abs(t.signed);
-                else outByCur[cur] = (outByCur[cur] || 0) + Math.abs(t.signed);
+                const val = Math.abs(t.signed);
+                if (t.type === 'withdraw_cancel') {
+                    outByCur[cur] = Math.max(0, (outByCur[cur] || 0) - val);
+                } else if (t.signed >= 0) {
+                    inByCur[cur] = (inByCur[cur] || 0) + val;
+                } else {
+                    outByCur[cur] = (outByCur[cur] || 0) + val;
+                }
             }
             const curs = new Set([...Object.keys(inByCur), ...Object.keys(outByCur)]);
             const net = {};

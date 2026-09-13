@@ -79,16 +79,30 @@
         const rates = { RUB: 1, USD: 90, EUR: 98, UNKNOWN: 0 }; // грубая нормализация к ₽ для графика
         for (const t of list) {
             const cur = t.currency || 'UNKNOWN';
+            const val = Math.abs(t.signed);
+
+            if (t.type === 'withdraw_cancel') {
+                // Отмена вывода уменьшает расходы/выводы (outByCur), а не завышает приход
+                outByCur[cur] = Math.max(0, (outByCur[cur] || 0) - val);
+                if (!byType['withdraw']) byType['withdraw'] = { in: {}, out: {}, count: 0 };
+                byType['withdraw'].out[cur] = Math.max(0, (byType['withdraw'].out[cur] || 0) - val);
+
+                if (!byType['withdraw_cancel']) byType['withdraw_cancel'] = { in: {}, out: {}, count: 0 };
+                byType['withdraw_cancel'].in[cur] = (byType['withdraw_cancel'].in[cur] || 0) + val;
+                byType['withdraw_cancel'].count++;
+                continue;
+            }
+
             const acc = t.signed >= 0 ? inByCur : outByCur;
-            acc[cur] = (acc[cur] || 0) + Math.abs(t.signed);
+            acc[cur] = (acc[cur] || 0) + val;
             if (!byType[t.type]) byType[t.type] = { in: {}, out: {}, count: 0 };
             const tacc = t.signed >= 0 ? byType[t.type].in : byType[t.type].out;
-            tacc[cur] = (tacc[cur] || 0) + Math.abs(t.signed);
+            tacc[cur] = (tacc[cur] || 0) + val;
             byType[t.type].count++;
             const d = new Date(t.date);
             const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             const dk = `${mk}-${String(d.getDate()).padStart(2, '0')}`;
-            const rub = Math.abs(t.signed) * (rates[cur] || 0);
+            const rub = val * (rates[cur] || 0);
             if (!byMonth[mk]) byMonth[mk] = { in: 0, out: 0 };
             if (!byDay[dk]) byDay[dk] = { in: 0, out: 0 };
             if (t.signed >= 0) { byMonth[mk].in += rub; byDay[dk].in += rub; }

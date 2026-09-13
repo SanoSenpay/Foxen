@@ -44,6 +44,22 @@
                 }
             });
 
+            // Pause particle loop when Foxen popup is open to avoid 60fps backdrop blur recalculation & memory leaks
+            const checkPopupState = () => {
+                const popup = document.querySelector('.foxen-popup') || document.querySelector('.fxn-popup');
+                const isPopupOpen = popup && (popup.classList.contains('active') || popup.style.display === 'flex');
+                if (isPopupOpen) {
+                    if (this.isRunning) this.stopLoop();
+                } else if (this.enabled && !document.hidden && !this.isRunning) {
+                    this.startLoop();
+                }
+            };
+
+            try {
+                const popupObserver = new MutationObserver(checkPopupState);
+                popupObserver.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['class', 'style'] });
+            } catch (_) {}
+
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
                 chrome.storage.onChanged.addListener((changes, area) => {
                     if (area !== 'local') return;

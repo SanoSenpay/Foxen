@@ -1,15 +1,39 @@
-const VERCEL_API_URL = 'https://fptools.onrender.com/api/ai'; 
+const VERCEL_API_URL = 'https://ai.foxen.site/api/ai'; 
 const API_SECRET_KEY = 'fptoolsdim';
 
-const SYSTEM_PROMPT = 'You are a text editing model. Follow user instructions precisely.';
+const SYSTEM_PROMPT = 'Ты — профессиональный ИИ-ассистент и опытный копирайтер для продавцов на игровой торговой площадке FunPay. Ты создаешь лаконичные, живые, грамотные и продающие тексты без рекламных клише, водянистых вступлений и фальшивого пафоса. Твои ответы звучат естественно, по делу и вызывают доверие покупателей.';
 
 /**
- * Нормализация текста от ИИ: удаляет лишние пустые строки и обрезает пробелы.
+ * Удаляет сторонние контакты (Telegram юзернеймы/ссылки, Discord, VK, телефоны)
+ * во избежание бана аккаунта пользователя на FunPay.
+ */
+function stripExternalContacts(t) {
+    if (typeof t !== 'string') return t;
+    return t
+        // 1. Прямые ссылки t.me/..., telegram.me/..., tg://...
+        .replace(/(?:https?:\/\/)?(?:t\.me|telegram\.me|tg:\/\/)[^\s\n]+/gi, '')
+        // 2. Ссылки Discord, VK, WhatsApp, Viber
+        .replace(/(?:https?:\/\/)?(?:discord\.(?:gg|com\/invite)|vk\.com|wa\.me|viber\:\/\/)[^\s\n]+/gi, '')
+        // 3. Упоминания "тг/tg/telegram/дискорд/discord/вк/vk" с юзернеймом или телефоном
+        .replace(/(?:связь|писать|пишите|мой|наш)?\s*(?:в|через|по)?\s*(?:тг|tg|telegram|дискорд|discord|вк|vk|вайбер|viber|ватсап|whatsapp)\s*[:\-=]?\s*@?[a-zA-Z0-9_\.]{3,}/gi, '')
+        // 4. Юзернеймы Telegram вида @username (буквы, цифры, подчёркивание от 4 до 32 символов)
+        .replace(/@([a-zA-Z0-9_]{4,32})/g, '')
+        // 5. Повторные пустые пробелы
+        .replace(/ {2,}/g, ' ')
+        .trim();
+}
+
+/**
+ * Нормализация текста от ИИ: вырезает сторонние контакты, удаляет лишние пустые строки и обрезает пробелы.
  */
 function fxnNorm(t) {
-    return typeof t === 'string'
-        ? t.replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
-        : t;
+    if (typeof t !== 'string') return t;
+    const sanitized = stripExternalContacts(t);
+    return sanitized
+        .replace(/\r\n?/g, '\n')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -169,16 +193,16 @@ async function makeAIRequest(finalPrompt) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            const details = errorData.details || `HTTP ${response.status} ${response.statusText}`;
+            const details = errorData.error || errorData.details || `HTTP ${response.status} ${response.statusText}`;
             console.error(`AI Server Error: ${details}`);
             
             if (response.status >= 500) {
                  return { 
                     success: false, 
-                    error: "ИИ на сервере разработчика устарел. Разработчик скоро обновит ИИ, и все заработает! ИЗВИНИ 🙏🏻" 
+                    error: `Сервер ИИ временно перегружен (${details}). Попробуйте ещё раз через несколько секунд.` 
                 };
             }
-            return { success: false, error: `Ошибка API: ${details}` };
+            return { success: false, error: `Ошибка ИИ: ${details}` };
         }
 
         const result = await response.json();
@@ -215,23 +239,20 @@ export async function fetchAIResponse(textForAI, context, myUsername, type = "re
         const reviewText = context;
 
         finalPrompt = `
-Ты - дружелюбный продавец "${myUsername}" на бирже FunPay. Покупатель оставил отзыв на товар.
-Название товара (вставляй ТОЧНО как есть, со всеми эмодзи/символами/буквами, НИЧЕГО не меняя): ${lotName}
-Текст отзыва покупателя: "${reviewText}"
+Ты — вежливый, позитивный продавец "${myUsername}" на бирже FunPay. Покупатель оставил отзыв.
+Товар: ${lotName}
+Отзыв покупателя: "${reviewText}"
 
-Напиши ОЧЕНЬ короткий благодарный ответ на отзыв.
+Напиши короткий, теплый и искренний ответ на отзыв (ровно 1-2 коротких предложения).
+ПРАВИЛА:
+1. Поблагодари за покупку и доверие.
+2. Пожелай приятной игры / удачного использования.
+3. Добавь 1-2 уместных эмодзи (🎮, ✨, 😊, 👍).
+4. Обязательно упомяни название товара: ${lotName}
+5. Без клише вроде "Спасибо за покупку нашего товара", пиши живо и по-человечески.
+6. Без Markdown, без кавычек, без лишних вступлений.
 
-ПРАВИЛА (строго):
-1. Длина - 1 предложение, максимум 2 коротких. Это самое важное правило.
-2. Обязательно упомяни название товара, вставив его ДОСЛОВНО (символ в символ) из строки выше.
-3. Поблагодари за отзыв и/или покупку, добавь 1-3 уместных эмодзи.
-4. Без Markdown, без кавычек, без заголовков, без пояснений. Только готовый текст ответа.
-5. Тёплый, искренний тон.
-
-Пример стиля (НЕ копируй дословно, только тон и длину):
-Спасибо за ваш отзыв и покупку нашего ${lotName}! Рад, что всё понравилось! 😊✨
-
-ГОТОВЫЙ ТЕКСТ ОТВЕТА:`;
+ГОТОВЫЙ ТЕКСТ:`;
 
     } else if (type === 'feature_match') {
         // textForAI = freeform user request ("что мне не нужно")
@@ -271,78 +292,183 @@ JSON:`;
 
     } else { // Логика по умолчанию для переписывания текста в чате
         finalPrompt = `
-Ты - ИИ-ассистент, который помогает продавцу "${myUsername}" на FunPay. Твоя задача - переписать его черновик сообщения, сохранив основной смысл, но сделав его вежливым, профессиональным и четким.
+Ты — опытный продавец "${myUsername}" на игровой бирже FunPay. Твоя задача — улучшить черновик сообщения продавца, сделав его грамотным, вежливым, уверенным и кристально понятным покупателю.
 
---- ОСНОВНЫЕ ПРАВИЛА ---
-1.  СОХРАНЯЙ СМЫСЛ: Твой ответ должен передавать ТОТ ЖЕ САМЫЙ смысл, что и черновик продавца. Не добавляй новые идеи, вопросы или предложения от себя.
-2.  БУДЬ КРАТОК: Ответ должен быть настолько же коротким, насколько позволяет исходное сообщение. Не пиши длинные тексты, если черновик короткий.
-3.  ДЕЙСТВУЙ ОТ ЛИЦА ПРОДАВЦА: Всегда пиши от имени "${myUsername}".
-4.  УЧИТЫВАЙ КОНТЕКСТ: Изучи историю переписки, чтобы твой ответ был уместен.
-5.  СТИЛЬ: Используй вежливый, но уверенный тон. Добавляй уместные эмодзи для дружелюбности, но без излишеств, и не всегда.
-6.  НИКАКИХ ЛИШНИХ СЛОВ: Не добавляй стандартные фразы вроде "Здравствуйте", "С уважением" или "Если будут вопросы, обращайтесь", если их не было в исходном черновике.
-7.  ТОЛЬКО ТЕКСТ: Твой итоговый ответ - это ТОЛЬКО готовый текст сообщения. Без кавычек, заголовков или объяснений.
+--- ПРАВИЛА УЛУЧШЕНИЯ ---
+1. СОХРАНЯЙ СМЫСЛ: Передай ровно ту мысль и факты, которые написал продавец. Не придумывай ничего от себя.
+2. ЕСТЕСТВЕННЫЙ ЖИВОЙ ТОН: Забудь роботизированные фразы ("Уведомляю вас", "Доброго времени суток", "В ответ на ваше обращение"). Пиши как реальный вежливый человек.
+3. ЛАКОНИЧНОСТЬ: Если черновик короткий — ответ должен быть коротким. Не лей воду.
+4. ЭМОДЗИ: Добавь 1 уместный эмодзи (👍, 🤝, 😊, ⚡) для дружелюбия, если уместно.
+5. БЕЗ ЛИШНЕГО: Не добавляй стандартные прощания "С уважением" или "Если будут вопросы", если их не было в черновике.
+6. ТОЛЬКО ГОТОВЫЙ ТЕКСТ: Никаких кавычек, пояснений, вариантов. Только готовое сообщение для чата.
 
+Контекст переписки:
+${context || 'Начало диалога'}
 
---- ИСТОРИЯ ПЕРЕПИСКИ ---
-${context}
---- КОНЕЦ ИСТОРИИ ---
+Черновик продавца (${myUsername}): "${textForAI}"
 
-ЧЕРНОВИК МОЕГО СООБЩЕНИЯ (от ${myUsername}): "${textForAI}"
-
-ПЕРЕПИШИ МОЙ ЧЕРНОВИК, СТРОГО СЛЕДУЯ ВСЕМ ПРАВИЛАМ.
 ГОТОВЫЙ ТЕКСТ:`;
     }
 
     return makeAIRequest(finalPrompt);
 }
 
+function safeParseAIJson(rawStr) {
+    if (!rawStr || typeof rawStr !== 'string') return null;
+    let text = rawStr.trim();
+    
+    // Срезаем markdown-обёртку ```json ... ``` если модель её вернула
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+    // 1. Попытка стандартного парсинга
+    try {
+        return JSON.parse(text);
+    } catch (e) {}
+
+    // 2. Извлечение JSON объекта подстрокой
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+        try {
+            return JSON.parse(match[0]);
+        } catch (e) {}
+
+        // 3. Исправление неэкранированных переносов строк внутри строковых литералов
+        try {
+            const sanitized = match[0].replace(/"((?:[^"\\]|\\.)*)"/gs, (m, p1) => {
+                return '"' + p1.replace(/\r?\n/g, '\\n').replace(/\t/g, '\\t') + '"';
+            });
+            return JSON.parse(sanitized);
+        } catch (e) {}
+    }
+
+    // 4. Резервное извлечение по регулярным выражениям
+    try {
+        const extractField = (name) => {
+            const r = new RegExp(`"${name}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`, 's');
+            const m = text.match(r);
+            if (m) return m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+            return null;
+        };
+
+        const title = extractField('title');
+        const description = extractField('description');
+        const buyerMessage = extractField('buyerMessage');
+
+        if (title || description) {
+            return {
+                title: title || '',
+                description: description || '',
+                buyerMessage: buyerMessage || ''
+            };
+        }
+    } catch (e) {}
+
+    return null;
+}
+
+let _cachedLotPresets = null;
+
+async function getLotPresetById(presetId) {
+    if (!presetId) return null;
+    const targetId = String(presetId).trim();
+
+    // 1. Попытка загрузить из кэша
+    if (_cachedLotPresets && Array.isArray(_cachedLotPresets)) {
+        const found = _cachedLotPresets.find(p => String(p.id) === targetId);
+        if (found) return found;
+    }
+
+    // 2. Попытка загрузить свежий каталог с сервера / GitHub
+    try {
+        const res = await fetch('https://api.foxen.site/catalog/lot-presets', { cache: 'no-cache' });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.presets)) {
+                _cachedLotPresets = data.presets;
+                const found = data.presets.find(p => String(p.id) === targetId);
+                if (found) return found;
+            }
+        }
+    } catch (e) {}
+
+    // 3. Резервный файл из локального пакета расширения
+    try {
+        const url = (typeof browser !== 'undefined' ? browser : chrome).runtime.getURL('content/lot-presets-catalog.json');
+        const res = await fetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.presets)) {
+                _cachedLotPresets = data.presets;
+                return data.presets.find(p => String(p.id) === targetId) || null;
+            }
+        }
+    } catch (e) {}
+
+    return null;
+}
+
 export async function fetchAILotGeneration(data) {
-    const { promptTitle, promptDesc, genBuyerMsg, styleExamples, gameCategory } = data;
+    const { promptTitle, promptDesc, genBuyerMsg, styleExamples, gameCategory, presetId } = data;
+
+    const matchedPreset = presetId ? await getLotPresetById(presetId) : null;
+
+    let presetPromptSection = '';
+    if (matchedPreset) {
+        presetPromptSection = `
+--- 🎯 ТЫ ОБЯЗАН СТРОГО СЛЕДОВАТЬ ШАБЛОНУ ПРЕСЕТА (ID: ${matchedPreset.id} - ${matchedPreset.title}) ---
+ШАБЛОН ЗАГОЛОВКА:
+${matchedPreset.title_template || matchedPreset.preview_title}
+
+ШАБЛОН ОФОРМЛЕНИЯ ОПИСАНИЯ:
+${matchedPreset.description_template}
+
+${matchedPreset.buyer_message_template ? `ШАБЛОН СООБЩЕНИЯ АВТОВЫДАЧИ:\n${matchedPreset.buyer_message_template}\n` : ''}
+Сформируй заголовок и описание лота точно по структуре, эмодзи, скобкам и маркерам этого пресета, подставив данные товара "${promptTitle}" и "${promptDesc}".
+--------------------------------------------------------------------------------`;
+    } else {
+        presetPromptSection = `
+--- 🎨 1. СТИЛЬ ЗАГОЛОВКА (КРАТКОЕ ОПИСАНИЕ) ---
+- Сделай заголовок ярким, визуально заметным в таблице лотов.
+- Используй красивые декоративные скобки: 〖 ... 〗, 【 ... 】, 〔 ... 〕 или [ ... ].
+- Добавляй гармоничные тематические эмодзи в начале и в конце, подходящие под товар (например, для огня/доната: 🔥🧡, для скинов/рангов: 💎💙, для красной темы: ❤️🔴🧧, для Discord/Nitro: 🚀💜, для аниме: 🌸✨).
+- Выделяй ключевые фичи КАПСОМ внутри скобок (например: 〖 АВТОВЫДАЧА 24/7 〗, 〖 1000+ ШТУК 〗, 〖 ПОЛНЫЙ ДОСТУП 〗, 〖 БЕЗ БАНА 〗).
+- Длина: от 40 до 95 символов.
+- Пример:
+  ❤️🔴🧧〖 Готовый пак эмодзи 〗〖 +1000 штук 〗〖 АВТОВЫДАЧА 24/7 〗🧧🔴❤️
+
+--- 📝 2. СТИЛЬ ПОДРОБНОГО ОПИСАНИЯ ---
+- Никакого Markdown (запрещены ** и *, так как FunPay их не поддерживает).
+- Оформляй смысловые блоки стильными маркерами-плашками:
+  ⚡] или 📦] Информация о товаре / выдаче
+  ❇️] или 📌] Что входит в покупку / Процесс получения
+  🛡️] или 💎] Гарантии и качество
+  ✅] или 🤝] Поддержка и готовность ответить на вопросы
+- Обязательно разделяй блоки пустыми строками (\\n\\n).
+- Используй списки через маркер • для легкого чтения.
+- Текст должен быть живым, вежливым, уверенным и вызывать максимальное доверие.
+`;
+    }
 
     const finalPrompt = `
-Ты - опытный и успешный продавец на игровой бирже FunPay. Твоя задача - создать убедительное и "живое" описание для лота (объявления), которое выглядит так, будто его написал реальный человек, а не ИИ. Ты должен идеально скопировать уникальный стиль оформления пользователя, который будет дан в примерах.
+Ты — топовый креативный продавец и копирайтер на бирже FunPay. Твоя цель — создать яркий, стильный, сочный и привлекающий внимание лот (заголовок и описание), оформленный в лучших традициях топовых продавцов FunPay с использованием красивых Unicode-символов и тематических эмодзи.
 
---- ГЛАВНЫЕ ТЕХНИЧЕСКИЕ ПРАВИЛА (ОЧЕНЬ ВАЖНО!) ---
-1.  ЗАПРЕЩЕНО ИСПОЛЬЗОВАТЬ MARKDOWN. FunPay не отображает **жирный текст** или *курсив*. Любое использование символов \`*\` или \`_\` для выделения текста - грубая ошибка, которая выдает в тебе ИИ.
-2.  РАЗРЕШЕНО ИСПОЛЬЗОВАТЬ UNICODE И ЭМОДЗИ. Для выделения и структурирования текста используй ТОЛЬКО приемы из примеров стиля пользователя: эмодзи (✅, 💎, 🔥, 🚀), визуальные разделители (➖➖➖, 💎======💎), и другие Unicode-символы.
+Товар / идея: "${promptTitle}"
+Детали и особенности: "${promptDesc}"
+Категория: ${gameCategory || "Игры"}
+${presetId ? `Выбранный пресет: ID ${presetId}` : ''}
 
---- ПРАВИЛА "ЖИВОГО" СТИЛЯ ПРОДАВЦА ---
-1.  ПИШИ ПРЯМО И ПО ДЕЛУ. Покупатели на FunPay ценят ясность и конкретику.
-    -   ПЛОХО: "Погрузитесь в захватывающий мир приключений с этим уникальным аккаунтом!"
-    -   ХОРОШО: "✅ После оплаты вы получите чистый аккаунт Microsoft с полным доступом."
-2.  ИСПОЛЬЗУЙ СТРУКТУРУ. Делай текст читабельным с помощью коротких абзацев, списков с эмодзи (✅, 🛒, 📌, ❗) и визуальных разделителей.
-3.  ГОВОРИ УВЕРЕННО. Используй фразы, которые вызывают доверие: "Гарантия 100%", "Аккаунты всегда в наличии", "Отвечаю моментально". Можно сослаться на количество отзывов или сделок.
-4.  ПРЕДВОСХИЩАЙ ВОПРОСЫ. Сразу отвечай на возможные вопросы покупателя, например, если это аккаунт, то: "Аккаунт лично ваш, не общий", "Полная смена данных", "Подходит для HYPIXEL".
-5.  ДОБАВЬ ВАЖНЫЕ УСЛОВИЯ.
+${presetPromptSection}
 
---- СТОП-СЛОВА И ФРАЗЫ (КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО) ---
--   "Погружайтесь в мир...", "Откройте для себя..."
--   "Невероятные возможности...", "Уникальный опыт..."
--   "Данный аккаунт подарит вам..."
--   "Приобретая этот товар, вы получаете:"
--   "Не упустите шанс..."
--   Любой другой "водянистый" и обезличенный маркетинговый язык, который звучит как реклама по телевизору. Будь проще и конкретнее.
+--- ✉️ 3. СООБЩЕНИЕ ПОКУПАТЕЛЮ ПОСЛЕ ОПЛАТЫ ---
+${genBuyerMsg ? 'Напиши стильное авто-сообщение покупателю с эмодзи, шаблоном [ДАННЫЕ ТОВАРА], краткой инструкцией и пожеланием приятной игры.' : 'Сообщение покупателю генерировать НЕ нужно (оставь строку пустой).'}
 
---- ОБЩИЕ ИНСТРУКЦИИ ---
-1.  **Анализ стиля:** Внимательно изучи примеры названий и описаний лотов пользователя. Узнай его примерный стиль, его манеру оформления, используемые эмодзи, символы и разделители.
-2.  Краткое описание: Создай яркий заголовок в стиле пользователя на основе идеи: "${promptTitle}".
-3.  Подробное описание: Напиши подробное, структурированное описание на основе деталей: "${promptDesc}", следуя всем правилам "живого" стиля.
-4.  Сообщение покупателю: ${genBuyerMsg ? 'Напиши короткое, дружелюбное сообщение для покупателя после оплаты в том же стиле.' : 'Сообщение покупателю генерировать НЕ нужно.'}
-5.  Формат ответа: Твой ответ должен быть СТРОГО в формате JSON. Без лишних слов, объяснений или приветствий.
+${styleExamples ? `--- УЧТИ СТИЛЬ ИЗ ПРОФИЛЯ ПРОДАВЦА ---\n${styleExamples}\n` : ''}
 
---- ПРИМЕРЫ СТИЛЯ ПОЛЬЗОВАТЕЛЯ (для анализа) ---
-${styleExamples}
---- КОНЕЦ ПРИМЕРОВ ---
-
-ЗАПРОС ПОЛЬЗОВАТЕЛЯ:
-- Идея для заголовка: "${promptTitle}"
-- Детали для описания: "${promptDesc}"
-
-Ожидаемый формат ответа (только JSON):
+ОТВЕТЬ СТРОГО В ВАЛИДНОМ JSON БЕЗ ЛИШНЕГО ТЕКСТА ВОКРУГ:
 {
-  "title": "Сгенерированный заголовок в стиле пользователя",
-  "description": "Сгенерированное подробное описание в живом стиле...",
-  "buyerMessage": "${genBuyerMsg ? 'Сгенерированное сообщение для покупателя...' : ''}"
+  "title": "Красивый заголовок с эмодзи и скобками",
+  "description": "Стильное описание с плашками и переносами строк...",
+  "buyerMessage": "${genBuyerMsg ? 'Сообщение покупателю с эмодзи...' : ''}"
 }
 `;
     const result = await makeAIRequest(finalPrompt);
@@ -357,21 +483,15 @@ ${styleExamples}
         return obj;
     };
 
-    try {
-        const aiJson = JSON.parse(result.data);
-        return { success: true, data: _cleanGen(aiJson), source: result.source };
-    } catch (e) {
-        const jsonMatch = result.data.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            try {
-                const cleanedJson = JSON.parse(jsonMatch[0]);
-                return { success: true, data: _cleanGen(cleanedJson), source: result.source };
-            } catch (e2) {
-                 return { success: false, error: `AI returned invalid JSON even after cleaning: ${e2.message}` };
-            }
-        }
-        return { success: false, error: `AI returned invalid JSON: ${e.message}` };
+    const parsedJson = safeParseAIJson(result.data);
+    if (parsedJson) {
+        return { success: true, data: _cleanGen(parsedJson), source: result.source };
     }
+
+    return { 
+        success: false, 
+        error: `Не удалось прочитать ответ ИИ как JSON. Сырой ответ: ${result.data ? result.data.substring(0, 150) : 'пусто'}` 
+    };
 }
 
 export async function fetchAITranslation(data) {
@@ -404,21 +524,15 @@ Output JSON:
         return obj;
     };
 
-    try {
-        const aiJson = JSON.parse(result.data);
-        return { success: true, data: _clean(aiJson), source: result.source };
-    } catch (e) {
-        const jsonMatch = result.data.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            try {
-                const cleanedJson = JSON.parse(jsonMatch[0]);
-                return { success: true, data: _clean(cleanedJson), source: result.source };
-            } catch (e2) {
-                return { success: false, error: `AI returned invalid JSON for translation (cleaned): ${e2.message}` };
-            }
-        }
-        return { success: false, error: `AI returned invalid JSON for translation: ${e.message}` };
+    const parsedJson = safeParseAIJson(result.data);
+    if (parsedJson) {
+        return { success: true, data: _clean(parsedJson), source: result.source };
     }
+
+    return { 
+        success: false, 
+        error: `Не удалось прочитать перевод как JSON: ${result.data ? result.data.substring(0, 120) : 'пусто'}` 
+    };
 }
 
 export async function fetchAIImageGeneration(prompt) {

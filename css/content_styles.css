@@ -9,20 +9,21 @@
 
 
 #foxenButton { 
-    font-weight: bold; 
+    font-family: "Jim Nightshade", cursive !important;
+    font-weight: 700 !important;
+    font-size: 21px !important;
+    letter-spacing: 2px !important;
     cursor: pointer; 
     user-select: none; 
-    color: #C026D3; 
+    color: #f4f4f3 !important; 
     padding: 15px 8px;
     position: relative; 
     transition: all 0.3s ease, transform 0.3s ease; 
     display: inline-block; 
-    font-size: 14px; 
-    letter-spacing: 0.5px; 
     text-decoration: none; 
     line-height: 20px; 
     transform-style: preserve-3d; 
-    padding-top: 20px; 
+    padding-top: 18px; 
     padding-bottom: 10px; 
     transform: translateY(1px); 
 }
@@ -522,626 +523,9 @@
     animation: foxenPulse 2s infinite ease-in-out;
 }
 
-.foxen-popup {
-    display: flex;
-    display: flex !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    flex-direction: column !important;
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    background: #131417 !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 18px !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75) !important;
-    padding: 0 !important;
-    z-index: 10000 !important;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-    color: #e2e8f0 !important;
-    transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important;
-    max-width: 960px !important;
-    width: 92vw !important;
-    max-height: 90vh !important;
-    height: 740px !important;
-    resize: none !important;
-    overflow: hidden !important;
-}
-
-.foxen-popup.active {
-    visibility: visible !important;
-    opacity: 1 !important;
-    animation: popIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes popIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -48%) scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-}
-
-.foxen-popup.no-transform {
-    transform: none !important;
-}
-
-.foxen-header {
-    display: flex !important;
-    align-items: center !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-    flex-shrink: 0 !important;
-    background: #0e121e !important;
-    padding: 12px 20px !important;
-}
-
-.foxen-popup h2 {
-    margin: 0 !important;
-    padding: 6px 12px !important;
-    cursor: move;
-    user-select: none;
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    flex-grow: 1;
-    text-align: left;
-    color: #ffffff !important;
-}
-
-.foxen-popup .close-btn {
-    position: static !important;
-    margin: 0 5px !important;
-    transform: none !important;
-    flex-shrink: 0 !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: #94a3b8 !important;
-    font-size: 20px !important;
-    width: 34px !important;
-    height: 34px !important;
-    border-radius: 50% !important;
-    cursor: pointer;
-    transition: all 0.2s ease !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.foxen-popup .close-btn:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: #ffffff !important;
-    transform: scale(1.05) !important;
-}
-
-.foxen-popup .close-btn::after {
-    content: '×';
-    display: block;
-    transform: translateY(-1px);
-}
-
-.foxen-body {
-    display: flex !important;
-    flex-grow: 1 !important;
-    overflow: hidden !important;
-    position: relative !important;
-    background: #0b0e17 !important;
-}
-
-.foxen-nav {
-    width: 240px !important;
-    flex-shrink: 0 !important;
-    padding: 16px 12px !important;
-    background: #0e121e !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-    overflow-y: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.foxen-nav ul {
-    list-style: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-.fp-nav-divider {
-    font-size: 10.5px !important;
-    font-weight: 700 !important;
-    color: #475569 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.6px !important;
-    margin: 14px 0 6px 8px !important;
-    padding: 0 !important;
-    list-style: none !important;
-}
-
-.foxen-nav li a {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    padding: 9px 12px !important;
-    color: #94a3b8 !important;
-    text-decoration: none !important;
-    border-radius: 9px !important;
-    margin-bottom: 3px !important;
-    cursor: pointer !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    transition: all 0.18s ease !important;
-}
-
-.foxen-nav li a:hover {
-    background-color: rgba(255, 255, 255, 0.04) !important;
-    color: #ffffff !important;
-}
-
-.foxen-nav li.active a {
-    background: rgba(37, 99, 235, 0.14) !important;
-    border: 1px solid rgba(37, 99, 235, 0.5) !important;
-    color: #ffffff !important;
-    font-weight: 600 !important;
-    box-shadow: 0 0 14px rgba(37, 99, 235, 0.25) !important;
-}
-
-.foxen-nav .nav-icon {
-    font-size: 17px !important;
-    width: 20px !important;
-    text-align: center !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    color: inherit !important;
-}
-
-.foxen-content {
-    flex-grow: 1 !important;
-    padding: 24px 28px !important;
-    overflow-y: auto !important;
-    background: #0b0e17 !important;
-}
-
-/* Прозрачное меню FunPay Tools (управляется из «Кастомизация»). */
-.foxen-popup.fxn-menu-transparent {
-    background:
-        linear-gradient(var(--fxn-menu-bg, rgba(19,20,26,0.8)), var(--fxn-menu-bg, rgba(19,20,26,0.8))),
-        var(--fxn-menu-scrim, rgba(15,16,22,0.62)) !important;
-}
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-dark,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-dark .foxen-content,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-dark .foxen-nav li a,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-dark label,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-dark .foxen-content p,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-dark .range-label {
-    color: #e8eaf2 !important;
-}
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light .foxen-content,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light .foxen-nav li a,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light label,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light .foxen-content p,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light .range-label,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light h2,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light h3,
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light h4 {
-    color: #16181f !important;
-}
-.foxen-popup.fxn-menu-transparent.fxn-menu-on-light .fp-nav-divider {
-    color: #4a4f68 !important;
-}
-.foxen-popup.fxn-menu-transparent .foxen-header,
-.foxen-popup.fxn-menu-transparent .foxen-nav,
-.foxen-popup.fxn-menu-transparent .foxen-content {
-    background: transparent !important;
-}
-.foxen-popup.fxn-menu-transparent .foxen-nav li a {
-    background: var(--fxn-menu-navbtn, rgba(42,16,51,0.05)) !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.28) !important;
-}
-.foxen-popup.fxn-menu-transparent .foxen-nav li a:hover {
-    background: var(--fxn-menu-navactive, rgba(42,16,51,0.11)) !important;
-    box-shadow: 0 5px 16px rgba(0,0,0,0.32) !important;
-}
-.foxen-popup.fxn-menu-transparent .foxen-nav li.active a {
-    background: var(--fxn-menu-navactive, rgba(42,16,51,0.11)) !important;
-    box-shadow: 0 5px 16px rgba(0,0,0,0.34) !important;
-}
-.foxen-popup.fxn-menu-transparent .foxen-content .setting-group,
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container,
-.foxen-popup.fxn-menu-transparent .foxen-content .fxn-smart-bump-card,
-.foxen-popup.fxn-menu-transparent .foxen-content .foxen-console,
-.foxen-popup.fxn-menu-transparent .foxen-content .template-input,
-.foxen-popup.fxn-menu-transparent .foxen-content select,
-.foxen-popup.fxn-menu-transparent .foxen-content input[type="text"],
-.foxen-popup.fxn-menu-transparent .foxen-content input[type="password"],
-.foxen-popup.fxn-menu-transparent .foxen-content input[type="number"],
-.foxen-popup.fxn-menu-transparent .foxen-content input[type="range"],
-.foxen-popup.fxn-menu-transparent .foxen-content input[type="search"],
-.foxen-popup.fxn-menu-transparent .foxen-content textarea,
-.foxen-popup.fxn-menu-transparent .foxen-content .checkbox-label-inline {
-    background: var(--fxn-menu-navbtn, rgba(42,16,51,0.05)) !important;
-    border-radius: 10px;
-    border: none !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.16) !important;
-}
-.foxen-popup.fxn-menu-transparent .foxen-content .setting-group,
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container,
-.foxen-popup.fxn-menu-transparent .foxen-content .checkbox-label-inline {
-    padding: 12px 14px;
-}
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container input[type="range"],
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container .template-input,
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container select,
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container input[type="text"],
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container input[type="password"],
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container input[type="number"] {
-    background: transparent !important;
-}
-.foxen-popup.fxn-menu-transparent .foxen-content .template-container input[type="range"] {
-    background: rgba(255,255,255,0.08) !important;
-}
-.foxen-popup.fxn-menu-transparent.fxn-menu-blur {
-    backdrop-filter: blur(var(--fxn-menu-blur, 8px));
-    -webkit-backdrop-filter: blur(var(--fxn-menu-blur, 8px));
-}
-
-@keyframes popIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -48%) scale(0.97);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-}
-
-.foxen-popup.no-transform {
-    transform: none !important;
-}
-
-.foxen-header {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid var(--fxn-border, #22253a);
-    flex-shrink: 0;
-    background: var(--fxn-surface, #0e0f16);
-}
-
-.foxen-popup h2 {
-    margin: 0;
-    padding: 18px 25px;
-    cursor: move;
-    user-select: none;
-    font-size: 22px;
-    font-weight: 700;
-    flex-grow: 1;
-    text-align: left;
-    color: #fff;
-}
-
-.foxen-popup .close-btn {
-    position: static;
-    margin: 0 15px;
-    transform: none;
-    flex-shrink: 0;
-    background: var(--fxn-surface, #1e2030);
-    border: none;
-    color: var(--fxn-text-muted, #9099b8);
-    font-size: 24px;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.foxen-popup .close-btn:hover {
-    background: var(--fxn-surface, #2a2d44);
-    transform: scale(1.05);
-}
-
-.foxen-popup .close-btn::after {
-    content: '×';
-    display: block;
-    transform: translateY(-1px);
-}
-
-.foxen-body {
-    display: flex;
-    flex-grow: 1;
-    overflow: hidden;
-    position: relative;
-}
-
-.foxen-nav {
-    width: 200px;
-    flex-shrink: 0;
-    padding: 20px 10px;
-    border-right: 1px solid var(--fxn-border, #22253a);
-    overflow-y: auto;
-}
-
-.foxen-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.foxen-nav li a {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    color: var(--fxn-text-muted, #ccc);
-    text-decoration: none;
-    border-radius: 8px;
-    margin-bottom: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.foxen-nav li a:hover {
-    background-color: var(--fxn-surface, #1e2030);
-    color: var(--fxn-text, #d8dae8);
-    transform: none;
-}
-
-.foxen-nav li.active a {
-    background: var(--fxn-surface, #26272d);
-    color: var(--fxn-accent, #C026D3);
-    font-weight: 600;
-}
-
-.foxen-nav .nav-icon {
-    margin-right: 12px;
-    font-size: 18px;
-    width: 20px;
-    text-align: center;
-    opacity: 0.9;
-}
-
-.foxen-content {
-    flex-grow: 1;
-    padding: 25px 30px;
-    overflow-y: auto;
-}
-
-.foxen-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.foxen-content::-webkit-scrollbar-track {
-    background: var(--fxn-surface, #0e0f16);
-}
-
-.foxen-content::-webkit-scrollbar-thumb {
-    background: var(--fxn-surface, #2a2d44);
-    border-radius: 3px;
-}
-
-.foxen-content::-webkit-scrollbar-thumb:hover {
-    background: var(--fxn-border, rgba(255,255,255,0.16));
-}
-
-.foxen-page-content {
-    display: none;
-}
-
-.foxen-page-content.active {
-    display: block;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.foxen-page-content h3 {
-    font-size: 24px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    margin-top: 35px;
-    margin-bottom: 25px;
-    color: #eee;
-    letter-spacing: 0.5px;
-}
-
-.foxen-page-content h3:first-child {
-    margin-top: 0;
-}
-
-/* Калькулятор: компактный заголовок, чтобы вкладка влезала без скролла */
-.foxen-page-content[data-page="calculator"] h3 {
-    margin-top: 0;
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-}
-
-.foxen-page-content h4 {
-    margin-top: 25px;
-    margin-bottom: 15px;
-    font-size: 18px;
-    color: #ddd;
-}
-
-.foxen-footer {
-    padding: 15px 25px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.foxen-popup label {
-    display: block;
-    margin-bottom: 10px;
-    font-size: 16px;
-    color: #ddd;
-}
-
-.foxen-popup input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    margin-right: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    position: relative;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    vertical-align: middle;
-}
-
-.foxen-popup input[type="checkbox"]:checked {
-    background: linear-gradient(45deg, #E879F9, #92FE9D);
-}
-
-.foxen-popup input[type="checkbox"]::after {
-    content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 14px;
-    color: #fff;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.foxen-popup input[type="checkbox"]:checked::after {
-    opacity: 1;
-}
-
-.foxen-popup input[type="text"],
-.foxen-popup input[type="password"],
-.foxen-popup input[type="number"],
-.foxen-popup textarea,
-.foxen-popup input[type="color"],
-.foxen-popup select,
-.foxen-popup input[type="range"] {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: none;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-}
-
-.foxen-popup select option {
-    background: #333;
-}
-
-.foxen-popup input[type="text"]:focus,
-.foxen-popup input[type="password"]:focus,
-.foxen-popup input[type="number"]:focus,
-.foxen-popup textarea:focus,
-.foxen-popup select:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 247, 255, 0.5);
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.foxen-popup input[type="text"]:disabled,
-.foxen-popup input[type="password"]:disabled,
-.foxen-popup input[type="number"]:disabled,
-.foxen-popup input[type="color"]:disabled,
-.foxen-popup button:disabled,
-.foxen-popup select:disabled,
-.foxen-popup input[type="range"]:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.foxen-popup button,
-.foxen-popup .btn {
-    background: #C026D3;
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 50px;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-    position: relative;
-    overflow: hidden;
-}
-
-.foxen-popup button::before,
-.foxen-popup .btn::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 80%);
-    transform: scale(0);
-    transition: transform 0.6s ease-out;
-}
-
-.foxen-popup button:hover::before,
-.foxen-popup .btn:hover::before {
-    transform: scale(1);
-}
-
-.foxen-popup button:not(:disabled):hover,
-.foxen-popup .btn:not(:disabled):hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
-}
-
-.foxen-popup button:active,
-.foxen-popup .btn:active {
-    transform: translateY(1px);
-}
-
-.foxen-popup .btn-default {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.foxen-popup .btn-default:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.foxen-popup .template-info {
-    margin-bottom: 15px;
-    font-size: 13px;
-    opacity: 0.8;
-    line-height: 1.4;
-}
-
-.foxen-popup .template-container {
-    margin-bottom: 20px;
-}
-
-.foxen-popup .template-input {
-    min-height: 60px;
-    resize: vertical;
-}
+/* =============================================================================
+   FOXEN POPUP MODAL STYLES (Moved to css/main_popup.css)
+   ============================================================================= */
 
 .chat-template-btn,
 .custom-chat-template-btn {
@@ -2084,8 +1468,8 @@
     --fp-bg-header: rgba(30, 30, 30, 0.85);
     --fp-text-primary: #e0e0e0;
     --fp-text-secondary: #a0a0a0;
-    --fp-accent: #0099ff;
-    --fp-accent-hover: #33aaff;
+    --fp-accent: var(--fxn-accent, #c026d3);
+    --fp-accent-hover: var(--fxn-accent-hover, #a21caf);
     --fp-border-color: #333333;
     --fp-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     --fp-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -2096,7 +1480,8 @@ html {
     scroll-behavior: smooth;
 }
 
-body:not(.funpay-redesigned) #content {
+body:not(.funpay-redesigned) > #content,
+body:not(.funpay-redesigned) .page-content > #content {
     visibility: hidden;
 }
 
@@ -5594,11 +4979,16 @@ a.contact-item:hover {
 }
 
 .foxen-modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(5px);
-    z-index: 10001;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    z-index: 20000000 !important;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -6063,13 +5453,13 @@ a.contact-item:hover {
     left: 10%;
     width: 80%;
     height: 40px;
-    background: #2a2a2a;
-    border: 1px solid #444;
+    background: #0f1015;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-bottom: none;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     z-index: 10005;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 -5px 25px rgba(0,0,0,0.7);
     overflow: hidden;
     transform: translateY(100%);
     transition: transform 0.4s ease-in-out;
@@ -6077,7 +5467,8 @@ a.contact-item:hover {
 .progress-bar-fill {
     position: absolute;
     top: 0; left: 0; height: 100%;
-    background: linear-gradient(90deg, #C026D3, #E879F9);
+    background: rgba(255, 255, 255, 0.2);
+    border-right: 2px solid #ffffff;
     transition: width 0.3s ease;
 }
 .progress-bar-text {
@@ -6085,9 +5476,9 @@ a.contact-item:hover {
     z-index: 2;
     line-height: 40px;
     text-align: center;
-    color: #fff;
-    font-weight: bold;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -6204,9 +5595,9 @@ a.contact-item:hover {
 /* === МИНИМАЛИСТИЧНЫЙ ДИЗАЙН КНОПОК === */
 .foxen-popup button,
 .foxen-popup .btn {
-    background: #0099ff;
+    background: var(--fxn-active, var(--fxn-accent, #c026d3));
     color: white;
-    box-shadow: none;
+    box-shadow: none !important;
     text-transform: none;
     letter-spacing: 0;
     font-weight: 500;
@@ -6215,9 +5606,9 @@ a.contact-item:hover {
 
 .foxen-popup button:hover,
 .foxen-popup .btn:hover {
-    background: #33aaff;
+    background: var(--fxn-accent-hover, #a21caf);
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 153, 255, 0.2);
+    box-shadow: none !important;
 }
 
 .foxen-popup .btn-default {
@@ -6226,6 +5617,7 @@ a.contact-item:hover {
 
 .foxen-popup .btn-default:hover {
     background: rgba(255, 255, 255, 0.15);
+    box-shadow: none !important;
 }
 
 /* === СТИЛИ ДЛЯ ВКЛАДКИ АВТО-ОТВЕТОВ === */
@@ -6781,148 +6173,7 @@ a.contact-item:hover {
     animation: none !important;
 }
 
-/* ── Popup panel: 2.8 flat dark base ───────────────────────────── */
-.foxen-popup,
-.foxen-popup * {
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-}
-
-.foxen-popup h3 {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: #5a5f7a;
-    margin: 20px 0 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #1e2030;
-}
-
-.foxen-popup h3:first-child {
-    margin-top: 0;
-}
-
-/* ── Nav icon: text emoji → cleaner layout ──────────────────────── */
-.foxen-nav .nav-icon {
-    font-size: 16px;
-    width: 22px;
-    flex-shrink: 0;
-}
-
-.foxen-nav li a {
-    color: #7a7f9a !important;
-    font-size: 13px;
-    border-radius: 6px;
-    padding: 9px 12px;
-    gap: 8px;
-}
-
-.foxen-nav li a:hover {
-    color: #d8dae8 !important;
-    background: #1a1c2e !important;
-    transform: none !important;
-}
-
-.foxen-nav li.active a {
-    color: #E9A8FF !important;
-    background: #1e1f38 !important;
-    font-weight: 600;
-    box-shadow: none !important;
-}
-
-/* ── Primary button: flat ───────────────────────────────────────── */
-.foxen-popup .btn:not(.btn-default) {
-    background: #C026D3 !important;
-    border: none;
-    color: #fff;
-    font-weight: 600;
-    border-radius: 6px;
-    transition: background 0.15s, transform 0.1s;
-    box-shadow: none !important;
-}
-
-.foxen-popup .btn:not(.btn-default):hover {
-    background: #5d58f0 !important;
-}
-
-.foxen-popup .btn:not(.btn-default):active {
-    transform: scale(0.98);
-}
-
-/* ── Secondary button ───────────────────────────────────────────── */
-.foxen-popup .btn.btn-default {
-    background: #1e2030;
-    border: 1px solid #2a2d44;
-    color: #9099b8;
-    font-weight: 500;
-    border-radius: 6px;
-    transition: background 0.15s;
-    box-shadow: none !important;
-}
-
-.foxen-popup .btn.btn-default:hover {
-    background: #2A1830;
-    color: #d8dae8;
-    border-color: #363a5a;
-}
-
-/* ── Inputs & textareas ─────────────────────────────────────────── */
-.foxen-popup .template-input,
-.foxen-popup input[type="text"],
-.foxen-popup input[type="password"],
-.foxen-popup input[type="number"],
-.foxen-popup textarea {
-    background: #0e0f16 !important;
-    border: 1px solid #22253a !important;
-    color: #d8dae8 !important;
-    border-radius: 6px;
-    font-size: 13px;
-    transition: border-color 0.15s;
-}
-
-.foxen-popup .template-input:focus,
-.foxen-popup input[type="text"]:focus,
-.foxen-popup input[type="password"]:focus,
-.foxen-popup input[type="number"]:focus,
-.foxen-popup textarea:focus {
-    border-color: #C026D3 !important;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(192, 38, 211, 0.15) !important;
-}
-
-/* ── Input groups ────────────────────────────────────────────────── */
-.foxen-popup .input-group {
-    display: flex !important;
-    align-items: stretch !important;
-    width: 100% !important;
-}
-
-.foxen-popup .input-group .form-control {
-    flex: 1 !important;
-    margin-bottom: 0 !important;
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-}
-
-.foxen-popup .input-group-addon {
-    background: #1a1c2e !important;
-    border: 1px solid #22253a !important;
-    border-left: none !important;
-    border-top-right-radius: 6px !important;
-    border-bottom-right-radius: 6px !important;
-    color: #a78bfa !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 12px !important;
-    cursor: pointer !important;
-    transition: all 0.15s ease !important;
-}
-
-.foxen-popup .input-group-addon:hover {
-    background: #252840 !important;
-    color: #c084fc !important;
-}
+/* ── Popup panel styles moved to css/main_popup.css ── */
 
 /* ── Checkbox rows ──────────────────────────────────────────────── */
 .checkbox-label-inline {

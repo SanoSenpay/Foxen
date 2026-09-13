@@ -1,12 +1,13 @@
-/* css/ai_creator.css */
+/* css/ai_creator.css - Premium Modern Design with Material Symbols */
 
-/* FIX 2.9.1: кнопка ИИ-генерации - обычный клон "Импорт" (btn btn-default).
-   Без теней, градиентов, трансформаций и частиц. */
 .foxen-ai-gen-btn {
     box-shadow: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
 }
 
-/* Modal Styles */
+/* Modal Overlay */
 .foxen-ai-gen-modal {
     display: none;
     position: fixed;
@@ -15,203 +16,558 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     justify-content: center;
     align-items: center;
 }
 
 .foxen-ai-gen-modal.active {
     display: flex;
-    animation: ai-modal-fade-in 0.3s ease;
+    animation: fxn-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes ai-modal-fade-in {
+@keyframes fxn-fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
+/* Modal Window Container */
 .foxen-ai-gen-modal-content {
-    --cw-bg: #1e1e1e; --cw-color: #e0e0e0; --cw-accent: #1b75bb;
-    --cw-border: rgba(255,255,255,0.12); --cw-subtle: rgba(255,255,255,0.05);
-    --cw-muted: rgba(255,255,255,0.55); --cw-field-bg: rgba(255,255,255,0.05);
-    background: var(--cw-bg);
-    border: 1px solid var(--cw-border);
-    border-radius: 14px;
-    box-shadow: 0 12px 48px rgba(0,0,0,0.45);
-    width: 90vw;
-    max-width: 550px;
-    animation: ai-modal-slide-up 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    background: #13151b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    width: 92vw;
+    max-width: 580px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    animation: fxn-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes ai-modal-slide-up {
-    from { transform: translateY(30px) scale(0.95); opacity: 0; }
+@keyframes fxn-slide-up {
+    from { transform: translateY(16px) scale(0.98); opacity: 0; }
     to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
+/* Header */
 .foxen-ai-gen-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 25px;
-    border-bottom: 1px solid var(--cw-border, rgba(255,255,255,0.12));
+    padding: 16px 22px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.foxen-ai-gen-modal-header h3 { margin: 0; font-size: 18px; color: var(--cw-color, #e0e0e0); }
-.foxen-ai-gen-modal-header .close-btn { background: none; border: none; font-size: 28px; color: var(--cw-muted, #888); cursor: pointer; transition: color 0.2s; }
-.foxen-ai-gen-modal-header .close-btn:hover { color: var(--cw-color, #fff); }
 
+.foxen-ai-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.foxen-ai-header-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2));
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #93c5fd;
+}
+
+.foxen-ai-header-icon-box .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.foxen-ai-header-title h3 {
+    margin: 0 0 2px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f8fafc;
+    letter-spacing: -0.01em;
+}
+
+.foxen-ai-model-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    padding: 1px 7px;
+    border-radius: 12px;
+}
+
+.foxen-ai-model-tag .material-symbols-rounded {
+    font-size: 13px;
+}
+
+.foxen-ai-gen-modal-header .close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.foxen-ai-gen-modal-header .close-btn .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.foxen-ai-gen-modal-header .close-btn:hover {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Modal Body */
 .foxen-ai-gen-modal-body {
-    padding: 25px;
+    padding: 18px 22px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
-.foxen-ai-gen-modal-body p {
+
+/* Quick Presets Bar */
+.foxen-ai-presets-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preset-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.preset-chips-scroll {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.preset-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.preset-chip .material-symbols-rounded {
     font-size: 14px;
-    color: var(--cw-muted, #aaa);
-    margin-top: 0;
-    margin-bottom: 20px;
-    line-height: 1.5;
+    color: #60a5fa;
 }
-.foxen-ai-gen-modal-body label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: var(--cw-color, #ccc);
+
+.preset-chip:hover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #bfdbfe;
+    transform: translateY(-1px);
 }
-.foxen-ai-gen-modal-body input[type="text"],
-.foxen-ai-gen-modal-body textarea {
+
+/* Field Groups */
+.foxen-ai-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.field-label-row label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.field-label-row label .material-symbols-rounded {
+    font-size: 15px;
+    color: #94a3b8;
+}
+
+.field-req {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.foxen-ai-field-group input[type="text"],
+.foxen-ai-field-group textarea {
     width: 100%;
     box-sizing: border-box;
-    background: var(--cw-field-bg, rgba(255,255,255,0.06));
-    border: 1px solid var(--cw-border, rgba(255,255,255,0.12));
+    background: #0d0e12;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
-    padding: 12px;
-    color: var(--cw-color, #fff);
-    font-size: 14px;
-    margin-bottom: 15px;
-    resize: vertical;
-    transition: all 0.3s ease;
-}
-.foxen-ai-gen-modal-body input[type="text"]:focus,
-.foxen-ai-gen-modal-body textarea:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--cw-accent, #1b75bb);
-    background: rgba(255, 255, 255, 0.15);
+    padding: 10px 14px;
+    color: #f8fafc;
+    font-size: 13.5px;
+    font-family: inherit;
+    line-height: 1.45;
+    transition: all 0.2s ease;
 }
 
-.foxen-ai-gen-options { margin-top: 15px; }
-.foxen-ai-gen-options label { 
-    display: flex; 
-    align-items: center; 
-    margin-bottom: 10px; 
-    cursor: pointer; 
+.foxen-ai-field-group input[type="text"]:focus,
+.foxen-ai-field-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background: #0f1117;
+}
+
+.foxen-ai-field-group textarea {
+    resize: vertical;
+    min-height: 65px;
+}
+
+/* Options Card */
+.foxen-ai-options-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+}
+
+.foxen-switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
     user-select: none;
 }
-.foxen-ai-gen-options span { font-size: 14px; }
 
-/* Custom Checkbox */
-.foxen-ai-gen-options input[type="checkbox"] {
+.foxen-switch-row input[type="checkbox"] {
     display: none;
 }
-.foxen-ai-gen-options .custom-checkbox {
-    width: 20px;
+
+.switch-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.switch-icon {
+    font-size: 18px;
+    color: #64748b;
+}
+
+.switch-title {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #cbd5e1;
+}
+
+.switch-desc {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.switch-slider {
+    width: 38px;
     height: 20px;
-    background-color: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 5px;
-    margin-right: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
     position: relative;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     flex-shrink: 0;
 }
-.foxen-ai-gen-options .custom-checkbox::after {
-    content: '✓';
-    font-size: 16px;
-    color: white;
+
+.switch-slider::after {
+    content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-    transition: all 0.2s ease;
-}
-.foxen-ai-gen-options input[type="checkbox"]:checked + .custom-checkbox {
-    background-color: #8A2BE2;
-    border-color: #a45eff;
-}
-.foxen-ai-gen-options input[type="checkbox"]:checked + .custom-checkbox::after {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-}
-
-.foxen-ai-gen-modal-footer {
-    padding: 15px 25px;
-    text-align: right;
-    border-top: 1px solid var(--cw-border, rgba(255,255,255,0.12));
-}
-
-.foxen-ai-gen-modal-footer .submit-btn {
-    background: var(--cw-accent, #1b75bb);
-    color: #fff;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    min-width: 150px;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-}
-.foxen-ai-gen-modal-footer .submit-btn:hover:not(:disabled) {
-    filter: brightness(1.08);
-}
-.submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.submit-btn .btn-loader {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
+    background: white;
+    top: 3px;
+    left: 3px;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.foxen-switch-row input[type="checkbox"]:checked + .switch-slider {
+    background: var(--fxn-active, var(--fxn-accent, #c026d3));
+}
+
+.foxen-switch-row input[type="checkbox"]:checked + .switch-slider::after {
+    left: 21px;
+}
+
+/* Status Panel */
+.foxen-ai-status-panel {
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    animation: fxn-fade-in 0.2s ease;
+}
+
+.foxen-ai-status-panel.status-loading {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.22);
+    color: #93c5fd;
+}
+
+.foxen-ai-status-panel.status-success {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.22);
+    color: #6ee7b7;
+}
+
+.foxen-ai-status-panel.status-error {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    color: #fca5a5;
+}
+
+.foxen-ai-status-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.foxen-ai-status-header .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.spinning {
     animation: spin 1s linear infinite;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-top: -10px;
-    margin-left: -10px;
-}
-
-.submit-btn.loading .btn-text {
-    opacity: 0;
-}
-
-.submit-btn.loading .btn-loader {
-    display: block;
+    display: inline-block;
 }
 
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
+.status-log-text {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.result-preview {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    color: #f8fafc;
+    font-size: 12.5px;
+}
+
+.preview-label {
+    color: #94a3b8;
+    margin-right: 4px;
+}
+
+.trans-ok, .trans-fail {
+    margin-top: 6px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.trans-ok { color: #34d399; }
+.trans-fail { color: #f59e0b; }
+
+.trans-ok .material-symbols-rounded,
+.trans-fail .material-symbols-rounded {
+    font-size: 14px;
+}
+
+.result-actions {
+    margin-top: 10px;
+}
+
+.foxen-btn-apply {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s ease;
+}
+
+.foxen-btn-apply .material-symbols-rounded {
+    font-size: 16px;
+}
+
+.foxen-btn-apply:hover {
+    background: #059669;
+}
+
+.error-msg {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #fca5a5;
+}
+
+.foxen-btn-retry {
+    margin-top: 8px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+
+.foxen-btn-retry .material-symbols-rounded {
+    font-size: 15px;
+}
+
+.foxen-btn-retry:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+/* Footer */
+.foxen-ai-gen-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    background: rgba(255, 255, 255, 0.015);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.foxen-btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.foxen-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+}
+
+.foxen-btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #ffffff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.foxen-btn-primary .btn-icon {
+    font-size: 17px;
+}
+
+.foxen-btn-primary:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+    transform: translateY(-1px);
+}
+
+.foxen-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.foxen-btn-primary.loading .btn-icon,
+.foxen-btn-primary.loading .btn-text {
+    opacity: 0;
+}
+
+.foxen-btn-primary .btn-spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    position: absolute;
+    left: 50%;
+    margin-left: -8px;
+}
+
+.foxen-btn-primary.loading .btn-spinner {
+    display: block;
+}
+
 #foxen-translate-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #ccc;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
     font-size: 11px;
     padding: 2px 8px;
     border-radius: 10px;
     cursor: pointer;
     margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
     transition: all 0.2s ease;
     transform: translateY(-3.5px);
 }
 
 #foxen-translate-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.14);
     color: #fff;
-    border-color: #E879F9;
+    border-color: #93c5fd;
 }
 
 #foxen-translate-btn:disabled {

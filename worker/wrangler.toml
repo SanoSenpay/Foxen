@@ -1,17 +1,26 @@
-name = "foxen-profiles"
+name = "foxen-api"
 main = "src/index.js"
 compatibility_date = "2024-03-20"
+keep_vars = true
+
+# Кастомный домен API для Cloudflare
+routes = [
+  { pattern = "api.foxen.site", custom_domain = true }
+]
 
 # AI Binding для модерации
 [ai]
 binding = "AI"
 
-# KV Binding для хранения данных
-# ВАЖНО: Замените id на свой после создания namespace
+# KV Binding для профилей
 [[kv_namespaces]]
 binding = "FPT_PROFILES"
 id = "b5202dd2d5a34360967231ae21221e17"
 
-# Настройки CORS
 [vars]
-CORS_ORIGIN = "https://funpay.com"
+CORS_ORIGIN = "https://web.foxen.site"
+MAX_SLOTS = "2"
+SUPABASE_URL = "https://yoacfrbedwksnfksjjmv.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ"
+PLATEGA_API_BASE = "https://app.platega.io"
+PLATEGA_MERCHANT_ID = "e6157015-e7e9-48be-b65e-1bb5932326dc"

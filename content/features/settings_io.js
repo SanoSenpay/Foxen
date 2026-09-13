@@ -77,7 +77,7 @@ const EXCLUDE_KEYS = new Set([
 function isJunkKey(k) {
     if (!k || typeof k !== 'string') return true;
     if (EXCLUDE_KEYS.has(k)) return true;
-    return /donat|sponsor|account|session|salesData|purchasesData|financeData|userInfo/i.test(k);
+    return /donat|sponsor|account|session|salesData|purchasesData|financeData|userInfo|Cache|Logs|Seeded|banner|news|announcement|telemetry|wallpaper|imageStore|canvas|history|unread|heartbeat|poll|processed|collecting|lastUpdate|token|auth_code|tg_owner|profile:|DescrCache|greetedUsers|lastReadNews|fxnLastReadNewsId/i.test(k);
 }
 
 async function exportSettings() {
@@ -90,9 +90,10 @@ async function exportSettings() {
             data[k] = v;
         }
 
-        // Очищаем рантайм-состояние автоответчика перед экспортом
+        // Очищаем рантайм-состояние автоответчика перед экспортом (ВАЖНО: удаляем greetedUsers)
         if (data.foxenAutoReplies && typeof data.foxenAutoReplies === 'object') {
             const ar = { ...data.foxenAutoReplies };
+            delete ar.greetedUsers;
             delete ar.autoResponderSeeded;
             delete ar.lastSeenMsgIds;
             delete ar.lastHandledText;
@@ -133,20 +134,35 @@ async function importSettings(file) {
         const text = await file.text();
         const obj  = JSON.parse(text);
 
+        // Проверяем, не пытается ли пользователь импортировать файл с лотами
+        if (Array.isArray(obj)) {
+            const isLots = obj.length > 0 && (obj[0].sourceTitle || obj[0].data || obj[0].sourceCategory || (obj[0].id && (obj[0].title || obj[0].fields)));
+            if (isLots) {
+                if (confirm(`Выбранный файл содержит экспортированные лоты (${obj.length} шт.), а не настройки расширения.\n\nЗапустить импорт лотов сейчас?`)) {
+                    await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'startLotImport', lots: obj, fileName: file.name });
+                    if (typeof showNotification === 'function') {
+                        showNotification(`Импорт ${obj.length} лотов запущен!`, false);
+                    }
+                }
+                return;
+            }
+            throw new Error('Файл содержит массив данных, не являющийся настройками расширения.');
+        }
+
         let settingsToImport = null;
         if (obj && typeof obj === 'object') {
             if (obj.settings && typeof obj.settings === 'object') {
                 settingsToImport = obj.settings;
             } else if (obj._magic === FP_CONFIG_MAGIC && obj.settings) {
                 settingsToImport = obj.settings;
-            } else if (obj.foxenAutoReplies || obj.autoBumpEnabled || obj.foxenAccounts) {
+            } else if (obj.foxenAutoReplies || obj.autoBumpEnabled || obj.foxenAccounts || obj.foxenThemeSettings) {
                 settingsToImport = obj;
-            } else {
+            } else if (!obj._magic) {
                 settingsToImport = obj;
             }
         }
 
-        if (!settingsToImport || typeof settingsToImport !== 'object' || !Object.keys(settingsToImport).length) {
+        if (!settingsToImport || typeof settingsToImport !== 'object' || Array.isArray(settingsToImport) || !Object.keys(settingsToImport).length) {
             throw new Error('Файл не содержит валидных настроек.');
         }
 
@@ -158,10 +174,11 @@ async function importSettings(file) {
             safe[k] = v;
         }
 
-        // Обязательно очищаем рантайм-маркеры просмотренных сообщений автоответчика из импортируемого конфига,
-        // чтобы при следующем цикле раннер прошёл посев (seeding) и НЕ рассылал приветствия по старым чатам!
+        // Обязательно очищаем рантайм-маркеры и greetedUsers из импортируемого конфига,
+        // чтобы расширение НЕ рассылало приветствия по старым чатам при импорте!
         if (safe.foxenAutoReplies && typeof safe.foxenAutoReplies === 'object') {
             const ar = { ...safe.foxenAutoReplies };
+            delete ar.greetedUsers;
             delete ar.autoResponderSeeded;
             delete ar.lastSeenMsgIds;
             delete ar.lastHandledText;
@@ -194,17 +211,17 @@ function initializeSettingsIO() {
     // Используем делегирование событий на document, чтобы кнопки экспорта/импорта
     // работали независимо от момента динамического рендеринга попапа/модального окна.
     document.addEventListener('click', (e) => {
-        const exportBtn = e.target.closest('#fp-settings-export-btn');
+        const exportBtn = e.target.closest('#fp-settings-export-btn, #fxnExportAllSettingsBtn');
         if (exportBtn) {
             e.preventDefault();
             exportSettings();
             return;
         }
 
-        const importBtn = e.target.closest('#fp-settings-import-btn');
+        const importBtn = e.target.closest('#fp-settings-import-btn, #fxnImportAllSettingsBtn');
         if (importBtn) {
             e.preventDefault();
-            let importInput = document.getElementById('fp-settings-import-input');
+            let importInput = document.getElementById('fp-settings-import-input') || document.getElementById('fxnImportAllSettingsFile');
             if (!importInput) {
                 importInput = document.createElement('input');
                 importInput.type = 'file';
@@ -218,7 +235,7 @@ function initializeSettingsIO() {
     });
 
     document.addEventListener('change', (e) => {
-        if (e.target && e.target.id === 'fp-settings-import-input') {
+        if (e.target && (e.target.id === 'fp-settings-import-input' || e.target.id === 'fxnImportAllSettingsFile')) {
             const file = e.target.files[0];
             if (file) {
                 importSettings(file);

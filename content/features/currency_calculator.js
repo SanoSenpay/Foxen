@@ -131,7 +131,7 @@ async function populateCurrencies() {
 
 // Основная функция инициализации
 function initializeCurrencyCalculator() {
-    const page = document.querySelector('.foxen-page-content[data-page="currency_calc"]');
+    const page = document.querySelector('.foxen-page-content[data-page="currency_calc"]') || document.querySelector('.fxn-subtab-content[data-subtab-page="currency_calc"]');
     if (!page || page.dataset.initialized) return;
 
     const amountFromInput = document.getElementById('currencyAmountFrom');

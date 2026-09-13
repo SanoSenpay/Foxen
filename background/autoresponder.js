@@ -352,15 +352,19 @@ function applyVariables(template, vars = {}) {
     const orderLink = vars.orderId ? `https://funpay.com/orders/${vars.orderId}/` : '';
 
     let result = template
-        
-        .replace(/{buyername}/gi,  vars.buyerName  || '')
-        .replace(/{lotname}/gi,    vars.lotName    || '')
-        .replace(/{orderid}/gi,    vars.orderId    || '')
-        .replace(/{orderlink}/gi,  orderLink)
-        .replace(/{welcome}/gi,    greeting)
-        .replace(/{date}/gi,       `${dateStr} ${timeStr}`)
+        .replace(/\{buyername\}|\{buyer_name\}/gi,  vars.buyerName  || '')
+        .replace(/\{sellername\}|\{seller_name\}/gi, vars.sellerName || 'продавец')
+        .replace(/\{lotname\}|\{lot_name\}/gi,    vars.lotName    || '')
+        .replace(/\{category\}|\{game\}/gi,       vars.category   || vars.game || '')
+        .replace(/\{orderid\}|\{order_id\}/gi,    vars.orderId    || '')
+        .replace(/\{orderlink\}|\{order_link\}/gi, orderLink)
+        .replace(/\{welcome\}/gi,    greeting)
+        .replace(/\{date\}/gi,       `${dateStr} ${timeStr}`)
+        .replace(/\{time\}/gi,       timeStr)
+        .replace(/\{rating\}|\{stars\}/gi, vars.rating || '⭐⭐⭐⭐⭐')
         
         .replace(/\$username/g,     vars.buyerName  || '')
+        .replace(/\$seller_name/g,  vars.sellerName || '')
         .replace(/\$order_id/g,     vars.orderId    || '')
         .replace(/\$order_link/g,   orderLink)
         .replace(/\$order_title/g,  vars.lotName    || '')
@@ -409,23 +413,26 @@ async function isBlacklisted(username, feature) {
 async function handleGreeting(msg, auth, settings) {
     if (!settings.greetingEnabled || !settings.greetingText) return;
 
-    
     if (getMessageType(msg.messageText) === 'DEAR_VENDORS') return;
 
-    
     if (settings.ignoreSystemMessages && getMessageType(msg.messageText) !== 'NON_SYSTEM') return;
 
-    
     if (await isBlacklisted(msg.buyerName, 'response')) return;
 
-    // Если чат инициирован нами (написали первыми), пропускаем приветствие
+    // Если чат инициирован нами (написали первыми или уже общались), пропускаем приветствие
     const selfInitiated = settings.selfInitiatedChats || [];
     if (selfInitiated.includes(msg.chatId)) {
-        console.log(`Foxen AR: пропуск приветствия — чат ${msg.chatId} инициирован нами.`);
+        console.log(`Foxen AR: пропуск приветствия — чат ${msg.chatId} инициирован нами/уже есть диалог.`);
         return;
     }
 
-    
+    // Если в чате уже есть оформленный/оплаченный заказ, пропускаем приветствие
+    const orderedChats = settings.orderedChats || [];
+    if (orderedChats.includes(msg.chatId)) {
+        console.log(`Foxen AR: пропуск приветствия — в чате ${msg.chatId} уже есть оформленный заказ.`);
+        return;
+    }
+
     const cooldownDays = parseFloat(settings.greetingCooldownDays || 0);
     const greetedTimestamps = settings.greetedTimestamps || {};
     const lastGreeted = greetedTimestamps[msg.chatId] || 0;
@@ -433,13 +440,41 @@ async function handleGreeting(msg, auth, settings) {
 
     if (cooldownDays > 0 && Date.now() - lastGreeted < cooldownMs) return;
 
-    
+    const greetedUsers = settings.greetedUsers || [];
     if (settings.onlyNewChats) {
-        const greetedUsers = settings.greetedUsers || [];
         if (greetedUsers.includes(msg.chatId)) return;
     } else {
-        const greetedUsers = settings.greetedUsers || [];
         if (greetedUsers.includes(msg.chatId) && cooldownDays === 0) return;
+    }
+
+    // Проверяем страницу чата перед первой отправкой приветствия,
+    // чтобы исключить случай, когда покупатель оплатил заказ и сразу написал сообщение.
+    try {
+        const cookieStr = auth.phpsessid
+            ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
+            : `golden_key=${auth.golden_key}`;
+        const chatRes = await fetchWithRetry(`https://funpay.com/chat/?node=${msg.chatId}`, {
+            headers: { cookie: cookieStr, 'x-requested-with': 'XMLHttpRequest' }
+        }, { retries: 1, timeoutMs: 5000 });
+
+        if (chatRes.ok) {
+            const chatHtml = await chatRes.text();
+            const hasOrderInChat = RX.ORDER_PURCHASED.test(chatHtml) || /orders\/[A-Z0-9]{8}/i.test(chatHtml);
+            if (hasOrderInChat) {
+                console.log(`Foxen AR: пропуск приветствия — найден оплаченный заказ в истории чата ${msg.chatId}`);
+                await atomicUpdate(s => {
+                    const g = s.greetedUsers || [];
+                    if (!g.includes(msg.chatId)) g.push(msg.chatId);
+                    s.greetedUsers = g;
+                    const o = s.orderedChats || [];
+                    if (!o.includes(msg.chatId)) o.push(msg.chatId);
+                    s.orderedChats = o;
+                });
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn(`Foxen AR: не удалось проверить историю чата ${msg.chatId} перед приветствием:`, e.message);
     }
 
     const text = applyVariables(settings.greetingText, { buyerName: msg.buyerName, chatId: msg.chatId });
@@ -767,14 +802,22 @@ async function handleAutoDelivery(msg, auth, settings) {
 }
 
 async function notifyDearVendors(msg) {
-    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: 'https://funpay.com/*' });
-    tabs.forEach(tab => {
-        chrome.tabs.sendMessage(tab.id, {
-            action: 'foxenDearVendors',
-            chatId: msg.chatId,
-            buyerName: msg.buyerName
-        }).catch(() => {});
-    });
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    try {
+        const tabs = await extApi.tabs.query({ url: 'https://funpay.com/*' });
+        if (tabs && Array.isArray(tabs)) {
+            tabs.forEach(tab => {
+                try {
+                    const p = extApi.tabs.sendMessage(tab.id, {
+                        action: 'foxenDearVendors',
+                        chatId: msg.chatId,
+                        buyerName: msg.buyerName
+                    });
+                    if (p && typeof p.catch === 'function') p.catch(() => {});
+                } catch (_) {}
+            });
+        }
+    } catch (_) {}
 }
 
 const RUNNER_TAG_KEY = 'foxenAutoResponderTag';
@@ -865,12 +908,28 @@ async function _runAutoResponderCycleInner() {
             }
             if (chat.lastByBot) {
                 if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
+                await atomicUpdate(s => {
+                    const arr = s.selfInitiatedChats || [];
+                    if (!arr.includes(chat.chatId)) arr.push(chat.chatId);
+                    s.selfInitiatedChats = arr;
+                    const g = s.greetedUsers || [];
+                    if (!g.includes(chat.chatId)) g.push(chat.chatId);
+                    s.greetedUsers = g;
+                });
                 continue;
             }
 
             // Пропускаем чаты, где последнее сообщение отправлено нами
             if (chat.lastByMe) {
                 if (nodeMsg != null) updates[chat.chatId] = Math.max(prevSeen, nodeMsg);
+                await atomicUpdate(s => {
+                    const arr = s.selfInitiatedChats || [];
+                    if (!arr.includes(chat.chatId)) arr.push(chat.chatId);
+                    s.selfInitiatedChats = arr;
+                    const g = s.greetedUsers || [];
+                    if (!g.includes(chat.chatId)) g.push(chat.chatId);
+                    s.greetedUsers = g;
+                });
                 continue;
             }
 
@@ -951,6 +1010,17 @@ async function _runAutoResponderCycleInner() {
                 const _oid = (msg.messageText.match(RX.ORDER_ID) || [])[1] || null;
 
                 if (msgType === 'ORDER_PURCHASED') {
+                    await atomicUpdate(s => {
+                        const g = s.greetedUsers || [];
+                        if (!g.includes(msg.chatId)) g.push(msg.chatId);
+                        s.greetedUsers = g;
+                        const o = s.orderedChats || [];
+                        if (!o.includes(msg.chatId)) o.push(msg.chatId);
+                        s.orderedChats = o;
+                        const ts = s.greetedTimestamps || {};
+                        ts[msg.chatId] = Date.now();
+                        s.greetedTimestamps = ts;
+                    });
                     await handleOrderPurchased(msg, auth, fresh);
                     await handleAutoDelivery(msg, auth, fresh);
                 } else if (msgType === 'ORDER_CONFIRMED') {
@@ -1007,7 +1077,8 @@ export async function resetAutoResponderState() {
         !foxenAutoReplies.lastSeenMsgIds &&
         !foxenAutoReplies.lastHandledText &&
         !foxenAutoReplies.autoResponderSeeded &&
-        !foxenAutoReplies.selfInitiatedChats
+        !foxenAutoReplies.selfInitiatedChats &&
+        !foxenAutoReplies.orderedChats
     ) {
         return;
     }
@@ -1015,5 +1086,6 @@ export async function resetAutoResponderState() {
     delete foxenAutoReplies.lastHandledText;
     delete foxenAutoReplies.autoResponderSeeded;
     delete foxenAutoReplies.selfInitiatedChats;
+    delete foxenAutoReplies.orderedChats;
     await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenAutoReplies });
 }
