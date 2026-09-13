@@ -44,15 +44,28 @@ export default {
         method: request.method,
         headers: proxyHeaders,
         body: (request.method !== 'GET' && request.method !== 'HEAD') ? await request.arrayBuffer() : undefined,
-        redirect: 'follow'
+        redirect: 'manual'
       };
 
       try {
         const resp = await fetch(targetUrl.toString(), fetchOptions);
         const responseHeaders = new Headers(resp.headers);
-        for (const [k, v] of Object.entries(corsHeaders)) {
-          responseHeaders.set(k, v);
+        
+        // Устанавливаем CORS-заголовки, не затирая оригинальный Content-Type
+        responseHeaders.set('Access-Control-Allow-Origin', requestOrigin);
+        responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-FPT-Key, apikey');
+        responseHeaders.set('Access-Control-Allow-Credentials', 'true');
+        responseHeaders.set('Access-Control-Expose-Headers', '*');
+
+        // Для редиректов (например, OAuth редирект на Google Accounts)
+        if ([301, 302, 303, 307, 308].includes(resp.status)) {
+          const loc = resp.headers.get('Location') || resp.headers.get('location');
+          if (loc) {
+            responseHeaders.set('Location', loc);
+          }
         }
+
         return new Response(resp.body, {
           status: resp.status,
           statusText: resp.statusText,
