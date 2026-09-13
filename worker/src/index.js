@@ -1377,6 +1377,35 @@ export default {
           const supabaseUrl = env.SUPABASE_URL || "https://yoacfrbedwksnfksjjmv.supabase.co";
           const apiKey = getSupabaseKey(env);
 
+          // Проверяем наличие РЕАЛЬНОГО профиля в базе данных (защита от призрачных/рандомных ID)
+          let userProfile = null;
+          try {
+            const pQuery = [];
+            if (user_id) pQuery.push(`id.eq.${user_id}`);
+            if (foxen_id) pQuery.push(`foxen_id.ilike.${encodeURIComponent(foxen_id)}`);
+            if (fp_user) pQuery.push(`fp_user.ilike.${encodeURIComponent(fp_user)}`);
+
+            if (pQuery.length > 0) {
+              const pRes = await fetch(`${supabaseUrl}/rest/v1/profiles?or=(${pQuery.join(',')})&select=id,foxen_id,fp_user&limit=1`, {
+                headers: { "apikey": apiKey, "Authorization": `Bearer ${apiKey}` }
+              });
+              if (pRes.ok) {
+                const pList = await pRes.json();
+                if (Array.isArray(pList) && pList.length > 0) {
+                  userProfile = pList[0];
+                }
+              }
+            }
+          } catch(e) {}
+
+          if (!userProfile) {
+            return new Response(JSON.stringify({ ok: false, error: "Профиль не найден. Для активации промокода необходимо войти в свой аккаунт Foxen" }), { status: 400, headers: corsHeaders });
+          }
+
+          const targetUserId = userProfile.id;
+          const targetFoxenId = userProfile.foxen_id;
+          const targetFpUser = userProfile.fp_user;
+
           // 1. Пробуем вызов RPC-функции в Supabase
           try {
             const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/redeem_promo_code`, {
@@ -1384,9 +1413,9 @@ export default {
               headers: { "apikey": apiKey, "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
               body: JSON.stringify({
                 p_code: cleanCode,
-                p_user_id: user_id || null,
-                p_foxen_id: foxen_id || null,
-                p_fp_user: fp_user || null
+                p_user_id: targetUserId,
+                p_foxen_id: targetFoxenId,
+                p_fp_user: targetFpUser
               })
             });
 
@@ -1431,9 +1460,8 @@ export default {
 
                 // Проверка повторного использования данным пользователем
                 const redemptionQuery = [];
-                if (user_id) redemptionQuery.push(`user_id=eq.${user_id}`);
-                if (foxen_id) redemptionQuery.push(`foxen_id=eq.${encodeURIComponent(foxen_id)}`);
-                if (fp_user) redemptionQuery.push(`fp_user=eq.${encodeURIComponent(fp_user)}`);
+                if (targetUserId) redemptionQuery.push(`user_id=eq.${targetUserId}`);
+                if (targetFoxenId) redemptionQuery.push(`foxen_id=eq.${encodeURIComponent(targetFoxenId)}`);
 
                 if (redemptionQuery.length > 0) {
                   const checkRedeemRes = await fetch(`${supabaseUrl}/rest/v1/promo_redemptions?code=eq.${encodeURIComponent(cleanCode)}&or=(${redemptionQuery.join(',')})&select=id`, {
@@ -1454,9 +1482,8 @@ export default {
                 // Получаем текущую подписку пользователя
                 let existingSub = null;
                 const subLookups = [];
-                if (user_id) subLookups.push(`user_id=eq.${user_id}`);
-                if (foxen_id) subLookups.push(`foxen_id=eq.${encodeURIComponent(foxen_id)}`);
-                if (fp_user) subLookups.push(`fp_user=eq.${encodeURIComponent(fp_user)}`);
+                if (targetUserId) subLookups.push(`user_id=eq.${targetUserId}`);
+                if (targetFoxenId) subLookups.push(`foxen_id=eq.${encodeURIComponent(targetFoxenId)}`);
 
                 if (subLookups.length > 0) {
                   const curSubRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?or=(${subLookups.join(',')})&select=*&order=starts_at.desc&limit=1`, {
@@ -1483,9 +1510,9 @@ export default {
 
                 // Обновляем/создаем подписку
                 const subPayload = {
-                  user_id: user_id || existingSub?.user_id || null,
-                  foxen_id: foxen_id || existingSub?.foxen_id || null,
-                  fp_user: fp_user || existingSub?.fp_user || null,
+                  user_id: targetUserId,
+                  foxen_id: targetFoxenId,
+                  fp_user: targetFpUser,
                   status: 'active',
                   is_lifetime: isLifetime,
                   plan_id: isLifetime ? 'lifetime' : `${daysToAdd}_days`,
@@ -1514,10 +1541,20 @@ export default {
                   body: JSON.stringify({
                     promo_code_id: promo.id,
                     code: cleanCode,
-                    user_id: user_id || null,
-                    foxen_id: foxen_id || null,
-                    fp_user: fp_user || null,
+                    user_id: targetUserId,
+                    foxen_id: targetFoxenId,
+                    fp_user: targetFpUser,
                     redeemed_at: now.toISOString()
+                  })
+                });
+
+                // Обновляем профиль пользователя
+                await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${targetUserId}`, {
+                  method: "PATCH",
+                  headers: { "apikey": apiKey, "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    is_premium: true,
+                    updated_at: now.toISOString()
                   })
                 });
 
@@ -1526,8 +1563,7 @@ export default {
                   method: "PATCH",
                   headers: { "apikey": apiKey, "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    times_used: (promo.times_used || 0) + 1,
-                    updated_at: now.toISOString()
+                    times_used: (promo.times_used || 0) + 1
                   })
                 });
 
