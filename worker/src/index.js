@@ -16,11 +16,13 @@ export default {
     const url = new URL(request.url);
 
     const requestOrigin = request.headers.get("Origin") || "*";
+    const requestHeaders = request.headers.get("Access-Control-Request-Headers") || "Content-Type, Authorization, X-FPT-Key, apikey, accept-profile, content-profile, prefer, range, x-client-info, x-supabase-api-version";
     const corsHeaders = {
       "Access-Control-Allow-Origin": requestOrigin,
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-FPT-Key",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+      "Access-Control-Allow-Headers": requestHeaders,
       "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Max-Age": "86400",
       "Content-Type": "application/json",
     };
 
@@ -53,8 +55,8 @@ export default {
         
         // Устанавливаем CORS-заголовки, не затирая оригинальный Content-Type
         responseHeaders.set('Access-Control-Allow-Origin', requestOrigin);
-        responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-FPT-Key, apikey');
+        responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+        responseHeaders.set('Access-Control-Allow-Headers', requestHeaders);
         responseHeaders.set('Access-Control-Allow-Credentials', 'true');
         responseHeaders.set('Access-Control-Expose-Headers', '*');
 
