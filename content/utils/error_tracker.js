@@ -14,6 +14,9 @@
     // 1. Конфигурация прокси-эндпоинта (Open-Source Webhook Endpoint)
     // -------------------------------------------------------------------------
     const TELEMETRY_WEBHOOK_URL = 'https://api.foxen.site/api/telemetry';
+const DEV_TELEGRAM_BOT_TOKEN = '';
+const DEV_TELEGRAM_CHAT_ID = '';
+
 
     // ID веток (message_thread_id) в Telegram-супергруппе разработчика
     const DEV_TELEGRAM_TOPICS = {

@@ -247,7 +247,10 @@
         const cached = (await storageGet([CATALOG_CACHE_KEY]))[CATALOG_CACHE_KEY];
         if (cached && cached.catalog && Array.isArray(cached.catalog.banners) && cached.catalog.banners.length > 5) {
           _catalog = cached.catalog;
-          refreshCatalogBackground();
+if (Date.now() - (cached.t || 0) > CATALOG_CACHE_TTL) {
+    refreshCatalogBackground();
+}
+
           return _catalog;
         }
       } catch (e) {}

@@ -137,40 +137,95 @@ function createMainPopup() {
         staleInspector.remove();
     }
 
-    let popup = document.querySelector('.foxen-popup');
-    if (popup) return popup;
+const popup = document.createElement('div');
+popup.id = 'foxenMainPopup';
+popup.className = 'foxen-popup fxn-popup';
+popup.innerHTML = `
+    <div class="foxen-header">
+        <button type="button" id="fxnSidebarToggleBtn" class="fxn-sidebar-toggle-btn" title="Свернуть / развернуть боковую панель" aria-label="Свернуть меню">
+            <span class="material-symbols-rounded">menu_open</span>
+        </button>
+        <h2 class="foxen-title-wrap"><a href="https://web.foxen.site" target="_blank" class="foxen-site-link">Foxen</a><a href="https://funpay.tools" target="_blank" class="fxn-fork-badge" title="Основано на FunPay Tools (v2.9.9)"><span class="fxn-fork-dot"></span>FPT 2.9.9</a></h2>
+        <div class="foxen-header-actions">
+            <button type="button" id="fxnAccentBtn" class="fxn-accent-btn" title="Сменить акцентный цвет" aria-label="Сменить акцентный цвет">
+                <span class="fxn-accent-preview-dot"></span>
+                <span class="material-symbols-rounded" style="font-size:16px;">palette</span>
+                <input type="color" id="fxnAccentInput" class="fxn-accent-input" value="#C026D3" aria-hidden="true" tabindex="-1">
+`
 
-    const logoUrl = getFoxenLogoUrl(false);
-
-    popup = document.createElement('div');
-    popup.id = 'foxenMainPopup';
-    popup.className = 'foxen-popup fxn-popup';
-    popup.innerHTML = `
-        <div class="scrim"></div>
-
-        <div class="window">
-            <div class="titlebar">
-                <div class="titlebar-title"></div>
-                <div class="titlebar-actions" style="display:flex;align-items:center;gap:8px;margin-left:auto;">
-                    <button class="fxn-titlebar-gear-btn" id="fxnTitlebarMenuSettingsBtn" title="Настройки меню Foxen" type="button">
-                        <span class="material-symbols-rounded">settings</span>
-                    </button>
-                    <div class="traffic">
-                        <span class="traffic-min" title="Свернуть / Компактный режим"></span>
-                        <span class="traffic-max" title="Развернуть / Обычный размер"></span>
-                        <span class="traffic-close fxn-popup-close" title="Закрыть (Esc)"></span>
-                    </div>
-                </div>
             </div>
 
-            <div class="body">
-                <!-- ================= SIDEBAR ================= -->
-                <nav class="sidebar">
-                    <div class="brand">
-                        <img class="brand-logo" src="${logoUrl}" alt="Foxen Logo" onerror="this.src='https://funpay.com/img/layout/avatar.png'">
-                        <div class="brand-name">
-                            <div class="t1">FOXEN</div>
-                            <div class="t2">Extension</div>
+<div class="body">
+    <!-- ================= SIDEBAR ================= -->
+    <nav class="sidebar">
+        <div class="brand">
+            <img class="brand-logo" src="${logoUrl}" alt="Foxen Logo" onerror="this.src='https://funpay.com/img/layout/avatar.png'">
+            <div class="brand-name">
+                <div class="t1">FOXEN</div>
+                <div class="t2">Extension</div>
+            </div>
+        </div>
+
+        <div class="fxn-nav-group">
+            <div class="fxn-nav-group-title">ТОРГОВЛЯ & ПРОДАВЕЦ</div>
+            <ul class="fxn-nav-vertical-list">
+                <li data-page="lot_io"><a><span class="material-symbols-rounded nav-list-icon">inventory_2</span><span>Управление лотами</span></a></li>
+                <li data-page="autobump"><a><span class="material-symbols-rounded nav-list-icon">rocket_launch</span><span>Авто-поднятие</span></a></li>
+                <li data-page="ai_audit"><a><span class="material-symbols-rounded nav-list-icon">search_insights</span><span>ИИ-Аудит лотов</span></a></li>
+            </ul>
+        </div>
+
+        <div class="fxn-nav-group">
+            <div class="fxn-nav-group-title">КОММУНИКАЦИЯ</div>
+            <ul class="fxn-nav-vertical-list">
+                <li data-page="templates"><a><span class="material-symbols-rounded nav-list-icon">description</span><span>Шаблоны ответов</span></a></li>
+                <li data-page="auto_review"><a><span class="material-symbols-rounded nav-list-icon">smart_toy</span><span>Авто-ответы</span></a></li>
+                <li data-page="auto_delivery"><a><span class="material-symbols-rounded nav-list-icon">bolt</span><span>Авто-выдача</span></a></li>
+                <li data-page="telegram"><a><span class="material-symbols-rounded nav-list-icon">send</span><span>Telegram-бот</span></a></li>
+                <li data-page="blacklist"><a><span class="material-symbols-rounded nav-list-icon">block</span><span>Чёрный список</span></a></li>
+            </ul>
+        </div>
+
+        <div class="fxn-nav-group">
+            <div class="fxn-nav-group-title">КАСТОМИЗАЦИЯ</div>
+            <ul class="fxn-nav-vertical-list">
+                <li data-page="theme"><a><span class="material-symbols-rounded nav-list-icon">palette</span><span>Внешний вид</span></a></li>
+                <li data-page="effects"><a><span class="material-symbols-rounded nav-list-icon">auto_awesome</span><span>Эффекты</span></a></li>
+            </ul>
+        </div>
+
+        <div class="fxn-nav-group">
+            <div class="fxn-nav-group-title">ФИНАНСЫ & ИНСТРУМЕНТЫ</div>
+            <ul class="fxn-nav-vertical-list">
+                <li data-page="piggy_banks"><a><span class="material-symbols-rounded nav-list-icon">savings</span><span>Копилки</span></a></li>
+                <li data-page="calculator"><a><span class="material-symbols-rounded nav-list-icon">calculate</span><span>Калькулятор</span></a></li>
+                <li data-page="currency_calc"><a><span class="material-symbols-rounded nav-list-icon">currency_exchange</span><span>Валюты</span></a></li>
+                <li data-page="notes"><a><span class="material-symbols-rounded nav-list-icon">edit_note</span><span>Заметки</span></a></li>
+                <li data-page="settings_io"><a><span class="material-symbols-rounded nav-list-icon">database</span><span>Импорт / Экспорт</span></a></li>
+            </ul>
+        </div>
+
+        <!-- Footer Buttons Stack (Sidebar style) -->
+        <div class="fxn-sidebar-footer">
+            <ul class="fxn-footer-nav-list">
+                <li>
+                    <a href="https://t.me/FoxenFF" target="_blank" rel="noopener" class="fxn-footer-nav-item fxn-footer-btn-tg">
+                        <span class="material-symbols-rounded nav-list-icon">send</span>
+                        <span>Telegram канал</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://github.com/SanoSenpay/Foxen/issues/new" target="_blank" rel="noopener" class="fxn-footer-nav-item fxn-footer-btn-bug">
+                        <span class="material-symbols-rounded nav-list-icon">bug_report</span>
+                        <span>Сообщить об ошибке</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <main class="foxen-content">
+        <div class="foxen-page-content active" data-page="general">
+
                         </div>
                     </div>
 
@@ -470,18 +525,85 @@ function createMainPopup() {
                                     </button>
                                 </div>
 
-                                <!-- Volume Slider Section -->
-                                <div class="fxn-sound-volume-wrap">
-                                    <div class="fxn-sound-volume-header">
-                                        <div class="fxn-sound-volume-left">
-                                            <svg class="fxn-sound-vol-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                                            </svg>
-                                            <span class="fxn-sound-vol-label">Громкость</span>
-                                        </div>
-                                        <span id="notificationVolumeValue" class="fxn-sound-vol-value">100%</span>
+                    <h3 style="margin-top: 40px;">Уведомления в Discord</h3>
+                     <div class="checkbox-label-inline">
+                        <input type="checkbox" id="discordLogEnabled">
+                        <label for="discordLogEnabled" style="margin-bottom:0;"><span>Включить уведомления о новых сообщениях</span></label>
+                    </div>
+                    <div id="discordSettingsContainer">
+                        <label for="discordWebhookUrl" style="margin-top: 10px;">Webhook URL:</label>
+                        <input type="text" id="discordWebhookUrl" class="template-input" placeholder="Вставьте ссылку на вебхук вашего Discord канала">
+                        <div class="checkbox-label-inline" style="margin-top:10px;"><input type="checkbox" id="discordPingEveryone"><label for="discordPingEveryone" style="margin-bottom:0;"><span>Пинговать @everyone</span></label></div>
+                        <div class="checkbox-label-inline"><input type="checkbox" id="discordPingHere"><label for="discordPingHere" style="margin-bottom:0;"><span>Пинговать @here</span></label></div>
+                    </div>
+                    <h3 style="margin-top: 30px;">Политика сбора данных</h3>
+                    <div class="checkbox-label-inline">
+                        <input type="checkbox" id="fxnTelemetryEnabled" checked>
+                        <label for="fxnTelemetryEnabled" style="margin-bottom:0;"><span>Автоматическая отправка анонимных отчетов об ошибках разработчику</span></label>
+                    </div>
+                    <p class="template-info">При возникновении ошибок расширение фиксирует логи консоли и данные о сетевых сбоях и отправляет их разработчику для оперативного выпуска исправлений. Личные данные (куки, сессии, токены, пароли) вырезаются перед отправкой.</p>
+
+                    <div class="support-promo">
+                        <span class="nav-icon material-symbols-rounded">favorite</span>
+                        <span>Понравился Foxen? <a href="#" data-nav-to="support">Поддержите труд разработчика</a> во вкладке "Поддержка"!</span>
+                    </div>
+                    
+                    <h3 style="margin-top: 30px;">Заказы и статистика</h3>
+                    <div class="checkbox-label-inline">
+                        <input type="checkbox" id="foxenBuyerHistory" checked>
+                        <label for="foxenBuyerHistory" style="margin-bottom:0;"><span>Показывать историю покупок в чате</span></label>
+                    </div>
+                    <div class="checkbox-label-inline">
+                        <input type="checkbox" id="foxenShowUnconfirmed" checked>
+                        <label for="foxenShowUnconfirmed" style="margin-bottom:0;"><span>Показывать сумму неподтверждённых заказов</span></label>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">Идентификатор FPT</h3>
+                    <div class="checkbox-label-inline">
+                        <input type="checkbox" id="fxnIdentifierEnabled" checked>
+                        <label for="fxnIdentifierEnabled" style="margin-bottom:0;"><span>Показывать метку «Foxen» рядом с ником собеседника</span></label>
+                    </div>
+                    <p class="template-info">При включении к исходящим сообщениям добавляется невидимый символ. Если собеседник тоже использует FPT - рядом с его ником появится пометка. Символ не виден обычным пользователям. Не добавляется в ссылки и скопированный текст.</p>
+
+                    <div class="support-promo" style="background: rgba(255, 152, 0, 0.1); border-color: rgba(255, 152, 0, 0.3); margin-top: 15px;">
+                        <span class="nav-icon material-symbols-rounded" style="color: #ff9800;">warning</span>
+                        <span>Для корректной работы расширения рекомендуется использовать FunPay на <strong>русском языке</strong>, так как большинство функций не будут работать на других языках.</span>
+                    </div>
+                </div> <!-- КОНЕЦ ВКЛАДКИ "ОБЩИЕ" -->
+
+                <!-- НАЧАЛО ВКЛАДКИ "АККАУНТЫ" -->
+                <div class="foxen-page-content" data-page="accounts">
+                    <h3>Управление аккаунтами</h3>
+                    <p class="template-info">Добавьте текущий аккаунт в список, чтобы быстро переключаться между профилями без ввода пароля.</p>
+                    <div class="support-promo" style="background:rgba(192,38,211,0.08); border-color:rgba(192,38,211,0.25); margin-bottom: 20px;">
+                        <span class="nav-icon material-symbols-rounded" style="color:#C026D3;">info</span>
+                        <span>Нажмите «+ Добавить текущий аккаунт» для каждого профиля. Переключение происходит мгновенно без ввода паролей.</span>
+                    </div>
+                    <button id="addCurrentAccountBtn" class="btn">+ Добавить текущий аккаунт</button>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;margin-bottom:10px;">
+                        <h4 style="margin:0;">Сохраненные аккаунты:</h4>
+                        <button id="fxnRefreshAccountsBtn" class="btn btn-default" style="padding:4px 10px;font-size:12px;" title="Обновить баланс, аватары и непрочитанные">
+                            <span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;">refresh</span> Обновить
+                        </button>
+                    </div>
+                    <div id="foxenAccountsList"></div>
+                </div>
+
+                <!-- Volume Slider Section -->
+                <div class="fxn-sound-volume-wrap">
+                    <div class="fxn-sound-volume-header">
+                        <div class="fxn-sound-volume-left">
+                            <svg class="fxn-sound-vol-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                            </svg>
+                            <span class="fxn-sound-vol-label">Громкость</span>
+                        </div>
+                        <span id="notificationVolumeValue" class="fxn-sound-vol-value">100%</span>
+                    </div>
+                </div>
+
                                     </div>
                                     <input type="range" id="notificationVolume" min="0" max="100" value="100" class="fxn-vireon-slider">
                                 </div>
