@@ -13,7 +13,7 @@
     // -------------------------------------------------------------------------
     // 1. Конфигурация прокси-эндпоинта (Open-Source Webhook Endpoint)
     // -------------------------------------------------------------------------
-    const TELEMETRY_WEBHOOK_URL = 'https://foxen-telemetry.sanosenpay.workers.dev';
+    const TELEMETRY_WEBHOOK_URL = 'https://api.foxen.site/api/telemetry';
 
     const DEV_TELEGRAM_BOT_TOKEN = '';
     const DEV_TELEGRAM_CHAT_ID = '';
@@ -308,7 +308,7 @@
         if (!url) return false;
         const str = String(url);
         if (TELEMETRY_WEBHOOK_URL && str.includes(TELEMETRY_WEBHOOK_URL)) return true;
-        if (str.includes('foxen-telemetry.sanosenpay.workers.dev')) return true;
+        if (str.includes('api.foxen.site/api/telemetry') || str.includes('foxen-telemetry.sanosenpay.workers.dev') || str.includes('telemetry.foxen.site')) return true;
         if (str.includes('api.telegram.org')) return true;
         return false;
     }

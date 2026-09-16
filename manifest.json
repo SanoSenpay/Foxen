@@ -1,12 +1,12 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "3.3.0",
+    "version": "3.3.5",
     "description": "300+ инструментов для FunPay: ИИ-помощник, автоматизация, аналитика, кастомизация и телеметрия.",
-    "homepage_url": "https://github.com/SanoSenpay/Foxen",
+    "homepage_url": "https://web.foxen.site/",
     "developer": {
         "name": "SanoSenpay",
-        "url": "https://github.com/SanoSenpay/Foxen/blob/main/PRIVACY_POLICY.md"
+        "url": "https://github.com/SanoSenpay/Foxen"
     },
     "permissions": [
         "storage",
@@ -14,6 +14,9 @@
         "cookies",
         "alarms",
         "notifications",
+        "https://api.foxen.site/*",
+        "https://*.foxen.site/*",
+        "https://foxen.site/*",
         "https://fptools-ai-server.vercel.app/*",
         "https://fptools.onrender.com/*",
         "https://funpay.com/*",

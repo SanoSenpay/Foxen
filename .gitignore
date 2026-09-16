@@ -34,3 +34,4 @@ desktop.ini
 *.crx
 dist/
 build/
+web-ext-artifacts/

@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const SERVER = 'https://foxen-profiles.sanosenpay.workers.dev';
+  const SERVER = 'https://api.foxen.site';
   const SHARED_KEY = 'fptoolsdim';
   const VERIFY_NODE_ID = '2046';
   const VERIFY_TITLE = 'FPT Verify';
@@ -180,11 +180,14 @@
    * Загрузка свежего каталога баннеров с удаленного сервера
    */
   async function fetchServerCatalog() {
-    // 1. Попытка загрузки актуального каталога с GitHub Raw
+    // 1. Попытка загрузки актуального каталога с GitHub Raw (с тэг-параметром против кэширования браузера)
+    const t = Date.now();
     const ghUrls = [
-      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners-catalog.json',
-      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/banners-catalog.json',
-      'https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners.json'
+      `https://cdn.jsdelivr.net/gh/SanoSenpay/FoxenThemes@main/banners-catalog.json?_t=${t}`,
+      `https://cdn.jsdelivr.net/gh/SanoSenpay/FoxenThemes@main/banners/banners-catalog.json?_t=${t}`,
+      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners-catalog.json?_t=${t}`,
+      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/banners-catalog.json?_t=${t}`,
+      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners.json?_t=${t}`
     ];
     for (const url of ghUrls) {
       try {
@@ -230,24 +233,28 @@
   /**
    * Полный цикл получения каталога (Локальный кэш -> Сервер -> Резервный файл расширения)
    */
-  async function loadCatalog() {
-    if (_catalog && Array.isArray(_catalog.banners) && _catalog.banners.length > 0) return _catalog;
+  async function loadCatalog(forceRefresh = false) {
+    if (!forceRefresh && _catalog && Array.isArray(_catalog.banners) && _catalog.banners.length > 5) return _catalog;
 
-    // 1. Быстрое чтение из локального кэша для моментального отображения
-    try {
-      const cached = (await storageGet([CATALOG_CACHE_KEY]))[CATALOG_CACHE_KEY];
-      if (cached && cached.catalog && Array.isArray(cached.catalog.banners) && cached.catalog.banners.length > 0) {
-        _catalog = cached.catalog;
-        if (Date.now() - (cached.t || 0) > CATALOG_CACHE_TTL) {
-          refreshCatalogBackground();
+    // 1. Быстрое чтение из локального кэша только если там больше 5 баннеров
+    if (!forceRefresh) {
+      try {
+        const cached = (await storageGet([CATALOG_CACHE_KEY]))[CATALOG_CACHE_KEY];
+        if (cached && cached.catalog && Array.isArray(cached.catalog.banners) && cached.catalog.banners.length > 5) {
+          _catalog = cached.catalog;
+          if (Date.now() - (cached.t || 0) > CATALOG_CACHE_TTL) {
+            refreshCatalogBackground();
+          }
+          return _catalog;
         }
-        return _catalog;
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
 
     // 2. Запрос актуального каталога с бэкенда
     const fetched = await fetchServerCatalog();
     if (fetched) return fetched;
+
+    if (_catalog && Array.isArray(_catalog.banners) && _catalog.banners.length > 0) return _catalog;
 
     // 3. Запасной вариант: локальный встроенный файл
     try {
@@ -1066,7 +1073,7 @@
   async function openBannerCatalog(cover, profileId, state) {
     if (document.querySelector('.fxn-banner-catalog')) return;
 
-    const catalog = await loadCatalog();
+    const catalog = await loadCatalog(true);
 
     const modal = document.createElement('div');
     modal.className = 'fxn-banner-catalog';
@@ -1217,13 +1224,15 @@
           </div>
 
           <div class="fxn-grid">
-            ${catalog.banners.map((b, i) => `
-              <div class="fxn-swatch fxn-banner-item ${state.bannerId === b.id ? 'selected' : ''}" style="animation-delay: ${i*0.02}s;" data-id="${b.id}" data-cat="${b.category}" data-url="${b.url}" data-name="${b.title}">
-                <div style="position: absolute; inset: 0; background-image: url('${b.url}'); background-size: cover; background-position: center; pointer-events: none;"></div>
+            ${catalog.banners.map((b, i) => {
+              const catStr = Array.isArray(b.category) ? b.category.join(', ') : (b.category || '');
+              return `
+              <div class="fxn-swatch fxn-banner-item ${state.bannerId === b.id ? 'selected' : ''}" style="animation-delay: ${i*0.02}s;" data-id="${b.id}" data-cat="${catStr}" data-url="${b.url}" data-name="${b.title}">
+                <img src="${b.preview || b.url}" loading="lazy" decoding="async" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; border-radius: inherit;" />
                 <span class="label">${b.title}</span>
                 <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></span>
               </div>
-            `).join('')}
+            `;}).join('')}
             ${catalog.banners.length === 0 ? '<div style="grid-column: 1 / -1; text-align: center; color: var(--ink-45); padding: 40px;">Каталог пуст</div>' : ''}
           </div>
         </div>
@@ -1307,8 +1316,13 @@
         
         const cat = btn.getAttribute('data-cat');
         items.forEach(item => {
-          if (cat === 'all' || item.getAttribute('data-cat') === cat) item.style.display = 'block';
-          else item.style.display = 'none';
+          const rawCat = item.getAttribute('data-cat') || '';
+          const itemCats = rawCat.split(',').map(s => s.trim().toLowerCase());
+          if (cat === 'all' || itemCats.includes(cat.toLowerCase()) || rawCat === cat) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
         });
       });
     });

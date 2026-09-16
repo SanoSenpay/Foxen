@@ -1,4 +1,4 @@
-const VERCEL_API_URL = 'https://fptools.onrender.com/api/ai'; 
+const VERCEL_API_URL = 'https://ai.foxen.site/api/ai'; 
 const API_SECRET_KEY = 'fptoolsdim';
 
 const SYSTEM_PROMPT = 'You are a text editing model. Follow user instructions precisely.';
@@ -10,6 +10,167 @@ function fxnNorm(t) {
     return typeof t === 'string'
         ? t.replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
         : t;
+}
+
+/**
+ * Очистка сырой строки ответа ИИ от markdown-обёрток и лишнего текста вокруг JSON.
+ */
+function cleanJsonString(raw) {
+    if (!raw || typeof raw !== 'string') return '';
+    let str = raw.trim();
+
+    // 1. Убираем markdown code blocks (```json ... ``` или ``` ... ```)
+    str = str.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+    // 2. Если вокруг JSON есть сопроводительный текст, извлекаем границы {...} или [...]
+    const firstBrace = str.indexOf('{');
+    const firstBracket = str.indexOf('[');
+    let startIdx = -1;
+    let endIdx = -1;
+
+    if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+        startIdx = firstBrace;
+        endIdx = str.lastIndexOf('}');
+    } else if (firstBracket !== -1) {
+        startIdx = firstBracket;
+        endIdx = str.lastIndexOf(']');
+    }
+
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        str = str.slice(startIdx, endIdx + 1);
+    }
+
+    return str;
+}
+
+/**
+ * Экранирует недопустимые управляющие символы (0x00..0x1F, включая сырые переносы строк \n, \r, \t)
+ * внутри строковых литералов JSON.
+ */
+function escapeControlCharsInJson(str) {
+    let result = '';
+    let inString = false;
+    let escaped = false;
+
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+
+        if (inString) {
+            if (escaped) {
+                result += char;
+                escaped = false;
+            } else if (char === '\\') {
+                result += char;
+                escaped = true;
+            } else if (char === '"') {
+                inString = false;
+                result += char;
+            } else if (char === '\n') {
+                result += '\\n';
+            } else if (char === '\r') {
+                if (i + 1 < str.length && str[i + 1] === '\n') {
+                    continue; // Пропускаем \r в \r\n, \n будет экранирован следующим
+                }
+                result += '\\r';
+            } else if (char === '\t') {
+                result += '\\t';
+            } else if (char.charCodeAt(0) < 0x20) {
+                result += '\\u' + char.charCodeAt(0).toString(16).padStart(4, '0');
+            } else {
+                result += char;
+            }
+        } else {
+            if (char === '"') {
+                inString = true;
+            }
+            result += char;
+        }
+    }
+    return result;
+}
+
+/**
+ * Удаляет висячие запятые перед закрывающими фигурными/квадратными скобками.
+ */
+function removeTrailingCommas(str) {
+    return str.replace(/,\s*([\}\]])/g, '$1');
+}
+
+/**
+ * Fallback-парсер для полей лота (title, description, buyerMessage) на случай,
+ * если ИИ вернул текст с грубыми ошибками синтаксиса JSON (например, неэкранированные внутренние кавычки).
+ */
+function fallbackExtractLotFields(raw) {
+    if (!raw || typeof raw !== 'string') return null;
+    const res = {};
+
+    const titleMatch = raw.match(/"title"\s*:\s*"((?:\\.|[^"\\])*)"/);
+    if (titleMatch) {
+        res.title = titleMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+    }
+
+    const bmMatch = raw.match(/"buyerMessage"\s*:\s*"([\s\S]*?)"\s*[\},]/);
+    if (bmMatch) {
+        res.buyerMessage = bmMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+    } else {
+        res.buyerMessage = '';
+    }
+
+    const descToBmMatch = raw.match(/"description"\s*:\s*"([\s\S]*?)"\s*,\s*"buyerMessage"/);
+    if (descToBmMatch) {
+        res.description = descToBmMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+    } else {
+        const descGeneralMatch = raw.match(/"description"\s*:\s*"([\s\S]*?)"\s*[\},]/);
+        if (descGeneralMatch) {
+            res.description = descGeneralMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+        }
+    }
+
+    if (res.title || res.description) {
+        return res;
+    }
+    return null;
+}
+
+/**
+ * Надёжный парсер JSON от ИИ с последовательным устранением типичных проблем:
+ * 1. Очистка от markdown
+ * 2. Экранирование сырых control characters (переносов строк \n в строках)
+ * 3. Удаление висячих запятых
+ * 4. Fallback-извлечение полей
+ */
+export function parseAIJson(rawText, fallbackFieldExtractor = null) {
+    if (!rawText || typeof rawText !== 'string') {
+        throw new Error('Пустой ответ от ИИ');
+    }
+
+    const cleaned = cleanJsonString(rawText);
+
+    // Попытка 1: стандартный парсинг очищенной строки
+    try {
+        return JSON.parse(cleaned);
+    } catch (_) {}
+
+    // Попытка 2: экранирование управляющих символов и сырых переводов строк
+    const escaped = escapeControlCharsInJson(cleaned);
+    try {
+        return JSON.parse(escaped);
+    } catch (_) {}
+
+    // Попытка 3: удаление висячих запятых
+    const noTrailing = removeTrailingCommas(escaped);
+    try {
+        return JSON.parse(noTrailing);
+    } catch (e) {
+        // Попытка 4: fallback extractor
+        if (typeof fallbackFieldExtractor === 'function') {
+            const fallbackResult = fallbackFieldExtractor(rawText);
+            if (fallbackResult) {
+                return fallbackResult;
+            }
+        }
+        throw e;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -328,7 +489,7 @@ export async function fetchAILotGeneration(data) {
 2.  Краткое описание: Создай яркий заголовок в стиле пользователя на основе идеи: "${promptTitle}".
 3.  Подробное описание: Напиши подробное, структурированное описание на основе деталей: "${promptDesc}", следуя всем правилам "живого" стиля.
 4.  Сообщение покупателю: ${genBuyerMsg ? 'Напиши короткое, дружелюбное сообщение для покупателя после оплаты в том же стиле.' : 'Сообщение покупателю генерировать НЕ нужно.'}
-5.  Формат ответа: Твой ответ должен быть СТРОГО в формате JSON. Без лишних слов, объяснений или приветствий.
+5.  Формат ответа: Твой ответ должен быть СТРОГО в формате валидного JSON. Без лишних слов, без markdown (без кодовых блоков). Все переносы строк внутри строковых значений обязательно экранируй как \\n.
 
 --- ПРИМЕРЫ СТИЛЯ ПОЛЬЗОВАТЕЛЯ (для анализа) ---
 ${styleExamples}
@@ -338,7 +499,7 @@ ${styleExamples}
 - Идея для заголовка: "${promptTitle}"
 - Детали для описания: "${promptDesc}"
 
-Ожидаемый формат ответа (только JSON):
+Ожидаемый формат ответа (только валидный JSON, переносы строк внутри кавычек экранированы):
 {
   "title": "Сгенерированный заголовок в стиле пользователя",
   "description": "Сгенерированное подробное описание в живом стиле...",
@@ -358,18 +519,9 @@ ${styleExamples}
     };
 
     try {
-        const aiJson = JSON.parse(result.data);
-        return { success: true, data: _cleanGen(aiJson), source: result.source };
+        const parsed = parseAIJson(result.data, fallbackExtractLotFields);
+        return { success: true, data: _cleanGen(parsed), source: result.source };
     } catch (e) {
-        const jsonMatch = result.data.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            try {
-                const cleanedJson = JSON.parse(jsonMatch[0]);
-                return { success: true, data: _cleanGen(cleanedJson), source: result.source };
-            } catch (e2) {
-                 return { success: false, error: `AI returned invalid JSON even after cleaning: ${e2.message}` };
-            }
-        }
         return { success: false, error: `AI returned invalid JSON: ${e.message}` };
     }
 }
@@ -377,17 +529,20 @@ ${styleExamples}
 export async function fetchAITranslation(data) {
     const { title, description, buyerMessage } = data;
     
+    const inputPayload = JSON.stringify({
+        title: title || "",
+        description: description || "",
+        buyerMessage: buyerMessage || ""
+    }, null, 2);
+
     const prompt = `
 Translate the following Russian texts for a gaming marketplace into natural-sounding English. Preserve emojis and any special characters or symbols. Keep the exact same line structure as the input - do NOT add extra empty lines or blank lines between items.
 
-Your response MUST be in JSON format only, with no extra text.
+Your response MUST be strictly a valid JSON object matching the input structure, with no markdown code blocks and no surrounding text.
+CRITICAL: All line breaks inside string values must be properly escaped as \\n (never use raw unescaped line breaks inside string literals).
 
 Input JSON:
-{
-  "title": "${title.replace(/"/g, '\\"')}",
-  "description": "${description.replace(/"/g, '\\"')}",
-  "buyerMessage": "${(buyerMessage || "").replace(/"/g, '\\"')}"
-}
+${inputPayload}
 
 Output JSON:
 `;
@@ -405,18 +560,9 @@ Output JSON:
     };
 
     try {
-        const aiJson = JSON.parse(result.data);
+        const aiJson = parseAIJson(result.data, fallbackExtractLotFields);
         return { success: true, data: _clean(aiJson), source: result.source };
     } catch (e) {
-        const jsonMatch = result.data.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            try {
-                const cleanedJson = JSON.parse(jsonMatch[0]);
-                return { success: true, data: _clean(cleanedJson), source: result.source };
-            } catch (e2) {
-                return { success: false, error: `AI returned invalid JSON for translation (cleaned): ${e2.message}` };
-            }
-        }
         return { success: false, error: `AI returned invalid JSON for translation: ${e.message}` };
     }
 }
@@ -460,18 +606,9 @@ Your response MUST be a single, valid JSON object and nothing else.
     if (!result.success) return result;
 
     try {
-        const aiJson = JSON.parse(result.data);
+        const aiJson = parseAIJson(result.data);
         return { success: true, data: aiJson, source: result.source };
     } catch (e) {
-        const jsonMatch = result.data.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            try {
-                const cleanedJson = JSON.parse(jsonMatch[0]);
-                return { success: true, data: cleanedJson, source: result.source };
-            } catch (e2) {
-                return { success: false, error: `AI returned invalid JSON for image generation (cleaned): ${e2.message}` };
-            }
-        }
         return { success: false, error: `AI returned invalid JSON for image generation: ${e.message}` };
     }
 }

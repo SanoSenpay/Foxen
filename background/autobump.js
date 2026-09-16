@@ -142,9 +142,9 @@ async function raiseCategory(categoryData, auth) {
 let _isBumpCycleRunning = false;
 
 export async function runBumpCycle() {
-    if (_isBumpCycleRunning) return { raised: 0, errors: 0, skipped: 0 };
+    if (_isBumpCycleRunning) return { raised: 0, errors: 0, skipped: 0, raisedNames: [], skippedNames: [] };
     _isBumpCycleRunning = true;
-    const summary = { raised: 0, errors: 0, skipped: 0 };
+    const summary = { raised: 0, errors: 0, skipped: 0, raisedNames: [], skippedNames: [] };
     try {
         const { foxenSelectiveBumpEnabled, foxenSelectedBumpCategories, foxenBumpOnlyAutoDelivery } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenSelectiveBumpEnabled', 'foxenSelectedBumpCategories', 'foxenBumpOnlyAutoDelivery']);
 
@@ -208,10 +208,17 @@ export async function runBumpCycle() {
                     categoryName: categoryName
                 };
                 const ok = await raiseCategory(categoryData, auth);
-                if (ok) summary.raised++; else summary.skipped++;
+                if (ok) {
+                    summary.raised++;
+                    summary.raisedNames.push(categoryName);
+                } else {
+                    summary.skipped++;
+                    summary.skippedNames.push(categoryName);
+                }
             } else {
                 await logToConsole(`Не поднято: ${categoryName}. Причина: Не найдена кнопка поднятия.`);
                 summary.skipped++;
+                summary.skippedNames.push(categoryName);
             }
             await new Promise(resolve => setTimeout(resolve, 4500)); // 2.9: increased to 4.5s to avoid rate limiting
         }

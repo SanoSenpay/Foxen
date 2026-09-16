@@ -222,9 +222,10 @@ async function initializeTelegramUI() {
                 return;
             }
             _fxnTgCfg.token = token;
-            if (res.chatId) {
-                _fxnTgCfg.chatId = res.chatId;
-                if (chatIdEl) chatIdEl.value = res.chatId;
+            const finalChatId = res.chatId || _fxnTgCfg.chatId || (chatIdEl ? chatIdEl.value.trim() : '');
+            if (finalChatId) {
+                _fxnTgCfg.chatId = finalChatId;
+                if (chatIdEl) chatIdEl.value = finalChatId;
             }
             // включаем интеграцию автоматически при успешном подключении
             _fxnTgCfg.enabled = true;
@@ -232,8 +233,8 @@ async function initializeTelegramUI() {
             if (configEl) configEl.style.display = '';
             await fxnTgSave();
 
-            if (res.chatId) {
-                fxnTgSetStatus(`Готово! Бот ${res.botName}. Chat ID: ${res.chatId}.`, 'ok');
+            if (finalChatId) {
+                fxnTgSetStatus(`Готово! Бот ${res.botName} подключен. Chat ID: ${finalChatId}.`, 'ok');
             } else {
                 fxnTgSetStatus(`Бот ${res.botName} найден, но не удалось определить чат. Напишите боту любое сообщение в Telegram и нажмите «Подключить» ещё раз.`, 'err');
             }

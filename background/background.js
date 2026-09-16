@@ -9,7 +9,7 @@ import { runAutoResponderCycle, resetAutoResponderState } from './autoresponder.
 import { startEngine, stopEngine, onHeartbeat, onKeepalivePing, ENGINE_HEARTBEAT_ALARM } from './fpt_engine.js';
 import { startSmartBump, stopSmartBump, runSmartBumpCycle, SMART_BUMP_ALARM } from './smart_bump.js';
 import {
-    TELEGRAM_ALARM, telegramInit, telegramSyncAlarm, telegramPollOnce,
+    TELEGRAM_ALARM, telegramInit, telegramSyncAlarm, telegramPollOnce, startTelegramPollingLoop,
     telegramValidateAndResolve, telegramNotifyNewMessages, telegramNotifyNewOrders, tgSendMessage
 } from './telegram.js';
 
@@ -557,9 +557,9 @@ async function sendChatImageInBackground(chatId, dataUrl, chatName) {
 let _authCache = null;
 let _authCacheTime = 0;
 
-async function getAuthDetailsForBackground() {
+async function getAuthDetailsForBackground(forceFresh = false) {
     const now = Date.now();
-    if (_authCache && (now - _authCacheTime < 15000)) {
+    if (!forceFresh && _authCache && (now - _authCacheTime < 15000)) {
         return _authCache;
     }
 
@@ -573,36 +573,41 @@ async function getAuthDetailsForBackground() {
     const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
     const phpsessid = phpSessIdCookie?.value || '';
 
-    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
-    for (const tab of tabs) {
-        try {
-            if (tab.discarded) continue;
-            const response = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: "getAppData" });
-            if (response && response.success) {
-                const appData = Array.isArray(response.data) ? response.data[0] : response.data;
-                if (appData && appData['csrf-token'] && appData.userId) {
-                    const authRes = {
-                        golden_key: golden_key,
-                        phpsessid: phpsessid,
-                        csrf_token: appData['csrf-token'],
-                        userId: appData.userId,
-                        username: appData.userName,
-                    };
-                    _authCache = authRes;
-                    _authCacheTime = now;
-                    return authRes;
+    // Если не запрошено принудительное обновление, пробуем получить из открытой вкладки
+    if (!forceFresh) {
+        const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
+        for (const tab of tabs) {
+            try {
+                if (tab.discarded) continue;
+                const response = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: "getAppData" });
+                if (response && response.success) {
+                    const appData = Array.isArray(response.data) ? response.data[0] : response.data;
+                    if (appData && appData['csrf-token'] && appData.userId) {
+                        const authRes = {
+                            golden_key: golden_key,
+                            phpsessid: phpsessid,
+                            csrf_token: appData['csrf-token'],
+                            userId: appData.userId,
+                            username: appData.userName,
+                        };
+                        _authCache = authRes;
+                        _authCacheTime = now;
+                        return authRes;
+                    }
                 }
+            } catch (e) {
+                console.warn(`Foxen: Не удалось получить appData из вкладки ${tab.id}. Пробую следующую.`);
             }
-        } catch (e) {
-            console.warn(`Foxen: Не удалось получить appData из вкладки ${tab.id}. Пробую следующую.`);
         }
     }
 
-    console.log("Foxen: Не удалось получить appData от вкладок, делаю прямой запрос к FunPay...");
+    console.log("Foxen: Получаю свежие Auth-данные напрямую с FunPay (cache: 'no-store')...");
     try {
+        const cookieHeader = phpsessid ? `golden_key=${golden_key}; PHPSESSID=${phpsessid}` : `golden_key=${golden_key}`;
         const response = await fetch("https://funpay.com/", {
             credentials: 'include',
-            headers: { "cookie": `golden_key=${golden_key}` }
+            cache: 'no-store',
+            headers: { "cookie": cookieHeader }
         });
         if (!response.ok) throw new Error(`Статус ответа: ${response.status}`);
         const text = await response.text();
@@ -619,7 +624,7 @@ async function getAuthDetailsForBackground() {
                     phpsessid: phpsessid,
                     csrf_token: userData['csrf-token'],
                     userId: userData.userId,
-                    username: userData.userName,
+                    username: userData.userName || '',
                 };
                 _authCache = authRes;
                 _authCacheTime = now;
@@ -658,28 +663,76 @@ async function tgFetchOrders(limit) {
     }
 }
 
-// Получить базовую информацию профиля (имя, баланс).
+// Получить детальную информацию профиля (имя, баланс, аватар, рейтинг, лоты, статистика).
 async function tgFetchProfileInfo() {
     try {
         const auth = await getAuthDetailsForBackground();
         if (!auth.golden_key) return null;
-        const resp = await fetch('https://funpay.com/', { credentials: 'include', cache: 'no-store' });
-        const html = await resp.text();
-        const info = await parseHtmlViaOffscreen(html, 'parseProfileInfo');
-        const orders = await tgFetchOrders(0);
-        // "Активные" = заказы, требующие действия (оплачен/в работе), а не вся история.
+
+        // Параллельно загружаем главную страницу и страницу профиля пользователя
+        const fetchHome = fetch('https://funpay.com/', { credentials: 'include', cache: 'no-store' })
+            .then(r => r.ok ? r.text() : '').catch(() => '');
+        
+        const fetchUser = auth.userId
+            ? fetch(`https://funpay.com/users/${auth.userId}/`, { credentials: 'include', cache: 'no-store' })
+                .then(r => r.ok ? r.text() : '').catch(() => '')
+            : Promise.resolve('');
+
+        const [homeHtml, userHtml, orders, sales, bumpStore, arStore, tgStore] = await Promise.all([
+            fetchHome,
+            fetchUser,
+            tgFetchOrders(0).catch(() => []),
+            tgSalesSummary().catch(() => null),
+            (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoBump').catch(() => ({})),
+            (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenAutoReplies').catch(() => ({})),
+            (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTelegram').catch(() => ({}))
+        ]);
+
+        const [homeSnapshot, userProfile, apiAvatar] = await Promise.all([
+            homeHtml ? parseHtmlViaOffscreen(homeHtml, 'parseAccountSnapshot').catch(() => null) : null,
+            userHtml ? parseHtmlViaOffscreen(userHtml, 'parseUserProfileFull').catch(() => null) : null,
+            auth.userId
+                ? fetch(`https://api.foxen.site/api/avatar?user_id=${encodeURIComponent(auth.userId)}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(j => (j && j.avatar && !j.avatar.includes('layout/avatar.png')) ? j.avatar : '')
+                    .catch(() => '')
+                : Promise.resolve('')
+        ]);
+
         const activeStatuses = ['paid', 'active', 'pending', 'оплачен', 'в работе'];
-        const activeCount = orders.filter(o => {
+        const activeCount = (orders || []).filter(o => {
             const s = String(o.status || o.orderStatus || '').toLowerCase();
             if (!s) return false;
             return activeStatuses.some(a => s.includes(a));
         }).length;
+
+        let resolvedAvatar = apiAvatar || (userProfile && userProfile.avatar) || (homeSnapshot && homeSnapshot.avatar) || '';
+        if (resolvedAvatar && /avatar\.png|default-avatar/i.test(resolvedAvatar)) {
+            resolvedAvatar = '';
+        }
+
         return {
-            username: (info && info.username) || auth.username || '',
-            balance: (info && info.balance) || '',
-            activeOrders: activeCount
+            username: (userProfile && userProfile.username) || (homeSnapshot && homeSnapshot.username) || auth.username || '',
+            userId: auth.userId || null,
+            avatar: resolvedAvatar,
+            balance: (homeSnapshot && homeSnapshot.balance) || '',
+            unreadChats: (homeSnapshot && homeSnapshot.unread) || 0,
+            rating: (userProfile && userProfile.rating) || '',
+            reviewsCount: (userProfile && userProfile.reviewsCount) || 0,
+            yearsOnSite: (userProfile && userProfile.yearsOnSite) || '',
+            onlineStatus: (userProfile && userProfile.onlineStatus) || '',
+            lotsCount: userProfile?.lotsCount ?? null,
+            categoriesCount: userProfile?.categoriesCount ?? null,
+            activeOrders: activeCount,
+            sales: sales || null,
+            modules: {
+                autobump: !!bumpStore?.foxenAutoBump?.enabled,
+                autoresponder: !!(arStore?.foxenAutoReplies?.autoReplyEnabled || arStore?.foxenAutoReplies?.newOrderReplyEnabled || arStore?.foxenAutoReplies?.autoDeliveryEnabled),
+                tgControl: tgStore?.foxenTelegram?.allowControl !== false
+            }
         };
     } catch (e) {
+        console.error('Foxen: tgFetchProfileInfo error:', e.message);
         return null;
     }
 }
@@ -719,11 +772,17 @@ async function tgRunBump() {
     try {
         const res = await runBumpCycle();
         if (res && typeof res === 'object') {
-            return { raised: res.raised || 0, errors: res.errors || 0, skipped: res.skipped || 0 };
+            return {
+                raised: res.raised || 0,
+                errors: res.errors || 0,
+                skipped: res.skipped || 0,
+                raisedNames: res.raisedNames || [],
+                skippedNames: res.skippedNames || []
+            };
         }
-        return { raised: 0, errors: 0 };
+        return { raised: 0, errors: 0, skipped: 0, raisedNames: [], skippedNames: [] };
     } catch (e) {
-        return { raised: 0, errors: 1 };
+        return { raised: 0, errors: 1, skipped: 0, raisedNames: [], skippedNames: [] };
     }
 }
 
@@ -780,6 +839,109 @@ async function tgKeepOnline() {
     } catch (_) { return false; }
 }
 
+// Отправка сообщения в чат FunPay (используется при ответе через reply в Telegram).
+async function tgSendChatMessage(chatId, text, counterpartUserId = null) {
+    try {
+        let auth = await getAuthDetailsForBackground();
+        if (!auth.golden_key || !auth.csrf_token) {
+            auth = await getAuthDetailsForBackground(true);
+        }
+        if (!auth.golden_key || !auth.csrf_token) throw new Error('Нет авторизации на FunPay');
+
+        const postToRunner = async (nodeId, curAuth) => {
+            const cookieStr = curAuth.phpsessid
+                ? `golden_key=${curAuth.golden_key}; PHPSESSID=${curAuth.phpsessid}`
+                : `golden_key=${curAuth.golden_key}`;
+            const payload = {
+                objects: JSON.stringify([{ type: 'chat_node', id: String(nodeId), tag: '00000000', data: { node: String(nodeId), last_message: -1, content: '' } }]),
+                request: JSON.stringify({ action: 'chat_message', data: { node: String(nodeId), last_message: -1, content: text } }),
+                csrf_token: curAuth.csrf_token
+            };
+            const res = await fetch('https://funpay.com/runner/', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'x-requested-with': 'XMLHttpRequest',
+                    'cookie': cookieStr
+                },
+                body: new URLSearchParams(payload).toString()
+            });
+            const json = await res.json().catch(() => null);
+            return { res, json };
+        };
+
+        const isCsrfOrStaleError = (j) => {
+            if (!j) return false;
+            const msg = String(j.msg || j.message || j.error || '');
+            return msg.includes('Обновите страницу') || msg.includes('csrf') || msg.includes('token') || j.error === 1 || j.error === '1';
+        };
+
+        let targetNode = String(chatId).trim();
+        let { res, json } = await postToRunner(targetNode, auth);
+
+        // Если получен ответ с ошибкой CSRF / сессии — сбрасываем кэш и пробуем со свежим CSRF напрямую
+        if (isCsrfOrStaleError(json)) {
+            console.warn('Foxen: runner вернул ошибку CSRF (' + (json?.msg || json?.error) + '). Обновляем токен напрямую с FunPay...');
+            _authCache = null;
+            auth = await getAuthDetailsForBackground(true);
+            if (auth.csrf_token) {
+                const freshRetry = await postToRunner(targetNode, auth);
+                res = freshRetry.res;
+                json = freshRetry.json;
+            }
+        }
+
+        // Если ошибка и известен ID собеседника, пробуем формат users-MYID-THEIRID
+        if (json?.error && counterpartUserId && auth.userId) {
+            const userPairNode = `users-${auth.userId}-${counterpartUserId}`;
+            if (userPairNode !== targetNode) {
+                const retryPair = await postToRunner(userPairNode, auth);
+                if (retryPair.res.ok && !retryPair.json?.error) {
+                    res = retryPair.res;
+                    json = retryPair.json;
+                }
+            }
+        }
+
+        // Если ошибка и targetNode не содержит users-, пробуем парный формат users-MYID-TARGETID
+        if (json?.error && !targetNode.startsWith('users-') && auth.userId) {
+            const pairedNode = `users-${auth.userId}-${targetNode}`;
+            const retry = await postToRunner(pairedNode, auth);
+            if (retry.res.ok && !retry.json?.error) {
+                res = retry.res;
+                json = retry.json;
+            }
+        }
+
+        // Если ошибка и targetNode в формате users-A-B, пробуем поменять порядок на users-B-A
+        if (json?.error && targetNode.startsWith('users-')) {
+            const parts = targetNode.split('-');
+            if (parts.length === 3 && parts[1] && parts[2]) {
+                const swappedNode = `users-${parts[2]}-${parts[1]}`;
+                const retrySwapped = await postToRunner(swappedNode, auth);
+                if (retrySwapped.res.ok && !retrySwapped.json?.error) {
+                    res = retrySwapped.res;
+                    json = retrySwapped.json;
+                }
+            }
+        }
+
+        if (json?.error) {
+            const errMsg = json.msg || json.message || (typeof json.error === 'string' ? json.error : null);
+            throw new Error(errMsg || `FunPay отклонил сообщение (код ${json.error})`);
+        }
+        if (json?.response?.error) {
+            const errMsg = json.response.msg || json.response.message || (typeof json.response.error === 'string' ? json.response.error : null);
+            throw new Error(errMsg || 'Не удалось доставить сообщение');
+        }
+
+        return { ok: res.ok };
+    } catch (e) {
+        return { ok: false, error: e.message };
+    }
+}
+
 telegramInit({
     getOrders: tgFetchOrders,
     getProfileInfo: tgFetchProfileInfo,
@@ -787,7 +949,8 @@ telegramInit({
     runBump: tgRunBump,
     getSalesSummary: tgSalesSummary,
     getLots: tgGetLots,
-    keepOnline: tgKeepOnline
+    keepOnline: tgKeepOnline,
+    sendChatMessage: tgSendChatMessage
 });
 
 // Полный цикл Telegram: приём команд (getUpdates) + уведомления (сообщения/заказы).
@@ -797,8 +960,8 @@ async function runTelegramCheckCycle() {
     const cfg = foxenTelegram || {};
     if (!cfg.enabled || !cfg.token) return;
 
-    // 1) команды из бота
-    try { await telegramPollOnce(); } catch (e) { console.error('Foxen: TG poll:', e.message); }
+    // 1) гарантируем активный опрос команд (Long Polling)
+    startTelegramPollingLoop();
 
     // 2) уведомления о новых сообщениях (если Discord-цикл не активен, тянем сами)
     if (cfg.notifyMessages) {
@@ -1310,7 +1473,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // RMTHUB PROXY (bypasses CORS - content scripts can't fetch cross-origin)
     if (request.action === 'rmthubFetch') {
         (async () => {
-            const API = 'https://fptools-ai-server.vercel.app/api';
+            const API = 'https://api.foxen.site/api';
             try {
                 const res = await fetch(`${API}/rmthub?username=${encodeURIComponent(request.username)}`);
                 if (res.status === 404) { sendResponse({ ok: false, notFound: true }); return; }

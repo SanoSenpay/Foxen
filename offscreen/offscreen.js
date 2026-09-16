@@ -824,8 +824,12 @@ function parseChatList(html) {
             const lastByMe = lastByBot || isOutPrefix;
             const nodeMsgVal = Number.isNaN(nodeMsg) ? null : nodeMsg;
             const userMsgVal = Number.isNaN(userMsg) ? null : userMsg;
+            const href = item.getAttribute('href') || '';
+            const mNode = href.match(/[?&]node=([^&#\s]+)/);
+            const resolvedNode = mNode ? decodeURIComponent(mNode[1]) : (item.dataset.node || item.dataset.id);
             return {
-                chatId: item.dataset.id,
+                chatId: resolvedNode,
+                userId: item.dataset.id,
                 chatName: nameEl ? nameEl.textContent.trim() : 'Unknown',
                 msgId: item.dataset.nodeMsg,
                 nodeMsg: nodeMsgVal,
@@ -1365,7 +1369,9 @@ function parseProfileInfo(html) {
     }
     let balance = '';
     const balEl = doc.querySelector('.badge-balance, .menu-item-balance, .user-link-balance');
-    if (balEl) balance = balEl.textContent.replace(/\s+/g, ' ').trim();
+    if (balEl) {
+        balance = balEl.textContent.replace(/\s+/g, ' ').replace(/^(?:Финансы|Finance)\s*/i, '').trim();
+    }
     return { username, balance };
 }
 
@@ -1403,7 +1409,9 @@ function parseAccountSnapshot(html) {
 
     // баланс
     const balEl = doc.querySelector('.badge-balance, .menu-item-balance, .user-link-balance');
-    if (balEl) out.balance = balEl.textContent.replace(/\s+/g, ' ').trim();
+    if (balEl) {
+        out.balance = balEl.textContent.replace(/\s+/g, ' ').replace(/^(?:Финансы|Finance)\s*/i, '').trim();
+    }
 
     // непрочитанные сообщения: бейдж на иконке чата
     const unreadEl = doc.querySelector('.menu-icon-chat .badge, .badge-chat, .menu-item-chat .badge, .chat-counter');
@@ -1420,6 +1428,90 @@ function parseAccountSnapshot(html) {
             if (c) { const n = parseInt(c, 10); if (!isNaN(n)) out.unread = n; }
         } catch (_) {}
     }
+
+    if (out.avatar) {
+        if (out.avatar.startsWith('//')) out.avatar = 'https:' + out.avatar;
+        else if (out.avatar.startsWith('/')) out.avatar = 'https://funpay.com' + out.avatar;
+    }
+
+    return out;
+}
+
+// Детальный профиль пользователя с https://funpay.com/users/ID/ для Telegram-бота
+function parseUserProfileFull(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const out = {
+        username: '',
+        userId: null,
+        avatar: '',
+        rating: '',
+        reviewsCount: 0,
+        yearsOnSite: '',
+        onlineStatus: '',
+        lotsCount: 0,
+        categoriesCount: 0
+    };
+
+    // 1. Имя пользователя
+    const nameEl = doc.querySelector('.header-descr-title, .user-link-name, h1');
+    if (nameEl) out.username = nameEl.textContent.trim();
+
+    // 2. Аватар (высокое разрешение со страницы профиля)
+    const photoEl = doc.querySelector('.avatar-photo, .profile-avatar, .user-link-photo, .avatar');
+    if (photoEl) {
+        const style = photoEl.getAttribute('style') || photoEl.querySelector('.avatar-photo')?.getAttribute('style') || '';
+        const m = style.match(/url\(([^)]+)\)/);
+        if (m) out.avatar = m[1].replace(/['"]/g, '').replace(/&quot;/g, '').trim();
+        if (!out.avatar || out.avatar.includes('avatar.png')) {
+            const img = photoEl.querySelector('img:not([src*="layout/avatar.png"])') || photoEl.querySelector('img');
+            if (img) out.avatar = img.getAttribute('src') || '';
+        }
+    }
+    if (out.avatar) {
+        if (out.avatar.startsWith('//')) out.avatar = 'https:' + out.avatar;
+        else if (out.avatar.startsWith('/')) out.avatar = 'https://funpay.com' + out.avatar;
+    }
+    if (out.avatar && /avatar\.png|default-avatar/i.test(out.avatar)) {
+        out.avatar = '';
+    }
+
+    // 3. Рейтинг и отзывы
+    const ratingEl = doc.querySelector('.rating, .big-stars, .rating-stars');
+    if (ratingEl) {
+        const valEl = ratingEl.querySelector('.rating-value, .big, span');
+        if (valEl) out.rating = valEl.textContent.trim();
+        else {
+            const m = ratingEl.textContent.match(/[\d.]+/);
+            if (m) out.rating = m[0];
+        }
+    }
+    const reviewsEl = doc.querySelector('.reviews-count, a[href*="reviews"], .review-item-list');
+    if (reviewsEl) {
+        const m = reviewsEl.textContent.match(/(\d+)\s*(?:отзыв|review)/i);
+        if (m) out.reviewsCount = parseInt(m[1], 10);
+    }
+    if (!out.reviewsCount) {
+        const allReviews = doc.querySelectorAll('.review-item');
+        if (allReviews.length) out.reviewsCount = allReviews.length;
+    }
+
+    // 4. Время на сайте и онлайн
+    const descrDivs = doc.querySelectorAll('.header-descr div, .user-status');
+    descrDivs.forEach(div => {
+        const t = div.textContent.trim();
+        if (/на сайте|years|months|days|года|лет|месяц/i.test(t)) {
+            out.yearsOnSite = t.replace(/\s+/g, ' ');
+        }
+        if (/онлайн|был в сети|online|offline|last seen/i.test(t)) {
+            out.onlineStatus = t.replace(/\s+/g, ' ');
+        }
+    });
+
+    // 5. Лоты и категории
+    const offerBlocks = doc.querySelectorAll('.offer');
+    out.categoriesCount = offerBlocks.length;
+    const lotRows = doc.querySelectorAll('a.tc-item');
+    out.lotsCount = lotRows.length;
 
     return out;
 }
@@ -1534,6 +1626,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
         case 'parseAccountSnapshot':
             sendResponse(parseAccountSnapshot(message.html));
+            break;
+        case 'parseUserProfileFull':
+            sendResponse(parseUserProfileFull(message.html));
             break;
         case 'parseTicketDetails':
             sendResponse(parseTicketDetails(message.html));

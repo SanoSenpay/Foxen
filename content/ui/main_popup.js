@@ -80,7 +80,7 @@ function createMainPopup() {
             <button type="button" id="fxnSidebarToggleBtn" class="fxn-sidebar-toggle-btn" title="Свернуть / развернуть боковую панель" aria-label="Свернуть меню">
                 <span class="material-symbols-rounded">menu_open</span>
             </button>
-            <h2 class="foxen-title-wrap"><a href="https://foxen.page.gd" target="_blank" class="foxen-site-link">Foxen</a><a href="https://funpay.tools" target="_blank" class="fxn-fork-badge" title="Основано на FunPay Tools (v2.9.9)"><span class="fxn-fork-dot"></span>FPT 2.9.9</a></h2>
+            <h2 class="foxen-title-wrap"><a href="https://web.foxen.site" target="_blank" class="foxen-site-link">Foxen</a><a href="https://funpay.tools" target="_blank" class="fxn-fork-badge" title="Основано на FunPay Tools (v2.9.9)"><span class="fxn-fork-dot"></span>FPT 2.9.9</a></h2>
             <div class="foxen-header-actions">
                 <button type="button" id="fxnAccentBtn" class="fxn-accent-btn" title="Сменить акцентный цвет" aria-label="Сменить акцентный цвет">
                     <span class="fxn-accent-preview-dot"></span>
@@ -119,6 +119,7 @@ function createMainPopup() {
                             <li data-page="templates"><a><span class="material-symbols-rounded nav-list-icon">description</span><span>Шаблоны ответов</span></a></li>
                             <li data-page="auto_review"><a><span class="material-symbols-rounded nav-list-icon">smart_toy</span><span>Авто-ответы</span></a></li>
                             <li data-page="auto_delivery"><a><span class="material-symbols-rounded nav-list-icon">bolt</span><span>Авто-выдача</span></a></li>
+                            <li data-page="telegram"><a><span class="material-symbols-rounded nav-list-icon">send</span><span>Telegram-бот</span></a></li>
                             <li data-page="blacklist"><a><span class="material-symbols-rounded nav-list-icon">block</span><span>Чёрный список</span></a></li>
                         </ul>
                     </div>
@@ -411,13 +412,14 @@ function createMainPopup() {
                             <label for="fxnTgAllowControl" style="margin-bottom:0;"><span>Разрешить команды управления из бота</span></label>
                         </div>
 
-                        <p class="template-info" style="margin-top:12px;margin-bottom:8px;">Команды бота (принимаются только из вашего чата):</p>
+                        <p class="template-info" style="margin-top:12px;margin-bottom:8px;">Команды и управление (кнопки в Telegram-боте):</p>
                         <ul class="fxn-tg-cmd-list">
-                            <li><code>/status</code><span>баланс и статус</span></li>
-                            <li><code>/chats</code><span>непрочитанные чаты</span></li>
+                            <li><code>/status</code><span>баланс, онлайн и активные заказы</span></li>
+                            <li><code>/chats</code><span>непрочитанные диалоги</span></li>
+                            <li><code>/bump</code><span>поднять лоты во всех разделах</span></li>
                             <li><code>/sales</code><span>статистика продаж</span></li>
                             <li><code>/online</code><span>поддержать онлайн</span></li>
-                            <li><code>/help</code><span>список команд</span></li>
+                            <li><code>Reply</code><span>ответ на уведомление бота пересылает текст покупателю в FunPay</span></li>
                         </ul>
                     </div>
                 </div>
