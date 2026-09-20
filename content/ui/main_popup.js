@@ -370,22 +370,31 @@ function createMainPopup() {
                                 </div>
                             </div>
 
+                            <div class="section-label">Звуковые уведомления & аудио</div>
                             <div class="fxn-sound-section-card">
                                 <div class="fxn-sound-header">
-                                    <div class="fxn-sound-header-icon">
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M12 3v18"></path>
-                                            <path d="M8 8v8"></path>
-                                            <path d="M4 11v2"></path>
-                                            <path d="M16 6v12"></path>
-                                            <path d="M20 10v4"></path>
+                                    <div class="fxn-sound-header-left">
+                                        <div class="fxn-sound-header-icon">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 3v18"></path>
+                                                <path d="M8 8v8"></path>
+                                                <path d="M4 11v2"></path>
+                                                <path d="M16 6v12"></path>
+                                                <path d="M20 10v4"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="fxn-sound-header-text">
+                                            <div class="fxn-sound-crumb">ЗВУКОВЫЕ УВЕДОМЛЕНИЯ & АУДИО</div>
+                                            <h2 class="fxn-sound-title">Звук уведомлений</h2>
+                                            <p class="fxn-sound-desc">Сигнал при новых сообщениях и заказах</p>
+                                        </div>
+                                    </div>
+                                    <button id="testNotificationSound" class="fxn-sound-preview-action-btn" type="button" title="Прослушать текущий выбранный звук">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                                            <polygon points="5 3 19 12 5 21 5 3"/>
                                         </svg>
-                                    </div>
-                                    <div class="fxn-sound-header-text">
-                                        <div class="fxn-sound-crumb">ЗВУКОВЫЕ УВЕДОМЛЕНИЯ & АУДИО</div>
-                                        <h2 class="fxn-sound-title">Звук уведомлений</h2>
-                                        <p class="fxn-sound-desc">Сигнал при новых сообщениях и заказах</p>
-                                    </div>
+                                        <span>Прослушать</span>
+                                    </button>
                                 </div>
 
                                 <input type="hidden" id="notificationSound" value="default">
@@ -395,7 +404,7 @@ function createMainPopup() {
                                         <!-- 1: Default -->
                                         <button type="button" class="fxn-vireon-sound-chip active" data-sound="default">
                                             <div class="fxn-sound-chip-lead">
-                                                <svg class="fxn-sound-chip-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                <svg class="fxn-sound-chip-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="M4 4l3 8-4 5c0 0 5 3 9 3s9-3 9-3l-4-5 3-8-6 3-3-2-3 2-6-3z"/>
                                                     <circle cx="9" cy="13" r="1" fill="currentColor"/>
                                                     <circle cx="15" cy="13" r="1" fill="currentColor"/>
@@ -457,7 +466,7 @@ function createMainPopup() {
                                         </button>
                                     </div>
 
-                                    <!-- 7: Своя мелодия (Большая кнопка на всю ширину) -->
+                                    <!-- 7: Своя мелодия -->
                                     <button type="button" class="fxn-vireon-sound-chip fxn-vireon-sound-chip-full" data-sound="custom">
                                         <div class="fxn-sound-chip-lead">
                                             <svg class="fxn-sound-chip-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -466,6 +475,7 @@ function createMainPopup() {
                                                 <circle cx="18" cy="16" r="3"></circle>
                                             </svg>
                                             <span class="fxn-sound-chip-title">Своя мелодия</span>
+                                            <span class="fxn-sound-chip-badge">Пользовательский WAV</span>
                                         </div>
                                     </button>
                                 </div>
@@ -474,30 +484,18 @@ function createMainPopup() {
                                 <div class="fxn-sound-volume-wrap">
                                     <div class="fxn-sound-volume-header">
                                         <div class="fxn-sound-volume-left">
-                                            <svg class="fxn-sound-vol-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <svg class="fxn-sound-vol-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                                                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                                                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
                                             </svg>
-                                            <span class="fxn-sound-vol-label">Громкость</span>
+                                            <span class="fxn-sound-vol-label">Громкость звука</span>
                                         </div>
                                         <span id="notificationVolumeValue" class="fxn-sound-vol-value">100%</span>
                                     </div>
                                     <input type="range" id="notificationVolume" min="0" max="100" value="100" class="fxn-vireon-slider">
                                 </div>
 
-                                <!-- Preview Sound Button -->
-                                <button id="testNotificationSound" class="fxn-sound-preview-action-btn" type="button">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 3v18"></path>
-                                        <path d="M8 8v8"></path>
-                                        <path d="M4 11v2"></path>
-                                        <path d="M16 6v12"></path>
-                                        <path d="M20 10v4"></path>
-                                    </svg>
-                                    <span>Прослушать звук</span>
-                                </button>
-                                <input type="hidden" id="notificationSound" value="default">
 
                                 <!-- Custom Sound Waveform Editor Container -->
                                 <div id="fxnCustomSoundBlock" class="fxn-custom-sound-box fxn-hidden" style="display:none !important;">
