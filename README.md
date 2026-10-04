@@ -9,7 +9,7 @@
 <br/><br/>
 
 [![Установить](https://img.shields.io/badge/УСТАНОВИТЬ_В_FIREFOX-111111?style=for-the-badge&logo=firefox-browser&logoColor=white&labelColor=000000)](https://addons.mozilla.org/ru/firefox/addon/foxen/)
-![Версия](https://img.shields.io/badge/VERSION-3.1.0-555555?style=for-the-badge&labelColor=000000)
+![Версия](https://img.shields.io/badge/VERSION-4.0-555555?style=for-the-badge&labelColor=000000)
 ![Лицензия](https://img.shields.io/badge/LICENSE-MIT-555555?style=for-the-badge&labelColor=000000)
 
 </div>
