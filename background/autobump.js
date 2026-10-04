@@ -1,4 +1,5 @@
 // background/autobump.js
+import { getAuthDetailsForBackground, fetchWithTabFallback } from './auth_helper.js';
 
 export const BUMP_ALARM_NAME = 'foxenAutoBump';
 
@@ -7,7 +8,7 @@ async function logToConsole(message) {
     const logMessage = `[${timestamp}] ${message}`;
     console.log(`[Foxen AutoBump] ${logMessage}`);
     try {
-        const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "*://funpay.com/*" });
+        const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "*://*.funpay.com/*" });
         if (tabs.length > 0) {
             tabs.forEach(tab => {
                 try {
@@ -35,54 +36,20 @@ async function parseHtmlViaOffscreen(html, action, extra = {}) {
 }
 
 async function getAuthDetails() {
-    const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
-    if (!goldenKeyCookie) throw new Error('Не удалось найти cookie "golden_key". Вы вошли в свой аккаунт FunPay?');
-    
-    // FunPay requires PHPSESSID alongside golden_key for runner requests
-    const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
-    const phpsessidPart = phpSessIdCookie?.value ? `; PHPSESSID=${phpSessIdCookie.value}` : '';
-    const cookies = `golden_key=${goldenKeyCookie.value}${phpsessidPart};`;
-
-    // 1) Пытаемся получить userId/csrf из открытой вкладки FunPay (быстрый путь).
-    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
-    for (const tab of tabs) {
-        try {
-            if (tab.discarded) continue;
-            const response = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: "getAppData" });
-            if (response && response.success) {
-                const parsedData = response.data;
-                let appData;
-                if (Array.isArray(parsedData) && parsedData.length > 0) appData = parsedData[0];
-                else if (typeof parsedData === 'object' && parsedData !== null && !Array.isArray(parsedData)) appData = parsedData;
-                else continue;
-
-                const userId = appData.userId;
-                const csrfToken = appData['csrf-token'];
-                if (!userId || !csrfToken) continue;
-
-                return { cookies, userId, csrfToken };
-            }
-        } catch (e) {
-            console.warn(`Could not connect to tab ${tab.id}. Trying next. Error: ${e.message}`);
-        }
+    const auth = await getAuthDetailsForBackground();
+    if (!auth || (!auth.userId && !auth.golden_key)) {
+        throw new Error('Не удалось получить данные сессии FunPay. Вы вошли в свой аккаунт FunPay? Откройте страницу сайта.');
     }
-
-    // 2) Открытой вкладки нет (например, команда /bump из Telegram) - берём
-    //    userId/csrf напрямую с главной страницы, используя настоящие cookie.
-    try {
-        const resp = await fetch('https://funpay.com/', { credentials: 'include', cache: 'no-store' });
-        const html = await resp.text();
-        const auth = await parseHtmlViaOffscreen(html, 'parseAuthData');
-        if (auth && auth.userId && auth.csrfToken) {
-            return { cookies, userId: auth.userId, csrfToken: auth.csrfToken };
-        }
-    } catch (e) {
-        console.warn('Foxen AutoBump: homepage auth fallback failed:', e.message);
+    const cookies = (auth.golden_key && auth.golden_key !== 'active_session')
+        ? (auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid};` : `golden_key=${auth.golden_key};`)
+        : '';
+    const csrfToken = auth.csrf_token || auth.csrfToken;
+    const userId = auth.userId;
+    if (!userId || !csrfToken) {
+        throw new Error('Не удалось получить userId или csrfToken. Откройте вкладку FunPay или войдите заново.');
     }
-
-    throw new Error("Не удалось получить данные авторизации (userId/csrf). Откройте вкладку FunPay или войдите заново.");
+    return { cookies, userId, csrfToken, golden_key: auth.golden_key, phpsessid: auth.phpsessid };
 }
-
 
 async function raiseCategory(categoryData, auth) {
     const { cookies, csrfToken } = auth;
@@ -94,8 +61,16 @@ async function raiseCategory(categoryData, auth) {
         'X-Requested-With': 'XMLHttpRequest',
         'X-Csrf-Token': csrfToken
     };
+    if (cookies) {
+        headers['Cookie'] = cookies;
+    }
 
-    let response = await fetch('https://funpay.com/lots/raise', { method: 'POST', headers: headers, body: initialData.toString(), credentials: 'include' });
+    let response = await fetchWithTabFallback('https://funpay.com/lots/raise', {
+        method: 'POST',
+        headers: headers,
+        body: initialData.toString(),
+        credentials: 'include'
+    });
     let responseText = await response.text();
 
     try {
@@ -112,7 +87,12 @@ async function raiseCategory(categoryData, auth) {
                 multiRaiseData.append('node_id', nodeId);
                 nodeIds.forEach(id => multiRaiseData.append('node_ids[]', id));
                 
-                response = await fetch('https://funpay.com/lots/raise', { method: 'POST', headers: headers, body: multiRaiseData.toString(), credentials: 'include' });
+                response = await fetchWithTabFallback('https://funpay.com/lots/raise', {
+                    method: 'POST',
+                    headers: headers,
+                    body: multiRaiseData.toString(),
+                    credentials: 'include'
+                });
                 responseText = await response.text();
 
             } else {
@@ -150,7 +130,8 @@ export async function runBumpCycle() {
 
         const auth = await getAuthDetails();
         const userUrl = `https://funpay.com/users/${auth.userId}/`;
-        const userPageResponse = await fetch(userUrl, { credentials: 'include', cache: 'no-store' });
+        const userHeaders = auth.cookies ? { 'Cookie': auth.cookies } : {};
+        const userPageResponse = await fetchWithTabFallback(userUrl, { credentials: 'include', cache: 'no-store', headers: userHeaders });
         const userPageHtml = await userPageResponse.text();
 
         // Получаем структурированный список категорий
@@ -182,7 +163,8 @@ export async function runBumpCycle() {
         const categoryUrlHrefs = categoryUrls.map(url => url.href);
 
         for (const categoryUrl of categoryUrlHrefs) {
-            const categoryPageResponse = await fetch(categoryUrl, { credentials: 'include', cache: 'no-store' });
+            const catHeaders = auth.cookies ? { 'Cookie': auth.cookies } : {};
+            const categoryPageResponse = await fetchWithTabFallback(categoryUrl, { credentials: 'include', cache: 'no-store', headers: catHeaders });
             
             const urlParts = categoryUrl.split('/');
             const guessedName = urlParts.length > 2 ? urlParts[urlParts.length - 2] : 'Неизвестная категория';

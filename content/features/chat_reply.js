@@ -245,19 +245,43 @@
         const orig = messageText(item);
         if (!orig) return false;
         let translated = null;
-        if (typeof translateText === 'function') translated = await translateText(orig);
-        else {
+        let isAi = false;
+        if (typeof window.fxnTranslateText === 'function') {
             try {
-                const r = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ru&dt=t&q=' + encodeURIComponent(orig));
-                const j = await r.json();
-                translated = j[0].map(s => s[0]).join('');
-                if (translated === orig) translated = null;
+                const st = await (typeof browser !== 'undefined' ? browser : chrome).storage?.local?.get(['foxenUserProfileCache', 'foxen_user_profile', 'foxen_is_premium', 'cached_profile']);
+                const prof = st?.foxenUserProfileCache?.data || st?.foxen_user_profile || st?.cached_profile;
+                const isPrem = (prof && prof.SUBSCRIPTION && prof.SUBSCRIPTION !== 'free') || Boolean(st?.foxen_is_premium);
+
+                const res = await window.fxnTranslateText(orig, 'ru', { useAi: isPrem });
+                if (res && res.text) {
+                    translated = res.text;
+                    isAi = Boolean(res.isAi);
+                }
             } catch (_) {}
+        } else if (typeof translateText === 'function') {
+            translated = await translateText(orig);
+        } else {
+            // Базовый Google Translate fallback
+            try {
+                const r = await fetch('https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=auto&tl=ru&q=' + encodeURIComponent(orig));
+                const j = await r.json();
+                const tr = Array.isArray(j) ? (Array.isArray(j[0]) ? j[0][0] : j[0]) : '';
+                if (tr && tr !== orig) translated = tr;
+            } catch (_) {}
+            if (!translated) {
+                try {
+                    const r = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ru&dt=t&q=' + encodeURIComponent(orig));
+                    const j = await r.json();
+                    translated = j[0].map(s => s[0]).join('');
+                    if (translated === orig) translated = null;
+                } catch (_) {}
+            }
         }
         if (!translated) translated = '(перевод недоступен)';
         const wrap = document.createElement('div');
         wrap.className = 'fp-trans-wrap';
-        wrap.innerHTML = '<div class="fp-trans-divider"></div><div class="fp-trans-text">' + esc(translated) + '</div>';
+        const aiBadge = isAi ? '<span style="font-size:10px;color:#e879f9;margin-left:6px;font-weight:600;" title="Нейросетевой перевод Llama 3.3">✨ ИИ</span>' : '';
+        wrap.innerHTML = '<div class="fp-trans-divider"></div><div class="fp-trans-text">' + esc(translated) + aiBadge + '</div>';
         textEl.appendChild(wrap);
         return true;
     }

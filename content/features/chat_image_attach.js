@@ -695,6 +695,88 @@
         return last || { ok: false, error: 'не удалось связаться с фоновым процессом' };
     }
 
+    function getPageCsrfToken() {
+        try {
+            const raw = document.body && document.body.dataset && document.body.dataset.appData;
+            if (raw) {
+                const p = JSON.parse(raw);
+                const d = Array.isArray(p) ? p[0] : p;
+                return d && d['csrf-token'] ? d['csrf-token'] : null;
+            }
+        } catch (_) {}
+        return null;
+    }
+
+    async function sendChatImageDirect(chatId, dataUrl) {
+        const csrfToken = getPageCsrfToken();
+        if (!csrfToken) throw new Error('Не найден CSRF-токен');
+
+        const blob = await (await fetch(dataUrl)).blob();
+        const fd = new FormData();
+        fd.append('file', new File([blob], 'image.png', { type: blob.type || 'image/png' }));
+        fd.append('file_id', '0');
+
+        const upRes = await fetch('https://funpay.com/file/addChatImage', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: fd
+        });
+        if (!upRes.ok) throw new Error(`HTTP ${upRes.status} при загрузке`);
+        const upJson = await upRes.json().catch(() => ({}));
+        const fileId = upJson.fileId;
+        if (!fileId) throw new Error(upJson.msg || 'Не получен ID файла');
+
+        const payload = {
+            objects: JSON.stringify([{ type: 'chat_node', id: String(chatId), tag: '00000000', data: { node: String(chatId), last_message: -1, content: '' } }]),
+            request: JSON.stringify({ action: 'chat_message', data: { node: String(chatId), last_message: -1, content: '', image_id: fileId } }),
+            csrf_token: csrfToken
+        };
+
+        const runnerRes = await fetch('https://funpay.com/runner/', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams(payload)
+        });
+
+        const runnerJson = await runnerRes.json().catch(() => null);
+        if (!runnerRes.ok || runnerJson?.error) {
+            throw new Error(runnerJson?.msg || runnerJson?.error || `HTTP ${runnerRes.status}`);
+        }
+        return { ok: true, fileId };
+    }
+
+    async function sendChatTextDirect(chatId, text) {
+        const csrfToken = getPageCsrfToken();
+        if (!csrfToken) throw new Error('Не найден CSRF-токен');
+
+        const payload = {
+            objects: JSON.stringify([{ type: 'chat_node', id: String(chatId), tag: '00000000', data: { node: String(chatId), last_message: -1, content: '' } }]),
+            request: JSON.stringify({ action: 'chat_message', data: { node: String(chatId), last_message: -1, content: text } }),
+            csrf_token: csrfToken
+        };
+
+        const runnerRes = await fetch('https://funpay.com/runner/', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams(payload)
+        });
+
+        const runnerJson = await runnerRes.json().catch(() => null);
+        if (!runnerRes.ok || runnerJson?.error) {
+            throw new Error(runnerJson?.msg || runnerJson?.error || `HTTP ${runnerRes.status}`);
+        }
+        return { ok: true };
+    }
+
     async function doSend() {
         if (!modalEl) return;
         const text = (modalEl.querySelector('#fxnTgMsg').value || '').trim();
@@ -712,15 +794,41 @@
         basket = [];
 
         try {
+            const pageCsrfToken = getPageCsrfToken();
             for (let i = 0; i < imgs.length; i++) {
-                const resp = await sendImageReliable({
-                    action: 'fxnSendImage', chatId, dataUrl: imgs[i].dataUrl, chatName
-                });
-                if (resp && resp.ok) markTileSent(group, i);
-                else { markTileError(group, i); notify('Не удалось отправить изображение: ' + ((resp && resp.error) || 'ошибка'), true); }
+                let sent = false;
+                try {
+                    const directRes = await sendChatImageDirect(chatId, imgs[i].dataUrl);
+                    if (directRes && directRes.ok) sent = true;
+                } catch (dirErr) {
+                    console.warn('[Foxen] Прямая отправка скриншота не удалась, пробуем через background:', dirErr.message);
+                }
+
+                if (sent) {
+                    markTileSent(group, i);
+                } else {
+                    const resp = await sendImageReliable({
+                        action: 'fxnSendImage', chatId, dataUrl: imgs[i].dataUrl, chatName, csrfToken: pageCsrfToken
+                    });
+                    if (resp && resp.ok) {
+                        markTileSent(group, i);
+                    } else {
+                        markTileError(group, i);
+                        notify('Не удалось отправить изображение: ' + ((resp && resp.error) || 'ошибка'), true);
+                    }
+                }
                 await new Promise(r => setTimeout(r, 250));
             }
-            if (text) await sendImageReliable({ action: 'fxnSendChatText', chatId, text });
+            if (text) {
+                let textSent = false;
+                try {
+                    const dirTextRes = await sendChatTextDirect(chatId, text);
+                    if (dirTextRes && dirTextRes.ok) textSent = true;
+                } catch (_) {}
+                if (!textSent) {
+                    await sendImageReliable({ action: 'fxnSendChatText', chatId, text, csrfToken: pageCsrfToken });
+                }
+            }
         } catch (e) {
             console.error('Foxen: ошибка отправки', e);
             notify('Ошибка при отправке: ' + e.message, true);

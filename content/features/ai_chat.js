@@ -128,14 +128,21 @@ function setupAIChatFeature() {
     const chatForm = chatTextarea ? chatTextarea.closest('form') : null;
 
     if (chatTextarea && chatFormAttachDiv && !document.getElementById('aiModeToggleBtn')) {
-        const aiButton = createElement('button', { type: 'button', id: 'aiModeToggleBtn' }, {}, '');
+        const cell = createElement('div', { class: 'chat-form-attach fxn-ai-toggle-cell' });
+        const aiButton = createElement('button', {
+            type: 'button',
+            id: 'aiModeToggleBtn',
+            class: 'btn btn-default chat-btn-image fxn-ai-toggle-btn'
+        }, {}, '');
         const _magicImg = document.createElement('img');
         _magicImg.src = chrome.runtime.getURL('icons/magic.png');
         _magicImg.className = 'ai-magic-icon';
         _magicImg.alt = 'AI';
         aiButton.appendChild(_magicImg);
-        if (chatFormAttachDiv.nextSibling) chatFormAttachDiv.parentNode.insertBefore(aiButton, chatFormAttachDiv.nextSibling);
-        else chatFormAttachDiv.parentNode.appendChild(aiButton);
+        cell.appendChild(aiButton);
+
+        if (chatFormAttachDiv.nextSibling) chatFormAttachDiv.parentNode.insertBefore(cell, chatFormAttachDiv.nextSibling);
+        else chatFormAttachDiv.parentNode.appendChild(cell);
 
         aiButton.classList.toggle('active', aiModeActive);
         aiButton.title = aiModeActive ? 'AI Режим АКТИВЕН (Enter для генерации/отправки)' : 'AI Режим (Enter для генерации/отправки)';

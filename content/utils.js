@@ -213,7 +213,7 @@ function showNotification(message, isError = false) {
 /**
  * Modern Unified Foxen Pro Color Picker (2D HSV Canvas + Hue Slider + Hex + 16 Curated Presets)
  */
-function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange) {
+function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange, options = {}) {
     // Remove any open picker first
     document.querySelector('.fxn-pro-color-picker')?.remove();
 
@@ -269,6 +269,20 @@ function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange) {
         <div class="fxn-picker-swatch ${p.toLowerCase() === hex.toLowerCase() ? 'active' : ''}" style="background:${p};" data-color="${p}"></div>
     `).join('');
 
+    const initialGlass = options.initialGlass ?? 16;
+    const glassSectionHtml = options.showGlassSlider ? `
+        <div class="fxn-picker-glass-section">
+            <div class="fxn-picker-glass-header">
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="material-icons" style="font-size:15px;color:var(--fxn-active, #c026d3);">blur_on</span>
+                    <span class="fxn-picker-glass-title">Glassmorphism</span>
+                </div>
+                <span class="fxn-picker-glass-val" id="fxnPickerGlassVal">${initialGlass}px</span>
+            </div>
+            <input type="range" min="0" max="30" step="1" value="${initialGlass}" class="fxn-picker-glass-slider" id="fxnPickerGlassSlider">
+        </div>
+    ` : '';
+
     picker.innerHTML = `
         <div class="fxn-picker-header">
             <span class="fxn-picker-title">Палитра цветов</span>
@@ -284,7 +298,7 @@ function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange) {
         <div class="fxn-picker-inputs">
             <div class="fxn-picker-hex-wrap">
                 <span class="fxn-picker-hash">#</span>
-                <input type="text" class="fxn-picker-hex" id="fxnPickerHex" value="${hex.replace('#', '')}" maxlength="6" spellcheck="false">
+                <input type="text" class="fxn-picker-hex" id="fxnPickerHex" value="${hex.replace('#', '')}" maxlength="7" spellcheck="false" placeholder="FFFFFF">
             </div>
             <button class="fxn-picker-copy" id="fxnPickerCopy" title="Скопировать HEX" type="button">
                 <span class="material-icons" style="font-size:15px;">content_copy</span>
@@ -293,6 +307,7 @@ function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange) {
         <div class="fxn-picker-presets">
             ${presetsHtml}
         </div>
+        ${glassSectionHtml}
     `;
 
     document.body.appendChild(picker);
@@ -348,7 +363,7 @@ function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange) {
     }
 
     let lastHueDrawn = -1;
-    function updateColor(newHex, triggerCallback = true, hueChanged = true) {
+    function updateColor(newHex, triggerCallback = true, hueChanged = true, isFinal = false) {
         hex = newHex.toUpperCase();
         const nextHsv = hexToHsv(hex);
         if (nextHsv.s > 0 && nextHsv.v > 0) {
@@ -428,17 +443,37 @@ function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange) {
     });
 
     // Hex Input
-    hexInput.addEventListener('input', (e) => {
-        let val = e.target.value.trim().replace('#', '');
+    const applyHexFromInput = (isFinal = false) => {
+        let val = hexInput.value.trim().replace('#', '');
         if (/^[0-9A-Fa-f]{6}$/.test(val)) {
-            updateColor('#' + val, true, true, false);
+            updateColor('#' + val, true, true, isFinal);
+            return true;
         } else if (/^[0-9A-Fa-f]{3}$/.test(val)) {
             const expanded = val.split('').map(c => c + c).join('');
-            updateColor('#' + expanded, true, true, false);
+            updateColor('#' + expanded, true, true, isFinal);
+            return true;
         }
+        return false;
+    };
+
+    hexInput.addEventListener('input', () => {
+        applyHexFromInput(false);
     });
+
     hexInput.addEventListener('change', () => {
+        if (!applyHexFromInput(true)) {
+            hexInput.value = hex;
+        }
         if (typeof onChange === 'function') onChange(hex, true);
+    });
+
+    hexInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyHexFromInput(true);
+            if (typeof onChange === 'function') onChange(hex, true);
+            hexInput.blur();
+        }
     });
 
     // Copy Button
@@ -453,6 +488,27 @@ function foxenOpenColorPicker(anchorEl, initialColor = '#c026d3', onChange) {
             updateColor(sw.dataset.color, true, true, true);
         });
     });
+
+    // Glassmorphism Slider (When enabled in options)
+    if (options.showGlassSlider) {
+        const glassSlider = picker.querySelector('#fxnPickerGlassSlider');
+        const glassVal = picker.querySelector('#fxnPickerGlassVal');
+        if (glassSlider && glassVal) {
+            glassSlider.addEventListener('input', (e) => {
+                const v = parseInt(e.target.value, 10);
+                glassVal.textContent = `${v}px`;
+                if (typeof options.onGlassChange === 'function') {
+                    options.onGlassChange(v, false);
+                }
+            });
+            glassSlider.addEventListener('change', (e) => {
+                const v = parseInt(e.target.value, 10);
+                if (typeof options.onGlassChange === 'function') {
+                    options.onGlassChange(v, true);
+                }
+            });
+        }
+    }
 
     // Close on outside click & cleanup listeners
     setTimeout(() => {
@@ -508,24 +564,24 @@ function fxnOrderIconsHtml(order) {
            `<span class="material-symbols-rounded fxn-order-img">image</span>`;
 }
 
-// Icon-only popup that lets the user pick the send order. No text at all - the
-// two rows are: 💬 → 🖼️  and  🖼️ → 💬. Returns nothing; calls onPick(order).
+// Popup that lets the user pick the send order. Calls onPick(order).
 function fxnShowOrderPopup(anchorEl, current, onPick) {
     document.querySelectorAll('.fxn-order-popup').forEach(p => p.remove());
 
     const popup = document.createElement('div');
     popup.className = 'fxn-order-popup';
-    const mk = (order) => `
-        <div class="fxn-order-opt${order === current ? ' active' : ''}" data-order="${order}" title="">
-            ${fxnOrderIconsHtml(order)}
+    const mk = (order, label) => `
+        <div class="fxn-order-opt${order === current ? ' active' : ''}" data-order="${order}">
+            <span class="fxn-order-opt-icons">${fxnOrderIconsHtml(order)}</span>
+            <span class="fxn-order-opt-text">${label}</span>
             <span class="material-symbols-rounded fxn-order-check">check</span>
         </div>`;
-    popup.innerHTML = mk('text_first') + mk('image_first');
+    popup.innerHTML = mk('text_first', 'Сначала текст, потом фото') + mk('image_first', 'Сначала фото, потом текст');
     document.body.appendChild(popup);
 
     // position below the anchor, clamped to viewport
     const r = anchorEl.getBoundingClientRect();
-    const pw = popup.offsetWidth || 160;
+    const pw = popup.offsetWidth || 230;
     let left = r.left + window.scrollX;
     if (left + pw > window.scrollX + window.innerWidth - 8) {
         left = window.scrollX + window.innerWidth - pw - 8;
@@ -567,7 +623,7 @@ function fxnRenderAttachments(textarea) {
         const chip = document.createElement('div');
         chip.className = 'fxn-attachment-chip';
         chip.title = 'Нажмите, чтобы выбрать порядок отправки';
-        // Whole chip is clickable → opens the icon-only order picker. The view/remove
+        // Whole chip is clickable → opens the order picker. The view/remove
         // buttons stop propagation so they still work independently.
         chip.innerHTML = `
             <span class="material-symbols-rounded fxn-att-ic">image</span>
@@ -610,7 +666,14 @@ function fxnShowImagePreview(dataUrl) {
     const overlay = document.createElement('div');
     overlay.className = 'fxn-img-preview-overlay';
     overlay.innerHTML = `<div class="fxn-img-preview-inner"><img src="${dataUrl}" alt="preview"><button type="button" class="fxn-img-preview-close"><span class="material-symbols-rounded">close</span></button></div>`;
-    const close = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
+    const onKey = (e) => {
+        if (e.key === 'Escape') close();
+    };
+    const close = () => {
+        window.removeEventListener('keydown', onKey);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
+    window.addEventListener('keydown', onKey);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     overlay.querySelector('.fxn-img-preview-close').addEventListener('click', close);
     document.body.appendChild(overlay);
@@ -755,8 +818,14 @@ function fxnComputePalette() {
     const hover    = fxnMix(bg, dark ? 'white' : 'black', dark ? 0.14 : 0.08);
     const text     = textRaw;
     const textMuted = dark ? fxnMix(textRaw, 'black', 0.35) : fxnMix(textRaw, 'white', 0.35);
-    // акцент берём из настроек пользователя (bgColor2/bgColor1) или фолбэк #C026D3
-    let customAccentHex = (window._foxenThemeSettings && (window._foxenThemeSettings.bgColor2 || window._foxenThemeSettings.bgColor1)) || null;
+    // акцент берём из выбранного пользователем акцентного цвета (window.__foxenAccentColor / __fptUserAccent / localStorage),
+    // затем из настроек кастомной темы (если задан не дефолтный #f4cf78), либо фолбэк #c026d3
+    let customAccentHex = window.__foxenAccentColor 
+        || window.__fptUserAccent 
+        || (function() { try { return sessionStorage.getItem('foxen_accent_color') || localStorage.getItem('foxen_accent_color'); } catch (_) { return null; } })()
+        || (window._foxenThemeSettings && window._foxenThemeSettings.bgColor2 && window._foxenThemeSettings.bgColor2 !== '#f4cf78' ? window._foxenThemeSettings.bgColor2 : null)
+        || (window._foxenThemeSettings && window._foxenThemeSettings.bgColor1 && window._foxenThemeSettings.bgColor1 !== '#ff6d15' ? window._foxenThemeSettings.bgColor1 : null)
+        || '#c026d3';
     let accent = customAccentHex ? (fxnParseRGB(customAccentHex) || [193, 38, 211, 1]) : [193, 38, 211, 1];
 
     return {
@@ -796,6 +865,7 @@ function fxnApplyThemeVars() {
         r.setProperty('--fxn-text',       p.text);
         r.setProperty('--fxn-text-muted', p.textMuted);
         r.setProperty('--fxn-accent',     p.accent);
+        r.setProperty('--fxn-active',     p.accent);
         r.setProperty('--fxn-accent-soft',p.accentSoft);
         r.setProperty('--fxn-shadow',     p.shadow);
         document.documentElement.classList.toggle('fxn-theme-dark', p.dark);
@@ -839,3 +909,178 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('focus', () => { try { fxnApplyThemeVars(); } catch (_) {} });
 window.addEventListener('pageshow', () => { try { fxnApplyThemeVars(); } catch (_) {} });
+
+// Синхронизация выбранного акцентного цвета из хранилища (предотвращает откат на дефолтные оттенки)
+try {
+    const extApi = typeof browser !== 'undefined' ? browser : chrome;
+    extApi?.storage?.local?.get(['foxenAccentColor', 'foxenHeaderButtonStyles', 'foxenHeaderButtons'], (data) => {
+        const val = data?.foxenAccentColor || data?.foxenHeaderButtonStyles?.color || data?.foxenHeaderButtons?.color;
+        if (val) {
+            window.__foxenAccentColor = val;
+            window.__fptUserAccent = val;
+            try {
+                localStorage.setItem('foxen_accent_color', val);
+                sessionStorage.setItem('foxen_accent_color', val);
+            } catch (_) {}
+            document.documentElement.style.setProperty('--fxn-accent', val);
+            document.documentElement.style.setProperty('--fxn-active', val);
+            if (typeof fxnApplyThemeVars === 'function') fxnApplyThemeVars();
+        }
+    });
+    extApi?.storage?.onChanged?.addListener((changes, area) => {
+        if (area === 'local' && (changes.foxenAccentColor || changes.foxenHeaderButtonStyles || changes.foxenHeaderButtons)) {
+            const val = changes.foxenAccentColor?.newValue || changes.foxenHeaderButtonStyles?.newValue?.color || changes.foxenHeaderButtons?.newValue?.color;
+            if (val) {
+                window.__foxenAccentColor = val;
+                window.__fptUserAccent = val;
+                try {
+                    localStorage.setItem('foxen_accent_color', val);
+                    sessionStorage.setItem('foxen_accent_color', val);
+                } catch (_) {}
+                document.documentElement.style.setProperty('--fxn-accent', val);
+                document.documentElement.style.setProperty('--fxn-active', val);
+                if (typeof fxnApplyThemeVars === 'function') fxnApplyThemeVars();
+            }
+        }
+    });
+} catch (_) {}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FOXEN UNIVERSAL TRANSLATION ENGINE (Отказоустойчивый многоуровневый перевод)
+// ─────────────────────────────────────────────────────────────────────────────
+(function () {
+    const _transCache = new Map();
+
+    async function _fetchClientMultiTier(text, targetLang, sourceLang) {
+        const cleanText = text.trim();
+        const sl = encodeURIComponent(sourceLang || 'auto');
+        const tl = encodeURIComponent(targetLang || 'en');
+        const q = encodeURIComponent(cleanText);
+
+        // 1. Google Clients5 (официальный эндпойнт Chrome-расширения, редкий 429)
+        try {
+            const u = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=${sl}&tl=${tl}&q=${q}`;
+            const res = await fetch(u);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    const tr = Array.isArray(data[0]) ? data[0][0] : data[0];
+                    if (typeof tr === 'string' && tr.trim()) {
+                        return { text: tr.trim(), provider: 'google_clients5' };
+                    }
+                }
+            }
+        } catch (_) {}
+
+        // 2. Google translate.google.com (dj=1 JSON sentences)
+        try {
+            const u = `https://translate.google.com/translate_a/single?client=at&dt=t&dj=1&sl=${sl}&tl=${tl}&q=${q}`;
+            const res = await fetch(u);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && Array.isArray(data.sentences)) {
+                    const tr = data.sentences.map(s => s.trans || '').join('');
+                    if (tr.trim()) {
+                        return { text: tr.trim(), provider: 'google_dj' };
+                    }
+                }
+            }
+        } catch (_) {}
+
+        // 3. Google translate.googleapis.com (gtx)
+        try {
+            const u = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${q}`;
+            const res = await fetch(u);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && Array.isArray(data[0])) {
+                    const tr = data[0].map(c => c[0] || '').join('');
+                    if (tr.trim()) {
+                        return { text: tr.trim(), provider: 'google_gtx' };
+                    }
+                }
+            }
+        } catch (_) {}
+
+        // 4. MyMemory API
+        try {
+            const lp = (sourceLang && sourceLang !== 'auto') ? `${sourceLang}|${targetLang}` : `autodetect|${targetLang}`;
+            const u = `https://api.mymemory.translated.net/get?q=${q}&langpair=${encodeURIComponent(lp)}`;
+            const res = await fetch(u);
+            if (res.ok) {
+                const data = await res.json();
+                const tr = data?.responseData?.translatedText;
+                if (typeof tr === 'string' && tr.trim() && !tr.includes('MYMEMORY WARNING')) {
+                    return { text: tr.trim(), provider: 'mymemory' };
+                }
+            }
+        } catch (_) {}
+
+        throw new Error('Все серверы перевода временно недоступны');
+    }
+
+    window.fxnTranslateText = async function (text, targetLang = 'en', options = {}) {
+        if (!text || !text.trim()) {
+            return { success: true, text: '', provider: 'none', isAi: false };
+        }
+
+        const cleanText = text.trim();
+        const sourceLang = options.sourceLang || 'auto';
+        const useAi = Boolean(options.useAi);
+        const cacheKey = `${sourceLang}:${targetLang}:${useAi ? 'ai' : 'std'}:${cleanText}`;
+
+        // 1. Проверка локального кэша сессии
+        if (_transCache.has(cacheKey)) {
+            const cached = _transCache.get(cacheKey);
+            return { success: true, text: cached.text, provider: 'cache', isAi: cached.isAi };
+        }
+
+        let result = null;
+
+        // 2. Попытка запроса через фоновый скрипт расширения (обходит CORS и 429 сайта funpay.com)
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+            try {
+                const bgRes = await new Promise((resolve) => {
+                    chrome.runtime.sendMessage(
+                        { action: 'fxnTranslateText', text: cleanText, targetLang, sourceLang, useAi },
+                        (resp) => {
+                            if (chrome.runtime.lastError || !resp) {
+                                resolve(null);
+                            } else {
+                                resolve(resp);
+                            }
+                        }
+                    );
+                });
+                if (bgRes && bgRes.success && bgRes.text) {
+                    result = { text: bgRes.text, provider: bgRes.provider || 'background', isAi: Boolean(bgRes.isAi) };
+                }
+            } catch (_) {}
+        }
+
+        // 3. Fallback: прямой клиентский многоуровневый перевод
+        if (!result) {
+            try {
+                const clientRes = await _fetchClientMultiTier(cleanText, targetLang, sourceLang);
+                if (clientRes && clientRes.text) {
+                    result = { text: clientRes.text, provider: clientRes.provider, isAi: false };
+                }
+            } catch (err) {
+                console.warn('[Foxen Translate] Direct client error:', err);
+                throw err;
+            }
+        }
+
+        if (result && result.text) {
+            if (_transCache.size > 150) {
+                const first = _transCache.keys().next().value;
+                _transCache.delete(first);
+            }
+            _transCache.set(cacheKey, { text: result.text, isAi: result.isAi });
+            return { success: true, text: result.text, provider: result.provider, isAi: result.isAi };
+        }
+
+        throw new Error('Не удалось получить перевод текста');
+    };
+})();
+

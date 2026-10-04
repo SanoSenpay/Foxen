@@ -97,14 +97,21 @@ function renderHistoryPanel(orders, name, anchor) {
 // ─── Translation engine ────────────────────────────────────────────────────────
 
 async function translateText(text) {
-    if (!text.trim()) return null;
-    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ru&dt=t&q=' + encodeURIComponent(text);
+    if (!text || !text.trim()) return null;
+    if (typeof window.fxnTranslateText === 'function') {
+        try {
+            const res = await window.fxnTranslateText(text, 'ru');
+            if (res && res.text && res.text !== text) return res.text;
+        } catch (_) {}
+    }
     try {
-        const res = await fetch(url);
+        const u = 'https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=auto&tl=ru&q=' + encodeURIComponent(text);
+        const res = await fetch(u);
         const json = await res.json();
-        const result = json[0].map(s => s[0]).join('');
-        return result === text ? null : result;
-    } catch (_) { return null; }
+        const tr = Array.isArray(json) ? (Array.isArray(json[0]) ? json[0][0] : json[0]) : '';
+        if (tr && tr !== text) return tr;
+    } catch (_) {}
+    return null;
 }
 
 async function appendTranslation(msgTextEl) {

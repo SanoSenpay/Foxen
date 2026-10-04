@@ -156,7 +156,15 @@ function manageFontImports(settings) {
 }
 
 function getCustomThemeCss(settings) {
-    const bgImageUrl = settings.bgImage ? `url(${settings.bgImage})` : 'url(https://i.ibb.co/Kpm5M7gg/Foxen-BCKG.png)';
+    let cleanBg = (settings.bgImage || '').trim();
+    let bgImageUrl;
+    if (!cleanBg) {
+        bgImageUrl = 'url("https://i.ibb.co/Kpm5M7gg/Foxen-BCKG.png")';
+    } else if (cleanBg.startsWith('url(')) {
+        bgImageUrl = cleanBg;
+    } else {
+        bgImageUrl = `url("${cleanBg.replace(/"/g, '\\"')}")`;
+    }
     const containerBgRgba = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
 
     const hasBlur = settings.bgBlur && parseFloat(settings.bgBlur) > 0;
@@ -204,11 +212,12 @@ function getCustomThemeCss(settings) {
         .navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover, .navbar-default .navbar-nav>.active>a:focus { color: #LINK_COLOR# !important; font-weight: 700; background-color: transparent !important; }
         .counter-list .counter-item { background: #14141480 !important; border: 0px solid #feff00; border-radius: 20px; outline: 0; }
         .content-with-cd-wide, .bg-light-style .content-with-cd-wide { background: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; background-color: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border-radius: 10px; }
+        .content-with-cd:not(.content-with-cd-wide):not(.content-with-cd-narrow), .counter-list, .counter-list-wide { background: transparent !important; background-color: transparent !important; border: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; }
         a.tc-item { color: #TEXT_COLOR# !important; text-decoration: none; }
         .cd { position: relative; z-index: 100; border-radius: 50%; width: 700px; height: 700px; filter: brightness(.8); border: 0px; }
         a.cd-satellite { transform: translate(-25px); }
         .offer, .bg-light-style .offer { background: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; background-color: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; padding: 20px; border-radius: 10px; }
-        .tc, .bg-light-style .tc { background-color: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border-radius: 10px; }
+        .tc, .bg-light-style .tc, .chat, .chat-full .chat, .chat-contacts, .chat-detail, .fxn-chat-translate-banner { background-color: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border-radius: 10px; }
         .tc-finance { border-top: 0px solid #322f34; border-bottom: #322f34 0px solid; border-left: #322f34 0px solid; border-right: #322f34 0px solid; border-radius: 10px; }
         .modal-content, .bg-light-style .modal-content { background-color: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border: 0px solid #999; border-radius: 10px; -webkit-box-shadow: 0 3px 9px rgba(0, 0, 0, .5); box-shadow: 0 3px 9px #00000080; background-clip: padding-box; outline: 0; }
         label.control-label { color: #ffba4cc4 !important; }
@@ -239,17 +248,18 @@ function getCustomThemeCss(settings) {
         .navbar-form .form-control { background-color: transparent !important; }
         .logo-color, .footer-block-als { filter: brightness(0) invert(1) !important; }
         .nav-abc ul .active a, .nav-abc ul .active a:hover, .nav-abc ul .active a:focus { text-decoration: none; cursor: default; color: #ACCENT_COLOR# !important; }
-        .nav-abc .nav>li>a:hover, .nav-abc .nav>li>a:focus { text-decoration: none; cursor: default; color: #ACCENT_COLOR# !important; }
         a:focus { text-decoration: none; cursor: default; color: #fff !important; }
         .list-inline>li:after { content: " ·"; color: #919191; }
-        .media-user.style-circle .avatar-photo:after { background: #a6a6a6 !important; border: 3px solid var(--fxn-theme-container-bg, ${containerBgRgba}) !important; }
+        .media-user.style-circle .avatar-photo:after, .media-user.style-circle .avatar-photo::after { background: #20ff00 !important; border: 3px solid rgba(0, 0, 0, 0.34) !important; }
         .counter-list-wide { padding-bottom: 20px; padding-top: 20px; }
         .dropdown-menu>li+li, .dropdown-menu .dropdown-menu>li { border-top: #6a6a6a70 1px solid !important; border: 0px; }
         .dropdown-menu>li:first-child>a { border-radius: 8px 8px 0 0; }
         .dropdown-menu>li:last-child>a { border-radius: 0 0 8px 8px; }
         .navbar-nav>li>.dropdown-menu, .dropdown-menu, .nav-tabs .dropdown-menu { border-radius: 8px; }
-        .navbar-default .navbar-nav>li>a { color: #TEXT_COLOR# !important; }
-        .navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>li>a:focus { color: #ddd !important; }
+        .navbar-default .navbar-nav>li>a:not(#foxenButton) { color: #TEXT_COLOR# !important; }
+        .navbar-default .navbar-nav>li>a:not(#foxenButton):hover, .navbar-default .navbar-nav>li>a:not(#foxenButton):focus { color: #ddd !important; }
+        #foxenButton { color: var(--fxn-btn-color, var(--fxn-accent, #c026d3)) !important; }
+        #foxenButton::before { background: var(--fxn-btn-color, var(--fxn-accent, #c026d3)) !important; }
         .ajax-alert { border-radius: 10px; }
         .offer-tc-container { border-top: #ff0000 0px solid !important; }
         .tc:not(.tc-selling):not(.tc-finance) .tc-item>div { border-top: #505050 1px solid !important; }
@@ -297,7 +307,10 @@ function getCustomThemeCss(settings) {
         table.table-clickable tbody tr a:hover { color: #fff !important; text-decoration: underline; }
         .caret { color: #888 !important; }
         .sort::after { color: #555 !important; }
-        .bootstrap-select .dropdown-toggle .filter-option { background: #65a91a !important; height: 100%; width: 100%; border: 0px #fff solid; border-radius: 8px; color: #fff !important; }
+        .bootstrap-select > .btn.dropdown-toggle, .bootstrap-select > .dropdown-toggle, .bootstrap-select .btn.btn-default.dropdown-toggle, .form-narrow .bootstrap-select .btn.dropdown-toggle, .form-narrow .bootstrap-select > .btn { background: #65a91a !important; background-color: #65a91a !important; border: 0px !important; border-radius: 8px !important; color: #fff !important; box-shadow: none !important; }
+        .bootstrap-select > .btn.dropdown-toggle:hover, .bootstrap-select > .btn.dropdown-toggle:focus, .bootstrap-select > .btn.dropdown-toggle:active, .open > .bootstrap-select > .btn.dropdown-toggle, .open > .bootstrap-select > .btn { background: #589516 !important; background-color: #589516 !important; border: 0px !important; color: #fff !important; }
+        .bootstrap-select .dropdown-toggle .filter-option { background: transparent !important; background-color: transparent !important; border: 0px !important; color: #fff !important; }
+        .bootstrap-select .dropdown-toggle .caret, .bootstrap-select .dropdown-toggle .bs-caret, .bootstrap-select .dropdown-toggle span { color: #fff !important; border-top-color: #fff !important; }
         .has-feedback .form-control { border-radius: 8px; }
         .withdraw-box .slave { background-color: #303030 !important; border-radius: 8px; }
         .withdraw-box .slave:hover { background-color: #3e3e3e !important; border-radius: 8px; }
@@ -310,14 +323,14 @@ function getCustomThemeCss(settings) {
         .bootstrap-select .dropdown-menu>.active>a, .bootstrap-select .dropdown-menu>.active>a:hover, .bootstrap-select .dropdown-menu>.active>a:focus { background-color: #1b1b1b !important; color: #82dd1e !important; }
         .chat-header { border: #bd59be00 0px solid !important; }
         .form-inline .form-control { background-color: #0f0f0f !important; border-radius: 8px; }
-        .chat-contacts, .chat-detail { background: #0009 !important; border: #fff 0px solid !important; }
+        .chat-contacts, .chat-detail { background: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border: #fff 0px solid !important; }
         .chat-contacts { border-radius: 10px 0 0 10px; }
         .chat-detail { border-radius: 0 10px 10px 0; }
-        .chat { background: #0009 !important; border-radius: 10px; }
+        .chat, .chat-full .chat { background: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; background-color: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border-radius: 10px; }
         .contact-item { border-bottom: #fff 0px !important; }
         .chat-full-header { border-bottom: #fff 0px solid !important; }
-        .chat-full .chat { border-bottom: 0px solid #fff !important; background-color: #0009 !important; border-radius: 0; }
-        .chat { border-top: 0px solid #fff !important; border-bottom: 0px solid #90f !important; }
+        .chat-full .chat { border-bottom: 0px solid transparent !important; }
+        .chat { border-top: 0px solid #fff !important; border-bottom: 0px solid transparent !important; }
         .alert-info { background-color: #709fdc3b !important; border-color: #709fdc !important; color: #fff !important; border-radius: 8px; }
         .alert-info, .alert-info .chat-msg-text, .alert-info .chat-msg-text * { color: #fff !important; }
         .alert-info a, .alert-info .chat-msg-text a { color: #LINK_COLOR# !important; }
@@ -379,18 +392,71 @@ function getCustomThemeCss(settings) {
     }
 
     if (settings.enableGlassmorphism) {
-        const glassBg = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
-        const safeBlur = Math.min(16, Math.max(0, parseInt(settings.glassmorphismBlur, 10) || 10));
+        const opVal = (settings.containerBgOpacity !== undefined && parseFloat(settings.containerBgOpacity) < 1)
+            ? parseFloat(settings.containerBgOpacity)
+            : 0.75;
+        const glassBg = hexToRgba(settings.containerBgColor || '#0b0b0b', opVal);
+        const safeBlur = Math.min(30, Math.max(2, parseInt(settings.glassmorphismBlur, 10) || 12));
         themedCss += `
-            .offer, .tc {
+            #header, .navbar-default, header, #header.navbar-default, .bg-light-style #header, .bg-light-style .navbar-default {
                 background: ${glassBg} !important;
-                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                background-color: ${glassBg} !important;
+                backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
+                -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
             }
-            .modal-content, .chat-contacts, .chat-detail, .chat, .dropdown-menu, .panel, .content-with-cd-wide, .payment-card, .details, .form-narrow {
+            .offer, 
+            .tc:not(.offer .tc), 
+            .content-with-cd-wide, 
+            .content-with-cd-narrow, 
+            .modal-content, 
+            .chat-contacts, 
+            .chat-detail, 
+            .chat, 
+            .chat-full .chat,
+            .chat-full,
+            .fxn-chat-translate-banner,
+            .dropdown-menu, 
+            #fp-rmthub-drop,
+            .fp-rmthub-drop,
+            .panel, 
+            .payment-card, 
+            .details, 
+            .form-narrow, 
+            .user-card,
+            .fxn-peek-panel {
                 background: ${glassBg} !important;
-                backdrop-filter: blur(${safeBlur}px);
-                -webkit-backdrop-filter: blur(${safeBlur}px);
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                background-color: ${glassBg} !important;
+                backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
+                -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                border-radius: var(--fxn-theme-border-radius, 10px) !important;
+                isolation: isolate !important;
+            }
+            .offer .tc,
+            .offer .tc.table-hover,
+            .tc .tc-header,
+            .tc .tc-item,
+            .tc.table-hover .tc-item,
+            .bg-light-style .tc.table-hover .tc-item {
+                background: transparent !important;
+                background-color: transparent !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+            .tc.table-hover .tc-item:hover,
+            .tc.table-hover a.tc-item:hover {
+                background-color: rgba(255, 255, 255, 0.06) !important;
+            }
+            .content-with-cd:not(.content-with-cd-wide):not(.content-with-cd-narrow),
+            .counter-list,
+            .counter-list-wide {
+                background: transparent !important;
+                background-color: transparent !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                border: none !important;
+                box-shadow: none !important;
             }
         `;
     }
@@ -549,7 +615,13 @@ async function applyCustomTheme() {
     const filterParts = [];
     if (settings.bgBlur && parseFloat(settings.bgBlur) > 0) filterParts.push(`blur(${settings.bgBlur}px)`);
     if (settings.bgBrightness !== undefined && parseFloat(settings.bgBrightness) !== 100) filterParts.push(`brightness(${settings.bgBrightness}%)`);
-    const containerBgRgba = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
+    let containerBgRgba = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
+    if (settings.enableGlassmorphism) {
+        const opVal = (settings.containerBgOpacity !== undefined && parseFloat(settings.containerBgOpacity) < 1)
+            ? parseFloat(settings.containerBgOpacity)
+            : 0.75;
+        containerBgRgba = hexToRgba(settings.containerBgColor || '#0b0b0b', opVal);
+    }
 
     const rootStyle = document.documentElement?.style;
     if (rootStyle) {
@@ -560,7 +632,20 @@ async function applyCustomTheme() {
         rootStyle.setProperty('--fxn-theme-accent-color', settings.bgColor2 || '#f4cf78');
         rootStyle.setProperty('--fxn-theme-primary-color', settings.bgColor1 || '#ff6d15');
         rootStyle.setProperty('--fxn-theme-link-color', settings.linkColor || '#2d6bb3');
+        const safeBlur = Math.min(30, Math.max(0, parseInt(settings.glassmorphismBlur, 10) || 12));
+        rootStyle.setProperty('--fxn-theme-glass-blur', `${safeBlur}px`);
+
+        const cachedAccent = (function() { try { return localStorage.getItem('foxen_accent_color') || sessionStorage.getItem('foxen_accent_color'); } catch (_) { return null; } })();
+        const activeAccent = window.__foxenAccentColor || cachedAccent || settings.bgColor2;
+        if (activeAccent) {
+            rootStyle.setProperty('--fxn-accent', activeAccent);
+            rootStyle.setProperty('--fxn-btn-color', activeAccent);
+            const hb = document.getElementById('foxenButton');
+            if (hb) hb.style.setProperty('color', activeAccent, 'important');
+        }
     }
+    document.documentElement.classList.toggle('fxn-glass-enabled', !!settings.enableGlassmorphism);
+    if (document.body) document.body.classList.toggle('fxn-glass-enabled', !!settings.enableGlassmorphism);
 
     if (!styleEl) {
         styleEl = document.createElement('style');
@@ -603,9 +688,10 @@ function updateCirclePreview() {
 
 async function updateThemePreview() {
     const ext = typeof browser !== 'undefined' ? browser : chrome;
-    const { foxenTheme = {}, foxenThemeBgImage, enableCustomTheme = true, enableRedesignedHomepage = true } = await ext.storage.local.get(['foxenTheme', 'foxenThemeBgImage', 'enableCustomTheme', 'enableRedesignedHomepage']);
+    const { foxenTheme = {}, foxenThemeBgImage, foxenAccentColor, enableCustomTheme = true, enableRedesignedHomepage = true } = await ext.storage.local.get(['foxenTheme', 'foxenThemeBgImage', 'foxenAccentColor', 'enableCustomTheme', 'enableRedesignedHomepage']);
     const bgImage = foxenThemeBgImage || foxenTheme.bgImage || null;
-    const settings = { ...DEFAULT_THEME, ...foxenTheme, bgImage };
+    const activeAccent = foxenAccentColor || window.__foxenAccentColor || (function() { try { return localStorage.getItem('foxen_accent_color'); } catch(_) { return null; } })() || foxenTheme.bgColor2 || DEFAULT_THEME.bgColor2;
+    const settings = { ...DEFAULT_THEME, ...foxenTheme, bgColor2: activeAccent, bgImage };
 
     const setToggle = (id, val) => {
         const el = document.getElementById(id);
@@ -704,7 +790,7 @@ async function updateThemePreview() {
     if (elements.circleBlurValue) elements.circleBlurValue.textContent = `${settings.circleBlur}px`;
     if(elements.headerPositionSelect) elements.headerPositionSelect.value = settings.headerPosition || 'top';
 
-    if (elements.glassmorphismControls) elements.glassmorphismControls.style.display = settings.enableGlassmorphism ? 'block' : 'none';
+    if (elements.glassmorphismControls) elements.glassmorphismControls.style.display = settings.enableGlassmorphism ? 'flex' : 'none';
     if (elements.glassmorphismBlur) elements.glassmorphismBlur.value = settings.glassmorphismBlur;
     if (elements.glassmorphismBlurValue) elements.glassmorphismBlurValue.textContent = `${settings.glassmorphismBlur}px`;
 
@@ -748,7 +834,9 @@ function toggleThemeControls(disabled) {
         }
     }
     const glassControls = document.getElementById('glassmorphismControls');
-    if (glassControls) glassControls.style.display = (!disabled && document.getElementById('enableGlassmorphism').checked) ? 'block' : 'none';
+    const glassToggleEl = document.getElementById('enableGlassmorphism');
+    const isGlassActive = glassToggleEl ? (glassToggleEl.checked || glassToggleEl.classList?.contains('on')) : false;
+    if (glassControls) glassControls.style.display = (!disabled && isGlassActive) ? 'flex' : 'none';
     
     const scrollbarControls = document.getElementById('customScrollbarControls');
     if (scrollbarControls) scrollbarControls.style.display = (!disabled && document.getElementById('enableCustomScrollbar').checked) ? 'block' : 'none';
@@ -804,14 +892,44 @@ async function randomizeTheme() {
 
 async function exportTheme() {
     const ext = typeof browser !== 'undefined' ? browser : chrome;
-    const { foxenTheme = {}, foxenThemeBgImage } = await ext.storage.local.get(['foxenTheme', 'foxenThemeBgImage']);
+    const { foxenTheme = {}, foxenThemeBgImage, foxenUserProfile, fpCurrentUserInfo } = await ext.storage.local.get(['foxenTheme', 'foxenThemeBgImage', 'foxenUserProfile', 'fpCurrentUserInfo']);
     const bgImage = foxenThemeBgImage || foxenTheme.bgImage || null;
-    const settingsToExport = { ...DEFAULT_THEME, ...foxenTheme, bgImage };
+
+    let author = 'FoxenTeam';
+    let foxenId = 'FX-000000';
+    const uName = (foxenUserProfile?.username || fpCurrentUserInfo?.username || '').toLowerCase();
+    const fId = String(foxenUserProfile?.foxen_id || '').toUpperCase();
+    const isAdminOrOfficial = !uName || uName === 'sanosenpay' || uName === 'sano' || uName === 'foxenteam' || uName === 'vireonshop' ||
+        fId === 'FX-000000' || fId === 'FX-774724' || fId === 'FX-000001' ||
+        Number(fpCurrentUserInfo?.userId) === 15508026 || Number(foxenUserProfile?.userId) === 15508026 ||
+        foxenUserProfile?.is_admin || foxenUserProfile?.is_official;
+
+    if (isAdminOrOfficial) {
+        author = 'FoxenTeam';
+        foxenId = 'FX-000000';
+    } else if (foxenUserProfile) {
+        if (foxenUserProfile.username) author = foxenUserProfile.username;
+        if (foxenUserProfile.foxen_id) foxenId = foxenUserProfile.foxen_id;
+        else if (foxenUserProfile.userId) foxenId = `FX-${foxenUserProfile.userId}`;
+    } else if (fpCurrentUserInfo?.userId) {
+        author = fpCurrentUserInfo.username || author;
+        foxenId = `FX-${fpCurrentUserInfo.userId}`;
+    }
+
+    const settingsToExport = {
+        name: "Моя тема",
+        author: author,
+        foxen_id: foxenId,
+        ...DEFAULT_THEME,
+        ...foxenTheme,
+        bgImage
+    };
 
     const themeName = prompt("Введите название темы:", "Моя тема");
     if (!themeName || themeName.trim() === "") {
         return;
     }
+    settingsToExport.name = themeName.trim();
 
     const fileName = `${themeName.trim().replace(/[^\p{L}\p{N}\s-]/gu, '').replace(/\s+/g, '_')}.fptheme`;
     const fileContent = JSON.stringify(settingsToExport, null, 2);
@@ -828,6 +946,100 @@ async function exportTheme() {
     showNotification(`Тема "${themeName}" экспортирована!`);
 }
 
+async function importThemeObject(importedTheme) {
+    if (!importedTheme || typeof importedTheme !== 'object') {
+        throw new Error("Неверный формат файла темы.");
+    }
+    const ext = typeof browser !== 'undefined' ? browser : chrome;
+
+    // Извлечение палитры цветов (поддержка объектов с colors и плоских полей)
+    const colors = importedTheme.colors || {};
+    const bgColor1 = importedTheme.bgColor1 || colors.bgColor1 || DEFAULT_THEME.bgColor1;
+    const bgColor2 = importedTheme.bgColor2 || colors.bgColor2 || DEFAULT_THEME.bgColor2;
+    const containerBgColor = importedTheme.containerBgColor || colors.containerBgColor || DEFAULT_THEME.containerBgColor;
+    const textColor = importedTheme.textColor || colors.textColor || DEFAULT_THEME.textColor;
+    const linkColor = importedTheme.linkColor || colors.linkColor || DEFAULT_THEME.linkColor;
+
+    const enableGlass = importedTheme.enableGlassmorphism !== undefined ? Boolean(importedTheme.enableGlassmorphism) : true;
+    let containerOpacity = importedTheme.containerBgOpacity !== undefined ? parseFloat(importedTheme.containerBgOpacity) : (enableGlass ? 0.75 : 1);
+    if (enableGlass && containerOpacity >= 1) {
+        containerOpacity = 0.75;
+    }
+
+    // Базовые параметры оформления
+    const baseTheme = {
+        ...DEFAULT_THEME,
+        enableCustomTheme: true,
+        enableGlassmorphism: enableGlass,
+        containerBgOpacity: containerOpacity,
+        glassmorphismBlur: importedTheme.glassmorphismBlur !== undefined ? parseInt(importedTheme.glassmorphismBlur, 10) : 14,
+        borderRadius: importedTheme.borderRadius !== undefined ? parseInt(importedTheme.borderRadius, 10) : 10
+    };
+
+    const merged = {
+        ...baseTheme,
+        ...importedTheme,
+        bgColor1,
+        bgColor2,
+        containerBgColor,
+        textColor,
+        linkColor,
+        enableGlassmorphism: enableGlass,
+        containerBgOpacity: containerOpacity,
+        enableCustomTheme: true
+    };
+
+    const importedBg = merged.bgImage || null;
+    const cleanedTheme = { ...merged };
+    delete cleanedTheme.bgImage;
+
+    const toSet = {
+        foxenTheme: cleanedTheme,
+        enableCustomTheme: true
+    };
+
+    if (importedBg) {
+        const isAnim = isAnimatedBackground(importedBg);
+        toSet.foxenThemeBgImage = importedBg;
+        toSet.foxenThemeBgIsAnimated = isAnim;
+        await ext.storage.local.set(toSet);
+    } else {
+        await ext.storage.local.remove(['foxenThemeBgImage', 'foxenThemeBgIsAnimated']);
+        await ext.storage.local.set(toSet);
+    }
+
+    const accentColor = cleanedTheme.linkColor || cleanedTheme.bgColor2;
+    if (accentColor) {
+        await ext.storage.local.set({ foxenAccentColor: accentColor });
+        window.__foxenAccentColor = accentColor;
+        window.__fptUserAccent = accentColor;
+        try {
+            localStorage.setItem('foxen_accent_color', accentColor);
+            sessionStorage.setItem('foxen_accent_color', accentColor);
+        } catch (_) {}
+    }
+
+    await applyCustomTheme();
+    await applyHeaderPosition();
+    await updateThemePreview();
+
+    return cleanedTheme;
+}
+window.foxenImportThemeObject = importThemeObject;
+window.foxenImportTheme = importThemeObject;
+
+// Слушатель для вызова импорта из web_bridge или других контекстов
+window.addEventListener('message', async (e) => {
+    if (e.data && e.data.source === 'foxen-bridge' && e.data.action === 'FOXEN_EXEC_THEME_IMPORT') {
+        try {
+            await importThemeObject(e.data.theme);
+            window.postMessage({ source: 'foxen-theme-engine', action: 'FOXEN_THEME_IMPORTED_DONE' }, '*');
+        } catch (err) {
+            console.error('[Foxen Theme Engine] Ошибка импорта темы из bridge:', err);
+        }
+    }
+});
+
 function importTheme(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -835,26 +1047,9 @@ function importTheme(event) {
     const reader = new FileReader();
     reader.onload = async (e) => {
         try {
-            const ext = typeof browser !== 'undefined' ? browser : chrome;
             const importedTheme = JSON.parse(e.target.result);
-            if (importedTheme && importedTheme.bgColor1 && importedTheme.font) {
-                const importedBg = importedTheme.bgImage || null;
-                const cleanedTheme = { ...importedTheme };
-                delete cleanedTheme.bgImage;
-                if (importedBg) {
-                    const isAnim = isAnimatedBackground(importedBg);
-                    await ext.storage.local.set({ 
-                        foxenThemeBgImage: importedBg,
-                        foxenThemeBgIsAnimated: isAnim,
-                        foxenTheme: cleanedTheme 
-                    });
-                } else {
-                    await ext.storage.local.remove(['foxenThemeBgImage', 'foxenThemeBgIsAnimated']);
-                    await ext.storage.local.set({ foxenTheme: cleanedTheme });
-                }
-                await applyCustomTheme();
-                await applyHeaderPosition();
-                await updateThemePreview();
+            if (importedTheme && (importedTheme.bgColor1 || importedTheme.colors || importedTheme.title || importedTheme.name)) {
+                await importThemeObject(importedTheme);
                 showNotification('Тема успешно импортирована!');
             } else {
                 throw new Error("Неверный формат файла темы.");
@@ -959,15 +1154,30 @@ function createShareThemeModal() {
     modalOverlay.innerHTML = `
         <div class="foxen-share-modal-content">
             <div class="foxen-share-modal-header">
-                <h3>Поделиться темой</h3>
-                <button class="foxen-share-modal-close">&times;</button>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;border-radius:8px;background:rgba(14,165,233,0.15);border:1px solid rgba(14,165,233,0.3);display:flex;align-items:center;justify-content:center;color:#38bdf8;">
+                        <span class="material-symbols-rounded" style="font-size:18px;">palette</span>
+                    </div>
+                    <h3 style="margin:0;font-size:16px;font-weight:600;color:#f8fafc;">Поделиться темой</h3>
+                </div>
+                <button class="foxen-share-modal-close" type="button" aria-label="Закрыть">&times;</button>
             </div>
             <div class="foxen-share-modal-body">
-                <p>Для того, чтобы поделиться темой, вы можете нажать кнопку "ЭКСПОРТ" и поделиться темой с телеграм-ботом <a href="https://t.me/FunPayThemesBot" target="_blank">@FunPayThemesBot</a>.</p>
-                <p>Там вы сможете кинуть файл темы и поделиться темой по ссылке либо выложить в боте в публичный доступ чтобы другие люди тоже могли скачивать.</p>
+                <p>Вы можете сохранить свои цвета и оформление, нажав кнопку <strong>«Экспорт темы»</strong> (будет создан файл с расширением <code>.fptheme</code>).</p>
+                <div class="fxn-share-theme-banner" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;margin:14px 0;display:flex;align-items:center;gap:12px;">
+                    <span class="material-symbols-rounded" style="font-size:24px;color:#38bdf8;">grid_view</span>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:#f1f5f9;">Каталог тем Foxen</div>
+                        <div style="font-size:11.5px;color:#94a3b8;">Публикуйте свои темы и устанавливайте работы других продавцов</div>
+                    </div>
+                </div>
+                <p style="margin-bottom:0;">Загрузить готовую тему в общий доступ можно в каталоге тем Foxen на сайте <a href="https://web.foxen.site/catalog/themes/" target="_blank" rel="noopener">web.foxen.site/catalog/themes/</a>.</p>
             </div>
             <div class="foxen-share-modal-footer">
-                <a href="https://t.me/FunPayThemesBot" target="_blank" class="btn">Перейти к боту</a>
+                <a href="https://web.foxen.site/catalog/themes/" target="_blank" rel="noopener" class="btn btn-solid" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600;font-size:13px;">
+                    <span class="material-symbols-rounded" style="font-size:18px;">open_in_new</span>
+                    <span>Перейти в каталог тем</span>
+                </a>
             </div>
         </div>
     `;
@@ -1003,8 +1213,9 @@ function setupThemeCustomizationHandlers() {
                 const next = { ...DEFAULT_THEME, ...foxenTheme, ...patch };
                 delete next.bgImage;
                 await ext.storage.local.set({ foxenTheme: next });
+                await applyCustomTheme();
             } catch (_) {}
-        }, 350);
+        }, 50);
     };
 
     function applyLiveThemeProperty(key, val) {
@@ -1020,8 +1231,8 @@ function setupThemeCustomizationHandlers() {
             root.style.setProperty('--fxn-theme-bg-filter', f.trim() || 'none');
         } else if (key === 'themeContainerBgColor' || key === 'themeContainerBgOpacity' || key === 'containerBgColor' || key === 'containerBgOpacity') {
             const c = document.getElementById('themeContainerBgColor')?.value ?? window._foxenThemeSettings?.containerBgColor ?? '#0b0b0b';
-            const opVal = document.getElementById('themeContainerBgOpacity')?.value ?? (window._foxenThemeSettings?.containerBgOpacity ? window._foxenThemeSettings.containerBgOpacity * 100 : 100);
-            const op = (parseFloat(opVal) || 100) / 100;
+            const opVal = document.getElementById('themeContainerBgOpacity')?.value ?? (window._foxenThemeSettings?.containerBgOpacity ? window._foxenThemeSettings.containerBgOpacity * 100 : 75);
+            const op = (parseFloat(opVal) || 75) / 100;
             root.style.setProperty('--fxn-theme-container-bg', hexToRgba(c, op));
         } else if (key === 'themeBorderRadius' || key === 'borderRadius') {
             root.style.setProperty('--fxn-theme-border-radius', `${val}px`);
@@ -1033,6 +1244,21 @@ function setupThemeCustomizationHandlers() {
             root.style.setProperty('--fxn-theme-primary-color', val);
         } else if (key === 'themeBgColor2' || key === 'bgColor2' || key === 'themeColor2') {
             root.style.setProperty('--fxn-theme-accent-color', val);
+            root.style.setProperty('--fxn-accent', val);
+            root.style.setProperty('--fxn-btn-color', val);
+            window.__foxenAccentColor = val;
+            window.__fptUserAccent = val;
+            try {
+                localStorage.setItem('foxen_accent_color', val);
+                sessionStorage.setItem('foxen_accent_color', val);
+            } catch (_) {}
+            const hb = document.getElementById('foxenButton');
+            if (hb) hb.style.setProperty('color', val, 'important');
+        } else if (key === 'glassmorphismBlur') {
+            const b = Math.min(30, Math.max(2, parseInt(val, 10) || 12));
+            root.style.setProperty('--fxn-theme-glass-blur', `${b}px`);
+        } else if (key === 'enableGlassmorphism') {
+            document.body?.classList.toggle('fxn-glass-enabled', !!val);
         }
     }
 
@@ -1056,6 +1282,31 @@ function setupThemeCustomizationHandlers() {
                             if (hiddenInput) hiddenInput.value = newHex;
                             curTheme[key] = newHex;
                             applyLiveThemeProperty(key, newHex);
+
+                            if (key === 'bgColor2' || key === 'themeBgColor2') {
+                                window.__foxenAccentColor = newHex;
+                                window.__fptUserAccent = newHex;
+                                try {
+                                    localStorage.setItem('foxen_accent_color', newHex);
+                                    sessionStorage.setItem('foxen_accent_color', newHex);
+                                } catch (_) {}
+                                const headerBtn = document.getElementById('foxenButton');
+                                if (headerBtn) headerBtn.style.setProperty('color', newHex, 'important');
+                                if (typeof applyButtonStyles === 'function') applyButtonStyles({ color: newHex });
+                                document.documentElement.style.setProperty('--fxn-active', newHex);
+                                document.documentElement.style.setProperty('--fxn-accent', newHex);
+                                document.documentElement.style.setProperty('--fxn-btn-color', newHex);
+                                const popupEl = document.querySelector('.foxen-popup');
+                                if (popupEl) {
+                                    popupEl.style.setProperty('--fxn-active', newHex);
+                                    popupEl.style.setProperty('--fxn-accent', newHex);
+                                }
+                                const ext = typeof browser !== 'undefined' ? browser : chrome;
+                                ext.storage?.local?.set({
+                                    foxenAccentColor: newHex,
+                                    foxenHeaderButtonStyles: { color: newHex }
+                                });
+                            }
 
                             if (isFinal) {
                                 clearTimeout(_themeSaveTimer);
@@ -1152,7 +1403,7 @@ function setupThemeCustomizationHandlers() {
     };
 
     const liveControls = [
-        'themeColor1', 'themeColor2', 'themeContainerBgColor', 'themeTextColor', 'themeLinkColor',
+        'themeBgColor1', 'themeBgColor2', 'themeColor1', 'themeColor2', 'themeContainerBgColor', 'themeTextColor', 'themeLinkColor',
         'themeBgBlur', 'themeBgBrightness', 'themeContainerBgOpacity', 'themeBorderRadius',
         'circleSize', 'circleOpacity', 'circleBlur', 'glassmorphismBlur',
         'scrollbarThumbColor', 'scrollbarTrackColor', 'scrollbarWidth'
@@ -1170,13 +1421,15 @@ function setupThemeCustomizationHandlers() {
             else if (el.id === 'themeBgBrightness') newSettings.bgBrightness = el.value;
             else if (el.id === 'themeContainerBgOpacity') newSettings.containerBgOpacity = el.value / 100;
             else if (el.id === 'themeBorderRadius') newSettings.borderRadius = el.value;
-            else if (el.id === 'themeColor1') newSettings.bgColor1 = el.value;
-            else if (el.id === 'themeColor2') newSettings.bgColor2 = el.value;
+            else if (el.id === 'themeBgColor1' || el.id === 'themeColor1') newSettings.bgColor1 = el.value;
+            else if (el.id === 'themeBgColor2' || el.id === 'themeColor2') newSettings.bgColor2 = el.value;
             else if (el.id === 'themeContainerBgColor') newSettings.containerBgColor = el.value;
             else if (el.id === 'themeTextColor') newSettings.textColor = el.value;
             else if (el.id === 'themeLinkColor') newSettings.linkColor = el.value;
+            else if (el.id === 'glassmorphismBlur') newSettings.glassmorphismBlur = el.value;
             delete newSettings.bgImage;
             await ext.storage.local.set({ foxenTheme: newSettings });
+            await applyCustomTheme();
         });
     });
 
@@ -1238,8 +1491,15 @@ function setupThemeCustomizationHandlers() {
                      newSettings.headerPosition = event.target.value;
                 } else if (id === 'enableGlassmorphism') {
                      const g = document.getElementById('glassmorphismControls');
-                     if (g) g.style.display = isChecked ? 'block' : 'none';
+                     if (g) g.style.display = isChecked ? 'flex' : 'none';
                      newSettings.enableGlassmorphism = isChecked;
+                     if (isChecked && (!newSettings.containerBgOpacity || newSettings.containerBgOpacity >= 1)) {
+                         newSettings.containerBgOpacity = 0.75;
+                         const opInput = document.getElementById('themeContainerBgOpacity');
+                         if (opInput) opInput.value = 75;
+                         const opVal = document.getElementById('themeContainerBgOpacityValue');
+                         if (opVal) opVal.textContent = '75%';
+                     }
                 } else if (id === 'enableCustomScrollbar') {
                      const s = document.getElementById('customScrollbarControls');
                      if (s) s.style.display = isChecked ? 'block' : 'none';
@@ -1316,10 +1576,15 @@ function setupThemeCustomizationHandlers() {
     });
     document.getElementById('randomizeThemeBtn')?.addEventListener('click', randomizeTheme);
     document.getElementById('exportThemeBtn')?.addEventListener('click', exportTheme);
+    document.getElementById('fxnMasterExportThemeBtn')?.addEventListener('click', exportTheme);
     document.getElementById('importThemeBtn')?.addEventListener('click', () => {
-        document.getElementById('importThemeInput').click();
+        document.getElementById('importThemeInput')?.click();
+    });
+    document.getElementById('fxnMasterImportThemeBtn')?.addEventListener('click', () => {
+        document.getElementById('fxnMasterImportThemeFile')?.click();
     });
     document.getElementById('importThemeInput')?.addEventListener('change', importTheme);
+    document.getElementById('fxnMasterImportThemeFile')?.addEventListener('change', importTheme);
     document.getElementById('generatePaletteBtn')?.addEventListener('click', generatePaletteFromImage);
 
     setupFptMenuTransparency();
@@ -1859,4 +2124,16 @@ async function setupFptTextOutline() {
 }
 
 // Ensure custom theme and animated-bg safeguards are applied on load
+window.applyCustomTheme = applyCustomTheme;
 applyCustomTheme().catch(() => {});
+
+// Real-time synchronization across all tabs on theme changes
+if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === 'local' && (changes.foxenTheme || changes.foxenThemeBgImage || changes.foxenAccentColor)) {
+            if (typeof applyCustomTheme === 'function') {
+                applyCustomTheme().catch(() => {});
+            }
+        }
+    });
+}

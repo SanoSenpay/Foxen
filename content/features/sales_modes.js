@@ -80,10 +80,17 @@
         return new Promise(async resolve => {
             const all = await (window.fxnOrdersDB || FPTSalesDB).getAllAsArray();
             {
+                const selectedLot = (typeof window.fxnGetSelectedLot === 'function') ? window.fxnGetSelectedLot() : null;
                 let filtered = all.filter(o => {
                     if (range.start && o.orderDate < range.start) return false;
                     if (range.end && o.orderDate > range.end) return false;
                     if (!statusAllowed(o.orderStatus)) return false;
+                    if (selectedLot) {
+                        const matchesFn = (typeof window.fxnMatchesLot === 'function')
+                            ? window.fxnMatchesLot
+                            : (d, l) => (d || '').trim() === (l || '').trim();
+                        if (!matchesFn(o.description, selectedLot)) return false;
+                    }
                     return true;
                 });
                 filtered = sortOrders(filtered);
@@ -270,13 +277,16 @@
             const nameInner = r.href
                 ? `<a class="fp-sm-row-link" href="${esc(r.href)}" target="_blank" rel="noopener" title="Открыть профиль">${esc(r.name)}</a>`
                 : `<span>${esc(r.name)}</span>`;
+            const focusBtn = (r.focusLot && typeof window.fxnSetSelectedLot === 'function')
+                ? `<button type="button" class="fp-sm-row-focus-btn" data-lot-focus="${esc(r.focusLot)}" title="Сфокусировать аналитику на этом лоте">🎯 Анализ</button>`
+                : '';
             const valInner = (r.filterType && r.filterKey != null)
                 ? `<button type="button" class="fp-sm-row-val fp-sm-row-valbtn" data-filter-type="${esc(r.filterType)}" data-filter-key="${esc(r.filterKey)}" title="Показать эти заказы">${esc(r.value)}</button>`
                 : `<span class="fp-sm-row-val">${esc(r.value)}</span>`;
             return `
             <div class="fp-sm-row">
                 <span class="fp-sm-row-rank">${i + 1}</span>
-                <span class="fp-sm-row-name">${nameInner}</span>
+                <span class="fp-sm-row-name">${nameInner}${focusBtn}</span>
                 ${valInner}
             </div>`;
         };
@@ -302,7 +312,13 @@
             }));
         const topProducts = Object.entries(agg.byProduct).map(([name, c]) => ({ name, c }))
             .sort((a, b) => b.c - a.c).slice(0, 100)
-            .map(p => ({ name: p.name, value: `${p.c} раз`, filterType: 'product', filterKey: p.name }));
+            .map(p => ({
+                name: p.name,
+                value: `${p.c} шт.`,
+                filterType: 'product',
+                filterKey: p.name,
+                focusLot: p.name
+            }));
         const topCats = Object.entries(agg.byCategory).map(([name, c]) => ({ name, c }))
             .sort((a, b) => b.c - a.c).slice(0, 100)
             .map(c => ({ name: c.name, value: `${c.c} зак.`, filterType: 'category', filterKey: c.name }));
@@ -595,6 +611,16 @@
                 const type = btn.getAttribute('data-filter-type');
                 const key = btn.getAttribute('data-filter-key');
                 if (type && key != null) showFilteredOrders(type, key);
+            });
+        });
+        // клик по кнопке «🎯 Анализ» у товара в детальной таблице
+        view.querySelectorAll('.fp-sm-row-focus-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const lot = btn.getAttribute('data-lot-focus');
+                if (lot && typeof window.fxnSetSelectedLot === 'function') {
+                    window.fxnSetSelectedLot(lot);
+                }
             });
         });
         // «Показать ещё» / «Скрыть» в топ-таблицах — раскрывает и сворачивает на месте
@@ -951,5 +977,8 @@
 
     if (typeof window !== 'undefined') {
         window.initSalesModes = initSalesModes;
+        window.fxnRefreshStatsModes = function () {
+            try { render(); } catch (_) {}
+        };
     }
 })();

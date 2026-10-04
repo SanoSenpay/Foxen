@@ -162,7 +162,7 @@ async function initializeAutoReviewUI() {
     // === КОНЕЦ НОВОЙ ЛОГИКИ ===
 
     // === ЭКСПОРТ И ИМПОРТ ЗАГОТОВЛЕННЫХ ТЕКСТОВ И ПРАВИЛ АВТО-ОТВЕТОВ ===
-    const exportAutoBtn = document.getElementById('fxn-export-autoreply-btn');
+    const exportAutoBtn = document.getElementById('fxnMasterExportAutoreplyBtn') || document.getElementById('fxn-export-autoreply-btn');
     if (exportAutoBtn && !exportAutoBtn.dataset.bound) {
         exportAutoBtn.dataset.bound = '1';
         exportAutoBtn.onclick = async () => {
@@ -236,8 +236,8 @@ async function initializeAutoReviewUI() {
         };
     }
 
-    const importAutoBtn = document.getElementById('fxn-import-autoreply-btn');
-    const importAutoFileInput = document.getElementById('fxn-import-autoreply-file');
+    const importAutoBtn = document.getElementById('fxnMasterImportAutoreplyBtn') || document.getElementById('fxn-import-autoreply-btn');
+    const importAutoFileInput = document.getElementById('fxnMasterImportAutoreplyFile') || document.getElementById('fxn-import-autoreply-file');
     if (importAutoBtn && importAutoFileInput && !importAutoBtn.dataset.bound) {
         importAutoBtn.dataset.bound = '1';
         importAutoBtn.onclick = () => importAutoFileInput.click();

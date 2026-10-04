@@ -44,21 +44,29 @@ function hexToRgba(hex, alpha = 1) {
 async function getUserAccentColor() {
     let accent = null;
     try {
-        if (window.__fptUserAccent) {
+        if (window.__foxenAccentColor) {
+            accent = window.__foxenAccentColor;
+        } else if (window.__fptUserAccent) {
             accent = window.__fptUserAccent;
-        } else if (window._foxenThemeSettings && (window._foxenThemeSettings.bgColor2 || window._foxenThemeSettings.bgColor1)) {
-            accent = window._foxenThemeSettings.bgColor2 || window._foxenThemeSettings.bgColor1;
         } else {
-            const docAccent = getComputedStyle(document.documentElement).getPropertyValue('--fxn-accent').trim();
-            if (docAccent && docAccent !== '#c026d3' && docAccent !== '#C026D3') {
-                accent = docAccent;
+            const cached = (function() { try { return localStorage.getItem('foxen_accent_color') || sessionStorage.getItem('foxen_accent_color'); } catch (_) { return null; } })();
+            if (cached) {
+                accent = cached;
+            } else if (window._foxenThemeSettings && (window._foxenThemeSettings.bgColor2 || window._foxenThemeSettings.bgColor1)) {
+                accent = window._foxenThemeSettings.bgColor2 || window._foxenThemeSettings.bgColor1;
+            } else {
+                const docAccent = getComputedStyle(document.documentElement).getPropertyValue('--fxn-accent').trim();
+                if (docAccent && docAccent !== '#c026d3' && docAccent !== '#C026D3') {
+                    accent = docAccent;
+                }
             }
         }
 
         if (!accent) {
             const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
-            const data = await new Promise(r => storage.get(['foxenAccentColor', 'foxenHeaderButtons', 'foxenTheme', 'themeSettings'], r));
+            const data = await new Promise(r => storage.get(['foxenAccentColor', 'foxenHeaderButtonStyles', 'foxenHeaderButtons', 'foxenTheme', 'themeSettings'], r));
             accent = data?.foxenAccentColor ||
+                     data?.foxenHeaderButtonStyles?.color ||
                      data?.foxenHeaderButtons?.color ||
                      data?.foxenTheme?.bgColor2 ||
                      data?.foxenTheme?.bgColor1 ||
@@ -96,14 +104,15 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             position: fixed !important;
             top: 0 !important; left: 0 !important;
             width: 100vw !important; height: 100vh !important;
-            background: rgba(8, 9, 13, 0.78) !important;
-            backdrop-filter: blur(8px) !important;
-            z-index: 10050 !important;
+            background: var(--fxn-scrim-bg, rgba(0, 0, 0, 0.65)) !important;
+            backdrop-filter: blur(var(--fxn-scrim-blur, 14px)) !important;
+            -webkit-backdrop-filter: blur(var(--fxn-scrim-blur, 14px)) !important;
+            z-index: 20000000 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-            color: #e2e8f0 !important;
+            font-family: var(--fxn-font-sans, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif) !important;
+            color: var(--fxn-text-main, #e2e8f0) !important;
             animation: fpBulkFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
 
@@ -113,16 +122,19 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
         }
 
         .fp-bulk-modal-container {
-            background: #141518 !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 18px !important;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.15) !important;
+            background: var(--fxn-content-color, #141518) !important;
+            border: 1px solid var(--fxn-border-color, rgba(255, 255, 255, 0.08)) !important;
+            border-radius: var(--fxn-radius-lg, 16px) !important;
+            box-shadow: var(--fxn-shadow, 0 24px 60px rgba(0, 0, 0, 0.8)) !important;
+            backdrop-filter: blur(var(--fxn-glass-blur, 16px)) saturate(160%) !important;
+            -webkit-backdrop-filter: blur(var(--fxn-glass-blur, 16px)) saturate(160%) !important;
             width: 94% !important;
             max-width: 820px !important;
             max-height: 90vh !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
+            color: var(--fxn-text-main, #f4f4f3) !important;
         }
 
         .fp-bulk-header {
@@ -130,8 +142,8 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             align-items: center !important;
             justify-content: space-between !important;
             padding: 16px 22px !important;
-            background: #18191e !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+            background: transparent !important;
+            border-bottom: 1px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.06)) !important;
             flex-shrink: 0 !important;
         }
 
@@ -142,55 +154,54 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
         }
 
         .fp-bulk-header-icon {
-            width: 38px !important;
-            height: 38px !important;
-            border-radius: 10px !important;
-            background: var(--fxn-accent-soft, ${accentSoft}) !important;
-            border: 1px solid var(--fxn-accent-border, ${accentBorder}) !important;
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: var(--fxn-radius-sm, 10px) !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.04)) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.08)) !important;
             color: var(--fxn-accent, ${accent}) !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            box-shadow: 0 4px 14px var(--fxn-accent-soft, ${accentSoft}) !important;
             flex-shrink: 0 !important;
         }
 
         .fp-bulk-header-title {
             margin: 0 !important;
-            font-size: 16.5px !important;
-            font-weight: 700 !important;
-            color: #ffffff !important;
-            letter-spacing: -0.2px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            color: var(--fxn-text-main, #ffffff) !important;
+            letter-spacing: -0.01em !important;
             line-height: 1.2 !important;
         }
 
         .fp-bulk-header-sub {
             font-size: 12px !important;
-            color: #94a3b8 !important;
+            color: var(--fxn-text-desc, #94a3b8) !important;
             margin-top: 2px !important;
         }
 
         .fp-bulk-close-btn {
-            width: 32px !important;
-            height: 32px !important;
+            width: 28px !important;
+            height: 28px !important;
             border-radius: 50% !important;
-            background: rgba(255, 255, 255, 0.05) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            color: #94a3b8 !important;
-            font-size: 18px !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.04)) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.08)) !important;
+            color: var(--fxn-text-desc, #94a3b8) !important;
+            font-size: 16px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             cursor: pointer !important;
-            transition: all 0.18s ease !important;
+            transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
             line-height: 1 !important;
             padding: 0 !important;
         }
 
         .fp-bulk-close-btn:hover {
-            background: rgba(255, 255, 255, 0.12) !important;
+            background: var(--fxn-card-color-hover, rgba(255, 255, 255, 0.1)) !important;
             border-color: var(--fxn-accent-border, ${accentBorder}) !important;
-            color: #ffffff !important;
+            color: var(--fxn-text-main, #ffffff) !important;
             transform: scale(1.05) !important;
         }
 
@@ -201,46 +212,46 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             display: flex !important;
             flex-direction: column !important;
             gap: 16px !important;
-            background: #141518 !important;
+            background: transparent !important;
         }
 
-        .fp-bulk-body::-webkit-scrollbar { width: 6px !important; }
+        .fp-bulk-body::-webkit-scrollbar { width: 4px !important; }
         .fp-bulk-body::-webkit-scrollbar-track { background: transparent !important; }
         .fp-bulk-body::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.12) !important;
+            background: var(--fxn-divider-color, rgba(255, 255, 255, 0.12)) !important;
             border-radius: 4px !important;
         }
-        .fp-bulk-body::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25) !important; }
+        .fp-bulk-body::-webkit-scrollbar-thumb:hover { background: var(--fxn-text-desc, rgba(255, 255, 255, 0.25)) !important; }
 
         .fp-bulk-info-banner {
             display: flex !important;
             align-items: flex-start !important;
             gap: 10px !important;
             padding: 12px 14px !important;
-            background: var(--fxn-accent-soft, ${accentSoft}) !important;
-            border: 1px solid var(--fxn-accent-border, ${accentBorder}) !important;
-            border-radius: 12px !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.03)) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.08)) !important;
+            border-radius: var(--fxn-radius-md, 12px) !important;
             font-size: 12.5px !important;
-            color: #cbd5e1 !important;
+            color: var(--fxn-text-desc, #cbd5e1) !important;
             line-height: 1.45 !important;
         }
 
         .fp-bulk-info-banner code {
-            background: var(--fxn-accent-soft, ${accentSoft}) !important;
-            color: #ffffff !important;
+            background: var(--fxn-card-color-hover, rgba(255, 255, 255, 0.06)) !important;
+            color: var(--fxn-text-main, #ffffff) !important;
             padding: 2px 6px !important;
             border-radius: 5px !important;
             font-family: monospace !important;
             font-size: 11.5px !important;
-            border: 1px solid var(--fxn-accent-border, ${accentBorder}) !important;
+            border: 1px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.08)) !important;
         }
 
         .fp-bulk-card {
-            background: #191a1f !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 14px !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.02)) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.06)) !important;
+            border-radius: var(--fxn-radius-md, 14px) !important;
             padding: 16px !important;
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2) !important;
+            box-shadow: none !important;
             transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
@@ -254,7 +265,7 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             gap: 8px !important;
             margin-bottom: 12px !important;
             padding-bottom: 8px !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            border-bottom: 1px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.05)) !important;
         }
 
         .fp-bulk-card-icon {
@@ -266,8 +277,8 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
         .fp-bulk-card-title {
             margin: 0 !important;
             font-size: 12px !important;
-            font-weight: 700 !important;
-            color: #f1f5f9 !important;
+            font-weight: 600 !important;
+            color: var(--fxn-text-main, #f1f5f9) !important;
             letter-spacing: 0.5px !important;
             text-transform: uppercase !important;
         }
@@ -280,17 +291,17 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
 
         .fp-bulk-label {
             font-size: 11.5px !important;
-            font-weight: 600 !important;
-            color: #94a3b8 !important;
+            font-weight: 500 !important;
+            color: var(--fxn-text-desc, #94a3b8) !important;
         }
 
         .fp-bulk-input, .fp-bulk-select, .fp-bulk-textarea {
             width: 100% !important;
-            background: #0e0f14 !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 8px !important;
+            background: var(--fxn-input-bg, rgba(255, 255, 255, 0.04)) !important;
+            border: 1px solid var(--fxn-input-border, rgba(255, 255, 255, 0.08)) !important;
+            border-radius: var(--fxn-radius-sm, 8px) !important;
             padding: 8px 12px !important;
-            color: #f1f5f9 !important;
+            color: var(--fxn-text-main, #f1f5f9) !important;
             font-size: 13px !important;
             font-family: inherit !important;
             box-sizing: border-box !important;
@@ -298,19 +309,19 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
         }
 
         .fp-bulk-input:hover, .fp-bulk-select:hover, .fp-bulk-textarea:hover {
-            border-color: rgba(255, 255, 255, 0.18) !important;
+            border-color: var(--fxn-divider-color, rgba(255, 255, 255, 0.18)) !important;
         }
 
         .fp-bulk-input:focus, .fp-bulk-select:focus, .fp-bulk-textarea:focus {
             outline: none !important;
-            border-color: var(--fxn-accent-border, ${accentBorder}) !important;
-            box-shadow: 0 0 10px var(--fxn-accent-glow, ${accentGlow}) !important;
+            border-color: var(--fxn-accent, ${accent}) !important;
+            box-shadow: 0 0 0 2px var(--fxn-focus-ring, rgba(255, 255, 255, 0.15)) !important;
         }
 
         .fp-bulk-input:disabled, .fp-bulk-select:disabled {
             opacity: 0.4 !important;
             cursor: not-allowed !important;
-            border-color: rgba(255, 255, 255, 0.05) !important;
+            border-color: var(--fxn-divider-color, rgba(255, 255, 255, 0.05)) !important;
         }
 
         .fp-bulk-chip-group {
@@ -325,20 +336,20 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             align-items: center !important;
             gap: 6px !important;
             padding: 5px 10px !important;
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.07) !important;
-            border-radius: 7px !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.03)) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.07)) !important;
+            border-radius: var(--fxn-radius-sm, 8px) !important;
             font-size: 12px !important;
-            color: #cbd5e1 !important;
+            color: var(--fxn-text-main, #cbd5e1) !important;
             cursor: pointer !important;
             user-select: none !important;
             transition: all 0.15s ease !important;
         }
 
         .fp-bulk-chip:hover {
-            background: rgba(255, 255, 255, 0.06) !important;
-            border-color: var(--fxn-accent-border, ${accentBorder}) !important;
-            color: #ffffff !important;
+            background: var(--fxn-card-color-hover, rgba(255, 255, 255, 0.08)) !important;
+            border-color: var(--fxn-accent, #ffffff) !important;
+            color: var(--fxn-text-main, #ffffff) !important;
         }
 
         .fp-bulk-chip input[type="checkbox"] { margin: 0 !important; }
@@ -347,13 +358,13 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
             appearance: none !important;
-            width: 17px !important;
-            height: 17px !important;
+            width: 16px !important;
+            height: 16px !important;
             flex-shrink: 0 !important;
             margin: 0 !important;
-            border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-            border-radius: 5px !important;
-            background: #0e0f14 !important;
+            border: 1px solid var(--fxn-input-border, rgba(255, 255, 255, 0.2)) !important;
+            border-radius: var(--fxn-radius-xs, 5px) !important;
+            background: var(--fxn-input-bg, rgba(255, 255, 255, 0.04)) !important;
             cursor: pointer !important;
             position: relative !important;
             transition: background 0.15s ease, border-color 0.15s ease !important;
@@ -376,29 +387,29 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             top: 2px !important;
             width: 4px !important;
             height: 8px !important;
-            border: solid #ffffff !important;
+            border: solid var(--fxn-bg-color, #0a0a0a) !important;
             border-width: 0 2px 2px 0 !important;
             transform: rotate(45deg) !important;
         }
 
         /* --- Lot list styling --- */
         .fp-bulk-lots-container {
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 12px !important;
-            background: #0b0c10 !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.08)) !important;
+            border-radius: var(--fxn-radius-md, 12px) !important;
+            background: var(--fxn-card-color, rgba(0, 0, 0, 0.08)) !important;
             max-height: 250px !important;
             overflow-y: auto !important;
             padding: 8px !important;
         }
 
-        .fp-bulk-lots-container::-webkit-scrollbar { width: 6px !important; }
+        .fp-bulk-lots-container::-webkit-scrollbar { width: 4px !important; }
         .fp-bulk-lots-container::-webkit-scrollbar-track { background: transparent !important; }
         .fp-bulk-lots-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.14) !important;
+            background: var(--fxn-divider-color, rgba(255, 255, 255, 0.14)) !important;
             border-radius: 4px !important;
         }
         .fp-bulk-lots-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.25) !important;
+            background: var(--fxn-text-desc, rgba(255, 255, 255, 0.25)) !important;
         }
 
         .fp-bulk-lot-row {
@@ -407,26 +418,27 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             gap: 12px !important;
             padding: 10px 14px !important;
             margin-bottom: 6px !important;
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
-            border-radius: 10px !important;
-            background: #121318 !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.05)) !important;
+            border-radius: var(--fxn-radius-sm, 10px) !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.03)) !important;
             cursor: pointer !important;
             transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
             user-select: none !important;
+            color: var(--fxn-text-main, #f1f5f9) !important;
         }
 
         .fp-bulk-lot-row:last-child { margin-bottom: 0 !important; }
 
         .fp-bulk-lot-row:hover {
-            background: #181920 !important;
-            border-color: rgba(255, 255, 255, 0.12) !important;
+            background: var(--fxn-card-color-hover, rgba(255, 255, 255, 0.08)) !important;
+            border-color: var(--fxn-divider-color, rgba(255, 255, 255, 0.12)) !important;
             transform: translateX(2px) !important;
         }
 
         .fp-bulk-lot-row.is-checked {
-            background: var(--fxn-accent-soft, ${accentSoft}) !important;
-            border-color: var(--fxn-accent-border, ${accentBorder}) !important;
-            border-left: 3px solid var(--fxn-accent, ${accent}) !important;
+            background: var(--fxn-accent-soft, rgba(255, 255, 255, 0.06)) !important;
+            border-color: var(--fxn-accent, #ffffff) !important;
+            border-left: 3px solid var(--fxn-accent, #ffffff) !important;
         }
 
         .fp-bulk-lot-info {
@@ -440,7 +452,7 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
         .fp-bulk-lot-title-text {
             font-size: 13px !important;
             font-weight: 600 !important;
-            color: #f1f5f9 !important;
+            color: var(--fxn-text-main, #f1f5f9) !important;
             line-height: 1.35 !important;
             word-break: break-word !important;
         }
@@ -453,35 +465,35 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
         }
 
         .fp-bulk-lot-id {
-            font-family: 'JetBrains Mono', monospace !important;
+            font-family: var(--fxn-font-mono, monospace) !important;
             font-size: 11px !important;
             font-weight: 500 !important;
-            color: #64748b !important;
-            background: rgba(0, 0, 0, 0.4) !important;
+            color: var(--fxn-text-subtle, #64748b) !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.05)) !important;
             padding: 2px 7px !important;
             border-radius: 5px !important;
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.05)) !important;
         }
 
         .fp-bulk-category-tag {
             font-size: 11px !important;
-            color: #94a3b8 !important;
-            background: rgba(255, 255, 255, 0.05) !important;
+            color: var(--fxn-text-desc, #94a3b8) !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.05)) !important;
             padding: 2px 8px !important;
             border-radius: 5px !important;
-            border: 1px solid rgba(255, 255, 255, 0.07) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.07)) !important;
         }
 
         .fp-bulk-progress-box {
-            background: rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid rgba(255, 255, 255, 0.07) !important;
-            border-radius: 10px !important;
+            background: var(--fxn-card-color, rgba(0, 0, 0, 0.2)) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.07)) !important;
+            border-radius: var(--fxn-radius-sm, 10px) !important;
             padding: 12px 14px !important;
         }
 
         .fp-bulk-progress-bar-bg {
             height: 6px !important;
-            background: rgba(255, 255, 255, 0.08) !important;
+            background: var(--fxn-card-border, rgba(255, 255, 255, 0.08)) !important;
             border-radius: 3px !important;
             overflow: hidden !important;
         }
@@ -495,9 +507,9 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
         }
 
         .fp-bulk-log-box {
-            font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+            font-family: var(--fxn-font-mono, monospace) !important;
             font-size: 11.5px !important;
-            color: #94a3b8 !important;
+            color: var(--fxn-text-desc, #94a3b8) !important;
             margin-top: 8px !important;
             max-height: 95px !important;
             overflow-y: auto !important;
@@ -509,8 +521,8 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             display: flex !important;
             gap: 10px !important;
             align-items: center !important;
-            background: #18191e !important;
-            border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+            background: transparent !important;
+            border-top: 1px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.06)) !important;
             flex-shrink: 0 !important;
         }
 
@@ -521,40 +533,39 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
             align-items: center !important;
             justify-content: center !important;
             gap: 8px !important;
-            background: var(--fxn-accent, ${accent}) !important;
-            background-color: var(--fxn-accent, ${accent}) !important;
-            color: #ffffff !important;
+            background: var(--fxn-text-main, #ffffff) !important;
+            background-color: var(--fxn-text-main, #ffffff) !important;
+            color: var(--fxn-bg-color, #0a0a0a) !important;
             border: none !important;
-            border-radius: 10px !important;
-            padding: 10px 18px !important;
+            border-radius: var(--fxn-radius-md, 12px) !important;
+            padding: 11px 18px !important;
             font-size: 13.5px !important;
             font-weight: 600 !important;
             cursor: pointer !important;
-            transition: all 0.18s ease !important;
-            box-shadow: 0 4px 14px var(--fxn-accent-glow, ${accentGlow}) !important;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            box-shadow: none !important;
         }
 
         #fp-bulk-editor-overlay #fp-bulk-apply-btn:hover,
         .fp-bulk-btn-primary:hover {
-            filter: brightness(1.12) !important;
+            opacity: 0.9 !important;
             transform: translateY(-1px) !important;
-            box-shadow: 0 6px 18px var(--fxn-accent-glow, ${accentGlow}) !important;
         }
 
         #fp-bulk-editor-overlay #fp-bulk-apply-btn:active,
         .fp-bulk-btn-primary:active { transform: translateY(0) !important; }
         #fp-bulk-editor-overlay #fp-bulk-apply-btn:disabled,
-        .fp-bulk-btn-primary:disabled { opacity: 0.6 !important; cursor: not-allowed !important; transform: none !important; }
+        .fp-bulk-btn-primary:disabled { opacity: 0.4 !important; cursor: not-allowed !important; transform: none !important; }
 
         .fp-bulk-btn-secondary {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             gap: 6px !important;
-            background: rgba(34, 197, 94, 0.12) !important;
+            background: rgba(34, 197, 94, 0.14) !important;
             color: #4ade80 !important;
-            border: 1px solid rgba(34, 197, 94, 0.25) !important;
-            border-radius: 10px !important;
+            border: 1px solid rgba(34, 197, 94, 0.3) !important;
+            border-radius: var(--fxn-radius-md, 12px) !important;
             padding: 10px 16px !important;
             font-size: 13px !important;
             font-weight: 600 !important;
@@ -564,26 +575,38 @@ function injectBulkEditorStyles(accentColor = '#c026d3') {
 
         .fp-bulk-btn-secondary:hover {
             background: rgba(34, 197, 94, 0.22) !important;
-            border-color: rgba(34, 197, 94, 0.4) !important;
+            border-color: rgba(34, 197, 94, 0.45) !important;
             color: #86efac !important;
         }
-        .fp-bulk-btn-secondary:disabled { opacity: 0.6 !important; cursor: not-allowed !important; }
+        .fp-bulk-btn-secondary:disabled { opacity: 0.4 !important; cursor: not-allowed !important; }
 
+        #fp-bulk-editor-overlay #fp-bulk-cancel-btn,
         .fp-bulk-btn-ghost {
-            background: rgba(255, 255, 255, 0.05) !important;
-            color: #cbd5e1 !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 10px !important;
-            padding: 10px 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: var(--fxn-card-color, rgba(255, 255, 255, 0.05)) !important;
+            color: var(--fxn-text-main, #ffffff) !important;
+            border: 1px solid var(--fxn-card-border, rgba(255, 255, 255, 0.1)) !important;
+            border-radius: var(--fxn-radius-md, 12px) !important;
+            padding: 10px 18px !important;
             font-size: 13px !important;
             font-weight: 500 !important;
             cursor: pointer !important;
             transition: all 0.18s ease !important;
+            white-space: nowrap !important;
+            width: auto !important;
+            height: auto !important;
+            line-height: normal !important;
+            box-sizing: border-box !important;
+            text-decoration: none !important;
         }
 
+        #fp-bulk-editor-overlay #fp-bulk-cancel-btn:hover,
         .fp-bulk-btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
+            background: var(--fxn-card-color-hover, rgba(255, 255, 255, 0.1)) !important;
             color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
         }
     `;
 }
@@ -830,7 +853,7 @@ async function openBulkEditor() {
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     <span>Активировать</span>
                 </button>
-                <button class="fp-bulk-btn-ghost foxen-modal-close">Отмена</button>
+                <button id="fp-bulk-cancel-btn" class="fp-bulk-btn-ghost">Отмена</button>
             </div>
         </div>
     `;
@@ -848,7 +871,7 @@ async function openBulkEditor() {
     };
     document.addEventListener('keydown', onKeyDown);
 
-    overlay.querySelectorAll('.foxen-modal-close').forEach(b =>
+    overlay.querySelectorAll('.foxen-modal-close, #fp-bulk-cancel-btn').forEach(b =>
         b.addEventListener('click', closeOverlay)
     );
     overlay.addEventListener('click', (e) => {

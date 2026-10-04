@@ -885,25 +885,25 @@ function getMainPopupHTML() {
                     </div>
 
                     <!-- Confirm Overlay -->
-                    <div id="fp-ticket-confirm-overlay" style="display:none;position:absolute;inset:0;background:rgba(15, 16, 22, 0.96);z-index:30;border-radius:12px;padding:20px;box-sizing:border-box;flex-direction:column;gap:12px;backdrop-filter:blur(6px);">
-                        <div style="font-weight:700;font-size:15px;color:#ffffff;">Проверьте заявку перед отправкой</div>
-                        <div style="font-size:12px;color:#94a3b8;">Этот текст будет отправлен напрямую в техподдержку FunPay:</div>
-                        <div id="fp-ticket-confirm-text" style="background:#111216;border:1px solid #232530;border-radius:8px;padding:12px;font-size:13px;color:#e2e8f0;white-space:pre-wrap;flex:1;overflow-y:auto;min-height:80px;max-height:180px;line-height:1.5;"></div>
+                    <div id="fp-ticket-confirm-overlay" style="display:none;position:absolute;inset:0;background:var(--fxn-content-color, rgba(15, 16, 22, 0.96));backdrop-filter:blur(var(--fxn-glass-blur, 16px)) saturate(160%);-webkit-backdrop-filter:blur(var(--fxn-glass-blur, 16px)) saturate(160%);z-index:30;border-radius:var(--fxn-radius-lg, 16px);border:1px solid var(--fxn-border-color, rgba(255,255,255,0.08));padding:20px;box-sizing:border-box;flex-direction:column;gap:12px;">
+                        <div style="font-weight:600;font-size:15px;letter-spacing:-0.01em;color:var(--fxn-text-main, #ffffff);">Проверьте заявку перед отправкой</div>
+                        <div style="font-size:12px;color:var(--fxn-text-desc, #94a3b8);">Этот текст будет отправлен напрямую в техподдержку FunPay:</div>
+                        <div id="fp-ticket-confirm-text" style="background:var(--fxn-card-color, rgba(255,255,255,0.03));border:1px solid var(--fxn-card-border, rgba(255,255,255,0.08));border-radius:var(--fxn-radius-sm, 10px);padding:12px;font-size:13px;color:var(--fxn-text-main, #f4f4f3);white-space:pre-wrap;flex:1;overflow-y:auto;min-height:80px;max-height:180px;line-height:1.5;"></div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
-                            <button id="fp-ticket-confirm-yes" class="btn" style="background:var(--fxn-accent, #c026d3);color:#fff;border:none;padding:9px;font-weight:600;">Отправить</button>
-                            <button id="fp-ticket-confirm-no" class="btn btn-default" style="padding:9px;font-weight:600;">Отмена</button>
+                            <button id="fp-ticket-confirm-yes" class="btn" style="background:var(--fxn-text-main, #ffffff);color:var(--fxn-bg-color, #0a0a0a);border:none;padding:10px;border-radius:var(--fxn-radius-md, 12px);font-weight:600;transition:all 0.18s cubic-bezier(0.16, 1, 0.3, 1);">Отправить</button>
+                            <button id="fp-ticket-confirm-no" class="btn btn-default" style="background:var(--fxn-card-color, rgba(255,255,255,0.05));border:1px solid var(--fxn-card-border, rgba(255,255,255,0.1));color:var(--fxn-text-main, #ffffff);padding:10px;border-radius:var(--fxn-radius-md, 12px);font-weight:500;transition:all 0.18s cubic-bezier(0.16, 1, 0.3, 1);">Отмена</button>
                         </div>
                     </div>
 
                     <!-- New ticket panel -->
-                    <div id="fp-new-ticket-panel" style="display:none;position:absolute;inset:0;background:#111216;z-index:25;border-radius:12px;box-sizing:border-box;flex-direction:column;overflow:hidden;border:1px solid #232530;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #232530;flex-shrink:0;background:#16171d;">
-                            <span style="font-weight:700;font-size:15px;color:#ffffff;">Новая заявка в ТП</span>
-                            <button id="fp-new-ticket-close" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1;">✕</button>
+                    <div id="fp-new-ticket-panel" style="display:none;position:absolute;inset:0;background:var(--fxn-content-color, #111216);backdrop-filter:blur(var(--fxn-glass-blur, 16px)) saturate(160%);-webkit-backdrop-filter:blur(var(--fxn-glass-blur, 16px)) saturate(160%);z-index:25;border-radius:var(--fxn-radius-lg, 16px);box-sizing:border-box;flex-direction:column;overflow:hidden;border:1px solid var(--fxn-border-color, rgba(255,255,255,0.08));">
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--fxn-divider-color, rgba(255,255,255,0.06));flex-shrink:0;">
+                            <span style="font-weight:600;font-size:15px;letter-spacing:-0.01em;color:var(--fxn-text-main, #ffffff);">Новая заявка в ТП</span>
+                            <button id="fp-new-ticket-close" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--fxn-card-border, rgba(255,255,255,0.1));background:var(--fxn-card-color, rgba(255,255,255,0.05));color:var(--fxn-text-desc, #94a3b8);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.15s cubic-bezier(0.16, 1, 0.3, 1);">✕</button>
                         </div>
                         <div id="fp-new-ticket-fields" style="display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;padding:16px;"></div>
-                        <div style="flex-shrink:0;padding:12px 16px;border-top:1px solid #232530;background:#16171d;">
-                            <button id="fp-new-ticket-submit" class="btn" style="width:100%;background:var(--fxn-accent, #c026d3);color:#fff;border:none;padding:10px;font-weight:600;font-size:13px;">Далее →</button>
+                        <div style="flex-shrink:0;padding:12px 16px;border-top:1px solid var(--fxn-divider-color, rgba(255,255,255,0.06));">
+                            <button id="fp-new-ticket-submit" class="btn" style="width:100%;background:var(--fxn-text-main, #ffffff);color:var(--fxn-bg-color, #0a0a0a);border:none;padding:10px;border-radius:var(--fxn-radius-md, 12px);font-weight:600;font-size:13px;transition:all 0.18s cubic-bezier(0.16, 1, 0.3, 1);">Далее →</button>
                         </div>
                     </div>
                 </div>

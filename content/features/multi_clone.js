@@ -227,7 +227,7 @@
         return activeExportLogger;
     }
 
-    async function getExportDataOne(offerId) {
+    async function getExportDataOne(offerId, fallbackCategory = '') {
         // 1) читаем источник + решённые поля с таймаутом 45 сек
         const src = await sendMessageWithTimeout({ action: 'cloneGetSource', offerId, batch: true }, 45000);
         if (!src || !src.success) {
@@ -254,12 +254,14 @@
         fields['amount'] = (s.amount && /^\d+$/.test(s.amount)) ? s.amount : (fields['amount'] || '1');
         fields['active'] = 'on';
         fields['secrets'] = fields['secrets'] || '';
-        fields['fields[images]'] = fields['fields[images]'] || '';
-        if (!fields['location']) fields['location'] = 'offer';
+        fields['location'] = 'trade';
+        delete fields['csrf_token'];
+        delete fields['csrf'];
+        delete fields['categoryName'];
 
         return {
             sourceTitle: s.summary_ru || s.summary || `Лот #${offerId}`,
-            sourceCategory: s.categoryName || 'Неизвестная категория',
+            sourceCategory: s.categoryName || fallbackCategory || 'Неизвестная категория',
             data: fields
         };
     }
@@ -283,7 +285,10 @@
             if (seenLotIds.has(lotId)) return;
             seenLotIds.add(lotId);
             const title = a.querySelector('.tc-title')?.textContent?.trim() || `Лот #${lotId}`;
-            items.push({ id: lotId, title });
+            const categoryEl = a.closest('.table-lots, .show-more')?.previousElementSibling 
+                || a.closest('.mb20, .table-container, .table-wrapper')?.querySelector('h2, h3, .block-title, .table-header');
+            const categoryName = categoryEl?.textContent?.trim() || '';
+            items.push({ id: lotId, title, categoryName });
         });
 
         const logEl = document.querySelector('.actions .log');
@@ -331,6 +336,7 @@
         const exportedData = [];
         const exportedLotIds = new Set();
         const failedLotIds = [];
+        let lotCooldownMs = 400; // Быстрый и безопасный интервал (~0.4 сек вместо 5.5 сек)
 
         try {
             for (let i = 0; i < items.length; i++) {
@@ -347,7 +353,7 @@
                 while (attempts < 2 && !success) {
                     attempts++;
                     try {
-                        const data = await getExportDataOne(id);
+                        const data = await getExportDataOne(id, item.categoryName);
                         if (!exportedLotIds.has(id)) {
                             exportedLotIds.add(id);
                             exportedData.push(data);
@@ -361,6 +367,7 @@
                         const isNetworkErr = errMsg.includes('NetworkError') || errMsg.includes('Failed to fetch') || errMsg.includes('Network request failed') || errMsg.includes('Превышено время ожидания');
                         
                         if (errMsg.includes('429')) {
+                            lotCooldownMs = 1200; // адаптивно увеличиваем задержку при 429
                             logger.addLog(`Лот #${id}: Лимит запросов (429). Ждём 10 секунд перед повтором...`, 'warning');
                             updateLog(`⚠ #${id}: Слишком много запросов (429). Ждём 10 сек...`, true);
                             await new Promise(resolve => setTimeout(resolve, 10000));
@@ -390,7 +397,7 @@
                 logger.updateProgress(i + 1, items.length, `Обработано ${i + 1} из ${items.length}`);
 
                 if (i < items.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 5500));
+                    await new Promise(resolve => setTimeout(resolve, lotCooldownMs));
                 }
             }
             

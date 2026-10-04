@@ -21,15 +21,15 @@ async function initializeAISettings() {
 
     // Default models per provider
     const DEFAULT_MODELS = {
-        gemini:     'gemini-2.0-flash',
+        gemini:     'gemini-2.5-flash',
         openai:     'gpt-4o-mini',
         openrouter: 'google/gemini-2.0-flash-exp:free'
     };
 
     const MODEL_HINTS = {
-        gemini:     'Бесплатно: gemini-2.0-flash, gemini-1.5-flash',
-        openai:     'Дешевле: gpt-4o-mini · Лучше: gpt-4o',
-        openrouter: 'Примеры: google/gemini-2.0-flash-exp:free · deepseek/deepseek-chat-v3-5:free · meta-llama/llama-3.3-8b-instruct:free'
+        gemini:     '⚡ Умный каскад: если на модели кончатся лимиты (429/RPM), Foxen мгновенно переключится на следующую (2.5 Flash → 2.5 Flash Lite → 3.7 Flash → 2.0 Flash → 1.5 Flash).',
+        openai:     'Дешевле: gpt-4o-mini · Качественнее: gpt-4o (при лимитах пробует gpt-4o-mini)',
+        openrouter: 'Бесплатные модели с авто-каскадом: google/gemini-2.0-flash-exp:free · meta-llama/llama-3.3-70b-instruct:free · deepseek/deepseek-chat:free'
     };
 
     let currentProvider = '';
@@ -126,7 +126,8 @@ async function initializeAISettings() {
             });
             testBtn.disabled = false;
             if (resp && resp.success) {
-                setStatus('✓ Ключ работает!', 'ok');
+                const modelInfo = resp.model ? ` (модель: ${resp.model})` : '';
+                setStatus(`✓ Ключ работает!${modelInfo}`, 'ok');
             } else {
                 setStatus('✗ ' + (resp?.error || 'Ошибка подключения'), 'err');
             }

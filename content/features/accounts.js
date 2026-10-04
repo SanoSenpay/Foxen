@@ -50,19 +50,17 @@ async function renderAccountsList() {
             }
         }
         const card = createElement('div', { class: `fxn-vireon-card ${isActive ? 'active' : ''}` });
-
-        // Декоративный плавный световой блик из правого нижнего угла (точь-в-точь по макету)
         card.innerHTML = `
             <svg class="fxn-vireon-card-glare" viewBox="0 0 460 210" fill="none" preserveAspectRatio="none">
                 <defs>
                     <linearGradient id="fxnGlareGrad_${index}" x1="100%" y1="100%" x2="45%" y2="20%">
-                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.10" />
-                        <stop offset="35%" stop-color="#ffffff" stop-opacity="0.04" />
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08" />
+                        <stop offset="35%" stop-color="#ffffff" stop-opacity="0.03" />
                         <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
                     </linearGradient>
                     <linearGradient id="fxnStrokeGrad_${index}" x1="100%" y1="100%" x2="50%" y2="30%">
-                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
-                        <stop offset="60%" stop-color="#ffffff" stop-opacity="0.08" />
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+                        <stop offset="60%" stop-color="#ffffff" stop-opacity="0.06" />
                         <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
                     </linearGradient>
                 </defs>
@@ -128,7 +126,7 @@ async function renderAccountsList() {
                 type: 'button',
                 title: 'Переключиться на этот аккаунт'
             });
-            loginBadge.innerHTML = '<span class="fxn-vireon-dot inactive"></span><span>ВОЙТИ</span>';
+            loginBadge.innerHTML = '<span class="fxn-vireon-dot inactive"></span><span>войти</span>';
             loginBadge.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 loginBadge.disabled = true;

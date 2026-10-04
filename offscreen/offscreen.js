@@ -234,9 +234,28 @@ function parseSalesPage(html) {
 function parseLotEditPage(html) {
     try {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const form = doc.querySelector('form.form-offer-editor, form[action*="offerSave"], form[action*="offerEdit"], form#offer-edit, form.lot-edit-form');
+        // Пробуем специфичные селекторы FunPay, затем fallback на любой POST-form
+        let form = doc.querySelector(
+            'form.form-offer-editor, form[action*="offerSave"], form[action*="offerEdit"], form#offer-edit, form.lot-edit-form'
+        );
+        // Fallback: берём первую POST-форму на странице (FunPay иногда меняет классы/action)
         if (!form) {
-            return null;
+            form = doc.querySelector('form[method="post"], form[method="POST"]');
+        }
+        // Последний fallback: любая форма с полем csrf_token (признак формы FunPay)
+        if (!form) {
+            form = Array.from(doc.querySelectorAll('form')).find(f =>
+                f.querySelector('input[name="csrf_token"]')
+            ) || null;
+        }
+        if (!form) {
+            // Диагностика: логируем заголовок страницы и первые формы чтобы понять что вернул FunPay
+            const title = doc.querySelector('title')?.textContent || '(no title)';
+            const forms = Array.from(doc.querySelectorAll('form')).map(f =>
+                `action=${f.getAttribute('action')||''} method=${f.getAttribute('method')||''} class=${f.className}`
+            );
+            console.error('Foxen Offscreen: parseLotEditPage — форма не найдена. title:', title, 'forms:', JSON.stringify(forms));
+            throw new Error(`Форма редактирования лота не найдена на странице. title="${title}" forms=${forms.join('; ')}`);
         }
 
         const formData = new FormData(form);
@@ -270,13 +289,19 @@ function parseLotEditPage(html) {
         // keep csrf_token for saving; remove only location
         delete dataObject.location;
 
+        const backLink = doc.querySelector('a.js-back-link, a[href*="/lots/"], a[href*="/chips/"]');
+        if (backLink) {
+            dataObject.categoryName = backLink.textContent.trim();
+            const m = backLink.getAttribute('href')?.match(/\/(?:lots|chips)\/(\d+)/i);
+            if (m && !dataObject.node_id) dataObject.node_id = m[1];
+        }
+        if (!dataObject.categoryName) {
+            const pageHeader = doc.querySelector('h1.page-header, .page-header');
+            if (pageHeader) dataObject.categoryName = pageHeader.textContent.trim();
+        }
+
         if (!dataObject.node_id && dataObject.node) dataObject.node_id = dataObject.node;
         if (!dataObject.node_id && dataObject.nodeId) dataObject.node_id = dataObject.nodeId;
-        if (!dataObject.node_id) {
-            const backLink = doc.querySelector('a.js-back-link, a[href*="/lots/"], a[href*="/chips/"]');
-            const m = backLink?.getAttribute('href')?.match(/\/(?:lots|chips)\/(\d+)/i);
-            if (m) dataObject.node_id = m[1];
-        }
         if (!dataObject.node_id) {
             const nodeInp = doc.querySelector('input[name="node_id"], input[name="node"], input[name="nodeId"], [data-node-id]');
             if (nodeInp) dataObject.node_id = nodeInp.value || nodeInp.getAttribute('data-node-id') || '';

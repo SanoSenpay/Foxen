@@ -127,3 +127,8 @@ web-ext-artifacts/
 
 other_assets/
 
+#Помощники
+build.bat
+build.js
+check-git.js
+

@@ -23,19 +23,26 @@
         if (!badge) return;
         let accent = null;
         try {
-            if (window.__fptUserAccent) {
+            if (window.__foxenAccentColor) {
+                accent = window.__foxenAccentColor;
+            } else if (window.__fptUserAccent) {
                 accent = window.__fptUserAccent;
             } else {
-                const docAccent = getComputedStyle(document.documentElement).getPropertyValue('--fxn-accent').trim();
-                if (docAccent && docAccent !== '#C026D3') {
-                    accent = docAccent;
+                const cached = (function() { try { return localStorage.getItem('foxen_accent_color') || sessionStorage.getItem('foxen_accent_color'); } catch (_) { return null; } })();
+                if (cached) {
+                    accent = cached;
+                } else {
+                    const docAccent = getComputedStyle(document.documentElement).getPropertyValue('--fxn-accent').trim();
+                    if (docAccent && docAccent !== '#C026D3' && docAccent !== '#c026d3') {
+                        accent = docAccent;
+                    }
                 }
             }
 
             if (!accent) {
                 const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
-                const data = await new Promise(r => storage.get(['foxenAccentColor', 'foxenHeaderButtons', 'foxenTheme'], r));
-                accent = data?.foxenAccentColor || data?.foxenHeaderButtons?.color || data?.foxenTheme?.bgColor1;
+                const data = await new Promise(r => storage.get(['foxenAccentColor', 'foxenHeaderButtonStyles', 'foxenHeaderButtons', 'foxenTheme'], r));
+                accent = data?.foxenAccentColor || data?.foxenHeaderButtonStyles?.color || data?.foxenHeaderButtons?.color || data?.foxenTheme?.bgColor1;
             }
         } catch (_) {}
 

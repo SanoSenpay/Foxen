@@ -120,22 +120,26 @@
         return { game, category: categoryName, nodeId, server, summary, description, secrets, rawPrice, priceCurrency, sellerName, sellerId };
     }
 
-    // ── Google-перевод (бесплатный эндпойнт translate_a, как в chat_reply) ──
+    // ── Отказоустойчивый перевод (Google / MyMemory / Foxen Engine) ──
     async function gTranslate(text, sl, tl) {
         text = String(text || '').trim();
         if (!text) return '';
+        if (typeof window.fxnTranslateText === 'function') {
+            try {
+                const res = await window.fxnTranslateText(text, tl || 'en', { sourceLang: sl || 'ru' });
+                if (res && res.text && res.text !== text) return res.text;
+            } catch (_) {}
+        }
         try {
-            const url = 'https://translate.googleapis.com/translate_a/single?client=gtx'
-                + '&sl=' + encodeURIComponent(sl || 'ru')
-                + '&tl=' + encodeURIComponent(tl || 'en')
-                + '&dt=t&q=' + encodeURIComponent(text);
+            const url = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=${encodeURIComponent(sl || 'ru')}&tl=${encodeURIComponent(tl || 'en')}&q=${encodeURIComponent(text)}`;
             const r = await fetch(url);
-            if (!r.ok) return '';
-            const j = await r.json();
-            // j[0] — массив сегментов [ [translated, original, ...], ... ]
-            const out = (j && j[0]) ? j[0].map(s => s[0]).join('') : '';
-            return (out && out !== text) ? out : '';
-        } catch (_) { return ''; }
+            if (r.ok) {
+                const j = await r.json();
+                const out = Array.isArray(j) ? (Array.isArray(j[0]) ? j[0][0] : j[0]) : '';
+                if (out && out !== text) return out;
+            }
+        } catch (_) {}
+        return '';
     }
 
     // ── UI: кнопка под блоком «Оплаченный товар», на всю его ширину ──

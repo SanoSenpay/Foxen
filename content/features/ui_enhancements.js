@@ -1,5 +1,31 @@
 // content/features/ui_enhancements.js
 
+// Foxen: Выбранный лот для детальной фильтрации статистики
+let _fxnSelectedLot = null;
+let _fxnFilterTable = false;
+let _fxnCachedLots = [];
+
+window.fxnGetSelectedLot = function () { return _fxnSelectedLot; };
+window.fxnSetSelectedLot = function (lot) {
+    _fxnSelectedLot = lot && lot.trim() ? lot.trim() : null;
+    if (typeof window.fxnOnLotChanged === 'function') {
+        window.fxnOnLotChanged(_fxnSelectedLot);
+    }
+};
+window.fxnGetFilterTable = function () { return _fxnFilterTable; };
+window.fxnSetFilterTable = function (val) {
+    _fxnFilterTable = !!val;
+    if (typeof window.fxnApplyPageTableFilter === 'function') {
+        window.fxnApplyPageTableFilter(_fxnSelectedLot, _fxnFilterTable);
+    }
+};
+
+function _fxnEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+}
+
 // Foxen: конфиг источника статистики. По умолчанию — продажи.
 // На странице покупок (/orders/) purchases.js переопределяет window.fxnStatsCfg.
 function _fxnCfg() {
@@ -27,6 +53,25 @@ function getStatsBlockHTML() {
                 <button type="button" class="btn btn-default fp-stats-search-toggle" id="fpTools-stats-search-toggle" title="Поиск по заказам"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:-4px;">search</span></button>
                 <button type="button" class="btn btn-default fp-stats-filter-toggle" id="fpTools-stats-filter-toggle" title="Фильтры и сортировка"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:-4px;">tune</span></button>
                 <button type="button" class="btn btn-default" id="fpTools-stats-accuracy" title="Почему цифры могут отличаться от FunPay" style="color:#f0a040;"><span class="material-symbols-rounded" style="font-size:18px;vertical-align:-4px;">info</span></button>
+                
+                <div class="fp-lot-combobox-wrap" id="fpTools-lot-combobox-wrap">
+                    <button type="button" class="btn btn-default fp-lot-combobox-trigger" id="fpTools-lot-trigger" title="Фильтровать статистику по конкретному лоту">
+                        <span class="material-symbols-rounded" style="font-size:18px;vertical-align:-4px;">inventory_2</span>
+                        <span class="fp-lot-trigger-text" id="fpTools-lot-trigger-text">Все лоты</span>
+                        <span class="fp-lot-trigger-arrow">▾</span>
+                    </button>
+                    <div class="fp-lot-dropdown" id="fpTools-lot-dropdown" style="display:none;">
+                        <div class="fp-lot-dropdown-search-wrap">
+                            <span class="material-symbols-rounded">search</span>
+                            <input type="text" id="fpTools-lot-search" placeholder="Поиск лота..." autocomplete="off">
+                            <button type="button" id="fpTools-lot-search-clear" style="display:none;">×</button>
+                        </div>
+                        <div class="fp-lot-dropdown-list" id="fpTools-lot-list">
+                            <div class="fp-lot-dropdown-empty">Загрузка лотов…</div>
+                        </div>
+                    </div>
+                </div>
+
                 <select class="form-control" id="fpTools-stats-period">
                     <option value="today">За сегодня</option>
                     <option value="yesterday">За вчера</option>
@@ -72,6 +117,8 @@ function getStatsBlockHTML() {
                 <button type="button" class="fp-stats-filter-reset" id="fpFilt-reset">Сбросить фильтры</button>
             </div>
         </div>
+
+        <div id="fpTools-stats-lot-focus-banner" style="display:none;"></div>
 
         <div id="fpTools-stats-modeview"></div>
 
@@ -162,7 +209,217 @@ function getStatsBlockHTML() {
     `;
 }
 
-async function calculateSalesStats(allOrders, startDate, endDate) {
+function _normalizeLotTitle(raw) {
+    if (!raw) return '';
+    let str = String(raw)
+        .replace(/[\u200B-\u200D\uFEFF]/g, '') // удаление zero-width символов
+        .replace(/[\u00A0\s]+/g, ' ')           // нормализация неразрывных пробелов и отступов
+        .trim();
+
+    // Отрезаем ТОЛЬКО хвостовое количество, добавляемое FunPay в конце строки заказа:
+    // 1. В круглых или квадратных скобках на конце: "(1 шт.)", "[1 шт]", "(2 шт.)", "(x1)"
+    str = str.replace(/\s*\(\s*\d+[\s\u00A0]*(?:шт|ед|x|pcs|k|к|руб|₽|\$|€)?\.?\s*\)\s*$/i, '');
+    str = str.replace(/\s*\[\s*\d+[\s\u00A0]*(?:шт|ед|x|pcs|k|к|руб|₽|\$|€)?\.?\s*\]\s*$/i, '');
+
+    // 2. После запятой / точки с запятой на конце: ", 1 шт.", ", 2 шт.", ", 1", " 1 шт", " x1"
+    str = str.replace(/[,;]\s*\d+[\s\u00A0]*(?:шт|ед|x|pcs|k|к|руб|₽|\$|€)?\.?\s*$/i, '');
+    str = str.replace(/\s+x\s*\d+\.?\s*$/i, '');
+    str = str.replace(/\s+\d+[\s\u00A0]*(?:шт|ед)\.?\s*$/i, '');
+
+    // 3. Очищаем висячие запятые/точки с запятой/пробелы, оставшиеся на конце после отрезания количества
+    str = str.replace(/[,;:\s]+$/, '').trim();
+
+    return str || raw.trim();
+}
+
+function _matchesLot(orderDesc, targetLot) {
+    if (!targetLot) return true;
+    if (!orderDesc) return false;
+    const cleanOrder = _normalizeLotTitle(orderDesc).toLowerCase();
+    const cleanTarget = _normalizeLotTitle(targetLot).toLowerCase();
+    if (cleanOrder === cleanTarget) return true;
+    const rawClean = String(orderDesc).replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[\u00A0\s]+/g, ' ').trim().toLowerCase();
+    if (rawClean === cleanTarget) return true;
+    return false;
+}
+window.fxnNormalizeLotTitle = _normalizeLotTitle;
+window.fxnMatchesLot = _matchesLot;
+
+function _updateLotDropdown(allOrders) {
+    const lotMap = new Map();
+    let totalAllOrders = 0;
+    for (const id in allOrders) {
+        const o = allOrders[id];
+        const rawDesc = (o.description || '').trim();
+        if (!rawDesc) continue;
+        const normTitle = _normalizeLotTitle(rawDesc);
+        if (!normTitle) continue;
+        const key = normTitle.toLowerCase();
+        totalAllOrders++;
+        if (!lotMap.has(key)) {
+            lotMap.set(key, {
+                key: key,
+                title: normTitle,
+                subcategory: o.subcategoryName || '',
+                count: 0,
+                revenueRUB: 0
+            });
+        }
+        const item = lotMap.get(key);
+        item.count++;
+        if (normTitle.length < item.title.length && normTitle.length >= 3) {
+            item.title = normTitle;
+        }
+        if (!item.subcategory && o.subcategoryName) {
+            item.subcategory = o.subcategoryName;
+        }
+        if (o.orderStatus === 'closed' || o.orderStatus === 'paid') {
+            const rate = o.currency === 'USD' ? 90 : o.currency === 'EUR' ? 100 : 1;
+            item.revenueRUB += (o.price || 0) * rate;
+        }
+    }
+    _fxnCachedLots = Array.from(lotMap.values()).sort((a, b) => b.count - a.count);
+    _renderLotDropdownList('', totalAllOrders);
+}
+
+function _renderLotDropdownList(query = '') {
+    const listEl = document.getElementById('fpTools-lot-list');
+    if (!listEl) return;
+    const q = (query || '').toLowerCase().trim();
+    let lots = _fxnCachedLots;
+    if (q) {
+        lots = lots.filter(l => l.title.toLowerCase().includes(q) || (l.subcategory && l.subcategory.toLowerCase().includes(q)));
+    }
+
+    const curLot = window.fxnGetSelectedLot();
+    let html = '';
+
+    // Пункт "Все лоты"
+    if (!q) {
+        const allActive = !curLot ? 'active' : '';
+        html += `
+        <div class="fp-lot-item ${allActive}" data-lot-val="__ALL__">
+            <div class="fp-lot-item-main">
+                <div class="fp-lot-item-title">🌟 Все лоты / товары</div>
+                <div class="fp-lot-item-sub">Сводная статистика по всему магазину</div>
+            </div>
+            <div class="fp-lot-item-stats">
+                <span class="fp-lot-item-count">${_fxnCachedLots.length} лотов</span>
+            </div>
+        </div>`;
+    }
+
+    if (!lots.length) {
+        html += `<div class="fp-lot-dropdown-empty">Лоты не найдены</div>`;
+    } else {
+        lots.forEach(lot => {
+            const isActive = curLot && (curLot.toLowerCase() === lot.title.toLowerCase() || curLot.toLowerCase() === lot.key || _matchesLot(lot.title, curLot)) ? 'active' : '';
+            const revFormatted = Math.round(lot.revenueRUB).toLocaleString('ru-RU') + ' ₽';
+            html += `
+            <div class="fp-lot-item ${isActive}" data-lot-val="${_fxnEsc(lot.title)}">
+                <div class="fp-lot-item-main">
+                    <div class="fp-lot-item-title" title="${_fxnEsc(lot.title)}">${_fxnEsc(lot.title)}</div>
+                    ${lot.subcategory ? `<div class="fp-lot-item-sub">${_fxnEsc(lot.subcategory)}</div>` : ''}
+                </div>
+                <div class="fp-lot-item-stats">
+                    <span class="fp-lot-item-count">${lot.count} шт.</span>
+                    <span class="fp-lot-item-revenue">${revFormatted}</span>
+                </div>
+            </div>`;
+        });
+    }
+
+    listEl.innerHTML = html;
+
+    listEl.querySelectorAll('.fp-lot-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const val = item.getAttribute('data-lot-val');
+            if (val === '__ALL__') {
+                window.fxnSetSelectedLot(null);
+            } else {
+                window.fxnSetSelectedLot(val);
+            }
+            _closeLotDropdown();
+        });
+    });
+}
+
+function _closeLotDropdown() {
+    const wrap = document.getElementById('fpTools-lot-combobox-wrap');
+    const dd = document.getElementById('fpTools-lot-dropdown');
+    if (wrap) wrap.classList.remove('open');
+    if (dd) dd.style.display = 'none';
+}
+
+function _toggleLotDropdown() {
+    const wrap = document.getElementById('fpTools-lot-combobox-wrap');
+    const dd = document.getElementById('fpTools-lot-dropdown');
+    if (!wrap || !dd) return;
+    const isOpen = dd.style.display !== 'none';
+    if (isOpen) {
+        _closeLotDropdown();
+    } else {
+        wrap.classList.add('open');
+        dd.style.display = 'block';
+        const searchInput = document.getElementById('fpTools-lot-search');
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+            _renderLotDropdownList('');
+        }
+    }
+}
+
+function applyPageTableFilter(targetLot, isEnabled) {
+    const rows = document.querySelectorAll('a.tc-item[href*="/orders/"], .tc-item[href*="/orders/"], .orders-table a.tc-item, .orders-table .tc-item');
+    if (!rows.length) return;
+    let matchCount = 0;
+    const ordersMap = window._fxnOrdersMap || {};
+
+    rows.forEach(row => {
+        if (!isEnabled || !targetLot) {
+            row.style.display = '';
+            return;
+        }
+
+        let isMatch = false;
+
+        // 1. Поиск по ID заказа в закэшированных данных
+        const href = row.getAttribute('href') || '';
+        const idMatch = href.match(/\/orders\/([A-Za-z0-9]+)/);
+        const orderId = idMatch ? idMatch[1] : (row.querySelector('.tc-order')?.textContent?.replace('#', '') || '').trim();
+        
+        if (orderId && ordersMap[orderId]) {
+            const desc = ordersMap[orderId].description || '';
+            if (_matchesLot(desc, targetLot)) {
+                isMatch = true;
+            }
+        }
+
+        // 2. Запасной вариант: матчинг по тексту DOM строки
+        if (!isMatch) {
+            const descEl = row.querySelector('.order-desc div, .order-desc, .tc-desc-text, .tc-desc');
+            const rawText = descEl ? descEl.textContent : '';
+            if (rawText && _matchesLot(rawText, targetLot)) {
+                isMatch = true;
+            }
+        }
+
+        if (isMatch) {
+            row.style.display = '';
+            matchCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const cntEl = document.getElementById('fpTools-lot-table-count');
+    if (cntEl) cntEl.textContent = String(matchCount);
+}
+window.fxnApplyPageTableFilter = applyPageTableFilter;
+
+async function calculateSalesStats(allOrders, startDate, endDate, targetLot = null) {
     const stats = {
         totalOrders: 0, totalClosed: 0, totalPending: 0, totalRefunded: 0,
         totalRevenue: { RUB: 0, USD: 0, EUR: 0 },
@@ -170,11 +427,18 @@ async function calculateSalesStats(allOrders, startDate, endDate) {
         averageCheck: { RUB: 0, USD: 0, EUR: 0 },
         uniqueBuyers: new Set(), mostPopularProduct: "", mostPopularCategory: "",
         mostActiveBuyer: { username: "", id: 0, count: 0 },
-        mostExpensiveSale: { price: 0, currency: "RUB", orderId: "" }
+        mostExpensiveSale: { price: 0, currency: "RUB", orderId: "" },
+        targetLot: targetLot || null,
+        lotShareRevenuePercent: 0,
+        lotShareOrdersPercent: 0,
+        successRate: 100,
+        storeTotalOrders: 0,
+        storeTotalRevenueRUB: 0
     };
     const productCount = new Map(), categoryCount = new Map(), buyerCount = new Map();
     const validCurrencies = new Set(["RUB", "USD", "EUR"]);
     const exchangeRates = { RUB: 0.011, USD: 1, EUR: 1.08 };
+    const toRUB = { RUB: 1, USD: 90, EUR: 100 };
 
     // Учитываем глобальные фильтры статусов (общие со статистикой/диаграммами).
     // Дефолт зависит от режима: на покупках возвраты по умолчанию выключены.
@@ -188,12 +452,27 @@ async function calculateSalesStats(allOrders, startDate, endDate) {
         return true;
     };
 
+    let storeOrdersCount = 0;
+    let storeRevenueRUB = 0;
+    let lotRevenueRUB = 0;
+
     for (const orderId in allOrders) {
         const order = allOrders[orderId];
         if ((startDate && order.orderDate < startDate) || (endDate && order.orderDate > endDate)) continue;
 
-        // Сумму возвратов считаем ВСЕГДА (даже если возвраты скрыты фильтром),
-        // чтобы было видно, сколько денег вернулось — это не входит в «потрачено».
+        if (statusOk(order.orderStatus)) {
+            storeOrdersCount++;
+            if ((order.orderStatus === "paid" || order.orderStatus === "closed") && validCurrencies.has(order.currency)) {
+                storeRevenueRUB += (order.price || 0) * (toRUB[order.currency] || 1);
+            }
+        }
+
+        // Если задан фокус на конкретный лот — считаем только его заказы
+        if (targetLot && !_matchesLot(order.description, targetLot)) {
+            continue;
+        }
+
+        // Сумму возвратов считаем ВСЕГДА (даже если возвраты скрыты фильтром)
         if (order.orderStatus === "refunded" && validCurrencies.has(order.currency)) {
             stats.refundedRevenue[order.currency] = (stats.refundedRevenue[order.currency] || 0) + (order.price || 0);
         }
@@ -205,6 +484,7 @@ async function calculateSalesStats(allOrders, startDate, endDate) {
         
         if (validCurrencies.has(order.currency) && (order.orderStatus === "paid" || order.orderStatus === "closed")) {
             stats.totalRevenue[order.currency] += order.price;
+            lotRevenueRUB += (order.price || 0) * (toRUB[order.currency] || 1);
         }
 
         productCount.set(order.description, (productCount.get(order.description) || 0) + 1);
@@ -232,7 +512,7 @@ async function calculateSalesStats(allOrders, startDate, endDate) {
     }
 
     stats.uniqueBuyers = stats.uniqueBuyers.size;
-    stats.mostPopularProduct = [...productCount.entries()].reduce((a, b) => b[1] > a[1] ? b : a, ["-", 0])[0] || "-";
+    stats.mostPopularProduct = targetLot || ([...productCount.entries()].reduce((a, b) => b[1] > a[1] ? b : a, ["-", 0])[0] || "-");
     stats.mostPopularCategory = [...categoryCount.entries()].reduce((a, b) => b[1] > a[1] ? b : a, ["-", 0])[0] || "-";
     
     const topBuyer = [...buyerCount.entries()].reduce((a, b) => b[1] > a[1] ? b : a, ["-", 0]);
@@ -240,6 +520,14 @@ async function calculateSalesStats(allOrders, startDate, endDate) {
         const [username, id] = topBuyer[0].split('|');
         stats.mostActiveBuyer = { username, id: Number(id), count: topBuyer[1] };
     }
+
+    stats.storeTotalOrders = storeOrdersCount;
+    stats.storeTotalRevenueRUB = storeRevenueRUB;
+    stats.lotShareOrdersPercent = storeOrdersCount > 0 ? (stats.totalOrders / storeOrdersCount) * 100 : 0;
+    stats.lotShareRevenuePercent = storeRevenueRUB > 0 ? (lotRevenueRUB / storeRevenueRUB) * 100 : 0;
+    const completedCount = stats.totalClosed + stats.totalRefunded;
+    stats.successRate = completedCount > 0 ? (stats.totalClosed / completedCount) * 100 : (stats.totalOrders > 0 ? 100 : 0);
+
     return stats;
 }
 
@@ -380,7 +668,88 @@ async function displaySalesStats() {
         case "365d": startDate = nowMs - 365 * oneDay; break;
     }
 
-    const stats = await calculateSalesStats(foxenSalesData, startDate, endDate);
+    window._fxnOrdersMap = foxenSalesData;
+    _updateLotDropdown(foxenSalesData);
+
+    const selectedLot = window.fxnGetSelectedLot();
+    const stats = await calculateSalesStats(foxenSalesData, startDate, endDate, selectedLot);
+
+    // Обновляем кнопку триггера комбобокса
+    const triggerBtn = document.getElementById("fpTools-lot-trigger");
+    const triggerText = document.getElementById("fpTools-lot-trigger-text");
+    if (triggerBtn && triggerText) {
+        if (selectedLot) {
+            triggerBtn.classList.add("active");
+            triggerText.textContent = selectedLot.length > 20 ? selectedLot.slice(0, 18) + "…" : selectedLot;
+            triggerBtn.title = `Выбран лот: ${selectedLot} (нажмите для смены)`;
+        } else {
+            triggerBtn.classList.remove("active");
+            triggerText.textContent = "Все лоты";
+            triggerBtn.title = "Фильтровать статистику по конкретному лоту";
+        }
+    }
+
+    // Рендер Фокус-баннера по выбранному лоту (стиль Foxen Toolbar)
+    const bannerEl = document.getElementById("fpTools-stats-lot-focus-banner");
+    if (bannerEl) {
+        if (selectedLot) {
+            bannerEl.style.display = "block";
+            const isTableFiltered = window.fxnGetFilterTable();
+            bannerEl.innerHTML = `
+            <div class="fp-lot-focus-banner">
+                <div class="fp-lot-focus-left">
+                    <div class="fp-focus-pill">
+                        <span class="material-symbols-rounded">filter_alt</span>
+                        <span>ФОКУС</span>
+                    </div>
+                    <span class="fp-focus-title" title="${_fxnEsc(selectedLot)}">${_fxnEsc(selectedLot)}</span>
+                    <span class="fp-focus-orders-badge">${stats.totalOrders} шт.</span>
+                </div>
+                <div class="fp-lot-focus-actions">
+                    <button type="button" class="fp-focus-action-btn fp-focus-table-toggle ${isTableFiltered ? 'active' : ''}" id="fpTools-filter-page-table" title="Показывать в таблице заказов FunPay только этот лот">
+                        <span class="material-symbols-rounded">table_rows</span>
+                        <span>Только в таблице</span>
+                    </button>
+                    <button type="button" class="fp-focus-action-btn fp-focus-clear-btn" id="fpTools-stats-lot-clear" title="Сбросить фильтр по лоту">
+                        <span class="material-symbols-rounded">close</span>
+                        <span>Сбросить</span>
+                    </button>
+                </div>
+            </div>`;
+
+            bannerEl.querySelector("#fpTools-stats-lot-clear")?.addEventListener("click", () => {
+                window.fxnSetSelectedLot(null);
+            });
+            bannerEl.querySelector("#fpTools-filter-page-table")?.addEventListener("click", () => {
+                const current = window.fxnGetFilterTable();
+                window.fxnSetFilterTable(!current);
+            });
+        } else {
+            bannerEl.style.display = "none";
+            bannerEl.innerHTML = "";
+        }
+    }
+
+    // Применяем фильтрацию таблицы на самой странице FunPay
+    window.fxnApplyPageTableFilter?.(selectedLot, window.fxnGetFilterTable());
+
+    // Обновляем подписи на карточках под режим лота
+    const revCardLabel = document.querySelector(".stat-card-revenue .stat-card-label");
+    const ordCardLabel = document.querySelector(".fp-stat-card:nth-child(2) .stat-card-label");
+    const avgCardLabel = document.querySelector(".fp-stat-card:nth-child(3) .stat-card-label");
+    if (revCardLabel) {
+        revCardLabel.innerHTML = selectedLot
+            ? `${_fxnCfg().totalMoneyLabel} <span class="fp-stat-pill fp-stat-pill-accent">${stats.lotShareRevenuePercent.toFixed(1)}% выручки</span>`
+            : _fxnCfg().totalMoneyLabel;
+    }
+    if (ordCardLabel) {
+        ordCardLabel.innerHTML = selectedLot
+            ? `Штук за период <span class="fp-stat-pill">${stats.lotShareOrdersPercent.toFixed(1)}% заказов</span>`
+            : (_fxnCfg().totalOrdersLabel || "Всего заказов");
+    }
+    if (avgCardLabel) {
+        avgCardLabel.textContent = selectedLot ? "Ср. цена лота" : "Средний чек";
+    }
 
     document.getElementById("fpTools-stats-total-orders").textContent = stats.totalOrders || 0;
     // Подсказка: данные есть, но за выбранный период нет заказов.
@@ -407,7 +776,33 @@ async function displaySalesStats() {
     document.getElementById("fpTools-stats-top-customer").onclick = () => { if(stats.mostActiveBuyer.id) window.open(`https://funpay.com/users/${stats.mostActiveBuyer.id}/`); };
     document.getElementById("fpTools-stats-top-sale").textContent = formatCurrency(stats.mostExpensiveSale.price, stats.mostExpensiveSale.currency) || "-";
     document.getElementById("fpTools-stats-top-sale").onclick = () => { if(stats.mostExpensiveSale.orderId) window.open(`https://funpay.com/orders/${stats.mostExpensiveSale.orderId}/`); };
-    document.getElementById("fpTools-stats-popular-product").textContent = stats.mostPopularProduct || "-";
+
+    // Популярный товар / успешность лота
+    const popProdEl = document.getElementById("fpTools-stats-popular-product");
+    const popProdItem = popProdEl?.closest('.fp-stat-detail-item');
+    const popProdLabel = popProdItem?.querySelector('.detail-label');
+    if (popProdEl) {
+        if (selectedLot) {
+            if (popProdLabel) popProdLabel.textContent = "🛡 Успешность сделок лота:";
+            popProdEl.innerHTML = `<span style="color:#10b981;font-weight:700;">✓ ${stats.successRate.toFixed(1)}% успешно</span> (${stats.totalClosed} из ${stats.totalClosed + stats.totalRefunded})`;
+            popProdEl.onclick = null;
+            popProdEl.style.cursor = 'default';
+            popProdEl.style.color = '';
+        } else {
+            if (popProdLabel) popProdLabel.textContent = "🔥 Самый популярный товар:";
+            popProdEl.textContent = stats.mostPopularProduct || "-";
+            if (stats.mostPopularProduct && stats.mostPopularProduct !== '-') {
+                popProdEl.title = `Кликните, чтобы посмотреть аналитику только по лоту «${stats.mostPopularProduct}»`;
+                popProdEl.style.cursor = 'pointer';
+                popProdEl.style.color = 'var(--fxn-accent, #c026d3)';
+                popProdEl.onclick = () => window.fxnSetSelectedLot(stats.mostPopularProduct);
+            } else {
+                popProdEl.onclick = null;
+                popProdEl.style.cursor = 'default';
+                popProdEl.style.color = '';
+            }
+        }
+    }
     document.getElementById("fpTools-stats-popular-category").textContent = stats.mostPopularCategory || "-";
 
     // Fetch unconfirmed (pending) balance from live trade page
@@ -437,9 +832,7 @@ async function displaySalesStats() {
         } catch(_) { unconfEl.textContent = "-"; }
     }
 
-    // FIX 2.8.6: авто-детектор неполной/неточной статистики. Раньше про неточность
-    // говорил только маленький значок в шапке, который никто не замечал. Теперь,
-    // если данные похожи на неполные, показываем заметный баннер с кнопкой действия.
+    // FIX 2.8.6: авто-детектор неполной/неточной статистики
     try { await _maybeShowInaccuracyBanner(foxenSalesData); } catch (_) {}
 }
 
@@ -597,6 +990,44 @@ function initializeSalesStatistics() {
         localStorage.setItem("foxenStatsPeriod", periodSelect.value);
         displaySalesStats();
     });
+
+    // Интерактивный комбобокс лотов
+    const lotTrigger = document.getElementById('fpTools-lot-trigger');
+    lotTrigger?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _toggleLotDropdown();
+    });
+
+    const lotSearch = document.getElementById('fpTools-lot-search');
+    const lotClear = document.getElementById('fpTools-lot-search-clear');
+    lotSearch?.addEventListener('input', () => {
+        const val = lotSearch.value.trim();
+        if (lotClear) lotClear.style.display = val ? 'inline' : 'none';
+        _renderLotDropdownList(val);
+    });
+    lotClear?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (lotSearch) {
+            lotSearch.value = '';
+            lotSearch.focus();
+        }
+        if (lotClear) lotClear.style.display = 'none';
+        _renderLotDropdownList('');
+    });
+
+    // Закрытие дропдауна при клике вне его
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#fpTools-lot-combobox-wrap')) {
+            _closeLotDropdown();
+        }
+    });
+
+    window.fxnOnLotChanged = function (selectedLot) {
+        displaySalesStats();
+        if (typeof window.fxnRefreshStatsModes === 'function') {
+            window.fxnRefreshStatsModes();
+        }
+    };
 
     const updateBtn = document.getElementById("fpTools-stats-reset");
     updateBtn.addEventListener('click', async () => {

@@ -105,7 +105,15 @@
     }
 
     function getCustomThemeCss(settings) {
-        const bgImageUrl = settings.bgImage ? `url(${settings.bgImage})` : 'url(https://i.ibb.co/Kpm5M7gg/Foxen-BCKG.png)';
+        let cleanBg = (settings.bgImage || '').trim();
+        let bgImageUrl;
+        if (!cleanBg) {
+            bgImageUrl = 'url("https://i.ibb.co/Kpm5M7gg/Foxen-BCKG.png")';
+        } else if (cleanBg.startsWith('url(')) {
+            bgImageUrl = cleanBg;
+        } else {
+            bgImageUrl = `url("${cleanBg.replace(/"/g, '\\"')}")`;
+        }
         const containerBgRgba = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
 
         const hasBlur = settings.bgBlur && parseFloat(settings.bgBlur) > 0;
@@ -153,6 +161,7 @@
             .navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover, .navbar-default .navbar-nav>.active>a:focus { color: #LINK_COLOR# !important; font-weight: 700; background-color: transparent !important; }
             .counter-list .counter-item { background: #14141480 !important; border: 0px solid #feff00; border-radius: 20px; outline: 0; }
             .content-with-cd-wide, .bg-light-style .content-with-cd-wide { background: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; background-color: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border-radius: 10px; }
+            .content-with-cd:not(.content-with-cd-wide):not(.content-with-cd-narrow), .counter-list, .counter-list-wide { background: transparent !important; background-color: transparent !important; border: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; }
             a.tc-item { color: #TEXT_COLOR# !important; text-decoration: none; }
             .cd { position: relative; z-index: 100; border-radius: 50%; width: 700px; height: 700px; filter: brightness(.8); border: 0px; }
             a.cd-satellite { transform: translate(-25px); }
@@ -191,14 +200,16 @@
             .nav-abc .nav>li>a:hover, .nav-abc .nav>li>a:focus { text-decoration: none; cursor: default; color: #ACCENT_COLOR# !important; }
             a:focus { text-decoration: none; cursor: default; color: #fff !important; }
             .list-inline>li:after { content: " ·"; color: #919191; }
-            .media-user.style-circle .avatar-photo:after { background: #a6a6a6 !important; border: 3px solid var(--fxn-theme-container-bg, ${containerBgRgba}) !important; }
+            .media-user.style-circle .avatar-photo:after, .media-user.style-circle .avatar-photo::after { background: #20ff00 !important; border: 3px solid rgba(0, 0, 0, 0.34) !important; }
             .counter-list-wide { padding-bottom: 20px; padding-top: 20px; }
             .dropdown-menu>li+li, .dropdown-menu .dropdown-menu>li { border-top: #6a6a6a70 1px solid !important; border: 0px; }
             .dropdown-menu>li:first-child>a { border-radius: 8px 8px 0 0; }
             .dropdown-menu>li:last-child>a { border-radius: 0 0 8px 8px; }
             .navbar-nav>li>.dropdown-menu, .dropdown-menu, .nav-tabs .dropdown-menu { border-radius: 8px; }
-            .navbar-default .navbar-nav>li>a { color: #TEXT_COLOR# !important; }
-            .navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>li>a:focus { color: #ddd !important; }
+            .navbar-default .navbar-nav>li>a:not(#foxenButton) { color: #TEXT_COLOR# !important; }
+            .navbar-default .navbar-nav>li>a:not(#foxenButton):hover, .navbar-default .navbar-nav>li>a:not(#foxenButton):focus { color: #ddd !important; }
+            #foxenButton { color: var(--fxn-btn-color, var(--fxn-accent, #c026d3)) !important; }
+            #foxenButton::before { background: var(--fxn-btn-color, var(--fxn-accent, #c026d3)) !important; }
             .ajax-alert { border-radius: 10px; }
             .offer-tc-container { border-top: #ff0000 0px solid !important; }
             .tc:not(.tc-selling):not(.tc-finance) .tc-item>div { border-top: #505050 1px solid !important; }
@@ -246,7 +257,10 @@
             table.table-clickable tbody tr a:hover { color: #fff !important; text-decoration: underline; }
             .caret { color: #888 !important; }
             .sort::after { color: #555 !important; }
-            .bootstrap-select .dropdown-toggle .filter-option { background: #65a91a !important; height: 100%; width: 100%; border: 0px #fff solid; border-radius: 8px; color: #fff !important; }
+            .bootstrap-select > .btn.dropdown-toggle, .bootstrap-select > .dropdown-toggle, .bootstrap-select .btn.btn-default.dropdown-toggle, .form-narrow .bootstrap-select .btn.dropdown-toggle, .form-narrow .bootstrap-select > .btn { background: #65a91a !important; background-color: #65a91a !important; border: 0px !important; border-radius: 8px !important; color: #fff !important; box-shadow: none !important; }
+            .bootstrap-select > .btn.dropdown-toggle:hover, .bootstrap-select > .btn.dropdown-toggle:focus, .bootstrap-select > .btn.dropdown-toggle:active, .open > .bootstrap-select > .btn.dropdown-toggle, .open > .bootstrap-select > .btn { background: #589516 !important; background-color: #589516 !important; border: 0px !important; color: #fff !important; }
+            .bootstrap-select .dropdown-toggle .filter-option { background: transparent !important; background-color: transparent !important; border: 0px !important; color: #fff !important; }
+            .bootstrap-select .dropdown-toggle .caret, .bootstrap-select .dropdown-toggle .bs-caret, .bootstrap-select .dropdown-toggle span { color: #fff !important; border-top-color: #fff !important; }
             .has-feedback .form-control { border-radius: 8px; }
             .withdraw-box .slave { background-color: #303030 !important; border-radius: 8px; }
             .withdraw-box .slave:hover { background-color: #3e3e3e !important; border-radius: 8px; }
@@ -259,14 +273,14 @@
             .bootstrap-select .dropdown-menu>.active>a, .bootstrap-select .dropdown-menu>.active>a:hover, .bootstrap-select .dropdown-menu>.active>a:focus { background-color: #1b1b1b !important; color: #82dd1e !important; }
             .chat-header { border: #bd59be00 0px solid !important; }
             .form-inline .form-control { background-color: #0f0f0f !important; border-radius: 8px; }
-            .chat-contacts, .chat-detail { background: #0009 !important; border: #fff 0px solid !important; }
+            .chat-contacts, .chat-detail { background: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border: #fff 0px solid !important; }
             .chat-contacts { border-radius: 10px 0 0 10px; }
             .chat-detail { border-radius: 0 10px 10px 0; }
-            .chat { background: #0009 !important; border-radius: 10px; }
+            .chat, .chat-full .chat { background: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; background-color: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border-radius: 10px; }
             .contact-item { border-bottom: #fff 0px !important; }
             .chat-full-header { border-bottom: #fff 0px solid !important; }
-            .chat-full .chat { border-bottom: 0px solid #fff !important; background-color: #0009 !important; border-radius: 0; }
-            .chat { border-top: 0px solid #fff !important; border-bottom: 0px solid #90f !important; }
+            .chat-full .chat { border-bottom: 0px solid transparent !important; }
+            .chat { border-top: 0px solid #fff !important; border-bottom: 0px solid transparent !important; }
             .alert-info { background-color: #709fdc3b !important; border-color: #709fdc !important; color: #fff !important; border-radius: 8px; }
             .alert-info, .alert-info .chat-msg-text, .alert-info .chat-msg-text * { color: #fff !important; }
             .alert-info a, .alert-info .chat-msg-text a { color: #LINK_COLOR# !important; }
@@ -311,18 +325,71 @@
             `;
         }
         if (settings.enableGlassmorphism) {
-            const glassBg = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
-            const safeBlur = Math.min(16, Math.max(0, parseInt(settings.glassmorphismBlur, 10) || 10));
+            const opVal = (settings.containerBgOpacity !== undefined && parseFloat(settings.containerBgOpacity) < 1)
+                ? parseFloat(settings.containerBgOpacity)
+                : 0.75;
+            const glassBg = hexToRgba(settings.containerBgColor || '#0b0b0b', opVal);
+            const safeBlur = Math.min(30, Math.max(2, parseInt(settings.glassmorphismBlur, 10) || 12));
             themedCss += `
-                .offer, .tc {
+                #header, .navbar-default, header, #header.navbar-default, .bg-light-style #header, .bg-light-style .navbar-default {
                     background: ${glassBg} !important;
-                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                    background-color: ${glassBg} !important;
+                    backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
+                    -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
                 }
-                .modal-content, .chat-contacts, .chat-detail, .chat, .dropdown-menu, .panel, .content-with-cd-wide, .payment-card, .details, .form-narrow {
+                .offer, 
+                .tc:not(.offer .tc), 
+                .content-with-cd-wide, 
+                .content-with-cd-narrow, 
+                .modal-content, 
+                .chat-contacts, 
+                .chat-detail, 
+                .chat, 
+                .chat-full .chat,
+                .chat-full,
+                .fxn-chat-translate-banner,
+                .dropdown-menu, 
+                #fp-rmthub-drop,
+                .fp-rmthub-drop,
+                .panel, 
+                .payment-card, 
+                .details, 
+                .form-narrow, 
+                .user-card,
+                .fxn-peek-panel {
                     background: ${glassBg} !important;
-                    backdrop-filter: blur(${safeBlur}px);
-                    -webkit-backdrop-filter: blur(${safeBlur}px);
-                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    background-color: ${glassBg} !important;
+                    backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
+                    -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                    border-radius: var(--fxn-theme-border-radius, 10px) !important;
+                    isolation: isolate !important;
+                }
+                .offer .tc,
+                .offer .tc.table-hover,
+                .tc .tc-header,
+                .tc .tc-item,
+                .tc.table-hover .tc-item,
+                .bg-light-style .tc.table-hover .tc-item {
+                    background: transparent !important;
+                    background-color: transparent !important;
+                    backdrop-filter: none !important;
+                    -webkit-backdrop-filter: none !important;
+                }
+                .tc.table-hover .tc-item:hover,
+                .tc.table-hover a.tc-item:hover {
+                    background-color: rgba(255, 255, 255, 0.06) !important;
+                }
+                .content-with-cd:not(.content-with-cd-wide):not(.content-with-cd-narrow),
+                .counter-list,
+                .counter-list-wide {
+                    background: transparent !important;
+                    background-color: transparent !important;
+                    backdrop-filter: none !important;
+                    -webkit-backdrop-filter: none !important;
+                    border: none !important;
+                    box-shadow: none !important;
                 }
             `;
         }
@@ -384,11 +451,14 @@
         try {
             const enabledStr = sessionStorage.getItem('foxen_theme_enabled') ?? localStorage.getItem('foxen_theme_enabled');
             const cacheStr = sessionStorage.getItem('foxen_theme_cache') ?? localStorage.getItem('foxen_theme_cache');
+            const accent = sessionStorage.getItem('foxen_accent_color') ?? localStorage.getItem('foxen_accent_color');
+            const glass = sessionStorage.getItem('foxen_glass_blur') ?? localStorage.getItem('foxen_glass_blur');
+            const popupTheme = sessionStorage.getItem('foxen_popup_theme') ?? localStorage.getItem('foxen_popup_theme');
             const enabled = enabledStr === null ? true : enabledStr !== '0';
             const theme = cacheStr ? JSON.parse(cacheStr) : null;
-            return { enabled, theme };
+            return { enabled, theme, accent, glass, popupTheme };
         } catch (_) {
-            return { enabled: true, theme: null };
+            return { enabled: true, theme: null, accent: null, glass: null, popupTheme: null };
         }
     }
 
@@ -420,6 +490,20 @@
     if (document.documentElement) {
         document.documentElement.classList.toggle('fxn-custom-theme-on', isThemeOn);
         document.documentElement.classList.toggle('fxn-custom-theme-off', !isThemeOn);
+        if (cached.accent) {
+            document.documentElement.style.setProperty('--fxn-accent', cached.accent);
+            document.documentElement.style.setProperty('--fxn-active', cached.accent);
+            document.documentElement.style.setProperty('--fxn-btn-color', cached.accent);
+        }
+        if (cached.glass) {
+            document.documentElement.style.setProperty('--fxn-glass-blur', `${cached.glass}px`);
+        }
+        if (cached.popupTheme) {
+            document.documentElement.setAttribute('data-fxn-popup-theme', cached.popupTheme);
+            document.documentElement.classList.toggle('fxn-popup-theme-light', cached.popupTheme === 'light');
+            document.documentElement.classList.toggle('fxn-popup-theme-dark', cached.popupTheme === 'dark');
+            document.documentElement.classList.toggle('fxn-popup-theme-transparent', cached.popupTheme === 'transparent');
+        }
     }
 
     if (isThemeOn) {
@@ -442,7 +526,13 @@
         const filterParts = [];
         if (initialSettings.bgBlur && parseFloat(initialSettings.bgBlur) > 0) filterParts.push(`blur(${initialSettings.bgBlur}px)`);
         if (initialSettings.bgBrightness !== undefined && parseFloat(initialSettings.bgBrightness) !== 100) filterParts.push(`brightness(${initialSettings.bgBrightness}%)`);
-        const containerBgRgba = hexToRgba(initialSettings.containerBgColor, initialSettings.containerBgOpacity);
+        let containerBgRgba = hexToRgba(initialSettings.containerBgColor, initialSettings.containerBgOpacity);
+        if (initialSettings.enableGlassmorphism) {
+            const opVal = (initialSettings.containerBgOpacity !== undefined && parseFloat(initialSettings.containerBgOpacity) < 1)
+                ? parseFloat(initialSettings.containerBgOpacity)
+                : 0.75;
+            containerBgRgba = hexToRgba(initialSettings.containerBgColor || '#0b0b0b', opVal);
+        }
 
         const rootStyle = document.documentElement?.style;
         if (rootStyle) {
@@ -453,7 +543,11 @@
             rootStyle.setProperty('--fxn-theme-accent-color', initialSettings.bgColor2 || '#f4cf78');
             rootStyle.setProperty('--fxn-theme-primary-color', initialSettings.bgColor1 || '#ff6d15');
             rootStyle.setProperty('--fxn-theme-link-color', initialSettings.linkColor || '#2d6bb3');
+            const safeBlur = Math.min(30, Math.max(2, parseInt(initialSettings.glassmorphismBlur, 10) || 12));
+            rootStyle.setProperty('--fxn-theme-glass-blur', `${safeBlur}px`);
+            rootStyle.setProperty('--fxn-glass-blur', `${safeBlur}px`);
         }
+        document.documentElement.classList.toggle('fxn-glass-enabled', !!initialSettings.enableGlassmorphism);
 
         const themeStyle = ensureStyle(THEME_STYLE_ID);
         themeStyle.textContent = getCustomThemeCss(initialSettings);
@@ -490,7 +584,11 @@
                 'foxenThemeBgIsAnimated',
                 'hideBalance',
                 'foxenDisabledFeatures',
-                'foxenLiveStyles'
+                'foxenLiveStyles',
+                'foxenPopupTheme',
+                'foxenAccentColor',
+                'foxenGlassBlur',
+                'foxenHeaderButtonStyles'
             ]);
 
             const enableCustomTheme = data.enableCustomTheme !== false;
@@ -501,10 +599,32 @@
             // Обновляем кеш
             setCachedThemeData(enableCustomTheme, settings);
 
+            const popupTheme = data.foxenPopupTheme || (data.foxenTheme?.menuTransparent ? 'transparent' : (cached.popupTheme || 'dark'));
+            const accentColor = data.foxenAccentColor || data.foxenHeaderButtonStyles?.color || cached.accent || '#c026d3';
+            const glassBlur = data.foxenGlassBlur || cached.glass || 16;
+
+            try {
+                sessionStorage.setItem('foxen_accent_color', accentColor);
+                localStorage.setItem('foxen_accent_color', accentColor);
+                sessionStorage.setItem('foxen_glass_blur', String(glassBlur));
+                localStorage.setItem('foxen_glass_blur', String(glassBlur));
+                sessionStorage.setItem('foxen_popup_theme', popupTheme);
+                localStorage.setItem('foxen_popup_theme', popupTheme);
+            } catch (_) {}
+
             if (document.documentElement) {
                 document.documentElement.classList.toggle('fxn-custom-theme-on', enableCustomTheme);
                 document.documentElement.classList.toggle('fxn-custom-theme-off', !enableCustomTheme);
                 document.documentElement.classList.toggle('fxn-animated-bg', enableCustomTheme && !!isAnim);
+                document.documentElement.setAttribute('data-fxn-popup-theme', popupTheme);
+                document.documentElement.classList.toggle('fxn-popup-theme-light', popupTheme === 'light');
+                document.documentElement.classList.toggle('fxn-popup-theme-dark', popupTheme === 'dark');
+                document.documentElement.classList.toggle('fxn-popup-theme-transparent', popupTheme === 'transparent');
+
+                document.documentElement.style.setProperty('--fxn-accent', accentColor);
+                document.documentElement.style.setProperty('--fxn-active', accentColor);
+                document.documentElement.style.setProperty('--fxn-btn-color', accentColor);
+                document.documentElement.style.setProperty('--fxn-glass-blur', `${glassBlur}px`);
             }
             if (document.body) {
                 document.body.classList.toggle('fxn-animated-bg', enableCustomTheme && !!isAnim);
@@ -529,7 +649,13 @@
                 const filterParts = [];
                 if (settings.bgBlur && parseFloat(settings.bgBlur) > 0) filterParts.push(`blur(${settings.bgBlur}px)`);
                 if (settings.bgBrightness !== undefined && parseFloat(settings.bgBrightness) !== 100) filterParts.push(`brightness(${settings.bgBrightness}%)`);
-                const containerBgRgba = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
+                let containerBgRgba = hexToRgba(settings.containerBgColor, settings.containerBgOpacity);
+                if (settings.enableGlassmorphism) {
+                    const opVal = (settings.containerBgOpacity !== undefined && parseFloat(settings.containerBgOpacity) < 1)
+                        ? parseFloat(settings.containerBgOpacity)
+                        : 0.75;
+                    containerBgRgba = hexToRgba(settings.containerBgColor || '#0b0b0b', opVal);
+                }
 
                 const rootStyle = document.documentElement?.style;
                 if (rootStyle) {
@@ -540,7 +666,12 @@
                     rootStyle.setProperty('--fxn-theme-accent-color', settings.bgColor2 || '#f4cf78');
                     rootStyle.setProperty('--fxn-theme-primary-color', settings.bgColor1 || '#ff6d15');
                     rootStyle.setProperty('--fxn-theme-link-color', settings.linkColor || '#2d6bb3');
+                    const safeBlur = Math.min(30, Math.max(2, parseInt(settings.glassmorphismBlur, 10) || 12));
+                    rootStyle.setProperty('--fxn-theme-glass-blur', `${safeBlur}px`);
+                    rootStyle.setProperty('--fxn-glass-blur', `${safeBlur}px`);
                 }
+                document.documentElement.classList.toggle('fxn-glass-enabled', !!settings.enableGlassmorphism);
+                if (document.body) document.body.classList.toggle('fxn-glass-enabled', !!settings.enableGlassmorphism);
 
                 const themeStyle = ensureStyle(THEME_STYLE_ID);
                 const newCss = getCustomThemeCss(settings);
@@ -587,6 +718,51 @@
                     liveStyleEl.textContent = cssText;
                 }
             }
+
+            try {
+                const extApi = typeof browser !== 'undefined' ? browser : chrome;
+                if (extApi?.storage?.onChanged) {
+                    extApi.storage.onChanged.addListener((changes, area) => {
+                        if (area !== 'local') return;
+                        const root = document.documentElement;
+                        if (!root) return;
+
+                        if (changes.foxenPopupTheme) {
+                            const newTheme = changes.foxenPopupTheme.newValue || 'dark';
+                            try {
+                                sessionStorage.setItem('foxen_popup_theme', newTheme);
+                                localStorage.setItem('foxen_popup_theme', newTheme);
+                            } catch (_) {}
+                            root.setAttribute('data-fxn-popup-theme', newTheme);
+                            root.classList.toggle('fxn-popup-theme-light', newTheme === 'light');
+                            root.classList.toggle('fxn-popup-theme-dark', newTheme === 'dark');
+                            root.classList.toggle('fxn-popup-theme-transparent', newTheme === 'transparent');
+                            document.dispatchEvent(new CustomEvent('foxenThemeChanged', { detail: { theme: newTheme } }));
+                        }
+                        if (changes.foxenAccentColor || changes.foxenHeaderButtonStyles) {
+                            const newAccent = changes.foxenAccentColor?.newValue || changes.foxenHeaderButtonStyles?.newValue?.color;
+                            if (newAccent) {
+                                try {
+                                    sessionStorage.setItem('foxen_accent_color', newAccent);
+                                    localStorage.setItem('foxen_accent_color', newAccent);
+                                } catch (_) {}
+                                root.style.setProperty('--fxn-accent', newAccent);
+                                root.style.setProperty('--fxn-active', newAccent);
+                                root.style.setProperty('--fxn-btn-color', newAccent);
+                                document.dispatchEvent(new CustomEvent('foxenThemeChanged', { detail: { accent: newAccent } }));
+                            }
+                        }
+                        if (changes.foxenGlassBlur) {
+                            const newBlur = changes.foxenGlassBlur.newValue || 16;
+                            try {
+                                sessionStorage.setItem('foxen_glass_blur', String(newBlur));
+                                localStorage.setItem('foxen_glass_blur', String(newBlur));
+                            } catch (_) {}
+                            root.style.setProperty('--fxn-glass-blur', `${newBlur}px`);
+                        }
+                    });
+                }
+            } catch (_) {}
         } catch (error) {
             console.error('[Foxen] theme_flash_fix error:', error);
         } finally {

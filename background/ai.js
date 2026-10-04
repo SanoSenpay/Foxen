@@ -68,6 +68,37 @@ function cleanJsonString(raw) {
 }
 
 /**
+ * Очистка и нормализация перевода: удаляет markdown-обёртки, случайные кавычки и вступительные фразы,
+ * а также гарантирует безупречную капитализацию первых букв предложений и слов после знаков (. ! ? \n).
+ */
+function cleanTranslationOutput(text) {
+    if (!text || typeof text !== 'string') return '';
+    let res = text.trim();
+
+    // 1. Убираем markdown code blocks (``` ... ```)
+    res = res.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/i, '').trim();
+
+    // 2. Убираем внешние кавычки вокруг всего текста, если ИИ обернул ответ
+    if ((res.startsWith('"') && res.endsWith('"')) ||
+        (res.startsWith("'") && res.endsWith("'")) ||
+        (res.startsWith('«') && res.endsWith('»')) ||
+        (res.startsWith('“') && res.endsWith('”'))) {
+        res = res.slice(1, -1).trim();
+    }
+
+    // 3. Убираем случайные вступительные префиксы
+    res = res.replace(/^(?:Translation|Перевод|Translated text|Output):\s*/i, '');
+
+    // 4. Гарантируем заглавную букву в начале текста
+    res = res.replace(/^[\s\p{P}]*[\p{Ll}]/u, m => m.toUpperCase());
+
+    // 5. Гарантируем заглавную букву после знаков завершения мысли (. ! ? \n) с пробелом
+    res = res.replace(/([.!?\n]\s+[^\p{L}\p{N}]*)([\p{Ll}])/gu, (m, p1, p2) => p1 + p2.toUpperCase());
+
+    return res.trim();
+}
+
+/**
  * Экранирует недопустимые управляющие символы (0x00..0x1F, включая сырые переносы строк \n, \r, \t)
  * внутри строковых литералов JSON.
  */
@@ -207,114 +238,378 @@ async function getUserAIProvider() {
 
 // ---------------------------------------------------------------------------
 // makeAIRequestViaUserKey — direct call to user's chosen provider
-// Returns { success, data, source } or throws on network error
 // ---------------------------------------------------------------------------
-async function makeAIRequestViaUserKey(provider, apiKey, model, finalPrompt) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+// SMART MODEL CASCADE & RATE-LIMIT COOLDOWN SYSTEM
+// ---------------------------------------------------------------------------
 
-    try {
-        if (provider === 'gemini') {
-            // Google Gemini — generativelanguage.googleapis.com
-            const mdl = model || 'gemini-2.0-flash';
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${apiKey}`;
-            const body = {
-                system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: [{ role: 'user', parts: [{ text: finalPrompt.trim() }] }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-            };
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-                signal: controller.signal
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err?.error?.message || `HTTP ${res.status}`);
-            }
-            const json = await res.json();
-            const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!text) throw new Error('Gemini: пустой ответ');
-            return { success: true, data: text.trim(), source: 'gemini' };
+const GEMINI_CASCADE_MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-3.7-flash',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
+    'gemini-flash-latest',
+    'gemini-2.5-pro'
+];
 
-        } else if (provider === 'openai') {
-            // OpenAI — api.openai.com
-            const mdl = model || 'gpt-4o-mini';
-            const res = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: mdl,
-                    messages: [
-                        { role: 'system', content: SYSTEM_PROMPT },
-                        { role: 'user', content: finalPrompt.trim() }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 2048
-                }),
-                signal: controller.signal
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err?.error?.message || `HTTP ${res.status}`);
-            }
-            const json = await res.json();
-            const text = json?.choices?.[0]?.message?.content;
-            if (!text) throw new Error('OpenAI: пустой ответ');
-            return { success: true, data: text.trim(), source: 'openai' };
+const OPENROUTER_CASCADE_MODELS = [
+    'google/gemini-2.0-flash-exp:free',
+    'google/gemini-2.5-flash:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'deepseek/deepseek-chat:free',
+    'qwen/qwen-2.5-72b-instruct:free',
+    'google/gemini-flash-1.5:free'
+];
 
-        } else if (provider === 'openrouter') {
-            // OpenRouter — openrouter.ai (supports Gemini, Claude, Deepseek, etc.)
-            const mdl = model || 'google/gemini-2.0-flash-exp:free';
-            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                    'HTTP-Referer': 'https://funpay.com',
-                    'X-Title': 'Foxen Extension'
-                },
-                body: JSON.stringify({
-                    model: mdl,
-                    messages: [
-                        { role: 'system', content: SYSTEM_PROMPT },
-                        { role: 'user', content: finalPrompt.trim() }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 2048
-                }),
-                signal: controller.signal
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err?.error?.message || `HTTP ${res.status}`);
+const OPENAI_CASCADE_MODELS = [
+    'gpt-4o-mini',
+    'gpt-4o',
+    'chatgpt-4o-latest'
+];
+
+// In-memory model cooldown tracking (resets per browser session / expires on TTL)
+// Key: `${provider}:${model}`, Value: { expiresAt: number, reason: string }
+const _modelCooldowns = new Map();
+
+function getModelCooldownKey(provider, model) {
+    return `${provider}:${model}`.toLowerCase();
+}
+
+function isModelOnCooldown(provider, model) {
+    const key = getModelCooldownKey(provider, model);
+    const entry = _modelCooldowns.get(key);
+    if (!entry) return false;
+    if (Date.now() >= entry.expiresAt) {
+        _modelCooldowns.delete(key);
+        return false;
+    }
+    return true;
+}
+
+function setModelCooldown(provider, model, errorMsg = '') {
+    const key = getModelCooldownKey(provider, model);
+    const msg = String(errorMsg || '').toLowerCase();
+    const isDaily = msg.includes('daily') || msg.includes('per day') || msg.includes('rpd');
+    const isOverload = msg.includes('overload') || msg.includes('503') || msg.includes('temporarily');
+    const isNotFound = msg.includes('not found') || msg.includes('404') || msg.includes('is not supported');
+
+    // Кулдаун для предотвращения спама в модель с исчерпанными лимитами:
+    // • Суточный лимит (RPD): 20 минут паузы
+    // • Модель не найдена / устарела (404): 12 часов
+    // • Перегрузка серверов Google (503): 20 секунд
+    // • Минутный лимит (RPM 429): 60 секунд (период сброса квоты Google AI Studio)
+    const durationMs = isNotFound ? 12 * 60 * 60 * 1000 : (isDaily ? 20 * 60 * 1000 : (isOverload ? 20 * 1000 : 60 * 1000));
+    _modelCooldowns.set(key, {
+        expiresAt: Date.now() + durationMs,
+        reason: isDaily ? 'daily_quota' : (isNotFound ? 'unsupported' : (isOverload ? 'overload' : 'rate_limit'))
+    });
+    console.warn(`[Foxen AI] Модель ${provider}/${model} временно на паузе (${Math.round(durationMs / 1000)}с). Причина: ${errorMsg}`);
+}
+
+function clearModelCooldown(provider, model) {
+    _modelCooldowns.delete(getModelCooldownKey(provider, model));
+}
+
+/**
+ * Извлечение чистого текста из ответа Gemini API с фильтрацией внутренних мыслей (thought)
+ * в моделях линейки Gemini 2.0 / 2.5 / 3.x
+ */
+function extractGeminiText(json) {
+    const candidate = json?.candidates?.[0];
+    if (!candidate?.content?.parts) return null;
+    const parts = candidate.content.parts;
+
+    // 1. Отбираем части ответа, не являющиеся скрытыми мыслями рассуждения
+    const nonThoughtParts = parts
+        .filter(p => !p.thought && typeof p.text === 'string')
+        .map(p => p.text.trim())
+        .filter(Boolean);
+
+    if (nonThoughtParts.length > 0) {
+        return nonThoughtParts.join('\n');
+    }
+
+    // 2. Резервный сбор любого текста из parts
+    const allParts = parts
+        .filter(p => typeof p.text === 'string')
+        .map(p => p.text.trim())
+        .filter(Boolean);
+
+    return allParts.join('\n') || null;
+}
+
+/**
+ * Формирует упорядоченный список моделей для каскада:
+ * Сначала модели без активного кулдауна, затем (если все исчерпаны) с наименьшим оставшимся временем кулдауна.
+ */
+function buildOrderedModelCascade(provider, userPreferredModel) {
+    let baseList = [];
+    if (provider === 'gemini') baseList = GEMINI_CASCADE_MODELS;
+    else if (provider === 'openrouter') baseList = OPENROUTER_CASCADE_MODELS;
+    else if (provider === 'openai') baseList = OPENAI_CASCADE_MODELS;
+
+    const candidates = [];
+    const preferred = (userPreferredModel || '').trim();
+    if (preferred) {
+        candidates.push(preferred);
+    }
+    for (const m of baseList) {
+        if (!candidates.includes(m)) {
+            candidates.push(m);
+        }
+    }
+
+    // Разделяем на доступные и те, у которых сейчас активен Rate Limit / Cooldown
+    const available = candidates.filter(m => !isModelOnCooldown(provider, m));
+    const onCooldown = candidates.filter(m => isModelOnCooldown(provider, m)).sort((a, b) => {
+        const tA = _modelCooldowns.get(getModelCooldownKey(provider, a))?.expiresAt || 0;
+        const tB = _modelCooldowns.get(getModelCooldownKey(provider, b))?.expiresAt || 0;
+        return tA - tB;
+    });
+
+    return [...available, ...onCooldown];
+}
+
+// ---------------------------------------------------------------------------
+// makeAIRequestViaUserKey — direct call to user's chosen provider with SMART CASCADE
+// Returns { success, data, source, usedModel } or throws on fatal error
+// ---------------------------------------------------------------------------
+async function makeAIRequestViaUserKey(provider, apiKey, model, finalPrompt, customSystemPrompt = null) {
+    const sysPrompt = customSystemPrompt || SYSTEM_PROMPT;
+    const modelsToTry = buildOrderedModelCascade(provider, model);
+    const errorsCollected = [];
+
+    // --- 1. GOOGLE GEMINI CASCADE ---
+    if (provider === 'gemini') {
+        for (const mdl of modelsToTry) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${apiKey}`;
+                const body = {
+                    system_instruction: { parts: [{ text: sysPrompt }] },
+                    contents: [{ role: 'user', parts: [{ text: finalPrompt.trim() }] }],
+                    generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+                };
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                    signal: controller.signal
+                });
+
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({}));
+                    const errMsg = errJson?.error?.message || `HTTP ${res.status}`;
+                    const errStatus = errJson?.error?.status || '';
+
+                    // Фатальная ошибка: недействительный API-ключ Gemini (смена модели не поможет)
+                    if (
+                        res.status === 400 &&
+                        (errMsg.includes('API key not valid') || errMsg.includes('API_KEY_INVALID') || errStatus === 'INVALID_ARGUMENT') &&
+                        !errMsg.includes('model')
+                    ) {
+                        throw new Error(`Недействительный API-ключ Gemini: ${errMsg}`);
+                    }
+                    if (res.status === 403 && (errMsg.includes('PERMISSION_DENIED') || errMsg.includes('key has expired'))) {
+                        throw new Error(`Доступ запрещен для API-ключа Gemini: ${errMsg}`);
+                    }
+
+                    // Лимит исчерпан (429 / RESOURCE_EXHAUSTED), модель перегружена (503) или недоступна (404/500):
+                    // Ставим модель на кулдаун и мгновенно переключаемся на следующую модель в каскаде!
+                    setModelCooldown('gemini', mdl, errMsg);
+                    errorsCollected.push(`${mdl} (${res.status}): ${errMsg}`);
+                    console.info(`[Foxen AI] Модель ${mdl} исчерпала лимиты или недоступна (${res.status}). Умное переключение на следующую модель...`);
+                    continue;
+                }
+
+                const json = await res.json();
+                const text = extractGeminiText(json);
+                if (!text) {
+                    errorsCollected.push(`${mdl}: пустой ответ`);
+                    setModelCooldown('gemini', mdl, 'пустой ответ');
+                    continue;
+                }
+
+                // Успех! Очищаем кулдаун и возвращаем результат с указанием рабочей модели
+                clearModelCooldown('gemini', mdl);
+                return { success: true, data: text.trim(), source: 'gemini', usedModel: mdl };
+
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    errorsCollected.push(`${mdl}: таймаут (25с)`);
+                    setModelCooldown('gemini', mdl, 'таймаут 25с');
+                    continue;
+                }
+                if (err.message && (err.message.includes('Недействительный API-ключ') || err.message.includes('Доступ запрещен'))) {
+                    throw err;
+                }
+                errorsCollected.push(`${mdl}: ${err.message}`);
+                setModelCooldown('gemini', mdl, err.message);
+            } finally {
+                clearTimeout(timeoutId);
             }
-            const json = await res.json();
-            const text = json?.choices?.[0]?.message?.content;
-            if (!text) throw new Error('OpenRouter: пустой ответ');
-            return { success: true, data: text.trim(), source: 'openrouter' };
         }
 
-        throw new Error('Неизвестный провайдер: ' + provider);
-    } finally {
-        clearTimeout(timeoutId);
+        throw new Error(`Все модели Gemini исчерпали лимиты или временно недоступны [${errorsCollected.join(' | ')}]`);
     }
+
+    // --- 2. OPENROUTER CASCADE ---
+    if (provider === 'openrouter') {
+        for (const mdl of modelsToTry) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+            try {
+                const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'HTTP-Referer': 'https://funpay.com',
+                        'X-Title': 'Foxen Extension'
+                    },
+                    body: JSON.stringify({
+                        model: mdl,
+                        messages: [
+                            { role: 'system', content: sysPrompt },
+                            { role: 'user', content: finalPrompt.trim() }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 2048
+                    }),
+                    signal: controller.signal
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    const errMsg = err?.error?.message || `HTTP ${res.status}`;
+
+                    if (res.status === 401) {
+                        throw new Error(`Недействительный API-ключ OpenRouter: ${errMsg}`);
+                    }
+
+                    // Rate limit (429) или ошибка провайдера бесплатной модели -> переключаемся на следующую
+                    setModelCooldown('openrouter', mdl, errMsg);
+                    errorsCollected.push(`${mdl} (${res.status}): ${errMsg}`);
+                    console.info(`[Foxen AI] OpenRouter модель ${mdl} исчерпала лимиты. Пробую следующую модель в каскаде...`);
+                    continue;
+                }
+
+                const json = await res.json();
+                const text = json?.choices?.[0]?.message?.content;
+                if (!text) {
+                    errorsCollected.push(`${mdl}: пустой ответ`);
+                    continue;
+                }
+
+                clearModelCooldown('openrouter', mdl);
+                return { success: true, data: text.trim(), source: 'openrouter', usedModel: mdl };
+
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    errorsCollected.push(`${mdl}: таймаут (25с)`);
+                    setModelCooldown('openrouter', mdl, 'таймаут 25с');
+                    continue;
+                }
+                if (err.message && err.message.includes('Недействительный API-ключ')) {
+                    throw err;
+                }
+                errorsCollected.push(`${mdl}: ${err.message}`);
+                setModelCooldown('openrouter', mdl, err.message);
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        throw new Error(`Все модели OpenRouter исчерпали лимиты [${errorsCollected.join(' | ')}]`);
+    }
+
+    // --- 3. OPENAI CASCADE ---
+    if (provider === 'openai') {
+        for (const mdl of modelsToTry) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+            try {
+                const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: mdl,
+                        messages: [
+                            { role: 'system', content: sysPrompt },
+                            { role: 'user', content: finalPrompt.trim() }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 2048
+                    }),
+                    signal: controller.signal
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    const errMsg = err?.error?.message || `HTTP ${res.status}`;
+
+                    if (res.status === 401) {
+                        throw new Error(`Недействительный API-ключ OpenAI: ${errMsg}`);
+                    }
+
+                    setModelCooldown('openai', mdl, errMsg);
+                    errorsCollected.push(`${mdl} (${res.status}): ${errMsg}`);
+                    console.info(`[Foxen AI] OpenAI модель ${mdl} вернула ошибку. Пробую следующую...`);
+                    continue;
+                }
+
+                const json = await res.json();
+                const text = json?.choices?.[0]?.message?.content;
+                if (!text) {
+                    errorsCollected.push(`${mdl}: пустой ответ`);
+                    continue;
+                }
+
+                clearModelCooldown('openai', mdl);
+                return { success: true, data: text.trim(), source: 'openai', usedModel: mdl };
+
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    errorsCollected.push(`${mdl}: таймаут (25с)`);
+                    setModelCooldown('openai', mdl, 'таймаут 25с');
+                    continue;
+                }
+                if (err.message && err.message.includes('Недействительный API-ключ')) {
+                    throw err;
+                }
+                errorsCollected.push(`${mdl}: ${err.message}`);
+                setModelCooldown('openai', mdl, err.message);
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        throw new Error(`Все модели OpenAI исчерпали квоту или лимиты [${errorsCollected.join(' | ')}]`);
+    }
+
+    throw new Error('Неизвестный провайдер: ' + provider);
 }
 
 // ---------------------------------------------------------------------------
 // makeAIRequest — main entry point. Tries user key first, falls back to Foxen
 // ---------------------------------------------------------------------------
-async function makeAIRequest(finalPrompt) {
+async function makeAIRequest(finalPrompt, customSystemPrompt = null) {
     // 1. Try user's own API key if configured
     const userProv = await getUserAIProvider();
     if (userProv.provider && userProv.apiKey) {
         try {
             const result = await makeAIRequestViaUserKey(
-                userProv.provider, userProv.apiKey, userProv.model || '', finalPrompt
+                userProv.provider, userProv.apiKey, userProv.model || '', finalPrompt, customSystemPrompt
             );
             return result; // { success, data, source: 'gemini'/'openai'/'openrouter' }
         } catch (e) {
@@ -328,8 +623,10 @@ async function makeAIRequest(finalPrompt) {
         return { success: false, error: "URL сервера не настроен в background/ai.js" };
     }
 
+    const sysPrompt = customSystemPrompt || SYSTEM_PROMPT;
+
     const payload = {
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: finalPrompt.trim() }],
+        messages: [{ role: "system", content: sysPrompt }, { role: "user", content: finalPrompt.trim() }],
         modelName: "ChatGPT 4o",
         currentPagePath: "/chatgpt-4o"
     };
@@ -354,13 +651,21 @@ async function makeAIRequest(finalPrompt) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
+            const rawDetails = errorData.details || errorData.error || '';
             const details = errorData.error || errorData.details || `HTTP ${response.status} ${response.statusText}`;
-            console.error(`AI Server Error: ${details}`);
+            console.error(`AI Server Error:`, errorData);
+
+            if (String(rawDetails).includes('daily free allocation') || response.status === 503) {
+                return {
+                    success: false,
+                    error: `Дневной лимит общего сервера ИИ временно исчерпан. Подключите свой бесплатный ключ Gemini или OpenRouter в Настройках Foxen (раздел «ИИ / API ключи»), чтобы ИИ работал всегда и без ограничений.`
+                };
+            }
             
             if (response.status >= 500) {
                  return { 
                     success: false, 
-                    error: `Сервер ИИ временно перегружен (${details}). Попробуйте ещё раз через несколько секунд.` 
+                    error: `Сервер ИИ временно перегружен (${details}). Вы можете указать свой ключ в Настройках Foxen → ИИ.` 
                 };
             }
             return { success: false, error: `Ошибка ИИ: ${details}` };
@@ -440,7 +745,60 @@ ${context}
 JSON:`;
 
     } else if (type === 'translate_to_russian') {
-        finalPrompt = `Переведи следующий текст на русский язык. Верни ТОЛЬКО перевод, без пояснений и кавычек:\n\n${textForAI}`;
+        const translateSysPrompt = `Ты — профессиональный лингвист и игровой переводчик для торговой биржи FunPay. Твоя задача: делать безупречный, живой, вежливый и грамматически точный перевод на русский язык с соблюдением правил пунктуации и регистра (заглавные буквы в начале предложений и после знаков . ! ?).`;
+        finalPrompt = `Переведи следующий текст на русский язык.
+
+ПРАВИЛА КАЧЕСТВА:
+1. ПУНКТУАЦИЯ И РЕГИСТР: Каждое предложение ОБЯЗАТЕЛЬНО начинай с заглавной буквы. После знаков завершения мысли (. ! ?) следующее слово ВСЕГДА пиши с заглавной буквы (например: "Привет! как твои дела?" -> "Привет! Как твои дела?"). Исправляй небрежный строчный регистр оригинала при необходимости.
+2. ЕСТЕСТВЕННЫЙ ЖИВОЙ ТОН: Перевод должен звучать органично и вежливо для общения покупателя и продавца на торговой бирже FunPay.
+3. ИГРОВОЙ КОНТЕКСТ: Сохраняй игровую терминологию, сленг, эмодзи, ссылки, теги, числа и переносы строк.
+4. ЧИСТЫЙ ВЫВОД: Верни ТОЛЬКО готовый переведённый текст без каких-либо вводных слов, пояснений, кавычек или markdown-блоков.
+
+Оригинальный текст:
+${textForAI}`;
+
+        const res = await makeAIRequest(finalPrompt, translateSysPrompt);
+        if (res && res.success && typeof res.data === 'string') {
+            res.data = cleanTranslationOutput(res.data);
+        }
+        return res;
+
+    } else if (type === 'translate') {
+        const targetLangCode = (context || 'en').toLowerCase().trim();
+        const LANG_NAMES = {
+            'en': 'английский (English)',
+            'ru': 'русский (Russian)',
+            'es': 'испанский (Español)',
+            'de': 'немецкий (Deutsch)',
+            'zh': 'китайский (Chinese)',
+            'tr': 'турецкий (Türkçe)',
+            'fr': 'французский (Français)',
+            'it': 'итальянский (Italiano)',
+            'pl': 'польский (Polski)',
+            'uk': 'украинский (Ukrainian)',
+            'pt': 'португальский (Português)',
+            'ja': 'японский (Japanese)'
+        };
+        const langName = LANG_NAMES[targetLangCode] || targetLangCode;
+        const translateSysPrompt = `Ты — высококлассный профессиональный переводчик для международной торговой биржи FunPay. Твоя цель — делать живой, естественный, вежливый и грамматически безупречный перевод на ${langName}. Ты строго соблюдаешь типографику и правила пунктуации целевого языка (заглавные буквы в начале предложений и после знаков . ! ?), даже если в исходном сообщении пользователя были опечатки или строчный регистр.`;
+
+        finalPrompt = `Переведи следующее сообщение на язык: ${langName}.
+
+СТРОГИЕ ПРАВИЛА КАЧЕСТВА:
+1. ПУНКТУАЦИЯ И РЕГИСТР: Каждое новое предложение ОБЯЗАНО начинаться с заглавной буквы. После знаков завершения мысли (. ! ?) следующее предложение ВСЕГДА начинается с заглавной буквы (строгий пример: "Привет! как твои дела?" -> "Hi! How are you?", а НЕ "Hi! how are you?"). Автоматически исправляй небрежный строчный регистр оригинала.
+2. ЕСТЕСТВЕННЫЙ СТИЛЬ: Перевод должен звучать естественно, чисто и вежливо для носителя языка, избегай топорного машинного подстрочника.
+3. ИГРОВОЙ КОНТЕКСТ: Сохраняй терминологию биржи FunPay (аккаунт, логин, пароль, почта, привязка/перепривязка, код подтверждения, гарантия, передача товара, лот, подтверждение заказа, отзыв и т.д.).
+4. СОХРАННОСТЬ ДАННЫХ: Не изменяй эмодзи, ссылки, спецсимволы, цены, числа, коды и структуру переносов строк.
+5. ТОЛЬКО ГОТОВЫЙ ТЕКСТ: Верни ИСКЛЮЧИТЕЛЬНО переведённый текст. Категорически запрещены любые вступительные фразы ("Перевод:", "Translation:"), комментарии, кавычки вокруг текста и markdown-блоки.
+
+Оригинальный текст:
+${textForAI}`;
+
+        const res = await makeAIRequest(finalPrompt, translateSysPrompt);
+        if (res && res.success && typeof res.data === 'string') {
+            res.data = cleanTranslationOutput(res.data);
+        }
+        return res;
 
     } else if (type === 'lot_audit_raw') {
         // Pass the full constructed prompt directly - no wrapping
@@ -682,7 +1040,8 @@ export async function fetchAITranslation(data) {
     }, null, 2);
 
     const prompt = `
-Translate the following Russian texts for a gaming marketplace into natural-sounding English. Preserve emojis and any special characters or symbols. Keep the exact same line structure as the input - do NOT add extra empty lines or blank lines between items.
+Translate the following Russian texts for a gaming marketplace into natural-sounding, grammatically correct English.
+Strictly ensure proper punctuation and capitalization (always begin sentences and words after sentence punctuation . ! ? with capital letters). Preserve emojis and any special characters or symbols. Keep the exact same line structure as the input - do NOT add extra empty lines or blank lines between items.
 
 Your response MUST be strictly a valid JSON object matching the input structure, with no markdown code blocks and no surrounding text.
 CRITICAL: All line breaks inside string values must be properly escaped as \\n (never use raw unescaped line breaks inside string literals).
@@ -698,9 +1057,9 @@ Output JSON:
 
     const _clean = (obj) => {
         if (obj && typeof obj === 'object') {
-            if (obj.title) obj.title = fxnNorm(obj.title);
-            if (obj.description) obj.description = fxnNorm(obj.description);
-            if (obj.buyerMessage) obj.buyerMessage = fxnNorm(obj.buyerMessage);
+            if (obj.title) obj.title = cleanTranslationOutput(fxnNorm(obj.title));
+            if (obj.description) obj.description = cleanTranslationOutput(fxnNorm(obj.description));
+            if (obj.buyerMessage) obj.buyerMessage = cleanTranslationOutput(fxnNorm(obj.buyerMessage));
         }
         return obj;
     };
@@ -771,7 +1130,7 @@ Your response MUST be a single, valid JSON object and nothing else.
 export async function testAIProviderKey(provider, apiKey, model) {
     try {
         const result = await makeAIRequestViaUserKey(provider, apiKey, model, 'Reply with exactly: ok');
-        if (result.success) return { success: true, source: result.source };
+        if (result.success) return { success: true, source: result.source, model: result.usedModel };
         return { success: false, error: result.error || 'Нет ответа' };
     } catch (e) {
         return { success: false, error: e.message };

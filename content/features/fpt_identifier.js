@@ -21,6 +21,10 @@
     const foxenUsers = new Set();
     const fxnUsers   = new Set();
 
+    const extApi = (typeof browser !== 'undefined' ? browser : chrome);
+    const FOXEN_ICON_URL = extApi.runtime.getURL('icons/icon128.png');
+    const FPT_ICON_URL   = extApi.runtime.getURL('icons/fptlogo.png');
+
     let currentChatUserId = null;
     let lastSeenAuthorId  = null;
     let lastRenderedBadgeKey = '';
@@ -34,49 +38,65 @@
             .fxn-status-badge-wrap {
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
+                justify-content: center;
                 margin-left: 6px;
                 vertical-align: middle;
                 user-select: none;
+                line-height: 1;
             }
-            .fxn-badge-foxen {
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-                color: #d946ef;
-                font-size: 11px;
-                font-weight: 600;
-                opacity: 0.9;
-            }
-            .fxn-badge-foxen::before {
-                content: '';
+            .fxn-badge-icon {
+                width: 22px;
+                height: 22px;
+                object-fit: contain;
                 display: inline-block;
-                width: 5px;
-                height: 5px;
-                border-radius: 50%;
-                background: #d946ef;
-                box-shadow: 0 0 6px rgba(217, 70, 239, 0.7);
+                vertical-align: middle;
+                transition: transform 0.18s ease, filter 0.18s ease;
+                cursor: pointer;
             }
-            .fxn-badge-fpt {
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-                color: #38bdf8;
-                font-size: 11px;
-                font-weight: 600;
-                opacity: 0.9;
+            .chat-header .fxn-badge-icon,
+            .profile-header .fxn-badge-icon {
+                width: 24px;
+                height: 24px;
             }
-            .fxn-badge-fpt::before {
-                content: '';
-                display: inline-block;
-                width: 5px;
-                height: 5px;
-                border-radius: 50%;
-                background: #38bdf8;
-                box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+            .chat-msg-author .fxn-badge-icon {
+                width: 20px;
+                height: 20px;
+            }
+            .fxn-badge-icon:hover {
+                transform: scale(1.18);
+            }
+            .fxn-badge-foxen-icon {
+                width: 25px;
+                height: 25px;
+                filter: drop-shadow(0 0 4px rgba(255, 254, 255, 0.63));
+            }
+            .chat-header .fxn-badge-foxen-icon,
+            .profile-header .fxn-badge-foxen-icon {
+                width: 28px;
+                height: 28px;
+            }
+            .chat-msg-author .fxn-badge-foxen-icon {
+                width: 23px;
+                height: 23px;
+            }
+            .fxn-badge-fpt-icon {
+                filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.55));
             }
         `;
         document.head.appendChild(s);
+    }
+
+    function createBadge(type) {
+        const wrap = document.createElement('span');
+        wrap.className = 'fxn-status-badge-wrap';
+        const img = document.createElement('img');
+        const isFoxen = type === 'foxen';
+        img.className = isFoxen ? 'fxn-badge-icon fxn-badge-foxen-icon' : 'fxn-badge-icon fxn-badge-fpt-icon';
+        img.src = isFoxen ? FOXEN_ICON_URL : FPT_ICON_URL;
+        img.alt = isFoxen ? 'Foxen' : 'FunPay Tools';
+        img.title = isFoxen ? 'Пользователь расширения Foxen' : 'Пользователь расширения FunPay Tools';
+        wrap.appendChild(img);
+        return wrap;
     }
 
     function getUserIdFromUrl(url) {
@@ -115,23 +135,9 @@
         statusEl.querySelector('.fxn-status-badge-wrap')?.remove();
 
         if (isFoxen) {
-            const wrap = document.createElement('span');
-            wrap.className = 'fxn-status-badge-wrap';
-            const bFoxen = document.createElement('span');
-            bFoxen.className = 'fxn-badge-foxen';
-            bFoxen.textContent = 'Foxen';
-            bFoxen.title = 'Пользователь расширения Foxen';
-            wrap.appendChild(bFoxen);
-            statusEl.appendChild(wrap);
+            statusEl.appendChild(createBadge('foxen'));
         } else if (isFPT) {
-            const wrap = document.createElement('span');
-            wrap.className = 'fxn-status-badge-wrap';
-            const bFPT = document.createElement('span');
-            bFPT.className = 'fxn-badge-fpt';
-            bFPT.textContent = 'FunPay Tools';
-            bFPT.title = 'Пользователь расширения FunPay Tools';
-            wrap.appendChild(bFPT);
-            statusEl.appendChild(wrap);
+            statusEl.appendChild(createBadge('fpt'));
         }
     }
 
@@ -167,21 +173,11 @@
             // Inline badge on message author header
             const headAuthor = node.querySelector('.chat-msg-author');
             if (headAuthor && !headAuthor.querySelector('.fxn-status-badge-wrap')) {
-                const wrap = document.createElement('span');
-                wrap.className = 'fxn-status-badge-wrap';
-
                 if (hasFoxen) {
-                    const bFoxen = document.createElement('span');
-                    bFoxen.className = 'fxn-badge-foxen';
-                    bFoxen.textContent = 'Foxen';
-                    wrap.appendChild(bFoxen);
+                    headAuthor.appendChild(createBadge('foxen'));
                 } else if (hasFPT) {
-                    const bFPT = document.createElement('span');
-                    bFPT.className = 'fxn-badge-fpt';
-                    bFPT.textContent = 'FunPay Tools';
-                    wrap.appendChild(bFPT);
+                    headAuthor.appendChild(createBadge('fpt'));
                 }
-                headAuthor.appendChild(wrap);
             }
 
             if (authorId && authorId === currentChatUserId) {

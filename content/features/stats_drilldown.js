@@ -105,46 +105,44 @@
         css.id = 'fxn-dd-styles';
         css.textContent = `
         .fxn-dd-overlay{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;
-            justify-content:center;background:rgba(8,9,14,0.62);backdrop-filter:blur(3px);
-            animation:fxnDdFade .15s ease;}
+            justify-content:center;background:var(--fxn-scrim-bg, rgba(8,9,14,0.65));backdrop-filter:blur(var(--fxn-scrim-blur, 10px));
+            -webkit-backdrop-filter:blur(var(--fxn-scrim-blur, 10px));animation:fxnDdFade .15s ease;}
         @keyframes fxnDdFade{from{opacity:0}to{opacity:1}}
         .fxn-dd-modal{width:min(680px,94vw);max-height:86vh;display:flex;flex-direction:column;
-            background:var(--fxn-surface,#171922);color:var(--fxn-text,#e7e9f3);
-            border:1px solid var(--fxn-border,rgba(255,255,255,0.1));border-radius:16px;
-            box-shadow:0 20px 60px rgba(0,0,0,0.5);overflow:hidden;}
-        .fxn-custom-theme-off .fxn-dd-modal{background:#fff;color:#1a1a1a;border-color:rgba(0,0,0,0.12);}
+            background:var(--fxn-content-color,#141414);color:var(--fxn-text-main,#f4f4f3);
+            border:1px solid var(--fxn-divider-color,rgba(255,255,255,0.08));border-radius:20px;
+            box-shadow:var(--fxn-shadow,0 24px 60px rgba(0,0,0,0.65));overflow:hidden;font-family:var(--fxn-font-sans);}
         .fxn-dd-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
-            padding:16px 18px;border-bottom:1px solid var(--fxn-border,rgba(255,255,255,0.08));}
-        .fxn-dd-title{font-size:15px;font-weight:700;}
-        .fxn-dd-sub{font-size:12px;color:var(--fxn-text-muted,#9099b8);margin-top:2px;}
-        .fxn-dd-close{background:none;border:none;color:inherit;font-size:22px;line-height:1;
-            cursor:pointer;opacity:.7;}
-        .fxn-dd-close:hover{opacity:1;}
-        .fxn-dd-tools{display:flex;gap:8px;padding:10px 18px 0;}
-        .fxn-dd-search{flex:1;padding:8px 10px;border-radius:8px;font-size:13px;
-            background:var(--fxn-surface-2,#20222e);color:var(--fxn-text,#fff);
-            border:1px solid var(--fxn-border,#22253a);}
-        .fxn-custom-theme-off .fxn-dd-search{background:#f3f3f5;color:#1a1a1a;border-color:#ddd;}
-        .fxn-dd-sort{padding:8px 10px;border-radius:8px;font-size:13px;
-            background:var(--fxn-surface-2,#20222e);color:var(--fxn-text,#fff);
-            border:1px solid var(--fxn-border,#22253a);cursor:pointer;}
-        .fxn-custom-theme-off .fxn-dd-sort{background:#f3f3f5;color:#1a1a1a;border-color:#ddd;}
-        .fxn-dd-list{padding:12px 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
-        .fxn-dd-row{display:block;text-decoration:none;background:var(--fxn-surface-2,#20222e);
-            border:1px solid var(--fxn-border,#22253a);border-radius:10px;padding:9px 11px;color:inherit;}
-        .fxn-custom-theme-off .fxn-dd-row{background:#f7f7f9;border-color:#e3e3e8;}
-        a.fxn-dd-row:hover{border-color:var(--fxn-accent,#ff6d15);}
+            padding:16px 20px;background:var(--fxn-header-color, rgba(255,255,255,0.02));border-bottom:1px solid var(--fxn-divider-color,rgba(255,255,255,0.08));}
+        .fxn-dd-title{font-size:16px;font-weight:700;color:var(--fxn-text-main);}
+        .fxn-dd-sub{font-size:12px;color:var(--fxn-text-desc,#96969a);margin-top:2px;}
+        .fxn-dd-close{background:transparent;border:none;color:var(--fxn-text-subtle,#5c5c60);font-size:22px;line-height:1;
+            cursor:pointer;width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;transition:all .15s ease;}
+        .fxn-dd-close:hover{background:var(--fxn-card-color-hover);color:var(--fxn-text-main);}
+        .fxn-dd-tools{display:flex;gap:8px;padding:12px 20px 0;background:var(--fxn-header-color, transparent);}
+        .fxn-dd-search{flex:1;padding:9px 12px;border-radius:10px;font-size:13px;
+            background:var(--fxn-card-color,#1c1c1e);color:var(--fxn-text-main,#fff);
+            border:1px solid var(--fxn-divider-color,rgba(255,255,255,0.08));outline:none;transition:border-color .15s;}
+        .fxn-dd-search:focus{border-color:var(--fxn-accent,#c026d3);box-shadow:0 0 0 3px var(--fxn-accent-soft, rgba(192,38,211,0.15));}
+        .fxn-dd-sort{padding:9px 12px;border-radius:10px;font-size:13px;
+            background:var(--fxn-card-color,#1c1c1e);color:var(--fxn-text-main,#fff);
+            border:1px solid var(--fxn-divider-color,rgba(255,255,255,0.08));cursor:pointer;outline:none;}
+        .fxn-dd-sort:focus{border-color:var(--fxn-accent,#c026d3);}
+        .fxn-dd-list{padding:14px 20px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+        .fxn-dd-row{display:block;text-decoration:none;background:var(--fxn-card-color,#1c1c1e);
+            border:1px solid var(--fxn-divider-color,rgba(255,255,255,0.08));border-radius:12px;padding:10px 14px;color:var(--fxn-text-main);transition:all .15s ease;}
+        .fxn-dd-row:hover{background:var(--fxn-card-color-hover);border-color:var(--fxn-accent,#c026d3);transform:translateY(-1px);}
         .fxn-dd-row-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
-        .fxn-dd-row-title{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-        .fxn-dd-row-price{font-size:12.5px;font-weight:700;color:var(--fxn-accent,#ff6d15);white-space:nowrap;}
-        .fxn-dd-row-meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;font-size:11px;
-            color:var(--fxn-text-muted,#9099b8);}
+        .fxn-dd-row-title{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fxn-text-main);}
+        .fxn-dd-row-price{font-size:13px;font-weight:700;color:var(--fxn-accent,#c026d3);white-space:nowrap;}
+        .fxn-dd-row-meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:11.5px;
+            color:var(--fxn-text-desc,#96969a);}
         .fxn-dd-st{font-weight:600;}
-        .fxn-dd-st-closed{color:#3ad07a;} .fxn-dd-st-paid{color:#4aa3ff;} .fxn-dd-st-refunded{color:#ff6b6b;}
-        .fxn-dd-empty{padding:24px;text-align:center;color:var(--fxn-text-muted,#9099b8);font-size:13px;}
+        .fxn-dd-st-closed{color:#10b981;} .fxn-dd-st-paid{color:#3b82f6;} .fxn-dd-st-refunded{color:#ef4444;}
+        .fxn-dd-empty{padding:28px;text-align:center;color:var(--fxn-text-desc,#96969a);font-size:13px;}
         .fp-stat-card{cursor:pointer;transition:transform .08s ease,box-shadow .12s ease;}
         .fp-stat-card:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,0.18);}
-        .fxn-dd-hint{font-size:10px;color:var(--fxn-text-muted,#9099b8);opacity:.7;margin-top:6px;}
+        .fxn-dd-hint{font-size:10px;color:var(--fxn-text-subtle,#5c5c60);opacity:.7;margin-top:6px;}
         `;
         document.head.appendChild(css);
     }
@@ -221,14 +219,21 @@
         });
     }
 
-    // Собирает заказы по предикату + период + (опц.) фильтры статусов.
+    // Собирает заказы по предикату + период + (опц.) фильтры статусов + выбранный лот.
     async function collect(predicate, applyStatusFilter) {
         const all = await db().getAllAsArray();
         const r = periodRange();
         const flt = statusFilters();
+        const selectedLot = (typeof window.fxnGetSelectedLot === 'function') ? window.fxnGetSelectedLot() : null;
         return all.filter(o => {
             if (!inRange(o, r)) return false;
             if (applyStatusFilter && !statusAllowed(o.orderStatus, flt)) return false;
+            if (selectedLot) {
+                const matchesFn = (typeof window.fxnMatchesLot === 'function')
+                    ? window.fxnMatchesLot
+                    : (d, l) => (d || '').trim() === (l || '').trim();
+                if (!matchesFn(o.description, selectedLot)) return false;
+            }
             return predicate(o);
         });
     }
@@ -290,7 +295,9 @@
         const def = defs[id];
         if (!def) return;
         const list = await collect(def.predicate, def.applyStatusFilter);
-        const subtitle = `${periodLabel()} · ${def.summary(list)}`;
+        const selectedLot = (typeof window.fxnGetSelectedLot === 'function') ? window.fxnGetSelectedLot() : null;
+        const lotInfo = selectedLot ? ` · 🎯 Лот: «${selectedLot}»` : '';
+        const subtitle = `${periodLabel()}${lotInfo} · ${def.summary(list)}`;
         openModal(def.title, subtitle, list);
     }
 

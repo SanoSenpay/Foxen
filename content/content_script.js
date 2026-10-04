@@ -201,7 +201,16 @@
             if (typeof window.closeFoxenMenuSettings === 'function') {
                 try { window.closeFoxenMenuSettings(); } catch (_) {}
             }
+            if (typeof window.fxnSyncDockbarActive === 'function') {
+                window.fxnSyncDockbarActive();
+            }
         } else {
+            try {
+                const cachedScrim = localStorage.getItem('foxenScrimEnabled') ?? sessionStorage.getItem('foxenScrimEnabled');
+                if (cachedScrim !== null) {
+                    popup.classList.toggle('fxn-no-scrim', cachedScrim === 'false');
+                }
+            } catch (_) {}
             popup.classList.add('active');
             if (typeof window.switchFoxenPanel === 'function') {
                 try {
@@ -209,6 +218,9 @@
                     if (storage && storage.local) {
                         storage.local.get('foxenLastActivePage', (data) => {
                             window.switchFoxenPanel(data?.foxenLastActivePage || 'general');
+                            if (typeof window.fxnSyncDockbarActive === 'function') {
+                                window.fxnSyncDockbarActive();
+                            }
                         });
                     } else {
                         window.switchFoxenPanel('general');
@@ -219,6 +231,9 @@
             }
             if (typeof applyFptMenuTransparency === 'function') applyFptMenuTransparency();
             if (typeof syncFptMenuControls === 'function') syncFptMenuControls();
+            if (typeof window.fxnSyncDockbarActive === 'function') {
+                window.fxnSyncDockbarActive();
+            }
         }
     };
 
@@ -248,8 +263,17 @@
             return false;
         }
 
-        const toolsMenu = createElement('li');
-        toolsMenu.innerHTML = `<a style="font-family: 'Jim Nightshade', cursive !important; font-size: 21px !important; font-weight: 700 !important; letter-spacing: 2px !important; line-height: 1 !important; cursor: pointer; user-select: none;" id="foxenButton">FOXEN<span></span></a>`;
+        const toolsMenu = createElement('li', { id: 'foxenButtonLi' });
+        const savedAccent = (function() {
+            try {
+                return window.__foxenAccentColor || localStorage.getItem('foxen_accent_color') || sessionStorage.getItem('foxen_accent_color') || '';
+            } catch (_) { return ''; }
+        })();
+        const colorStyle = savedAccent ? `color: ${savedAccent} !important;` : `color: var(--fxn-btn-color, var(--fxn-accent, #c026d3)) !important;`;
+        toolsMenu.innerHTML = `<a style="font-family: 'Jim Nightshade', cursive !important; font-size: 21px !important; font-weight: 700 !important; letter-spacing: 2px !important; line-height: 1 !important; cursor: pointer; user-select: none; ${colorStyle}" id="foxenButton">FOXEN<span></span></a>`;
+        if (document.documentElement.classList.contains('fxn-dockbar-active')) {
+            toolsMenu.style.setProperty('display', 'none', 'important');
+        }
         
         if (anchor.tagName && anchor.tagName.toLowerCase() === 'li') {
             anchor.insertAdjacentElement('afterend', toolsMenu);
@@ -554,6 +578,48 @@
                 } catch (e) {
                     sendResponse({ success: false, error: e.message });
                 }
+                return true;
+            }
+            if (request.action === 'foxenProxyFetch') {
+                (async () => {
+                    try {
+                        const init = {
+                            method: request.options?.method || 'GET',
+                            credentials: 'include'
+                        };
+                        const h = request.options?.headers ? { ...request.options.headers } : {};
+                        delete h['Cookie'];
+                        delete h['cookie'];
+                        delete h['Origin'];
+                        delete h['origin'];
+                        delete h['Referer'];
+                        delete h['referer'];
+
+                        let body = request.options?.body;
+                        try {
+                            const appDataEl = document.querySelector('body[data-app-data]');
+                            if (appDataEl) {
+                                const appData = JSON.parse(appDataEl.getAttribute('data-app-data') || '{}');
+                                if (appData && appData['csrf-token']) {
+                                    h['X-Csrf-Token'] = appData['csrf-token'];
+                                }
+                                if (appData && appData.userId && typeof body === 'string' && !body.includes('user_id=')) {
+                                    body = (body ? body + '&' : '') + 'user_id=' + encodeURIComponent(appData.userId);
+                                }
+                            }
+                        } catch (_) {}
+
+                        init.headers = h;
+                        if (body) {
+                            init.body = body;
+                        }
+                        const res = await fetch(request.url, init);
+                        const text = await res.text();
+                        sendResponse({ success: true, status: res.status, text, ok: res.ok });
+                    } catch (err) {
+                        sendResponse({ success: false, error: err.message });
+                    }
+                })();
                 return true;
             }
             if (request.action === 'FOXEN_PARSE_ACTIVE_PROFILE') {

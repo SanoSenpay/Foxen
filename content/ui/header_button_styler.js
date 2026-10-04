@@ -54,23 +54,35 @@ async function saveButtonStyles(settings) {
         foxenAccentColor: settings.color
     });
     if (settings.color) {
+        try {
+            localStorage.setItem('foxen_accent_color', settings.color);
+            sessionStorage.setItem('foxen_accent_color', settings.color);
+        } catch (_) {}
         document.documentElement.style.setProperty('--fxn-accent', settings.color);
         window.__fptUserAccent = settings.color;
+        window.__foxenAccentColor = settings.color;
     }
 }
 
 async function loadAndApplyButtonStyles() {
     const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
     const data = await storage.get([STORAGE_KEY, 'foxenAccentColor']);
-    const savedAccent = data.foxenAccentColor;
+    const cachedAccent = (function() { try { return localStorage.getItem('foxen_accent_color') || sessionStorage.getItem('foxen_accent_color'); } catch (_) { return null; } })();
+    const savedAccent = data.foxenAccentColor || cachedAccent || data[STORAGE_KEY]?.color;
     const defaults = { color: savedAccent || '#C026D3', size: 14, opacity: 100 };
     const settings = { ...defaults, ...(data[STORAGE_KEY] || {}) };
     if (savedAccent) {
         settings.color = savedAccent;
         document.documentElement.style.setProperty('--fxn-accent', savedAccent);
+        document.documentElement.style.setProperty('--fxn-btn-color', savedAccent);
         window.__fptUserAccent = savedAccent;
+        window.__foxenAccentColor = savedAccent;
     }
     applyButtonStyles(settings);
+    const headerBtn = document.getElementById('foxenButton');
+    if (headerBtn && settings.color) {
+        headerBtn.style.setProperty('color', settings.color, 'important');
+    }
 }
 
 function applyButtonStyles(settings) {
@@ -78,7 +90,7 @@ function applyButtonStyles(settings) {
     if (!styleTag) {
         styleTag = document.createElement('style');
         styleTag.id = BUTTON_STYLE_ID;
-        document.head.appendChild(styleTag);
+        (document.head || document.documentElement).appendChild(styleTag);
     }
 
     const color = settings.color || '#C026D3';
@@ -87,7 +99,8 @@ function applyButtonStyles(settings) {
     document.documentElement.style.setProperty('--fxn-btn-color', color);
 
     styleTag.textContent = `
-        #foxenButton {
+        #foxenButton,
+        .navbar-default .navbar-nav>li>a#foxenButton {
             --fxn-btn-color: ${color} !important;
             color: ${color} !important;
             font-family: 'Jim Nightshade', cursive !important;
@@ -99,6 +112,11 @@ function applyButtonStyles(settings) {
             background: ${color} !important;
         }
     `;
+
+    const headerBtn = document.getElementById('foxenButton');
+    if (headerBtn) {
+        headerBtn.style.setProperty('color', color, 'important');
+    }
 
     // Update styler UI if it exists
     const styler = document.getElementById('foxen-button-styler');

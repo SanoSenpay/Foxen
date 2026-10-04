@@ -329,17 +329,55 @@ function setupActionProcessing() {
     if ($('.actions').length === 0) {
         $(`
             <div class="actions">
-                <span class="log">Выберите действие</span>
-                <div>
-                    <button class="action-lot export-lots" style="background:#2563eb;display:none;">Экспорт (JSON)</button>
+                <div class="actions-status">
+                    <span class="log">Выберите действие</span>
+                    <button type="button" class="actions-deselect-btn" title="Снять выбор" aria-label="Снять выбор">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+                <div class="actions-divider"></div>
+                <div class="actions-buttons-wrap">
+                    <button class="action-lot export-lots" style="display:none;">Экспорт (JSON)</button>
                     <button class="action-lot price-editor">Редактор цен</button>
                     <button class="action-lot dublicate">Дублировать</button>
-                    <button class="action-lot activate-lot" style="background: #4CAF50; display:none;">Включить</button>
+                    <button class="action-lot activate-lot" style="display:none;">Включить</button>
                     <button class="action-lot deactivate-lot">Отключить</button>
                     <button class="action-lot delete-lot">Удалить</button>
                 </div>
             </div>
         `).appendTo('body').hide();
+
+        function syncActionsTheme() {
+            const isLight = document.documentElement.classList.contains('fxn-popup-theme-light')
+                || document.documentElement.getAttribute('data-fxn-popup-theme') === 'light'
+                || (document.querySelector('.fxn-popup.light-theme, .window.light-theme') !== null)
+                || (!document.documentElement.classList.contains('fxn-popup-theme-dark') && document.documentElement.classList.contains('fxn-theme-light'));
+            $('.actions').toggleClass('theme-light', !!isLight);
+        }
+
+        syncActionsTheme();
+
+        try {
+            const extApi = typeof browser !== 'undefined' ? browser : chrome;
+            if (extApi?.storage?.onChanged) {
+                extApi.storage.onChanged.addListener((changes, area) => {
+                    if (area === 'local' && (changes.foxenPopupTheme || changes.foxenTheme)) {
+                        syncActionsTheme();
+                    }
+                });
+            }
+        } catch (_) {}
+
+        try {
+            const themeObserver = new MutationObserver(() => syncActionsTheme());
+            themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-fxn-popup-theme'] });
+        } catch (_) {}
+
+        $(document).on('click', '.actions-deselect-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $('.lot-box input:checked').prop('checked', false).trigger('change');
+        });
 
         // В режиме копирования (чужой профиль) показываем только «Экспорт (JSON)»,
         // прячем действия над своими лотами.
@@ -390,6 +428,15 @@ function setupActionProcessing() {
         const selectAllBtn = $('#foxen-select-all-btn');
 
         $('.actions').css('display', checkedLots > 0 ? 'flex' : 'none');
+        if (checkedLots > 0) {
+            syncActionsTheme();
+            const curText = $('.actions .log').text();
+            if (!curText || curText === 'Выберите действие' || curText.startsWith('Выбрано')) {
+                $('.actions .log').text('Выбрано: ' + checkedLots);
+            }
+        } else {
+            $('.actions .log').text('Выберите действие');
+        }
         updateActivateDeactivateCounts();
         
         // Обновляем состояние кнопки "Выбрать все" / "Снять все"

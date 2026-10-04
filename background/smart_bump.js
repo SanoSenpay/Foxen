@@ -1,17 +1,5 @@
 // background/smart_bump.js - Foxen 2.8
-// "Smart" auto-raise mode, ported from Foxen's Foxen.raise_lots().
-//
-// The old autobump just raised every category on a fixed interval (e.g. every 245 min) and
-// ate FunPay's "wait N minutes" errors. Smart mode instead:
-//   - reads FunPay's actual response after each raise attempt,
-//   - parses the exact remaining wait time per category (parseWaitTime, ported 1:1 from
-//     Foxen's utils.parse_wait_time),
-//   - stores a per-category nextRaiseAt timestamp,
-//   - only raises categories that are actually due,
-//   - reschedules its heartbeat to fire right when the soonest category becomes due.
-//
-// Result: each category is raised as early as FunPay allows, with no wasted requests and no
-// rate-limit spam - exactly Foxen's behaviour, adapted to MV3.
+import { getAuthDetailsForBackground, fetchWithTabFallback } from './auth_helper.js';
 
 export const SMART_BUMP_ALARM = 'foxenSmartBump';
 const STATE_KEY = 'foxenSmartBumpState'; // { [categoryUrl]: { nextRaiseAt, name } }
@@ -39,47 +27,28 @@ async function parseHtmlViaOffscreen(html, action, extra = {}) {
 }
 
 async function getAuth() {
-    const gk = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
-    if (!gk?.value) return null;
-    const ps = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
-    const cookies = ps?.value ? `golden_key=${gk.value}; PHPSESSID=${ps.value}` : `golden_key=${gk.value}`;
-
-    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: 'https://funpay.com/*' });
-    for (const tab of tabs) {
-        if (tab.discarded) continue;
-        try {
-            const r = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: 'getAppData' });
-            if (r?.success) {
-                const d = Array.isArray(r.data) ? r.data[0] : r.data;
-                if (d?.['csrf-token'] && d.userId) return { cookies, csrfToken: d['csrf-token'], userId: d.userId };
-            }
-        } catch (_) {}
-    }
-    // fallback: scrape main page
-    try {
-        const res = await fetch('https://funpay.com/', { headers: { cookie: cookies } });
-        const text = await res.text();
-        const m = text.match(/<body[^>]*data-app-data="([^"]+)"/);
-        if (m) {
-            const d = JSON.parse(m[1].replace(/&quot;/g, '"'));
-            const u = Array.isArray(d) ? d[0] : d;
-            if (u?.['csrf-token'] && u.userId) return { cookies, csrfToken: u['csrf-token'], userId: u.userId };
-        }
-    } catch (_) {}
-    return null;
+    const auth = await getAuthDetailsForBackground();
+    if (!auth || (!auth.userId && !auth.golden_key)) return null;
+    const cookies = (auth.golden_key && auth.golden_key !== 'active_session')
+        ? (auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`)
+        : '';
+    const csrfToken = auth.csrf_token || auth.csrfToken;
+    const userId = auth.userId;
+    if (!csrfToken || !userId) return null;
+    return { cookies, csrfToken, userId, golden_key: auth.golden_key, phpsessid: auth.phpsessid };
 }
 
 // Raise one category. Returns { ok, waitSec, name } - waitSec is when to try again.
 async function raiseCategory(categoryUrl, auth) {
     const headers = {
         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'cookie': auth.cookies,
         'x-requested-with': 'XMLHttpRequest',
         'x-csrf-token': auth.csrfToken
     };
+    if (auth.cookies) headers['cookie'] = auth.cookies;
 
     // Load category page to discover game_id / node_id and name.
-    const pageRes = await fetch(categoryUrl, { headers: { cookie: auth.cookies } });
+    const pageRes = await fetchWithTabFallback(categoryUrl, { credentials: 'include', headers });
     if (!pageRes.ok) return { ok: false, waitSec: 600, name: categoryUrl };
     const pageHtml = await pageRes.text();
     const nameMatch = pageHtml.match(/<span class="inside">([^<]+)<\/span>/);
@@ -91,7 +60,7 @@ async function raiseCategory(categoryUrl, auth) {
 
     // First attempt (single node).
     let body = new URLSearchParams({ game_id: gameId, node_id: nodeId });
-    let res = await fetch('https://funpay.com/lots/raise', { method: 'POST', headers, body: body.toString() });
+    let res = await fetchWithTabFallback('https://funpay.com/lots/raise', { method: 'POST', headers, body: body.toString(), credentials: 'include' });
     let json = await res.json().catch(() => ({}));
 
     // FunPay may ask to confirm multiple subcategories via a modal.
@@ -102,7 +71,7 @@ async function raiseCategory(categoryUrl, auth) {
             body.append('game_id', gameId);
             body.append('node_id', nodeId);
             ids.forEach(id => body.append('node_ids[]', id));
-            res = await fetch('https://funpay.com/lots/raise', { method: 'POST', headers, body: body.toString() });
+            res = await fetchWithTabFallback('https://funpay.com/lots/raise', { method: 'POST', headers, body: body.toString(), credentials: 'include' });
             json = await res.json().catch(() => ({}));
         }
     }
@@ -164,7 +133,7 @@ export async function runSmartBumpCycle() {
     if (!auth) { logToTabs('Умное поднятие: нет авторизации (golden_key/csrf).'); return; }
 
     const userUrl = `https://funpay.com/users/${auth.userId}/`;
-    const userHtml = await (await fetch(userUrl, { headers: { cookie: auth.cookies } })).text();
+    const userHtml = await (await fetchWithTabFallback(userUrl, { credentials: 'include', headers: auth.cookies ? { cookie: auth.cookies } : {} })).text();
     let categories = await parseHtmlViaOffscreen(userHtml, 'parseUserCategories');
     if (!Array.isArray(categories)) categories = [];
 

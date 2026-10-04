@@ -2,8 +2,13 @@ class CursorFX {
     constructor() {
         this.canvas = createElement('canvas', { id: 'foxen-cursor-fx' });
         this.ctx = this.canvas.getContext('2d', { willReadFrequently: false, alpha: true });
-        this.config = {};
-        this.particles = [];
+        this.config = { enabled: false, type: 'braid', color1: '#c026d3', rgb: false };
+        this.pts = [];
+        this.trailId = 0;
+        this.cumulativeDist = 0;
+        this.live = false;
+        this.LIFE = 700;
+        this.TAU = Math.PI * 2;
         this.hue = 0;
         this.mouse = { x: -100, y: -100 };
         this.animationFrame = null;
@@ -12,7 +17,6 @@ class CursorFX {
         this.customCursorConfig = {};
         this._customCursorActive = false;
         this.cursorHideStyleTag = null;
-        this.maxParticles = 120; // 2.8: reduced for GPU perf (review #5)
         this._lastMouseTime = 0;
 
         this.init();
@@ -41,36 +45,86 @@ class CursorFX {
         document.body.appendChild(this.customCursor);
 
         this.cursorHideStyleTag = createElement('style', { id: 'foxen-cursor-hide-style' });
-        document.head.appendChild(this.cursorHideStyleTag);
+        document.documentElement.appendChild(this.cursorHideStyleTag);
 
         window.addEventListener('resize', this.resize.bind(this));
         this.resize();
 
+        document.addEventListener('mouseleave', () => {
+            this.live = false;
+            this.pts = [];
+            this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            if (this._customCursorActive && this.customCursor) {
+                this.customCursor.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('mouseenter', () => {
+            this.live = true;
+            if (this._customCursorActive && this.customCursor) {
+                this.customCursor.style.display = 'block';
+            }
+        });
+
+        let lastCheckedEl = null;
+        let lastIsSpecial = false;
+
+        const isCursorSpecial = (el) => {
+            if (!el || el === document.body || el === document.documentElement) return false;
+            if (el === lastCheckedEl) return lastIsSpecial;
+            lastCheckedEl = el;
+
+            // Interactive elements that change cursor to pointer, text, grab, etc.
+            if (el.closest('a, button, input, select, textarea, label, [role="button"], [role="link"], [role="tab"], [role="checkbox"], [role="switch"], [data-toggle], .btn, .switch, [onclick], .lot-item, .chat-item, [style*="cursor"]')) {
+                lastIsSpecial = true;
+                return true;
+            }
+
+            try {
+                const c = window.getComputedStyle(el).cursor;
+                if (c && c !== 'auto' && c !== 'default' && c !== 'none') {
+                    lastIsSpecial = true;
+                    return true;
+                }
+            } catch (_) {}
+
+            lastIsSpecial = false;
+            return false;
+        };
+
         window.addEventListener('mousemove', e => {
             this.mouse.x = e.clientX;
             this.mouse.y = e.clientY;
+            this.live = true;
 
-            // PERF: only touch the custom-cursor element when it's actually enabled.
-            // Previously this wrote a transform on EVERY mousemove even with the feature
-            // off (display:none), causing constant layout/style work and visible lag.
+            // When hovering an element that changes cursor to another type (pointer, text, etc.),
+            // hide custom cursor and let the native system pointer for that element display.
             if (this._customCursorActive) {
-                this.customCursor.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
+                const isSpecial = isCursorSpecial(e.target);
+                if (isSpecial) {
+                    if (this.customCursor.style.display !== 'none') {
+                        this.customCursor.style.display = 'none';
+                    }
+                } else {
+                    if (this.customCursor.style.display !== 'block') {
+                        this.customCursor.style.display = 'block';
+                    }
+                    this.customCursor.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
+                }
             }
 
-            // Only spawn cursor-fx particles when that effect is enabled.
-            if (this.isEnabled) {
-                const now = performance.now();
-                if (now - this._lastMouseTime >= 16) {
-                    this._lastMouseTime = now;
-                    this.createParticle();
-                }
+            // Trigger trail animation
+            if (this.isEnabled && !this.animationFrame) {
+                this.animationFrame = requestAnimationFrame(t => this.animate(t));
             }
         });
     }
 
     resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        const d = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = window.innerWidth * d;
+        this.canvas.height = window.innerHeight * d;
+        this.ctx.setTransform(d, 0, 0, d, 0, 0);
     }
     
     updateCustomCursor(newConfig) {
@@ -80,30 +134,62 @@ class CursorFX {
             this._customCursorActive = true;
             this.customCursor.style.display = 'block';
             
-            if (this.customCursorConfig.hideSystem) {
-                this.cursorHideStyleTag.textContent = `* { cursor: none !important; }`;
-            } else {
-                this.cursorHideStyleTag.textContent = '';
-            }
+            this.applyHideSystemCursor(this.customCursorConfig.hideSystem !== false);
             
-            this.customCursor.style.backgroundImage = `url(${this.customCursorConfig.image})`;
-            this.customCursor.style.width = `${this.customCursorConfig.size}px`;
-            this.customCursor.style.height = `${this.customCursorConfig.size}px`;
-            this.customCursor.style.opacity = this.customCursorConfig.opacity / 100;
-            // place it under the current pointer immediately so it doesn't jump from 0,0
+            this.customCursor.style.backgroundImage = `url("${this.customCursorConfig.image}")`;
+            const size = this.customCursorConfig.size || 32;
+            this.customCursor.style.width = `${size}px`;
+            this.customCursor.style.height = `${size}px`;
+            this.customCursor.style.opacity = (this.customCursorConfig.opacity !== undefined ? this.customCursorConfig.opacity : 100) / 100;
             this.customCursor.style.transform = `translate(calc(${this.mouse.x}px - 50%), calc(${this.mouse.y}px - 50%))`;
         } else {
             this._customCursorActive = false;
             this.customCursor.style.display = 'none';
+            this.applyHideSystemCursor(false);
+        }
+    }
+
+    applyHideSystemCursor(hide) {
+        if (!this.cursorHideStyleTag) {
+            this.cursorHideStyleTag = createElement('style', { id: 'foxen-cursor-hide-style' });
+        }
+        
+        if (hide) {
+            // Hide system cursor on default page content, but display native pointer/text/etc. on interactive elements
+            this.cursorHideStyleTag.textContent = `
+                html, body, div, span, p, table, tr, td, th, ul, li, section, article, aside, header, footer, main {
+                    cursor: none;
+                }
+                a, a *,
+                button, button *,
+                [role="button"], [role="button"] *,
+                [role="link"], [role="link"] *,
+                .btn, .btn *, .switch, [data-toggle], [onclick] {
+                    cursor: pointer !important;
+                }
+                input[type="text"], input[type="password"], input[type="search"], input[type="number"], input[type="email"], textarea {
+                    cursor: text !important;
+                }
+            `;
+            if (this.cursorHideStyleTag.parentNode !== document.documentElement) {
+                document.documentElement.appendChild(this.cursorHideStyleTag);
+            }
+        } else {
             this.cursorHideStyleTag.textContent = '';
         }
     }
 
     updateConfig(newConfig) {
+        const wasEnabled = this.isEnabled;
+        const typeChanged = newConfig.type && newConfig.type !== this.config.type;
         this.config = { ...this.config, ...newConfig };
-        if (this.config.enabled && !this.isEnabled) {
+        if (typeChanged) {
+            this.pts = [];
+            this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        }
+        if (this.config.enabled && !wasEnabled) {
             this.start();
-        } else if (!this.config.enabled && this.isEnabled) {
+        } else if (!this.config.enabled && wasEnabled) {
             this.stop();
         }
     }
@@ -111,159 +197,344 @@ class CursorFX {
     start() {
         if (this.isEnabled) return;
         this.isEnabled = true;
-        // Не запускаем animate() сразу, он запустится при первом движении мыши
+        if (!this.animationFrame) {
+            this.animationFrame = requestAnimationFrame(t => this.animate(t));
+        }
     }
 
     stop() {
-        if (!this.isEnabled) return;
         this.isEnabled = false;
+        this.live = false;
+        this.pts = [];
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
             this.animationFrame = null;
         }
-        // Очищаем холст через некоторое время, чтобы частицы успели исчезнуть
-        setTimeout(() => this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height), 200);
-    }
-    
-    spawnSingleParticle() {
-        if (this.particles.length >= this.maxParticles) {
-            return;
-        }
-        
-        const p = {
-            x: this.mouse.x, y: this.mouse.y,
-            life: Math.random() * 40 + 40,
-        };
-
-        const hexToRgb = hex => hex.match(/\w\w/g).map(x => parseInt(x, 16));
-
-        switch(this.config.type) {
-            case 'trail': p.vx = 0; p.vy = 0; p.size = Math.random() * 3 + 2; break;
-            case 'snow': p.vx = Math.random() * 2 - 1; p.vy = Math.random() * 1 + 0.5; p.size = Math.random() * 2 + 1; break;
-            case 'blood': p.vx = Math.random() * 2 - 1; p.vy = Math.random() * 1 - 2; p.gravity = 0.15; p.size = Math.random() * 4 + 2; break;
-            default: const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 3 + 1; p.vx = Math.cos(angle) * speed; p.vy = Math.sin(angle) * speed; p.size = Math.random() * 2 + 1; break;
-        }
-
-        if (this.config.rgb) {
-            p.color = `hsl(${this.hue}, 100%, 70%)`;
-            if (this.config.type === 'snow') p.color = `hsla(${this.hue}, 100%, 90%, ${Math.random() * 0.5 + 0.3})`;
-        } else {
-            const t = Math.random();
-            const c1 = hexToRgb(this.config.color1);
-            const c2 = hexToRgb(this.config.color2);
-            const r = Math.round(c1[0] * (1 - t) + c2[0] * t);
-            const g = Math.round(c1[1] * (1 - t) + c2[1] * t);
-            const b = Math.round(c1[2] * (1 - t) + c2[2] * t);
-            p.color = `rgb(${r},${g},${b})`;
-            if (this.config.type === 'snow') p.color = `rgba(255,255,255,${Math.random() * 0.5 + 0.3})`;
-        }
-        this.particles.push(p);
+        this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     }
 
-    createParticle() {
-        // Если анимация неактивна, запускаем ее
-        if (!this.animationFrame && this.isEnabled) {
-            this.animate();
-        }
-
-        const count = (this.config.count / 100) * 5;
-        const numToSpawn = Math.floor(count) + (Math.random() < (count % 1) ? 1 : 0);
-
-        for(let i = 0; i < numToSpawn; i++) {
-            this.spawnSingleParticle();
+    /* Плавная кривая через середины отрезков; fn(i) -> [толщина, прозрачность] */
+    curve(p, fn) {
+        const q = p.concat(p[p.length - 1]);
+        for (let i = 1; i < q.length - 1; i++) {
+            const a = q[i - 1], b = q[i], c = q[i + 1];
+            if (Math.abs(a.x - c.x) + Math.abs(a.y - c.y) < 0.4) continue;
+            const r = fn(i);
+            this.ctx.lineWidth = r[0];
+            this.ctx.globalAlpha = r[1];
+            this.ctx.beginPath();
+            this.ctx.moveTo((a.x + b.x) / 2, (a.y + b.y) / 2);
+            this.ctx.quadraticCurveTo(b.x, b.y, (b.x + c.x) / 2, (b.y + c.y) / 2);
+            this.ctx.stroke();
         }
     }
 
-    animate() {
+    /* Точки вдоль следа через равные расстояния */
+    samples(step, now) {
+        const out = [];
+        for (let i = 1; i < this.pts.length; i++) {
+            const a = this.pts[i - 1], b = this.pts[i], len = b.d - a.d;
+            if (len <= 0) continue;
+            const da = Math.atan2(Math.sin(b.a - a.a), Math.cos(b.a - a.a));
+            for (let j = Math.ceil(a.d / step) * step; j < b.d; j += step) {
+                const f = (j - a.d) / len;
+                const t = a.t + (b.t - a.t) * f;
+                out.push({
+                    x: a.x + (b.x - a.x) * f,
+                    y: a.y + (b.y - a.y) * f,
+                    ang: a.a + da * f,
+                    k: Math.max(0, 1 - (now - t) / this.LIFE),
+                    d: j,
+                    i: Math.round(j / step)
+                });
+            }
+        }
+        return out;
+    }
+
+    /* Коса: две нити переплетаются вдоль следа */
+    drawBraid(now) {
+        const kf = p => Math.max(0, 1 - (now - p.t) / this.LIFE);
+        const s1 = [], s2 = [], n = this.pts.length;
+        for (let i = 0; i < n; i++) {
+            const p = this.pts[i];
+            const a = this.pts[Math.max(i - 1, 0)];
+            const b = this.pts[Math.min(i + 1, n - 1)];
+            let nx = a.y - b.y, ny = b.x - a.x;
+            const l = Math.hypot(nx, ny) || 1;
+            nx /= l; ny /= l;
+            const o = 7 * Math.sin(Math.PI * (1 - kf(p))) * Math.sin(p.n * 0.45);
+            s1.push({ x: p.x + nx * o, y: p.y + ny * o });
+            s2.push({ x: p.x - nx * o, y: p.y - ny * o });
+        }
+        const fn = i => [1.8, 0.95 * kf(this.pts[i])];
+        this.curve(s1, fn);
+        this.curve(s2, fn);
+    }
+
+    /* Пружина: линия закручивается в петли */
+    drawCoil(now) {
+        const o = this.samples(3, now).map(p => {
+            const e = Math.sin(Math.PI * (1 - p.k));
+            const ph = p.d * 0.32;
+            const A = 6.5 * e * Math.sin(ph);
+            const B = 6 * e * Math.cos(ph);
+            const c = Math.cos(p.ang);
+            const s = Math.sin(p.ang);
+            return { x: p.x - s * A + c * B, y: p.y + c * A + s * B, k: p.k };
+        });
+        if (o.length > 2) this.curve(o, i => [1.8, 0.95 * o[i].k]);
+    }
+
+    /* Схема: след печатной платы с прямыми углами */
+    drawCircuit(now) {
+        const s = this.samples(28, now);
+        s.push({ x: this.mouse.x, y: this.mouse.y, k: 1 });
+        for (let i = 1; i < s.length; i++) {
+            const P = s[i - 1], Q = s[i];
+            const E = Math.abs(Q.x - P.x) > Math.abs(Q.y - P.y) ? { x: Q.x, y: P.y } : { x: P.x, y: Q.y };
+            this.ctx.globalAlpha = 0.95 * Q.k;
+            this.ctx.lineWidth = 1.6;
+            this.ctx.beginPath();
+            this.ctx.moveTo(P.x, P.y);
+            this.ctx.arcTo(E.x, E.y, Q.x, Q.y, 7);
+            this.ctx.lineTo(Q.x, Q.y);
+            this.ctx.stroke();
+            if (i < s.length - 1) {
+                this.ctx.beginPath();
+                this.ctx.arc(Q.x, Q.y, 2.6, 0, this.TAU);
+                this.ctx.fill();
+            }
+        }
+    }
+
+    /* Рельсы: две параллельные линии со шпалами */
+    drawRails(now) {
+        const w = k => 7 * Math.min(1, (1 - k) * 4);
+        const s = this.samples(4, now);
+        const L = [], R = [];
+        s.forEach(p => {
+            const d = w(p.k), nx = -Math.sin(p.ang) * d, ny = Math.cos(p.ang) * d;
+            L.push({ x: p.x + nx, y: p.y + ny });
+            R.push({ x: p.x - nx, y: p.y - ny });
+        });
+        if (s.length > 2) {
+            const fn = i => [1.6, 0.9 * s[i].k];
+            this.curve(L, fn);
+            this.curve(R, fn);
+        }
+        this.ctx.lineWidth = 1.4;
+        this.samples(10, now).forEach(p => {
+            const d = w(p.k), nx = -Math.sin(p.ang) * d, ny = Math.cos(p.ang) * d;
+            this.ctx.globalAlpha = 0.75 * p.k;
+            this.ctx.beginPath();
+            this.ctx.moveTo(p.x + nx, p.y + ny);
+            this.ctx.lineTo(p.x - nx, p.y - ny);
+            this.ctx.stroke();
+        });
+    }
+
+    /* Веер: тонкие хорды от курсора к прошлым точкам */
+    drawFan(now) {
+        const kf = p => Math.max(0, 1 - (now - p.t) / this.LIFE);
+        this.ctx.lineWidth = 1.4;
+        for (let i = 0; i < this.pts.length - 1; i += 2) {
+            const p = this.pts[i];
+            this.ctx.globalAlpha = 0.65 * kf(p);
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.mouse.x, this.mouse.y);
+            this.ctx.lineTo(p.x, p.y);
+            this.ctx.stroke();
+        }
+    }
+
+    /* Цепь: звенья вдоль следа */
+    drawChain(now) {
+        this.ctx.lineWidth = 1.5;
+        this.samples(12, now).forEach(p => {
+            const s = 0.6 + 0.4 * p.k;
+            this.ctx.globalAlpha = 0.95 * p.k;
+            this.ctx.beginPath();
+            this.ctx.ellipse(p.x, p.y, 8 * s, (p.i % 2 ? 1.5 : 4) * s, p.ang, 0, this.TAU);
+            this.ctx.stroke();
+        });
+    }
+
+    animate(t) {
         if (!this.isEnabled) {
             this.animationFrame = null;
             return;
         }
 
-        // Очищаем только если есть частицы, чтобы не нагружать впустую
-        if (this.particles.length > 0) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        const now = t || performance.now();
+        this.hue = (this.hue + 1.5) % 360;
+
+        // Record trail points on motion
+        if (this.live) {
+            const l = this.pts[this.pts.length - 1];
+            const dist = l ? Math.hypot(this.mouse.x - l.x, this.mouse.y - l.y) : 9;
+            if (!l || dist > 1.2) {
+                if (l) this.cumulativeDist += dist;
+                this.pts.push({
+                    x: this.mouse.x,
+                    y: this.mouse.y,
+                    t: now,
+                    n: this.trailId++,
+                    d: this.cumulativeDist,
+                    a: 0
+                });
+            }
         }
-        
-        this.hue = (this.hue + 1) % 360;
 
-        // Создаем частицы при движении мыши (уже делается в mousemove
+        // Purge points older than LIFE
+        while (this.pts.length && (now - this.pts[0].t > this.LIFE)) {
+            this.pts.shift();
+        }
 
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            p.life--;
+        this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-            if (p.life <= 0) {
-                this.particles.splice(i, 1);
-                continue;
+        const strokeColor = this.config.rgb ? `hsl(${this.hue}, 100%, 65%)` : (this.config.color1 || '#c026d3');
+        this.ctx.strokeStyle = strokeColor;
+        this.ctx.fillStyle = strokeColor;
+        this.ctx.shadowColor = strokeColor;
+        this.ctx.shadowBlur = 6;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        if (this.pts.length > 2) {
+            for (let i = 0; i < this.pts.length; i++) {
+                const a = this.pts[Math.max(i - 3, 0)];
+                const b = this.pts[Math.min(i + 3, this.pts.length - 1)];
+                this.pts[i].a = Math.atan2(b.y - a.y, b.x - a.x);
             }
 
-            p.x += p.vx; p.y += p.vy;
-            if (p.gravity) p.vy += p.gravity;
-
-            this.ctx.globalAlpha = p.life / 35;
-            this.ctx.fillStyle = p.color;
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            this.ctx.fill();
+            switch (this.config.type) {
+                case 'coil': this.drawCoil(now); break;
+                case 'circuit': this.drawCircuit(now); break;
+                case 'rails': this.drawRails(now); break;
+                case 'fan': this.drawFan(now); break;
+                case 'chain': this.drawChain(now); break;
+                case 'braid':
+                default:
+                    this.drawBraid(now);
+                    break;
+            }
         }
 
         this.ctx.globalAlpha = 1;
+        this.ctx.shadowBlur = 0;
 
-        // Если частиц больше нет, останавливаем цикл анимации
-        if (this.particles.length === 0) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Финальная очистка
+        // Idle when nothing to draw
+        if (this.pts.length === 0) {
             this.animationFrame = null;
             return;
         }
 
-        this.animationFrame = requestAnimationFrame(this.animate.bind(this));
+        this.animationFrame = requestAnimationFrame(time => this.animate(time));
     }
 }
 const cursorFx = new CursorFX();
 
 function setupCursorFxHandlers() {
-    const settingsToUpdate = {};
-    const inputs = {
-        cursorFxEnabled: (e) => settingsToUpdate.enabled = e.target.checked ?? e.target.classList.contains('on'),
-        cursorFxType: (e) => settingsToUpdate.type = e.target.value,
-        cursorFxColor1: (e) => settingsToUpdate.color1 = e.target.value,
-        cursorFxColor2: (e) => settingsToUpdate.color2 = e.target.value,
-        cursorFxRgb: (e) => settingsToUpdate.rgb = e.target.checked ?? e.target.classList.contains('on'),
-        cursorFxCount: (e) => {
-            settingsToUpdate.count = e.target.value;
-            const valEl = document.getElementById('cursorFxCountValue');
-            if (valEl) valEl.textContent = `${e.target.value}%`;
-        },
-    };
-    const handler = async (e) => {
-        if (!inputs[e.target.id]) return;
-        inputs[e.target.id](e);
-        const currentSettings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCursorFx')).foxenCursorFx || {};
-        const newSettings = { ...currentSettings, ...settingsToUpdate };
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCursorFx: newSettings });
+    // 1. Trail style chips selector
+    const trailPresets = document.getElementById('fxnTrailPresets');
+    const typeLabel = document.getElementById('cursorFxActiveTypeLabel');
+    const typeSelect = document.getElementById('cursorFxType');
+
+    if (trailPresets && !trailPresets.dataset.fxnBound) {
+        trailPresets.dataset.fxnBound = '1';
+        trailPresets.addEventListener('click', async (e) => {
+            const chip = e.target.closest('.fxn-trail-chip');
+            if (!chip) return;
+
+            const selectedType = chip.dataset.type;
+            if (!selectedType) return;
+
+            trailPresets.querySelectorAll('.fxn-trail-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+
+            const title = chip.querySelector('.fxn-trail-title')?.textContent || selectedType;
+            if (typeLabel) typeLabel.textContent = title;
+            if (typeSelect) typeSelect.value = selectedType;
+
+            const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
+            const currentSettings = (await storage.get('foxenCursorFx')).foxenCursorFx || {};
+            const newSettings = { ...currentSettings, type: selectedType };
+            await storage.set({ foxenCursorFx: newSettings });
+            cursorFx.updateConfig(newSettings);
+        });
+    }
+
+    // 2. Color picker & Quick swatches
+    const colorInput = document.getElementById('cursorFxColor1');
+    const quickSwatches = document.getElementById('cursorFxQuickSwatches');
+
+    const saveColor = async (color) => {
+        if (!color) return;
+        if (colorInput) colorInput.value = color;
+
+        if (quickSwatches) {
+            quickSwatches.querySelectorAll('.fxn-mini-swatch').forEach(sw => {
+                sw.classList.toggle('active', (sw.dataset.color || '').toLowerCase() === color.toLowerCase());
+            });
+        }
+
+        const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
+        const currentSettings = (await storage.get('foxenCursorFx')).foxenCursorFx || {};
+        const newSettings = { ...currentSettings, color1: color };
+        await storage.set({ foxenCursorFx: newSettings });
         cursorFx.updateConfig(newSettings);
     };
 
-    Object.keys(inputs).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('change', handler);
-    });
+    if (colorInput && !colorInput.dataset.fxnBound) {
+        colorInput.dataset.fxnBound = '1';
+        colorInput.addEventListener('input', (e) => saveColor(e.target.value));
+        colorInput.addEventListener('change', (e) => saveColor(e.target.value));
+    }
 
-    const countSlider = document.getElementById('cursorFxCount');
-    if (countSlider) countSlider.addEventListener('input', handler);
+    if (quickSwatches && !quickSwatches.dataset.fxnBound) {
+        quickSwatches.dataset.fxnBound = '1';
+        quickSwatches.addEventListener('click', (e) => {
+            const swatch = e.target.closest('.fxn-mini-swatch');
+            if (!swatch) return;
+            saveColor(swatch.dataset.color);
+        });
+    }
 
-    // Toggle sub-panels visibility
+    // 3. RGB Rainbow toggle
+    const rgbToggle = document.getElementById('cursorFxRgb');
+    if (rgbToggle && !rgbToggle.dataset.fxnBound) {
+        rgbToggle.dataset.fxnBound = '1';
+        const toggleRgb = async () => {
+            const isRgb = rgbToggle.classList.contains('on') || rgbToggle.checked;
+            const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
+            const currentSettings = (await storage.get('foxenCursorFx')).foxenCursorFx || {};
+            const newSettings = { ...currentSettings, rgb: isRgb };
+            await storage.set({ foxenCursorFx: newSettings });
+            cursorFx.updateConfig(newSettings);
+        };
+        rgbToggle.addEventListener('change', toggleRgb);
+        rgbToggle.addEventListener('click', () => setTimeout(toggleRgb, 20));
+    }
+
+    // 4. Cursor FX Enable switch
     const cursorFxEnabledCheckbox = document.getElementById('cursorFxEnabled');
     const cursorFxControls = document.getElementById('cursorFxControls');
-    if (cursorFxEnabledCheckbox) {
-        const updateFxControls = () => {
+    if (cursorFxEnabledCheckbox && !cursorFxEnabledCheckbox.dataset.fxnBound) {
+        cursorFxEnabledCheckbox.dataset.fxnBound = '1';
+        const updateFxControls = async () => {
             const on = cursorFxEnabledCheckbox.classList.contains('on') || cursorFxEnabledCheckbox.checked;
             if (cursorFxControls) cursorFxControls.style.display = on ? 'flex' : 'none';
+            const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
+            const currentSettings = (await storage.get('foxenCursorFx')).foxenCursorFx || {};
+            const newSettings = { ...currentSettings, enabled: on };
+            await storage.set({ foxenCursorFx: newSettings });
+            cursorFx.updateConfig(newSettings);
         };
         cursorFxEnabledCheckbox.addEventListener('change', updateFxControls);
         cursorFxEnabledCheckbox.addEventListener('click', () => setTimeout(updateFxControls, 20));
-        updateFxControls();
+        const on = cursorFxEnabledCheckbox.classList.contains('on') || cursorFxEnabledCheckbox.checked;
+        if (cursorFxControls) cursorFxControls.style.display = on ? 'flex' : 'none';
     }
 
     const pEnabledCheckbox = document.getElementById('foxenParticleEnabled');
@@ -322,63 +593,34 @@ function setupCursorFxHandlers() {
         updateCurControls();
     }
 
-    const presetSVGs = {
-        'default': null,
-        'neon-dot': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="%23c026d3"/><circle cx="12" cy="12" r="8" fill="none" stroke="%23c026d3" stroke-width="1.5" opacity="0.6"/></svg>',
-        'crosshair': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke="%2338bdf8" stroke-width="2" fill="none"><circle cx="12" cy="12" r="7"/><line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/></svg>',
-        'sword': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 17.5L3 6V3h3l11.5 11.5-3 3z" fill="%23f87171" stroke="%23b91c1c" stroke-width="1"/><path d="M13 19l2 2 4-4-2-2" stroke="%23ef4444" stroke-width="1.5" fill="none"/><line x1="19" y1="19" x2="22" y2="22" stroke="%23ef4444" stroke-width="2"/></svg>',
-        'wand': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M15 4l5 5L7 21l-5-5L15 4z" fill="%23a855f7" stroke="%239333ea" stroke-width="1"/><circle cx="19" cy="3" r="2" fill="%23fbbf24"/><circle cx="22" cy="7" r="1.5" fill="%23fbbf24"/><circle cx="16" cy="1" r="1" fill="%23fbbf24"/></svg>'
-    };
-
-    const presetCards = document.querySelectorAll('#fxnCursorPresets .fxn-cursor-card');
-    presetCards.forEach(card => {
-        card.addEventListener('click', async () => {
-            const cursorKey = card.dataset.cursor;
-            presetCards.forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
-
-            const uploadWrap = document.getElementById('customCursorUploadWrap');
-            if (cursorKey === 'custom') {
-                if (uploadWrap) uploadWrap.style.display = 'block';
-                return;
-            } else {
-                if (uploadWrap) uploadWrap.style.display = 'none';
-            }
-
-            const imgUri = presetSVGs[cursorKey] || null;
+    const customCursorUrlInput = document.getElementById('customCursorUrl');
+    if (customCursorUrlInput) {
+        const applyUrl = async () => {
+            const url = customCursorUrlInput.value.trim();
             const preview = document.getElementById('cursor-image-preview');
-            if (preview) {
-                if (imgUri) {
-                    preview.style.backgroundImage = `url("${imgUri}")`;
-                    preview.textContent = '';
-                } else {
+            if (!url) {
+                if (preview) {
                     preview.style.backgroundImage = 'none';
                     preview.textContent = 'Нет';
                 }
+                const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
+                const newSettings = { ...settings, image: null };
+                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
+                cursorFx.updateCustomCursor(newSettings);
+                return;
             }
 
-            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-            const newSettings = { ...settings, image: imgUri, preset: cursorKey };
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
-            cursorFx.updateCustomCursor(newSettings);
-        });
-    });
-
-    const customCursorUrlInput = document.getElementById('customCursorUrl');
-    if (customCursorUrlInput) {
-        customCursorUrlInput.addEventListener('change', async (e) => {
-            const url = e.target.value.trim();
-            if (!url) return;
-            const preview = document.getElementById('cursor-image-preview');
             if (preview) {
                 preview.style.backgroundImage = `url("${url}")`;
                 preview.textContent = '';
             }
             const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-            const newSettings = { ...settings, image: url, preset: 'custom' };
+            const newSettings = { ...settings, image: url };
             await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
-        });
+        };
+
+        customCursorUrlInput.addEventListener('change', applyUrl);
     }
 
     const uploadCursorBtn = document.getElementById('uploadCursorImageBtn');
@@ -399,12 +641,15 @@ function setupCursorFxHandlers() {
                 const imageDataUrl = readEvent.target.result;
                 const preview = document.getElementById('cursor-image-preview');
                 if (preview) {
-                    preview.style.backgroundImage = `url(${imageDataUrl})`;
+                    preview.style.backgroundImage = `url("${imageDataUrl}")`;
                     preview.textContent = '';
                 }
 
+                const curUrlInput = document.getElementById('customCursorUrl');
+                if (curUrlInput) curUrlInput.value = '';
+
                 const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-                const newSettings = { ...settings, image: imageDataUrl, preset: 'custom' };
+                const newSettings = { ...settings, image: imageDataUrl };
                 await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
                 cursorFx.updateCustomCursor(newSettings);
             };
@@ -420,15 +665,15 @@ function setupCursorFxHandlers() {
                 preview.style.backgroundImage = 'none';
                 preview.textContent = 'Нет';
             }
+            const curUrlInput = document.getElementById('customCursorUrl');
+            if (curUrlInput) curUrlInput.value = '';
+            const curFileInput = document.getElementById('cursorImageInput');
+            if (curFileInput) curFileInput.value = '';
 
             const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-            const newSettings = { ...settings, image: null, preset: 'default' };
+            const newSettings = { ...settings, image: null };
             await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
             cursorFx.updateCustomCursor(newSettings);
-
-            presetCards.forEach(c => c.classList.remove('active'));
-            const defaultCard = document.querySelector('#fxnCursorPresets .fxn-cursor-card[data-cursor="default"]');
-            if (defaultCard) defaultCard.classList.add('active');
         });
     }
 

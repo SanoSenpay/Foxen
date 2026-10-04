@@ -45,36 +45,79 @@ function removeExportProgressBar() {
 
 
 function initializeLotIO() {
-    // Проверяем, был ли уже инициализирован
-    const page = document.querySelector('.foxen-page-content[data-page="lot_io"]');
-    if (!page || page.dataset.initialized) return;
+    // Проверяем наличие страницы Экспорт / Импорт или Управление лотами
+    const page = document.querySelector('.foxen-page-content[data-page="settings_io"]') || document.querySelector('.foxen-page-content[data-page="lot_io"]');
+    if (!page || page.dataset.lotIoInitialized) return;
 
     const exportBtn = document.getElementById('lot-io-export-btn');
     const importBtn = document.getElementById('lot-io-import-btn');
     const hiddenFileInput = document.getElementById('lot-io-import-file');
     const convertBtn = document.getElementById('convert-cardinal-lots-btn');
 
-    exportBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        showExportModal();
-    });
-    importBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        hiddenFileInput.click();
-    });
-    hiddenFileInput.addEventListener('change', handleFileImport);
+    if (exportBtn && !exportBtn.dataset.bound) {
+        exportBtn.dataset.bound = '1';
+        exportBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showExportModal();
+        });
+    }
+    if (importBtn && !importBtn.dataset.bound) {
+        importBtn.dataset.bound = '1';
+        importBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            hiddenFileInput?.click();
+        });
+    }
+    if (hiddenFileInput && !hiddenFileInput.dataset.bound) {
+        hiddenFileInput.dataset.bound = '1';
+        hiddenFileInput.addEventListener('change', handleFileImport);
+    }
 
-    if (convertBtn) {
+    if (convertBtn && !convertBtn.dataset.bound) {
+        convertBtn.dataset.bound = '1';
         convertBtn.addEventListener('click', (e) => {
             e.preventDefault();
             window.open(chrome.runtime.getURL('background/remake.html'));
         });
     }
 
-    // Слушатель прогресса импорта от background.js
-    chrome.runtime.onMessage.addListener((request) => {
+    page.dataset.lotIoInitialized = 'true';
+
+    // Слушатель событий импорта от background.js
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'lotImportProgressUpdate') {
             updateImportProgressUI(request.data);
+            return;
+        }
+        if (request.action === 'foxenProxyFetch') {
+            (async () => {
+                try {
+                    const init = {
+                        method: request.options?.method || 'GET',
+                        credentials: 'include'
+                    };
+                    if (request.options?.headers) {
+                        init.headers = request.options.headers;
+                    }
+                    if (request.options?.body) {
+                        init.body = request.options.body;
+                    }
+                    const res = await fetch(request.url, init);
+                    const text = await res.text();
+                    sendResponse({ success: true, status: res.status, text, ok: res.ok });
+                } catch (err) {
+                    sendResponse({ success: false, error: err.message });
+                }
+            })();
+            return true;
+        }
+    });
+
+    // Восстанавливаем окно прогресса, если процесс импорта уже выполняется в фоне
+    (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY, (res) => {
+        const proc = res && res[IMPORT_PROCESS_KEY];
+        if (proc && proc.state === 'running' && !proc.finished) {
+            updateImportProgressUI(proc);
         }
     });
 
@@ -178,26 +221,38 @@ async function startExportProcess(allCategories, selectedCategoryIds) {
             processedCount++;
             updateExportProgressBar(processedCount, totalLots, lot.title);
 
-            try {
-                const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
-                    action: 'getLotForExport',
-                    offerId: lot.id,
-                    nodeId: lot.nodeId
-                });
-                if (response && response.success) {
-                    if (!exportedLotIds.has(lotIdStr)) {
-                        exportedLotIds.add(lotIdStr);
-                        exportedData.push({
-                            sourceTitle: lot.title,
-                            sourceCategory: lot.categoryName || '',
-                            data: response.data
-                        });
+            let attempts = 0;
+            let success = false;
+            while (attempts < 2 && !success) {
+                attempts++;
+                try {
+                    const response = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
+                        action: 'getLotForExport',
+                        offerId: lot.id,
+                        nodeId: lot.nodeId
+                    });
+                    if (response && response.success) {
+                        if (!exportedLotIds.has(lotIdStr)) {
+                            exportedLotIds.add(lotIdStr);
+                            exportedData.push({
+                                sourceTitle: lot.title,
+                                sourceCategory: lot.categoryName || '',
+                                data: response.data
+                            });
+                        }
+                        success = true;
+                    } else {
+                        throw new Error(response?.error || 'Не удалось получить данные лота');
                     }
-                } else {
-                    throw new Error(response?.error || 'Не удалось получить данные лота');
+                } catch (e) {
+                    if (String(e.message || e).includes('429')) {
+                        console.warn(`[Lot IO Export] 429 rate limit on lot "${lot.title}", waiting 10s...`);
+                        await new Promise(resolve => setTimeout(resolve, 10000));
+                    } else {
+                        console.error(`Ошибка при экспорте лота "${lot.title}": ${e.message}`);
+                        break;
+                    }
                 }
-            } catch (e) {
-                console.error(`Ошибка при экспорте лота "${lot.title}": ${e.message}`);
             }
             await new Promise(resolve => setTimeout(resolve, 300)); // Задержка между запросами
         }
@@ -314,12 +369,18 @@ function updateImportProgressUI(processData) {
                 statusBadgeText = 'Готово';
                 iconName = 'check_circle';
                 successCount++;
+                if (lot.newId) {
+                    errorDetail = `<div class="progress-item-success-link" style="margin-top:3px;"><a href="https://funpay.com/lots/offerEdit?offer=${lot.newId}" target="_blank" style="color:var(--fxn-primary,#a855f7); font-size:11px; text-decoration:underline;">Лот #${lot.newId} ↗</a></div>`;
+                }
                 break;
             case 'pending':
                 statusClass = 'status-pending';
                 statusBadgeText = lot.retries > 0 ? `Попытка ${lot.retries}` : 'В очереди';
                 iconName = 'hourglass_top';
                 pendingCount++;
+                if (lot.error) {
+                    errorDetail = `<div class="progress-item-error-msg" style="color:var(--fxn-warning,#f59e0b); font-size:11px; margin-top:3px;" title="${escapeText(lot.error)}">${escapeText(lot.error)}</div>`;
+                }
                 skipButton = `<button class="btn-lot-skip skip-lot-btn" data-index="${index}" title="Пропустить этот лот" type="button"><span class="material-symbols-rounded">skip_next</span></button>`;
                 break;
             case 'error':
@@ -374,23 +435,23 @@ function updateImportProgressUI(processData) {
             <div class="lot-io-stats-chips">
                 <div class="lot-io-chip chip-success" title="Успешно создано">
                     <span class="material-symbols-rounded">check_circle</span>
-                    <span>${successCount}</span>
+                    <span>${successCount} Готово</span>
                 </div>
                 <div class="lot-io-chip chip-pending" title="В очереди">
                     <span class="material-symbols-rounded">hourglass_top</span>
-                    <span>${pendingCount}</span>
+                    <span>${pendingCount} В очереди</span>
                 </div>
                 <div class="lot-io-chip chip-error" title="Ошибки">
                     <span class="material-symbols-rounded">error</span>
-                    <span>${errorCount}</span>
+                    <span>${errorCount} Ошибок</span>
                 </div>
                 <div class="lot-io-chip chip-skipped" title="Пропущено">
                     <span class="material-symbols-rounded">redo</span>
-                    <span>${skippedCount}</span>
+                    <span>${skippedCount} Пропущено</span>
                 </div>
                 <div class="lot-io-chip chip-total" title="Всего в файле">
                     <span class="material-symbols-rounded">inventory_2</span>
-                    <span>${totalLots}</span>
+                    <span>${totalLots} Всего</span>
                 </div>
             </div>
             ${processData.finished ? `
@@ -405,7 +466,7 @@ function updateImportProgressUI(processData) {
         </div>
     `;
     
-    if (errorCount > 0 && pendingCount === 0 && !processData.finished) {
+    if (errorCount > 0 && pendingCount === 0 && !processData.finished && processData.state !== 'running') {
         continueBtn.style.display = 'inline-flex';
     } else {
         continueBtn.style.display = 'none';

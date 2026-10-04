@@ -1,0 +1,563 @@
+/* ==========================================================================
+   FOXEN FLOATING DOCKBAR (Apple macOS / 21st.dev Style)
+   Glassmorphic smart floating dock with magnification & dynamic edge snapping
+   ========================================================================== */
+
+/* State when dockbar is active: hide standard FOXEN navbar button */
+html.fxn-dockbar-active #foxenButton,
+html.fxn-dockbar-active #foxenButtonLi,
+html.fxn-dockbar-active li:has(> #foxenButton) {
+    display: none !important;
+}
+
+/* --- Container (Parent for Handle + Dock Shell + Popover) --- */
+.fxn-dock-container {
+    position: fixed;
+    z-index: 999990;
+    display: flex;
+    align-items: center;
+    user-select: none;
+    touch-action: none;
+    pointer-events: auto;
+    font-family: var(--fxn-font-sans, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif);
+    -webkit-font-smoothing: antialiased;
+    transition: top 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                left 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                right 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                bottom 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.24s ease;
+}
+
+body.modal-open .fxn-dock-container {
+    pointer-events: none !important;
+    opacity: 0.3 !important;
+}
+
+.fxn-dock-container.is-dragging {
+    /* Fluid, responsive dampening during drag for smooth motion without jitter */
+    transition: top 0.08s ease-out,
+                left 0.08s ease-out,
+                right 0.08s ease-out,
+                bottom 0.08s ease-out !important;
+    cursor: grabbing !important;
+}
+
+.fxn-dock-container.is-dragging * {
+    cursor: grabbing !important;
+}
+
+/* --- 4 Edge Orientations & Handle Placements --- */
+/* Bottom edge: Handle is ON TOP, Shell on BOTTOM */
+.fxn-dock-container.fxn-dock-bottom {
+    flex-direction: column;
+}
+
+/* Top edge: Shell is ON TOP, Handle on BOTTOM */
+.fxn-dock-container.fxn-dock-top {
+    flex-direction: column-reverse;
+}
+
+/* Right edge: Handle is ON LEFT, Shell on RIGHT (against screen edge) */
+.fxn-dock-container.fxn-dock-right {
+    flex-direction: row;
+}
+
+/* Left edge: Shell is ON LEFT (against screen edge), Handle on RIGHT */
+.fxn-dock-container.fxn-dock-left {
+    flex-direction: row-reverse;
+}
+
+/* --- Drag Handle Bar (The pill handle to grab and move) --- */
+.fxn-dock-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+    opacity: 0.65;
+    flex-shrink: 0;
+}
+
+.fxn-dock-handle:hover {
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+.fxn-dock-handle-bar {
+    border-radius: 9999px;
+    background: var(--fxn-text-subtle, rgba(255, 255, 255, 0.4));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    transition: background-color 0.2s ease, width 0.22s cubic-bezier(0.16, 1, 0.3, 1), height 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fxn-dock-handle:hover .fxn-dock-handle-bar {
+    background: var(--fxn-text-main, #ffffff);
+}
+
+/* Handle in Horizontal orientations (Bottom & Top) */
+.fxn-dock-horizontal .fxn-dock-handle {
+    padding: 4px 12px;
+}
+
+.fxn-dock-horizontal .fxn-dock-handle-bar {
+    width: 38px;
+    height: 4.5px;
+}
+
+/* Handle in Vertical orientations (Left & Right) */
+.fxn-dock-vertical .fxn-dock-handle {
+    padding: 12px 4px;
+}
+
+.fxn-dock-vertical .fxn-dock-handle-bar {
+    width: 4.5px;
+    height: 38px;
+}
+
+/* --- Main Dock Glass Shell --- */
+.fxn-dock-shell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--fxn-content-color, rgba(20, 21, 26, 0.82));
+    backdrop-filter: blur(var(--fxn-glass-blur, 20px)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--fxn-glass-blur, 20px)) saturate(180%);
+    border: 1px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.1));
+    border-radius: 22px;
+    box-shadow: var(--fxn-shadow, 0 16px 48px rgba(0, 0, 0, 0.45)), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    transition: padding 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                border-radius 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                background 0.25s ease,
+                box-shadow 0.25s ease;
+}
+
+/* Vertical orientation shell */
+.fxn-dock-vertical .fxn-dock-shell {
+    flex-direction: column;
+    padding: 10px 6px;
+}
+
+/* Liquid glass mode for Transparent theme */
+:root[data-fxn-popup-theme="transparent"] .fxn-dock-shell,
+html.fxn-popup-theme-transparent .fxn-dock-shell {
+    background: var(--fxn-content-color, rgba(12, 13, 18, 0.65)) !important;
+    backdrop-filter: blur(var(--fxn-glass-blur, 24px)) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(var(--fxn-glass-blur, 24px)) saturate(200%) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.12) inset !important;
+}
+
+/* --- Items List Container --- */
+.fxn-dock-items {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fxn-dock-vertical .fxn-dock-items {
+    flex-direction: column;
+}
+
+/* --- Individual Dock Item Button --- */
+.fxn-dock-item {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--fxn-text-desc, rgba(255, 255, 255, 0.7));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 0.15s ease,
+                color 0.15s ease;
+    will-change: transform;
+}
+
+.fxn-dock-item svg {
+    width: 21px;
+    height: 21px;
+    stroke-width: 1.8;
+    stroke: currentColor;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.15s ease, transform 0.18s ease;
+    pointer-events: none;
+}
+
+/* Hover & Focus state */
+.fxn-dock-item:hover {
+    background: var(--fxn-card-color-hover, rgba(255, 255, 255, 0.1));
+    color: var(--fxn-text-main, #ffffff);
+    transform: scale(1.18);
+}
+
+.fxn-dock-item:active {
+    transform: scale(0.96);
+}
+
+/* Active Section Dot / Indicator (Shown only when Foxen window is open) */
+.fxn-dock-item.active {
+    color: var(--fxn-accent, #c026d3);
+    background: var(--fxn-accent-soft, rgba(192, 38, 211, 0.14));
+}
+
+.fxn-dock-item.active::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--fxn-accent, #c026d3);
+    box-shadow: 0 0 8px var(--fxn-accent, #c026d3);
+}
+
+.fxn-dock-bottom .fxn-dock-item.active::after {
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.fxn-dock-top .fxn-dock-item.active::after {
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.fxn-dock-left .fxn-dock-item.active::after {
+    left: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.fxn-dock-right .fxn-dock-item.active::after {
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* --- Separator --- */
+.fxn-dock-separator {
+    width: 1px;
+    height: 24px;
+    background: var(--fxn-divider-color, rgba(255, 255, 255, 0.12));
+    margin: 0 2px;
+    flex-shrink: 0;
+}
+
+.fxn-dock-vertical .fxn-dock-separator {
+    width: 24px;
+    height: 1px;
+    margin: 2px 0;
+}
+
+/* --- Action Buttons (Settings & Return) --- */
+.fxn-dock-btn-action {
+    color: var(--fxn-text-subtle, rgba(255, 255, 255, 0.45));
+}
+
+.fxn-dock-btn-action:hover {
+    color: var(--fxn-text-main, #ffffff);
+}
+
+.fxn-dock-btn-return:hover {
+    color: #ef4444 !important;
+}
+
+/* --- Tooltips (Apple Minimalist Float) --- */
+.fxn-dock-tooltip {
+    position: absolute;
+    pointer-events: none;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: var(--fxn-header-color, rgba(16, 17, 22, 0.95));
+    color: var(--fxn-text-main, #ffffff);
+    border: 1px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.12));
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.14s ease, transform 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+}
+
+/* Bottom: tooltip opens above dock */
+.fxn-dock-bottom .fxn-dock-item .fxn-dock-tooltip {
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+}
+.fxn-dock-bottom .fxn-dock-item:hover .fxn-dock-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Top: tooltip opens below dock */
+.fxn-dock-top .fxn-dock-item .fxn-dock-tooltip {
+    top: calc(100% + 10px);
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+}
+.fxn-dock-top .fxn-dock-item:hover .fxn-dock-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Left: tooltip opens to right of dock */
+.fxn-dock-left .fxn-dock-item .fxn-dock-tooltip {
+    left: calc(100% + 10px);
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%) translateX(-4px);
+}
+.fxn-dock-left .fxn-dock-item:hover .fxn-dock-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Right: tooltip opens to left of dock */
+.fxn-dock-right .fxn-dock-item .fxn-dock-tooltip {
+    right: calc(100% + 10px);
+    left: auto;
+    top: 50%;
+    transform: translateY(-50%) translateX(4px);
+}
+.fxn-dock-right .fxn-dock-item:hover .fxn-dock-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* --- Section Picker Popover (Centered over Handle / Stick) --- */
+.fxn-dock-popover {
+    position: absolute;
+    width: 290px;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+    background: var(--fxn-content-color, #121316);
+    backdrop-filter: blur(var(--fxn-glass-blur, 20px)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--fxn-glass-blur, 20px)) saturate(160%);
+    border: 1px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.1));
+    border-radius: 18px;
+    box-shadow: var(--fxn-shadow, 0 20px 50px rgba(0, 0, 0, 0.6));
+    color: var(--fxn-text-main, #f4f4f3);
+    overflow: hidden;
+    z-index: 1000000;
+}
+
+/* Bottom edge: popover is directly above the stick, horizontally centered */
+.fxn-dock-bottom .fxn-dock-popover {
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    top: auto;
+    right: auto;
+    animation: fxnDockPopInBottom 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Top edge: popover is directly below the stick, horizontally centered */
+.fxn-dock-top .fxn-dock-popover {
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: auto;
+    right: auto;
+    animation: fxnDockPopInTop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Left edge: popover is directly to the right of the stick, vertically centered */
+.fxn-dock-left .fxn-dock-popover {
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    right: auto;
+    bottom: auto;
+    animation: fxnDockPopInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Right edge: popover is directly to the left of the stick, vertically centered */
+.fxn-dock-right .fxn-dock-popover {
+    right: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    left: auto;
+    bottom: auto;
+    animation: fxnDockPopInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fxnDockPopInBottom {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.96) translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) scale(1) translateY(0);
+    }
+}
+
+@keyframes fxnDockPopInTop {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.96) translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) scale(1) translateY(0);
+    }
+}
+
+@keyframes fxnDockPopInLeft {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) scale(0.96) translateX(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) scale(1) translateX(0);
+    }
+}
+
+@keyframes fxnDockPopInRight {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) scale(0.96) translateX(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) scale(1) translateX(0);
+    }
+}
+
+.fxn-dock-popover-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.08));
+    background: var(--fxn-header-color, rgba(255, 255, 255, 0.02));
+}
+
+.fxn-dock-popover-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--fxn-text-main, #f4f4f3);
+}
+
+.fxn-dock-popover-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--fxn-text-subtle, rgba(255, 255, 255, 0.5));
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.fxn-dock-popover-close:hover {
+    background: var(--fxn-card-color-hover, rgba(255, 255, 255, 0.1));
+    color: var(--fxn-text-main, #fff);
+}
+
+.fxn-dock-popover-list {
+    padding: 8px 10px;
+    overflow-y: auto;
+    max-height: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.fxn-dock-popover-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.fxn-dock-popover-list::-webkit-scrollbar-thumb {
+    background: var(--fxn-divider-color, rgba(255, 255, 255, 0.15));
+    border-radius: 4px;
+}
+
+.fxn-dock-popover-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.14s ease;
+}
+
+.fxn-dock-popover-item:hover {
+    background: var(--fxn-card-color-hover, rgba(255, 255, 255, 0.06));
+}
+
+.fxn-dock-popover-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--fxn-text-main, #f4f4f3);
+}
+
+.fxn-dock-popover-icon {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+    stroke: var(--fxn-text-desc, rgba(255, 255, 255, 0.6));
+    fill: none;
+    flex-shrink: 0;
+}
+
+/* Custom Checkbox in popover */
+.fxn-dock-checkbox {
+    width: 17px;
+    height: 17px;
+    border-radius: 6px;
+    border: 1.5px solid var(--fxn-divider-color, rgba(255, 255, 255, 0.2));
+    background: var(--fxn-input-bg, rgba(255, 255, 255, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.fxn-dock-popover-item.selected .fxn-dock-checkbox {
+    background: var(--fxn-accent, #c026d3);
+    border-color: var(--fxn-accent, #c026d3);
+}
+
+.fxn-dock-checkbox::after {
+    content: '';
+    width: 4px;
+    height: 8px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translate(-0.5px, -0.5px);
+    display: none;
+}
+
+.fxn-dock-popover-item.selected .fxn-dock-checkbox::after {
+    display: block;
+}

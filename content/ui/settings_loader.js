@@ -250,7 +250,7 @@ async function setupTemplateSettingsHandlers() {
     }
 
     // Экспорт шаблонов в формат .fxnprst
-    const exportBtn = document.getElementById('fxn-export-templates-btn');
+    const exportBtn = document.getElementById('fxnMasterExportTemplatesBtn') || document.getElementById('fxn-export-templates-btn');
     if (exportBtn && !exportBtn.dataset.bound) {
         exportBtn.dataset.bound = '1';
         exportBtn.onclick = async () => {
@@ -312,8 +312,8 @@ async function setupTemplateSettingsHandlers() {
     }
 
     // Импорт шаблонов из файлов .fxnprst / .json
-    const importBtn = document.getElementById('fxn-import-templates-btn');
-    const importFileInput = document.getElementById('fxn-import-templates-file');
+    const importBtn = document.getElementById('fxnMasterImportTemplatesBtn') || document.getElementById('fxn-import-templates-btn');
+    const importFileInput = document.getElementById('fxnMasterImportTemplatesFile') || document.getElementById('fxn-import-templates-file');
     if (importBtn && importFileInput && !importBtn.dataset.bound) {
         importBtn.dataset.bound = '1';
         importBtn.onclick = () => importFileInput.click();
@@ -667,7 +667,7 @@ async function loadSavedSettings() {
     }
 
     const cursorFxSettings = settings.foxenCursorFx || {};
-    const cursorFxDefaults = { enabled: false, type: 'sparkle', color1: '#FF6B6B', color2: '#C026D3', rgb: false, count: 50 };
+    const cursorFxDefaults = { enabled: false, type: 'braid', color1: '#c026d3', rgb: false };
     const finalCursorFxSettings = { ...cursorFxDefaults, ...cursorFxSettings };
 
     fxnSetCheck('cursorFxEnabled', finalCursorFxSettings.enabled);
@@ -676,12 +676,31 @@ async function loadSavedSettings() {
 
     const fxType = document.getElementById('cursorFxType'); if (fxType) fxType.value = finalCursorFxSettings.type;
     const fxC1 = document.getElementById('cursorFxColor1'); if (fxC1) fxC1.value = finalCursorFxSettings.color1;
-    const fxC2 = document.getElementById('cursorFxColor2'); if (fxC2) fxC2.value = finalCursorFxSettings.color2;
-    const fxC1Sw = document.getElementById('cursorFxColor1Swatch'); if (fxC1Sw) fxC1Sw.style.background = finalCursorFxSettings.color1;
-    const fxC2Sw = document.getElementById('cursorFxColor2Swatch'); if (fxC2Sw) fxC2Sw.style.background = finalCursorFxSettings.color2;
     fxnSetCheck('cursorFxRgb', finalCursorFxSettings.rgb);
-    const fxCount = document.getElementById('cursorFxCount'); if (fxCount) fxCount.value = finalCursorFxSettings.count;
-    const fxCountVal = document.getElementById('cursorFxCountValue'); if (fxCountVal) fxCountVal.textContent = `${finalCursorFxSettings.count}%`;
+
+    // Sync active trail chip & label
+    const trailChips = document.querySelectorAll('#fxnTrailPresets .fxn-trail-chip');
+    if (trailChips.length > 0) {
+        trailChips.forEach(chip => {
+            const matches = chip.dataset.type === finalCursorFxSettings.type;
+            chip.classList.toggle('active', matches);
+            if (matches) {
+                const label = document.getElementById('cursorFxActiveTypeLabel');
+                const title = chip.querySelector('.fxn-trail-title')?.textContent || finalCursorFxSettings.type;
+                if (label) label.textContent = title;
+            }
+        });
+    }
+
+    // Sync quick swatches active state
+    const swatches = document.querySelectorAll('#cursorFxQuickSwatches .fxn-mini-swatch');
+    if (swatches.length > 0) {
+        const curColor = (finalCursorFxSettings.color1 || '').toLowerCase();
+        swatches.forEach(sw => {
+            sw.classList.toggle('active', (sw.dataset.color || '').toLowerCase() === curColor);
+        });
+    }
+
     cursorFx.updateConfig(finalCursorFxSettings);
     
     // Screen Particles
@@ -740,14 +759,14 @@ async function loadSavedSettings() {
     bindParticleInputs();
 
     const customCursorSettings = settings.foxenCustomCursor || {};
-    const customCursorDefaults = { enabled: false, image: null, size: 32, opacity: 100, hideSystem: true, preset: 'default' };
+    const customCursorDefaults = { enabled: false, image: null, size: 32, opacity: 100, hideSystem: true };
     const finalCustomCursorSettings = { ...customCursorDefaults, ...customCursorSettings };
 
     fxnSetCheck('customCursorEnabled', finalCustomCursorSettings.enabled);
     const controlsDiv = document.getElementById('customCursorControls');
     if (controlsDiv) controlsDiv.style.display = finalCustomCursorSettings.enabled ? 'flex' : 'none';
     
-    fxnSetCheck('hideSystemCursor', finalCustomCursorSettings.hideSystem);
+    fxnSetCheck('hideSystemCursor', finalCustomCursorSettings.hideSystem !== false);
     
     const curSize = document.getElementById('customCursorSize'); if (curSize) curSize.value = finalCustomCursorSettings.size;
     const curSizeVal = document.getElementById('customCursorSizeValue'); if (curSizeVal) curSizeVal.textContent = `${finalCustomCursorSettings.size}px`;
@@ -757,7 +776,7 @@ async function loadSavedSettings() {
     const preview = document.getElementById('cursor-image-preview');
     if (preview) {
         if (finalCustomCursorSettings.image) {
-            preview.style.backgroundImage = `url(${finalCustomCursorSettings.image})`;
+            preview.style.backgroundImage = `url("${finalCustomCursorSettings.image}")`;
             preview.textContent = '';
         } else {
             preview.style.backgroundImage = 'none';
@@ -765,14 +784,11 @@ async function loadSavedSettings() {
         }
     }
 
-    if (finalCustomCursorSettings.preset) {
-        const activeCard = document.querySelector(`#fxnCursorPresets .fxn-cursor-card[data-cursor="${finalCustomCursorSettings.preset}"]`);
-        if (activeCard) {
-            document.querySelectorAll('#fxnCursorPresets .fxn-cursor-card').forEach(c => c.classList.remove('active'));
-            activeCard.classList.add('active');
+    const curUrlInput = document.getElementById('customCursorUrl');
+    if (curUrlInput && finalCustomCursorSettings.image && typeof finalCustomCursorSettings.image === 'string' && (finalCustomCursorSettings.image.startsWith('http') || finalCustomCursorSettings.image.startsWith('data:'))) {
+        if (finalCustomCursorSettings.image.startsWith('http')) {
+            curUrlInput.value = finalCustomCursorSettings.image;
         }
-        const uploadWrap = document.getElementById('customCursorUploadWrap');
-        if (uploadWrap) uploadWrap.style.display = finalCustomCursorSettings.preset === 'custom' ? 'block' : 'none';
     }
 
     cursorFx.updateCustomCursor(finalCustomCursorSettings);

@@ -1,9 +1,9 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "3.4.0",
+    "version": "4.0",
 
-    "description": "300+ инструментов для FunPay: ИИ-помощник, автоматизация, аналитика, кастомизация и телеметрия.",
+    "description": "Расширение нового поколения для FunPay, которое улучшает функционал сайта и добавляет новые возможности.",
     "homepage_url": "https://web.foxen.site/",
     "developer": {
         "name": "SanoSenpay",
@@ -18,15 +18,14 @@
         "alarms",
         "notifications",
         "https://api.foxen.site/*",
+        "https://ai.foxen.site/*",
+        "https://web.foxen.site/*",
         "https://*.foxen.site/*",
         "https://foxen.site/*",
-        "https://fptools-ai-server.vercel.app/*",
-        "https://fptools.onrender.com/*",
         "https://funpay.com/*",
         "https://*.funpay.com/*",
         "https://sfunpay.com/*",
         "https://*.sfunpay.com/*",
-        "https://funpay.tools/*",
         "https://cdn.jsdelivr.net/*",
         "https://raw.githubusercontent.com/*",
         "https://*.workers.dev/*",
@@ -35,8 +34,14 @@
         "https://support.funpay.com/*",
         "https://api.telegram.org/*",
         "https://translate.googleapis.com/*",
+        "https://clients5.google.com/*",
+        "https://translate.google.com/*",
+        "https://api.mymemory.translated.net/*",
         "https://*.supabase.co/*",
-        "https://yoacfrbedwksnfksjjmv.supabase.co/*"
+        "https://yoacfrbedwksnfksjjmv.supabase.co/*",
+        "https://generativelanguage.googleapis.com/*",
+        "https://api.openai.com/*",
+        "https://openrouter.ai/*"
     ],
     "icons": {
         "128": "icons/icon128.png"
@@ -134,6 +139,7 @@
                 "content/features/needs_tab.js",
                 "content/features/slash_telegram_ui.js",
                 "content/ui/main_popup.js",
+                "content/ui/dockbar.js",
                 "content/ui/header_button_styler.js",
                 "content/features/lot_context_menu.js",
                 "content/features/ai_lot_audit.js",
@@ -172,6 +178,7 @@
                 "content/features/slash_commands.js",
                 "content/features/category_peek_panel.js",
                 "content/features/chat_reply.js",
+                "content/features/chat_translate_out.js",
                 "content/features/open_lot_button.js",
                 "content/features/order_lot_copy.js",
                 "content/features/export_studio.js",
@@ -184,6 +191,7 @@
             "css": [
                 "css/content_styles.css",
                 "css/main_popup.css",
+                "css/dockbar.css",
                 "css/image_generator.css",
                 "css/ai_creator.css",
                 "css/live_styler.css"

@@ -1,4 +1,6 @@
 
+import { getAuthDetailsForBackground, fetchWithTabFallback, clearAuthCache } from './auth_helper.js';
+
 function randomTag() {
     return Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, '0');
 }
@@ -146,81 +148,30 @@ const AUTH_CACHE_TTL_MS = 60000;
 export function clearAutoresponderAuthCache() {
     _authCache = null;
     _authCacheTime = 0;
+    clearAuthCache();
 }
 
 async function getAuth() {
-    const now = Date.now();
-    const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
-    if (!goldenKeyCookie?.value) {
-        _authCache = null;
-        return {};
-    }
-    const golden_key = goldenKeyCookie.value;
-
-    const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
-    const phpsessid = phpSessIdCookie?.value || '';
-
-    if (_authCache && (now - _authCacheTime < AUTH_CACHE_TTL_MS) && _authCache.golden_key === golden_key && _authCache.phpsessid === phpsessid && _authCache.csrf_token && _authCache.userId) {
-        return _authCache;
-    }
-
-    let storedUser = {};
-    try {
-        const s = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpCurrentUserInfo');
-        if (s?.fpCurrentUserInfo) storedUser = s.fpCurrentUserInfo;
-    } catch (_) {}
-
-    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: 'https://funpay.com/*' });
-    for (const tab of tabs) {
-        if (tab.discarded) continue;
+    const auth = await getAuthDetailsForBackground();
+    if (!auth || (!auth.userId && !auth.golden_key)) {
+        let storedUser = {};
         try {
-            const r = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: 'getAppData' });
-            if (r?.success) {
-                const d = Array.isArray(r.data) ? r.data[0] : r.data;
-                const username = d?.userName || d?.username || d?.user?.name || storedUser.username || '';
-                const userId = d?.userId || storedUser.userId || '';
-                if (username || userId) {
-                    (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: String(userId), username } });
-                }
-                if (d?.['csrf-token'] && userId) {
-                    const res = { golden_key, phpsessid, csrf_token: d['csrf-token'], userId, username };
-                    _authCache = res;
-                    _authCacheTime = now;
-                    return res;
-                }
-            }
+            const s = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('fpCurrentUserInfo');
+            if (s?.fpCurrentUserInfo) storedUser = s.fpCurrentUserInfo;
         } catch (_) {}
+        return { golden_key: '', phpsessid: '', userId: storedUser.userId || '', username: storedUser.username || '' };
     }
-
-    try {
-        const cookieStr = phpsessid
-            ? `golden_key=${golden_key}; PHPSESSID=${phpsessid}`
-            : `golden_key=${golden_key}`;
-        const res = await fetch('https://funpay.com/', { credentials: 'include', headers: { cookie: cookieStr } });
-        const text = await res.text();
-        const m = text.match(/<body[^>]*data-app-data="([^"]+)"/);
-        if (m) {
-            const d = JSON.parse(m[1].replace(/&quot;/g, '"'));
-            const u = Array.isArray(d) ? d[0] : d;
-            const username = u?.userName || u?.username || u?.user?.name || storedUser.username || '';
-            const userId = u?.userId || storedUser.userId || '';
-            if (username || userId) {
-                (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: String(userId), username } });
-            }
-            if (u?.['csrf-token'] && userId) {
-                const result = { golden_key, phpsessid, csrf_token: u['csrf-token'], userId, username };
-                _authCache = result;
-                _authCacheTime = now;
-                return result;
-            }
-        }
-    } catch (e) {}
-
-    if (_authCache && _authCache.golden_key === golden_key && _authCache.csrf_token && _authCache.userId) {
-        return _authCache;
+    const res = {
+        golden_key: auth.golden_key,
+        phpsessid: auth.phpsessid || '',
+        csrf_token: auth.csrf_token || auth.csrfToken || '',
+        userId: auth.userId || '',
+        username: auth.username || ''
+    };
+    if (res.userId && res.username) {
+        (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: String(res.userId), username: res.username } });
     }
-
-    return { golden_key, phpsessid, userId: storedUser.userId || '', username: storedUser.username || '' };
+    return res;
 }
 
 async function parseViaOffscreen(html, action, extra = {}) {

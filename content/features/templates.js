@@ -304,15 +304,28 @@ async function applyTemplateToInput(chatInput, templateContent, images, sendOrde
             return { handledInBackground: false };
         }
 
+        const getPageCsrf = () => {
+            try {
+                const raw = document.body && document.body.dataset && document.body.dataset.appData;
+                if (raw) {
+                    const p = JSON.parse(raw);
+                    const d = Array.isArray(p) ? p[0] : p;
+                    return d && d['csrf-token'] ? d['csrf-token'] : null;
+                }
+            } catch (_) {}
+            return null;
+        };
+        const pageCsrfToken = getPageCsrf();
+
         const sendText = async () => {
             if (processedText && processedText.trim()) {
-                await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fxnSendChatText', chatId, text: processedText.trim() });
+                await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fxnSendChatText', chatId, text: processedText.trim(), csrfToken: pageCsrfToken });
                 await new Promise(r => setTimeout(r, 300));
             }
         };
         const sendImages = async () => {
             for (const dataUrl of imgs) {
-                const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fxnSendImage', chatId, dataUrl, chatName });
+                const resp = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'fxnSendImage', chatId, dataUrl, chatName, csrfToken: pageCsrfToken });
                 if (!resp || !resp.ok) showNotification('Не удалось отправить изображение: ' + (resp && resp.error || 'ошибка'), true);
                 await new Promise(r => setTimeout(r, 300));
             }

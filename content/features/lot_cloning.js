@@ -68,28 +68,24 @@ function cloneSurfaceColors() {
 function applyWizardTheme(rootId) {
     const root = document.getElementById(rootId);
     if (!root) return;
-    const { bg, color, accent, isLight } = cloneSurfaceColors();
-    const border = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)';
-    const subtle = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)';
-    const muted = isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)';
     
     if (!document.getElementById('fp-wizard-shared-css')) {
         const s = document.createElement('style');
         s.id = 'fp-wizard-shared-css';
         s.textContent = `
-            .fp-wizard-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:10010; justify-content:center; align-items:center; font-family:inherit; }
-            .fp-wizard-container { width:92%; max-width:960px; max-height:90vh; display:flex; flex-direction:column; background:var(--cw-bg); color:var(--cw-color); border:1px solid var(--cw-border); border-radius:14px; box-shadow:0 12px 48px rgba(0,0,0,0.45); overflow:hidden; animation:fpCwPopIn 0.24s cubic-bezier(0.26,0.53,0.74,1.3); }
+            .fp-wizard-overlay { display:none; position:fixed !important; inset:0 !important; background:var(--fxn-scrim-bg, rgba(0,0,0,0.65)) !important; backdrop-filter:blur(var(--fxn-scrim-blur, 10px)) !important; -webkit-backdrop-filter:blur(var(--fxn-scrim-blur, 10px)) !important; z-index:20000000 !important; justify-content:center; align-items:center; font-family:var(--fxn-font-sans, inherit) !important; }
+            .fp-wizard-container { width:92%; max-width:960px; max-height:90vh; display:flex; flex-direction:column; background:var(--cw-bg); color:var(--cw-color); border:1px solid var(--cw-border); border-radius:18px; box-shadow:var(--fxn-shadow, 0 16px 48px rgba(0,0,0,0.45)); overflow:hidden; animation:fpCwPopIn 0.24s cubic-bezier(0.16,1,0.3,1); }
         `;
         document.head.appendChild(s);
     }
 
-    root.style.setProperty('--cw-bg', bg);
-    root.style.setProperty('--cw-color', color);
-    root.style.setProperty('--cw-accent', accent);
-    root.style.setProperty('--cw-border', border);
-    root.style.setProperty('--cw-subtle', subtle);
-    root.style.setProperty('--cw-muted', muted);
-    root.style.setProperty('--cw-field-bg', isLight ? '#fff' : 'rgba(255,255,255,0.04)');
+    root.style.setProperty('--cw-bg', 'var(--fxn-content-color, #121316)');
+    root.style.setProperty('--cw-color', 'var(--fxn-text-main, #f4f4f3)');
+    root.style.setProperty('--cw-accent', 'var(--fxn-accent, #ffffff)');
+    root.style.setProperty('--cw-border', 'var(--fxn-divider-color, rgba(255,255,255,0.08))');
+    root.style.setProperty('--cw-subtle', 'var(--fxn-card-color, rgba(255,255,255,0.03))');
+    root.style.setProperty('--cw-muted', 'var(--fxn-text-desc, rgba(255,255,255,0.5))');
+    root.style.setProperty('--cw-field-bg', 'var(--fxn-input-bg, rgba(255,255,255,0.05))');
 }
 
 async function openCloneWizard(offerId) {

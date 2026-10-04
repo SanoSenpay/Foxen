@@ -1,18 +1,79 @@
 {
   "version": 1,
-  "categories": ["Космос", "Аниме", "Игры", "Природа", "Разное"],
+  "categories": [
+    "Тёмные",
+    "Светлые",
+    "Анимированные",
+    "Серые",
+    "Аниме",
+    "Прочее"
+  ],
   "banners": [
     {
-      "id": "foxen_blackhole",
-      "category": "Космос",
-      "title": "Черная дыра",
-      "url": "https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/foxen_blackhole.gif"
+      "id": "FXNB-17418",
+      "canonicalId": "FXNB-17418",
+      "category": "Прочее",
+      "title": "Белые Цветки",
+      "author": "FX-000000",
+      "foxen_id": "FX-000000",
+      "source_url": "https://pin.it/4OMx7L8TL",
+      "url": "https://cdn.foxen.site/download/Catalog/Banners/FXNB-17418.png",
+      "added_at": "2026-10-03T19:00:12.356Z"
     },
     {
-      "id": "foxen_blackhole2",
-      "category": "Космос",
-      "title": "Черная дыра 2",
-      "url": "https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/foxen_blackhole2.gif"
+      "id": "FXNB-42385",
+      "canonicalId": "FXNB-42385",
+      "category": "Прочее",
+      "title": "Облака",
+      "author": "FX-000000",
+      "foxen_id": "FX-000000",
+      "source_url": "https://pin.it/2W09o7fdw",
+      "url": "https://cdn.foxen.site/download/Catalog/Banners/FXNB-42385.png",
+      "added_at": "2026-10-03T19:01:23.588Z"
+    },
+    {
+      "id": "FXNB-86108",
+      "canonicalId": "FXNB-86108",
+      "category": "Прочее",
+      "title": "SUPRAAAAAAAAAAAAA",
+      "author": "FX-000000",
+      "foxen_id": "FX-000000",
+      "source_url": "https://pin.it/1bI7WDMGu",
+      "url": "https://cdn.foxen.site/download/Catalog/Banners/FXNB-86108.png",
+      "added_at": "2026-10-03T19:03:41.306Z"
+    },
+    {
+      "id": "FXNB-93175",
+      "canonicalId": "FXNB-93175",
+      "category": "Прочее",
+      "title": "Mountain Fuji x Sakura",
+      "author": "FX-000000",
+      "foxen_id": "FX-000000",
+      "source_url": "https://pin.it/4QAjJd1kT",
+      "url": "https://cdn.foxen.site/download/Catalog/Banners/FXNB-93175.png",
+      "added_at": "2026-10-03T19:10:19.449Z"
+    },
+    {
+      "id": "FXNB-14724",
+      "canonicalId": "FXNB-14724",
+      "category": "Прочее",
+      "title": "Gachiakuta",
+      "author": "FX-000000",
+      "foxen_id": "FX-000000",
+      "source_url": "https://pin.it/6oZIsGtpx",
+      "url": "https://cdn.foxen.site/download/Catalog/Banners/FXNB-14724.png",
+      "added_at": "2026-10-03T19:18:33.605Z"
+    },
+    {
+      "id": "FXNB-83928",
+      "canonicalId": "FXNB-83928",
+      "category": "Прочее",
+      "title": "Кот в Elden Ring",
+      "author": "FX-000000",
+      "foxen_id": "FX-000000",
+      "source_url": "https://pin.it/4yBqLcMiR",
+      "url": "https://cdn.foxen.site/download/Catalog/Banners/FXNB-83928.png",
+      "added_at": "2026-10-03T19:18:36.804Z"
     }
   ]
 }

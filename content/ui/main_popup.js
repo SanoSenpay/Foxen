@@ -142,9 +142,16 @@ function createMainPopup() {
 
     const logoUrl = getFoxenLogoUrl(false);
 
+    const cachedScrim = (() => {
+        try {
+            return localStorage.getItem('foxenScrimEnabled') ?? sessionStorage.getItem('foxenScrimEnabled');
+        } catch (_) { return null; }
+    })();
+    const isScrimDisabled = cachedScrim === 'false';
+
     popup = document.createElement('div');
     popup.id = 'foxenMainPopup';
-    popup.className = 'foxen-popup fxn-popup';
+    popup.className = 'foxen-popup fxn-popup' + (isScrimDisabled ? ' fxn-no-scrim' : '');
     popup.innerHTML = `
         <div class="scrim"></div>
 
@@ -152,11 +159,8 @@ function createMainPopup() {
             <div class="titlebar">
                 <div class="titlebar-title"></div>
                 <div class="titlebar-actions" style="display:flex;align-items:center;gap:8px;margin-left:auto;">
-                    <button class="fxn-titlebar-gear-btn" id="fxnTitlebarMenuSettingsBtn" title="Настройки меню Foxen" type="button">
-                        <span class="material-symbols-rounded">settings</span>
-                    </button>
                     <div class="traffic">
-                        <span class="traffic-min" title="Свернуть / Компактный режим"></span>
+                        <span class="traffic-min" title="Превратить в стильный Dockbar (вместо кнопки в меню)"></span>
                         <span class="traffic-max" title="Развернуть / Обычный размер"></span>
                         <span class="traffic-close fxn-popup-close" title="Закрыть (Esc)"></span>
                     </div>
@@ -183,89 +187,240 @@ function createMainPopup() {
 
                     <!-- SIDEBAR NAVIGATION ACCORDION -->
                     <div class="nav" id="nav">
-                        <!-- Group 1: Основное -->
+                        <!-- Group 1: Главная & Настройки -->
                         <div class="nav-group open" data-group="main">
                             <div class="nav-item cat">
-                                <div class="nav-icon"><span class="material-symbols-rounded">home</span></div>
-                                <div class="nav-text">Основное</div>
+                                <div class="nav-icon"><span class="material-symbols-rounded">tune</span></div>
+                                <div class="nav-text">Главная & Настройки</div>
+                                <div class="nav-chevron"></div>
                             </div>
                             <div class="nav-sub">
                                 <div class="nav-subitem active" data-target="general"><span class="dot"></span>Общие настройки</div>
-                                <div class="nav-subitem" data-target="needs"><span class="dot"></span>Что тебе нужно</div>
-                                <div class="nav-subitem" data-target="accounts"><span class="dot"></span>Аккаунты</div>
-                                <div class="nav-subitem" data-target="overview"><span class="dot"></span>Справка & Тур</div>
-                                <div class="nav-subitem" data-target="support"><span class="dot"></span>Поддержка проекта</div>
+                                <div class="nav-subitem" data-target="accounts"><span class="dot"></span>Мульти-аккаунты</div>
+                                <div class="nav-subitem" data-target="settings_io"><span class="dot"></span>Экспорт / Импорт</div>
+                                <div class="nav-subitem" data-target="needs"><span class="dot"></span>Мастер настройки</div>
                             </div>
                         </div>
 
-                        <!-- Group 2: Автоматизация & Продажи -->
+                        <!-- Group 2: Торговля & Лоты -->
                         <div class="nav-group" data-group="seller">
                             <div class="nav-item cat">
                                 <div class="nav-icon"><span class="material-symbols-rounded">storefront</span></div>
-                                <div class="nav-text">Автоматизация & Продажи</div>
+                                <div class="nav-text">Торговля & Лоты</div>
+                                <div class="nav-chevron"></div>
                             </div>
                             <div class="nav-sub">
-                                <div class="nav-subitem" data-target="autobump"><span class="dot"></span>Авто-Поднятие</div>
-                                <div class="nav-subitem" data-target="auto_review"><span class="dot"></span>Авто-Ответы</div>
-                                <div class="nav-subitem" data-target="auto_delivery"><span class="dot"></span>Авто-Выдача</div>
                                 <div class="nav-subitem" data-target="lot_io"><span class="dot"></span>Управление лотами</div>
-                                <div class="nav-subitem" data-target="telegram"><span class="dot"></span>Telegram Бот</div>
-                                <div class="nav-subitem" data-target="ai_settings"><span class="dot"></span>Свой API ключ (ИИ)</div>
+                                <div class="nav-subitem" data-target="autobump"><span class="dot"></span>Авто-поднятие</div>
+                                <div class="nav-subitem" data-target="auto_delivery"><span class="dot"></span>Авто-выдача</div>
                             </div>
                         </div>
 
-                        <!-- Group 3: Чат & Коммуникация -->
+                        <!-- Group 3: Чат & Клиенты -->
                         <div class="nav-group" data-group="chat">
                             <div class="nav-item cat">
                                 <div class="nav-icon"><span class="material-symbols-rounded">forum</span></div>
-                                <div class="nav-text">Чат & Коммуникация</div>
+                                <div class="nav-text">Чат & Клиенты</div>
+                                <div class="nav-chevron"></div>
                             </div>
                             <div class="nav-sub">
+                                <div class="nav-subitem" data-target="auto_review"><span class="dot"></span>Авто-ответчик & Отзывы</div>
                                 <div class="nav-subitem" data-target="templates"><span class="dot"></span>Шаблоны ответов</div>
                                 <div class="nav-subitem" data-target="slash_commands"><span class="dot"></span>Слэш-команды</div>
                                 <div class="nav-subitem" data-target="blacklist"><span class="dot"></span>Чёрный список</div>
-                                <div class="nav-subitem" data-target="tickets"><span class="dot"></span>Тикеты FunPay</div>
                             </div>
                         </div>
 
-                        <!-- Group 4: Инструменты & Финансы -->
+                        <!-- Group 4: Финансы & Инструменты -->
                         <div class="nav-group" data-group="tools">
                             <div class="nav-item cat">
-                                <div class="nav-icon"><span class="material-symbols-rounded">construction</span></div>
-                                <div class="nav-text">Инструменты & Финансы</div>
+                                <div class="nav-icon"><span class="material-symbols-rounded">account_balance_wallet</span></div>
+                                <div class="nav-text">Финансы & Расчёты</div>
+                                <div class="nav-chevron"></div>
                             </div>
                             <div class="nav-sub">
-                                <div class="nav-subitem" data-target="calculator"><span class="dot"></span>Калькулятор</div>
+                                <div class="nav-subitem" data-target="calculator"><span class="dot"></span>Калькулятор комиссий</div>
                                 <div class="nav-subitem" data-target="currency_calc"><span class="dot"></span>Курсы валют</div>
                                 <div class="nav-subitem" data-target="piggy_banks"><span class="dot"></span>Копилки целей</div>
                                 <div class="nav-subitem" data-target="notes"><span class="dot"></span>Личные заметки</div>
-                                <div class="nav-subitem" data-target="settings_io"><span class="dot"></span>Импорт / Экспорт</div>
                             </div>
                         </div>
 
-                        <!-- Group 5: Кастомизация -->
+                        <!-- Group 5: Интеграции & ИИ -->
+                        <div class="nav-group" data-group="integrations">
+                            <div class="nav-item cat">
+                                <div class="nav-icon"><span class="material-symbols-rounded">hub</span></div>
+                                <div class="nav-text">Интеграции & ИИ</div>
+                                <div class="nav-chevron"></div>
+                            </div>
+                            <div class="nav-sub">
+                                <div class="nav-subitem" data-target="telegram"><span class="dot"></span>Telegram-бот</div>
+                                <div class="nav-subitem" data-target="ai_settings"><span class="dot"></span>Нейросеть (ИИ)</div>
+                                <div class="nav-subitem" data-target="tickets"><span class="dot"></span>Тикеты FunPay <span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:#ffffff;border:1px solid rgba(255,255,255,0.18);margin-left:auto;letter-spacing:0.04em;">DEV</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Group 6: Кастомизация -->
                         <div class="nav-group" data-group="customization">
                             <div class="nav-item cat">
                                 <div class="nav-icon"><span class="material-symbols-rounded">palette</span></div>
-                                <div class="nav-text">Кастомизация</div>
+                                <div class="nav-text">Кастомизация & Стиль</div>
+                                <div class="nav-chevron"></div>
                             </div>
                             <div class="nav-sub">
                                 <div class="nav-subitem" data-target="theme"><span class="dot"></span>Внешний вид</div>
-                                <div class="nav-subitem" data-target="theme_gallery"><span class="dot"></span>Каталог тем</div>
+                                <div class="nav-subitem" data-target="theme_gallery"><span class="dot"></span>Каталог тем <span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:#ffffff;border:1px solid rgba(255,255,255,0.18);margin-left:auto;letter-spacing:0.04em;">DEV</span></div>
                                 <div class="nav-subitem" data-target="effects"><span class="dot"></span>Эффекты & Курсор</div>
+                            </div>
+                        </div>
+
+                        <!-- Group 7: Справка & О проекте -->
+                        <div class="nav-group" data-group="help">
+                            <div class="nav-item cat">
+                                <div class="nav-icon"><span class="material-symbols-rounded">help</span></div>
+                                <div class="nav-text">Справка & О проекте</div>
+                                <div class="nav-chevron"></div>
+                            </div>
+                            <div class="nav-sub">
+                                <div class="nav-subitem" data-target="overview"><span class="dot"></span>Обучение & Тур</div>
+                                <div class="nav-subitem" data-target="support"><span class="dot"></span>Поддержка проекта</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Account status in footer -->
                     <div class="account">
-                        <div class="account-row" id="fxnSidebarAccountWidget">
+                        <div class="account-row" id="fxnSidebarAccountWidget" title="Нажмите для просмотра полного профиля">
                             <div class="avatar"><img src="${logoUrl}" alt="Avatar" id="fxnSidebarAvatar"></div>
                             <div class="account-text">
-                                <div class="name"><span id="fxnSidebarUsername">Foxen User</span> <span class="account-tag" id="fxnSidebarTag">PRO</span></div>
+                                <div class="name"><span id="fxnSidebarUsername">Foxen User</span> <span class="account-tag" id="fxnSidebarTag">PREMIUM</span></div>
                                 <div class="sub" id="fxnSidebarSub">v3.4.0 active</div>
                             </div>
                             <div class="chevron"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Profile Modal (Strictly contained within sidebar) -->
+                    <div class="fxn-sidebar-profile-modal" id="fxnSidebarProfileModal" aria-hidden="true">
+                        <div class="fxn-spm-header">
+                            <button type="button" class="fxn-spm-icon-btn" id="fxnSpmBackBtn" title="Назад (Esc)">
+                                <span class="material-symbols-rounded">arrow_back</span>
+                            </button>
+                            <span class="fxn-spm-title">Профиль</span>
+                            <button type="button" class="fxn-spm-icon-btn" id="fxnSpmRefreshBtn" title="Обновить данные из БД">
+                                <span class="material-symbols-rounded">refresh</span>
+                            </button>
+                        </div>
+
+                        <div class="fxn-spm-scroll">
+                            <!-- Hero User Card -->
+                            <div class="fxn-spm-card fxn-spm-hero-card">
+                                <div class="fxn-spm-avatar-wrap">
+                                    <img src="${logoUrl}" alt="Avatar" id="fxnSpmAvatar" class="fxn-spm-avatar">
+                                    <span class="fxn-spm-online-dot" id="fxnSpmOnlineDot" title="Онлайн"></span>
+                                </div>
+                                <div class="fxn-spm-hero-info">
+                                    <div class="fxn-spm-username-row">
+                                        <span class="fxn-spm-username" id="fxnSpmUsername">Foxen User</span>
+                                    </div>
+                                    <div class="fxn-spm-id-row">
+                                        <span class="fxn-spm-mono-tag" id="fxnSpmFoxenId">FX-000000</span>
+                                        <button type="button" class="fxn-spm-copy-btn" id="fxnSpmCopyIdBtn" title="Скопировать Foxen ID">
+                                            <span class="material-symbols-rounded">content_copy</span>
+                                        </button>
+                                    </div>
+                                    <div class="fxn-spm-fpid-row">
+                                        <a href="#" target="_blank" class="fxn-spm-link" id="fxnSpmFpUserLink">
+                                            <span>FunPay ID: <b id="fxnSpmFpUserId">—</b></span>
+                                            <span class="material-symbols-rounded">open_in_new</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subscription Card -->
+                            <div class="fxn-spm-card">
+                                <div class="fxn-spm-card-header">
+                                    <div class="fxn-spm-card-title">
+                                        <span class="material-symbols-rounded">military_tech</span>
+                                        <span>Подписка Foxen</span>
+                                    </div>
+                                </div>
+                                <div class="fxn-spm-meta-list">
+                                    <div class="fxn-spm-meta-row">
+                                        <span class="fxn-spm-label">Тариф</span>
+                                        <span class="fxn-spm-val fxn-spm-plan-smallcaps" id="fxnSpmSubPlan">PREMIUM</span>
+                                    </div>
+                                    <div class="fxn-spm-meta-row">
+                                        <span class="fxn-spm-label">Статус</span>
+                                        <span class="fxn-spm-val fxn-spm-status-wrap">
+                                            <span class="fxn-spm-status-dot active" id="fxnSpmStatusDot"></span>
+                                            <span id="fxnSpmSubStatus">Активна</span>
+                                        </span>
+                                    </div>
+                                    <div class="fxn-spm-meta-row">
+                                        <span class="fxn-spm-label">Действует до</span>
+                                        <span class="fxn-spm-val" id="fxnSpmSubExpiry">Бессрочно</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ecosystem & Integrations Card -->
+                            <div class="fxn-spm-card">
+                                <div class="fxn-spm-card-header">
+                                    <div class="fxn-spm-card-title">
+                                        <span class="material-symbols-rounded">hub</span>
+                                        <span>Экосистема</span>
+                                    </div>
+                                </div>
+                                <div class="fxn-spm-meta-list">
+                                    <div class="fxn-spm-meta-row">
+                                        <span class="fxn-spm-label">Telegram</span>
+                                        <span class="fxn-spm-val" id="fxnSpmTgUser">Не привязан</span>
+                                    </div>
+                                    <div class="fxn-spm-meta-row">
+                                        <span class="fxn-spm-label">Верификация</span>
+                                        <span class="fxn-spm-val" id="fxnSpmVerifiedText">Базовая</span>
+                                    </div>
+                                    <div class="fxn-spm-meta-row fxn-spm-clickable-row" id="fxnSpmEffectRow" title="Нажмите, чтобы настроить эффекты в меню">
+                                        <span class="fxn-spm-label">Эффект ника</span>
+                                        <span class="fxn-spm-val" id="fxnSpmEffectVal">Стандарт</span>
+                                    </div>
+                                    <div class="fxn-spm-meta-row">
+                                        <span class="fxn-spm-label">Регистрация</span>
+                                        <span class="fxn-spm-val" id="fxnSpmCreatedAt">—</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FunPay Stats Card -->
+                            <div class="fxn-spm-card" id="fxnSpmStatsCard">
+                                <div class="fxn-spm-card-header">
+                                    <div class="fxn-spm-card-title">
+                                        <span class="material-symbols-rounded">analytics</span>
+                                        <span>FunPay статистика</span>
+                                    </div>
+                                    <button type="button" class="fxn-spm-icon-btn" id="fxnSpmStatsBtn" title="Открыть профиль на FunPay">
+                                        <span class="material-symbols-rounded">open_in_new</span>
+                                    </button>
+                                </div>
+                                <div class="fxn-spm-grid-stats">
+                                    <div class="fxn-spm-stat-box" id="fxnSpmRatingBox" title="Рейтинг продавца на FunPay (нажмите для перехода)">
+                                        <div class="fxn-spm-stat-val">
+                                            <span class="fxn-spm-star">★</span>
+                                            <span id="fxnSpmRatingVal">5.0</span>
+                                        </div>
+                                        <div class="fxn-spm-stat-lbl">Рейтинг</div>
+                                    </div>
+                                    <div class="fxn-spm-stat-box" id="fxnSpmReviewsBox" title="Отзывы покупателей на FunPay (нажмите для перехода)">
+                                        <div class="fxn-spm-stat-val">
+                                            <span class="material-symbols-rounded fxn-spm-reviews-icon">rate_review</span>
+                                            <span id="fxnSpmReviewsVal">—</span>
+                                        </div>
+                                        <div class="fxn-spm-stat-lbl">Отзывы</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </nav>
@@ -279,7 +434,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">settings</span></div>
                                 <div>
-                                    <div class="crumb">Основное</div>
+                                    <div class="crumb">Главная & Настройки</div>
                                     <h1>Общие настройки</h1>
                                     <p>Базовые параметры отображения и поведение расширения</p>
                                 </div>
@@ -611,7 +766,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">tune</span></div>
                                 <div>
-                                    <div class="crumb">Основное</div>
+                                    <div class="crumb">Главная & Настройки</div>
                                     <h1>Что тебе нужно</h1>
                                     <p>Персональный конфигуратор функций: включите только необходимые инструменты</p>
                                 </div>
@@ -624,25 +779,9 @@ function createMainPopup() {
                     <!-- PANEL 3: АККАУНТЫ (ACCOUNTS) -->
                     <section class="panel foxen-page-content" id="accounts" data-page="accounts">
                         <div class="panel-body fxn-vireon-panel-body">
-                            <div class="panel-header fxn-vireon-header">
-                                <div class="fxn-vireon-header-icon">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                        <circle cx="9" cy="7" r="4"/>
-                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                    </svg>
-                                </div>
-                                <div class="fxn-vireon-header-text">
-                                    <div class="fxn-vireon-crumb">ОСНОВНОЕ</div>
-                                    <h1 class="fxn-vireon-title">Управление аккаунтами</h1>
-                                    <p class="fxn-vireon-desc">Мгновенное переключение между профилями FunPay без повторного ввода паролей</p>
-                                </div>
-                            </div>
-
                             <button id="addCurrentAccountBtn" class="fxn-vireon-add-btn" type="button">
                                 <div class="fxn-vireon-add-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="12" y1="5" x2="12" y2="19"/>
                                         <line x1="5" y1="12" x2="19" y2="12"/>
                                     </svg>
@@ -651,9 +790,7 @@ function createMainPopup() {
                             </button>
 
                             <div class="fxn-vireon-sec-label">СОХРАНЕННЫЕ ПРОФИЛИ</div>
-                            <div id="foxenAccountsList" class="fxn-vireon-cards-grid"></div>
-
-                            <div class="fxn-vireon-divider"></div>
+                            <div id="foxenAccountsList" class="fxn-vireon-cards-list"></div>
 
                             <button id="foxenCleanLogoutBtn" class="fxn-vireon-logout-btn" type="button">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -672,7 +809,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">info</span></div>
                                 <div>
-                                    <div class="crumb">Основное</div>
+                                    <div class="crumb">Справка & О проекте</div>
                                     <h1>Справка & Видео-тур</h1>
                                     <p>Полный справочник по всем возможностям расширения Foxen</p>
                                 </div>
@@ -694,7 +831,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">favorite</span></div>
                                 <div>
-                                    <div class="crumb">Основное</div>
+                                    <div class="crumb">Справка & О проекте</div>
                                     <h1>Поддержка проекта</h1>
                                     <p>Поставьте оценку или звезду на GitHub — это помогает развивать расширение!</p>
                                 </div>
@@ -730,7 +867,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">rocket_launch</span></div>
                                 <div>
-                                    <div class="crumb">Автоматизация & Продажи</div>
+                                    <div class="crumb">Торговля & Лоты</div>
                                     <h1>Авто-Поднятие лотов</h1>
                                     <p>Автоматическое поднятие ваших предложений по настраиваемому таймеру</p>
                                 </div>
@@ -799,9 +936,62 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">smart_toy</span></div>
                                 <div>
-                                    <div class="crumb">Автоматизация & Продажи</div>
+                                    <div class="crumb">Чат & Клиенты</div>
                                     <h1>Авто-Ответы & Автоответчик</h1>
                                     <p>Автоматические ответы на отзывы 1–5 звезд, приветствия и новые заказы</p>
+                                </div>
+                            </div>
+
+                            <div class="template-variables-guide" style="background:rgba(255,255,255,0.03);border:1px solid var(--fxn-divider-color);border-radius:12px;padding:14px 16px;margin:16px 0;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                    <div style="font-size:12.5px;font-weight:700;color:var(--fxn-text-main);">Переменные для автоответов:</div>
+                                    <span style="font-size:11px;color:var(--fxn-text-subtle);">📋 Кликните на тег для копирования</span>
+                                </div>
+                                <div class="fxn-var-chips-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:8px;">
+                                    <div class="fxn-var-item" data-code="{buyername}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{buyername}</span>
+                                        <span class="var-desc">Имя покупателя</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{sellername}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{sellername}</span>
+                                        <span class="var-desc">Ваш ник продавца</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{lotname}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{lotname}</span>
+                                        <span class="var-desc">Название товара / лота</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{category}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{category}</span>
+                                        <span class="var-desc">Категория / игра</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{orderid}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{orderid}</span>
+                                        <span class="var-desc">Номер заказа (#ABC12345)</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{orderlink}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{orderlink}</span>
+                                        <span class="var-desc">Ссылка на страницу заказа</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{date}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{date}</span>
+                                        <span class="var-desc">Текущая дата</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{time}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{time}</span>
+                                        <span class="var-desc">Текущее время</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{welcome}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{welcome}</span>
+                                        <span class="var-desc">Приветствие («Доброе утро»)</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{rating}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{rating}</span>
+                                        <span class="var-desc">Оценка отзыва (звёзды ★)</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{вариант 1|вариант 2|вариант 3}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{вариант 1|вариант 2}</span>
+                                        <span class="var-desc">Случайный выбор (Spintax)</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -964,12 +1154,6 @@ function createMainPopup() {
                                     </div>
                                 </div>
                             </div>
-
-                            <div style="display:flex;gap:10px;margin-top:10px;">
-                                <button id="fxn-export-autoreply-btn" class="btn btn-ghost" type="button"><span class="material-symbols-rounded">download</span>Экспорт текстов</button>
-                                <button id="fxn-import-autoreply-btn" class="btn btn-ghost" type="button"><span class="material-symbols-rounded">upload</span>Импорт текстов</button>
-                                <input type="file" id="fxn-import-autoreply-file" accept=".fxnar,.json" style="display:none;">
-                            </div>
                         </div>
                     </section>
 
@@ -979,7 +1163,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">bolt</span></div>
                                 <div>
-                                    <div class="crumb">Автоматизация & Продажи</div>
+                                    <div class="crumb">Торговля & Лоты</div>
                                     <h1>Авто-Выдача товаров</h1>
                                     <p>Мгновенная автоматическая доставка ключей, аккаунтов и файлов покупателям</p>
                                 </div>
@@ -1014,7 +1198,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">inventory_2</span></div>
                                 <div>
-                                    <div class="crumb">Автоматизация & Продажи</div>
+                                    <div class="crumb">Торговля & Лоты</div>
                                     <h1>Управление лотами</h1>
                                     <p>Резервное копирование предложений в JSON, массовое редактирование цен и перенос</p>
                                 </div>
@@ -1023,22 +1207,15 @@ function createMainPopup() {
                             <div class="section-label">Резервная копия & Перенос</div>
                             <div class="group">
                                 <div class="row">
-                                    <div class="row-icon"><span class="material-symbols-rounded">backup</span></div>
+                                    <div class="row-icon"><span class="material-symbols-rounded">import_export</span></div>
                                     <div class="row-text">
-                                        <div class="row-title">Экспорт и импорт лотов</div>
-                                        <div class="row-sub">Сохранение предложений аккаунта в JSON-файл или восстановление / перенос базы лотов</div>
+                                        <div class="row-title">Экспорт и импорт предложений</div>
+                                        <div class="row-sub">Резервное копирование, восстановление и конвертер Cardinal перенесены в единый мастер «Экспорт / Импорт»</div>
                                     </div>
-                                </div>
-                                <div class="lot-io-action-bar">
-                                    <button id="lot-io-export-btn" class="btn btn-solid" type="button">
-                                        <span class="material-symbols-rounded">upload</span>
-                                        <span>Экспорт лотов</span>
+                                    <button id="lotIoGoMasterBtn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
+                                        <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
+                                        <span>Перейти в мастер</span>
                                     </button>
-                                    <button id="lot-io-import-btn" class="btn btn-ghost" type="button">
-                                        <span class="material-symbols-rounded">download</span>
-                                        <span>Импорт лотов</span>
-                                    </button>
-                                    <input type="file" id="lot-io-import-file" accept=".json" style="display:none;">
                                 </div>
                             </div>
 
@@ -1055,28 +1232,6 @@ function createMainPopup() {
                                         <span>Открыть</span>
                                     </button>
                                 </div>
-                                <div class="row">
-                                    <div class="row-icon">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
-                                        </svg>
-                                    </div>
-                                    <div class="row-text">
-                                        <div class="row-title">Конвертер Cardinal</div>
-                                        <div class="row-sub">Конвертация базы предложений из бота Cardinal в формат Foxen</div>
-                                    </div>
-                                    <button id="convert-cardinal-lots-btn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
-                                        <span class="material-symbols-rounded" style="font-size:16px;">open_in_new</span>
-                                        <span>Конвертер</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="section-label">Отложенные процессы импорта</div>
-                            <div class="group">
-                                <div id="lot-io-pending-imports-list" class="lot-io-pending-container">
-                                    <!-- Заполняется динамически через renderPendingImports() -->
-                                </div>
                             </div>
                         </div>
                     </section>
@@ -1087,7 +1242,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-icons">send</span></div>
                                 <div>
-                                    <div class="crumb">Автоматизация & Продажи</div>
+                                    <div class="crumb">Интеграции & ИИ</div>
                                     <h1>Telegram Бот & Уведомления</h1>
                                     <p>Мгновенные уведомления о новых заказах, сообщениях и удалённое управление через личного бота</p>
                                 </div>
@@ -1154,9 +1309,9 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-icons">vpn_key</span></div>
                                 <div>
-                                    <div class="crumb">Автоматизация & Продажи</div>
+                                    <div class="crumb">Интеграции & ИИ</div>
                                     <h1>Свой API ключ (ИИ)</h1>
-                                    <p>Подключение персональных ключей Gemini, OpenAI или OpenRouter для расширенных функций ИИ</p>
+                                    <p>Подключение персональных ключей Gemini, OpenAI или OpenRouter с автоматическим каскадом моделей при исчерпании лимитов</p>
                                 </div>
                             </div>
 
@@ -1182,7 +1337,7 @@ function createMainPopup() {
 
                                 <div>
                                     <label class="field-label">Модель (опционально)</label>
-                                    <input type="text" id="fxnAIModel" class="fxn-input" placeholder="gemini-2.0-flash" style="width:100%;">
+                                    <input type="text" id="fxnAIModel" class="fxn-input" placeholder="gemini-2.5-flash (авто-каскад при лимитах)" style="width:100%;">
                                     <div id="fxnAIModelHint" style="font-size:11.5px;color:var(--fxn-text-desc);margin-top:4px;"></div>
                                 </div>
 
@@ -1201,7 +1356,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">description</span></div>
                                 <div>
-                                    <div class="crumb">Чат & Коммуникация</div>
+                                    <div class="crumb">Чат & Клиенты</div>
                                     <h1>Шаблоны быстрых ответов</h1>
                                     <p>Кнопки готовых фраз в чате с поддержкой переменных {buyername}, {date}, картинок и ИИ</p>
                                 </div>
@@ -1245,6 +1400,18 @@ function createMainPopup() {
                                         <span class="variable-code">{order_id}</span>
                                         <span class="var-desc">Номер заказа (#ABC12345)</span>
                                     </div>
+                                    <div class="fxn-var-item" data-code="{orderlink}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{orderlink}</span>
+                                        <span class="var-desc">Ссылка на заказ</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{bal}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{bal}</span>
+                                        <span class="var-desc">Баланс продавца</span>
+                                    </div>
+                                    <div class="fxn-var-item" data-code="{activesells}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{activesells}</span>
+                                        <span class="var-desc">Активные продажи</span>
+                                    </div>
                                     <div class="fxn-var-item" data-code="{date}" title="Нажмите, чтобы скопировать">
                                         <span class="variable-code">{date}</span>
                                         <span class="var-desc">Текущая дата</span>
@@ -1261,6 +1428,10 @@ function createMainPopup() {
                                         <span class="variable-code">{rating}</span>
                                         <span class="var-desc">Оценка отзыва (звёзды ★)</span>
                                     </div>
+                                    <div class="fxn-var-item" data-code="{вариант 1|вариант 2|вариант 3}" title="Нажмите, чтобы скопировать">
+                                        <span class="variable-code">{вариант 1|вариант 2}</span>
+                                        <span class="var-desc">Случайный выбор (Spintax)</span>
+                                    </div>
                                     <div class="fxn-var-item" data-code="{ai: ваш запрос}" title="Нажмите, чтобы скопировать">
                                         <span class="variable-code">{ai: ваш запрос}</span>
                                         <span class="var-desc">Ответ через ИИ</span>
@@ -1273,9 +1444,6 @@ function createMainPopup() {
                             
                             <div style="display:flex;gap:10px;margin-top:12px;">
                                 <button id="addCustomTemplateBtn" class="btn btn-solid" type="button"><span class="material-symbols-rounded">add</span>Добавить шаблон</button>
-                                <button id="fxn-export-templates-btn" class="btn btn-ghost" type="button"><span class="material-symbols-rounded">download</span>Экспорт</button>
-                                <button id="fxn-import-templates-btn" class="btn btn-ghost" type="button"><span class="material-symbols-rounded">upload</span>Импорт</button>
-                                <input type="file" id="fxn-import-templates-file" accept=".fxnprst,.json" style="display:none;">
                             </div>
                         </div>
                     </section>
@@ -1286,7 +1454,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">terminal</span></div>
                                 <div>
-                                    <div class="crumb">Чат & Коммуникация</div>
+                                    <div class="crumb">Чат & Клиенты</div>
                                     <h1>Слэш-команды в чате</h1>
                                     <p>Быстрые команды и автодополнение в чатах FunPay (наберите «/» для вызова)</p>
                                 </div>
@@ -1336,7 +1504,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">block</span></div>
                                 <div>
-                                    <div class="crumb">Чат & Коммуникация</div>
+                                    <div class="crumb">Чат & Клиенты</div>
                                     <h1>Чёрный список покупателей</h1>
                                     <p>Блокировка нежелательных пользователей: скрытие их сообщений, отключение автоответов и выдачи</p>
                                 </div>
@@ -1359,69 +1527,30 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-icons">support_agent</span></div>
                                 <div>
-                                    <div class="crumb">Чат & Коммуникация</div>
+                                    <div class="crumb">Интеграции & ИИ</div>
                                     <h1>Тикеты FunPay</h1>
                                     <p>Управление обращениями в службу поддержки без перехода на внешний сайт</p>
                                 </div>
-                                <div style="margin-left:auto;display:flex;gap:8px;">
-                                    <button class="btn btn-ghost fxn-tkt-refresh-btn" id="fp-tickets-refresh-btn" type="button" title="Обновить список"><span class="material-icons" style="font-size:16px;">refresh</span></button>
-                                    <button class="btn btn-solid fxn-tkt-create-btn" id="fp-tickets-new-btn" type="button"><span class="material-icons" style="font-size:16px;">add</span>Создать обращение</button>
+                                <div class="status-pill" style="color: #ffffff; border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06);">
+                                    <span class="material-symbols-rounded" style="font-size: 14px; color: #ffffff;">construction</span>
+                                    <span>В РАЗРАБОТКЕ</span>
                                 </div>
                             </div>
 
-                            <!-- Metrics Row -->
-                            <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-bottom:14px;">
-                                <div style="background:var(--fxn-card-color);border:1px solid var(--fxn-divider-color);border-radius:10px;padding:10px 14px;">
-                                    <div style="font-size:11px;color:var(--fxn-text-subtle);text-transform:uppercase;font-family:var(--fxn-font-mono);">Всего заявок</div>
-                                    <div id="fp-tkt-metric-total" style="font-size:18px;font-weight:700;color:var(--fxn-text-main);margin-top:2px;">0</div>
+                            <div class="group" style="padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.16); border-radius: 16px;">
+                                <div style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); display: flex; align-items: center; justify-content: center; color: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.05);">
+                                    <span class="material-symbols-rounded" style="font-size: 32px; color: #ffffff;">construction</span>
                                 </div>
-                                <div style="background:var(--fxn-card-color);border:1px solid var(--fxn-divider-color);border-radius:10px;padding:10px 14px;">
-                                    <div style="font-size:11px;color:#f0a040;text-transform:uppercase;font-family:var(--fxn-font-mono);">Актуальные</div>
-                                    <div id="fp-tkt-metric-active" style="font-size:18px;font-weight:700;color:#f0a040;margin-top:2px;">0</div>
+                                <div style="display: flex; flex-direction: column; gap: 6px; max-width: 480px;">
+                                    <div style="font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em;">Временно недоступно: находится в разработке</div>
+                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); line-height: 1.55;">
+                                        Мы полностью обновляем модуль тикетов для прямой интеграции со службой поддержки FunPay, добавления быстрых шаблонов ответов и автоматических уведомлений.
+                                    </div>
                                 </div>
-                                <div style="background:var(--fxn-card-color);border:1px solid var(--fxn-divider-color);border-radius:10px;padding:10px 14px;">
-                                    <div style="font-size:11px;color:#4caf82;text-transform:uppercase;font-family:var(--fxn-font-mono);">Решённые</div>
-                                    <div id="fp-tkt-metric-solved" style="font-size:18px;font-weight:700;color:#4caf82;margin-top:2px;">0</div>
+                                <div style="display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;">
+                                    <span class="material-symbols-rounded" style="font-size: 16px; color: rgba(255, 255, 255, 0.8);">schedule</span>
+                                    <span>Скоро появится в следующем обновлении</span>
                                 </div>
-                            </div>
-
-                            <!-- Filters & Search -->
-                            <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;">
-                                <input type="text" id="fp-tickets-search" class="fxn-input" placeholder="Поиск по номеру или теме обращения..." style="flex:1;">
-                                <select id="fp-tickets-status-filter" class="fxn-input" style="width:140px;">
-                                    <option value="all">Все статусы</option>
-                                    <option value="active">Актуальные</option>
-                                    <option value="solved">Решённые</option>
-                                </select>
-                                <select id="fp-tickets-sort" class="fxn-input" style="width:150px;">
-                                    <option value="newest_first">Сначала новые</option>
-                                    <option value="oldest_first">Сначала старые</option>
-                                    <option value="last_answered">По последнему ответу</option>
-                                </select>
-                            </div>
-
-                            <div id="fp-tickets-count" style="font-size:11.5px;color:var(--fxn-text-subtle);margin-bottom:8px;"></div>
-                            <div id="fp-tickets-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-                            <div id="fp-tickets-loading" style="text-align:center;color:var(--fxn-text-desc);font-size:13px;padding:24px 0;">Загрузка обращений...</div>
-                            <div id="fp-tickets-empty" style="display:none;text-align:center;color:var(--fxn-text-desc);font-size:13px;padding:24px 0;">Заявок не найдено</div>
-                        </div>
-
-                        <!-- Ticket Detail Overlay Panel -->
-                        <div id="fp-ticket-detail-panel" style="display:none;position:absolute;inset:0;background:var(--fxn-popup-bg,#121318);z-index:40;flex-direction:column;border-radius:14px;overflow:hidden;">
-                            <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--fxn-divider-color);background:rgba(255,255,255,0.03);flex-shrink:0;">
-                                <button id="fp-ticket-detail-back" type="button" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--fxn-text-main);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;transition:all .15s ease;" title="Назад к списку">
-                                    <span class="material-icons" style="font-size:18px;line-height:1;margin:0;display:block;">arrow_back</span>
-                                </button>
-                                <div id="fp-tkt-av" style="width:34px;height:34px;border-radius:50%;background:var(--fxn-active,#c026d3);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;line-height:1;"></div>
-                                <div style="flex:1;min-width:0;">
-                                    <div id="fp-ticket-detail-title" style="font-size:14px;font-weight:700;color:var(--fxn-text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-                                    <div id="fp-ticket-detail-status" style="font-size:11.5px;color:var(--fxn-text-desc);margin-top:2px;"></div>
-                                </div>
-                            </div>
-                            <div id="fp-tdm" style="flex:1;min-height:0;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:rgba(0,0,0,0.15);"></div>
-                            <div id="fp-tria" style="display:none;padding:12px 16px;border-top:1px solid var(--fxn-divider-color);background:rgba(255,255,255,0.03);align-items:center;gap:10px;flex-shrink:0;">
-                                <textarea id="fp-tri" class="fxn-input" placeholder="Напишите ответ в поддержку..." style="height:42px;min-height:42px;max-height:100px;resize:none;flex:1;padding:10px 12px;line-height:1.4;box-sizing:border-box;"></textarea>
-                                <button id="fp-ticket-reply-btn" class="btn btn-solid" type="button" style="height:42px;width:42px;min-width:42px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:10px;flex-shrink:0;" title="Отправить ответ"><span class="material-icons" style="font-size:18px;line-height:1;margin:0;display:block;">send</span></button>
                             </div>
                         </div>
                     </section>
@@ -1432,7 +1561,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">calculate</span></div>
                                 <div>
-                                    <div class="crumb">Инструменты & Финансы</div>
+                                    <div class="crumb">Финансы & Расчёты</div>
                                     <h1>Калькулятор</h1>
                                     <p>Быстрый подсчет комиссии FunPay, стоимости товаров и прибыли</p>
                                 </div>
@@ -1479,7 +1608,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">currency_exchange</span></div>
                                 <div>
-                                    <div class="crumb">Инструменты & Финансы</div>
+                                    <div class="crumb">Финансы & Расчёты</div>
                                     <h1>Конвертер валют</h1>
                                     <p>Актуальные курсы валют в реальном времени для расчета сделок</p>
                                 </div>
@@ -1495,7 +1624,7 @@ function createMainPopup() {
                                     <div id="currencyRateDisplay" style="font-family:var(--fxn-font-mono);font-size:12px;color:var(--fxn-text-desc);"></div>
                                 </div>
                                 <div style="display:grid;grid-template-columns:1fr 140px;gap:12px;">
-                                    <input type="text" id="currencyAmountTo" class="fxn-input" readonly style="width:100% !important;box-sizing:border-box;background:rgba(255,255,255,0.04);">
+                                    <input type="text" id="currencyAmountTo" class="fxn-input" readonly style="width:100% !important;box-sizing:border-box;background:rgba(255,255,204,0.04);">
                                     <select id="currencySelectTo" class="fxn-select" style="width:100% !important;box-sizing:border-box;"></select>
                                 </div>
                                 <div id="currency-error-display" style="color:#ef4444;font-size:12px;margin-top:10px;text-align:center;"></div>
@@ -1509,7 +1638,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">savings</span></div>
                                 <div>
-                                    <div class="crumb">Инструменты & Финансы</div>
+                                    <div class="crumb">Финансы & Расчёты</div>
                                     <h1>Финансовые копилки</h1>
                                     <p>Отслеживайте накопления на цели прямо от вашего баланса FunPay</p>
                                 </div>
@@ -1530,7 +1659,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">edit_note</span></div>
                                 <div>
-                                    <div class="crumb">Инструменты & Финансы</div>
+                                    <div class="crumb">Финансы & Расчёты</div>
                                     <h1>Личные заметки</h1>
                                     <p>Блокнот с мгновенным автосохранением: сохраняйте важные данные, контакты и идеи</p>
                                 </div>
@@ -1542,22 +1671,146 @@ function createMainPopup() {
                         </div>
                     </section>
 
-                    <!-- PANEL: ИМПОРТ / ЭКСПОРТ (SETTINGS_IO) -->
+                    <!-- PANEL: ЭКСПОРТ / ИМПОРТ (SETTINGS_IO MASTER HUB) -->
                     <section class="panel foxen-page-content" id="settings_io" data-page="settings_io">
                         <div class="panel-body">
                             <div class="panel-header">
-                                <div class="panel-icon"><span class="material-symbols-rounded">database</span></div>
+                                <div class="panel-icon"><span class="material-symbols-rounded">import_export</span></div>
                                 <div>
-                                    <div class="crumb">Инструменты & Финансы</div>
-                                    <h1>Импорт / Экспорт настроек</h1>
-                                    <p>Резервное копирование и перенос всех настроек Foxen между браузерами и устройствами</p>
+                                    <div class="crumb">Главная & Настройки</div>
+                                    <h1>Экспорт / Импорт</h1>
+                                    <p>Единый мастер резервного копирования и переноса настроек, лотов, шаблонов и данных</p>
                                 </div>
                             </div>
 
-                            <div class="group" style="padding:20px;display:flex;gap:12px;">
-                                <button id="fxnExportAllSettingsBtn" class="btn btn-solid" type="button" style="flex:1;padding:12px;"><span class="material-symbols-rounded">download</span>Экспортировать всё в JSON</button>
-                                <button id="fxnImportAllSettingsBtn" class="btn btn-ghost" type="button" style="flex:1;padding:12px;"><span class="material-symbols-rounded">upload</span>Импортировать из файла</button>
-                                <input type="file" id="fxnImportAllSettingsFile" accept=".json" style="display:none;">
+                            <!-- 1. НАСТРОЙКИ FOXEN -->
+                            <div class="section-label">Настройки расширения</div>
+                            <div class="group">
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">tune</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Резервная копия конфигурации Foxen</div>
+                                        <div class="row-sub">Сохранение и перенос всех параметров, переключателей и режимов в файл JSON</div>
+                                    </div>
+                                </div>
+                                <div class="lot-io-action-bar" style="padding:0 16px 14px 16px;margin-top:0;">
+                                    <button id="fxnExportAllSettingsBtn" class="btn btn-solid" type="button">
+                                        <span class="material-symbols-rounded">download</span>
+                                        <span>Экспортировать всё в JSON</span>
+                                    </button>
+                                    <button id="fxnImportAllSettingsBtn" class="btn btn-ghost" type="button">
+                                        <span class="material-symbols-rounded">upload</span>
+                                        <span>Импортировать из файла</span>
+                                    </button>
+                                    <input type="file" id="fxnImportAllSettingsFile" accept=".json" style="display:none;">
+                                </div>
+                            </div>
+
+                            <!-- 2. ЛОТЫ И ПРЕДЛОЖЕНИЯ FUNPAY -->
+                            <div class="section-label">Лоты & Торговые предложения</div>
+                            <div class="group">
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">inventory_2</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Экспорт и импорт лотов</div>
+                                        <div class="row-sub">Сохранение предложений аккаунта в JSON-файл или восстановление / перенос базы лотов</div>
+                                    </div>
+                                </div>
+                                <div class="lot-io-action-bar" style="padding:0 16px 14px 16px;margin-top:0;">
+                                    <button id="lot-io-export-btn" class="btn btn-solid" type="button">
+                                        <span class="material-symbols-rounded">download</span>
+                                        <span>Экспорт лотов</span>
+                                    </button>
+                                    <button id="lot-io-import-btn" class="btn btn-ghost" type="button">
+                                        <span class="material-symbols-rounded">upload</span>
+                                        <span>Импорт лотов</span>
+                                    </button>
+                                    <input type="file" id="lot-io-import-file" accept=".json" style="display:none;">
+                                </div>
+
+                                <div class="row" style="border-top:1px solid var(--fxn-divider-color);margin-top:2px;">
+                                    <div class="row-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
+                                        </svg>
+                                    </div>
+                                    <div class="row-text">
+                                        <div class="row-title">Конвертер Cardinal</div>
+                                        <div class="row-sub">Конвертация базы предложений из бота Cardinal в формат Foxen</div>
+                                    </div>
+                                    <button id="convert-cardinal-lots-btn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
+                                        <span class="material-symbols-rounded" style="font-size:16px;">open_in_new</span>
+                                        <span>Конвертер</span>
+                                    </button>
+                                </div>
+
+                                <div id="lot-io-pending-imports-list" class="lot-io-pending-container" style="padding:0 16px 14px 16px;">
+                                    <!-- Заполняется динамически через renderPendingImports() -->
+                                </div>
+                            </div>
+
+                            <!-- 3. ШАБЛОНЫ И АВТООТВЕТ -->
+                            <div class="section-label">Шаблоны & Автоответ</div>
+                            <div class="group">
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">forum</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Шаблоны быстрых ответов</div>
+                                        <div class="row-sub">Экспорт и восстановление базы готовых шаблонных сообщений для чатов (.fxnprst)</div>
+                                    </div>
+                                    <div style="display:flex;gap:8px;">
+                                        <button id="fxnMasterExportTemplatesBtn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
+                                            <span class="material-symbols-rounded" style="font-size:16px;">download</span>
+                                            <span>Экспорт</span>
+                                        </button>
+                                        <button id="fxnMasterImportTemplatesBtn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
+                                            <span class="material-symbols-rounded" style="font-size:16px;">upload</span>
+                                            <span>Импорт</span>
+                                        </button>
+                                        <input type="file" id="fxnMasterImportTemplatesFile" accept=".fxnprst,.json" style="display:none;">
+                                    </div>
+                                </div>
+                                <div class="row" style="border-top:1px solid var(--fxn-divider-color);margin-top:2px;">
+                                    <div class="row-icon"><span class="material-symbols-rounded">smart_toy</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Правила автоответа</div>
+                                        <div class="row-sub">Сохранение и перенос триггеров и ключевых слов автоответчика (.fxnar)</div>
+                                    </div>
+                                    <div style="display:flex;gap:8px;">
+                                        <button id="fxnMasterExportAutoreplyBtn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
+                                            <span class="material-symbols-rounded" style="font-size:16px;">download</span>
+                                            <span>Экспорт</span>
+                                        </button>
+                                        <button id="fxnMasterImportAutoreplyBtn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
+                                            <span class="material-symbols-rounded" style="font-size:16px;">upload</span>
+                                            <span>Импорт</span>
+                                        </button>
+                                        <input type="file" id="fxnMasterImportAutoreplyFile" accept=".fxnar,.json" style="display:none;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 4. ОФОРМЛЕНИЕ И ТЕМЫ -->
+                            <div class="section-label">Оформление & Темы</div>
+                            <div class="group">
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">palette</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Кастомная тема Foxen</div>
+                                        <div class="row-sub">Экспорт текущей цветовой палитры, эффектов и стилей в файл .fptheme</div>
+                                    </div>
+                                    <div style="display:flex;gap:8px;">
+                                        <button id="fxnMasterExportThemeBtn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
+                                            <span class="material-symbols-rounded" style="font-size:16px;">download</span>
+                                            <span>Экспорт темы</span>
+                                        </button>
+                                        <button id="fxnMasterImportThemeBtn" class="btn btn-ghost btn-sm" type="button" style="display:flex;align-items:center;gap:6px;">
+                                            <span class="material-symbols-rounded" style="font-size:16px;">upload</span>
+                                            <span>Импорт темы</span>
+                                        </button>
+                                        <input type="file" id="fxnMasterImportThemeFile" accept=".fptheme,.json" style="display:none;">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -1568,7 +1821,7 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">palette</span></div>
                                 <div>
-                                    <div class="crumb">Кастомизация</div>
+                                    <div class="crumb">Кастомизация & Стиль</div>
                                     <h1>Внешний вид &amp; Тема</h1>
                                     <p>Полная настройка визуального стиля: цвета, фоны, прозрачность, размытие и шрифты</p>
                                 </div>
@@ -1801,9 +2054,9 @@ function createMainPopup() {
                                         <div class="row-title">Эффект глассморфизма (Glass)</div>
                                         <div class="row-sub">Стеклянное размытие под блоками контента</div>
                                     </div>
-                                    <button class="switch" id="enableGlassmorphism" data-toggle></button>
+                                    <button class="switch" id="enableGlassmorphism" type="button"></button>
                                 </div>
-                                <div id="glassmorphismControls" class="fxn-nested-block" style="display:none;padding:14px 16px;">
+                                <div id="glassmorphismControls" class="fxn-nested-block" style="display:none;padding:14px 16px;flex-direction:column;gap:12px;">
                                     <div class="fxn-slider-card">
                                         <div class="fxn-slider-header">
                                             <label class="field-label" for="glassmorphismBlur">
@@ -1814,6 +2067,18 @@ function createMainPopup() {
                                         </div>
                                         <div class="slider-wrap">
                                             <input type="range" id="glassmorphismBlur" min="0" max="30" step="1" value="10">
+                                        </div>
+                                    </div>
+                                    <div class="fxn-slider-card">
+                                        <div class="fxn-slider-header">
+                                            <label class="field-label" for="glassContainerBgOpacity">
+                                                <span class="material-symbols-rounded">opacity</span>
+                                                <span>Прозрачность стеклянных блоков</span>
+                                            </label>
+                                            <span class="slider-value" id="glassContainerBgOpacityValue">75%</span>
+                                        </div>
+                                        <div class="slider-wrap">
+                                            <input type="range" id="glassContainerBgOpacity" min="10" max="100" step="1" value="75">
                                         </div>
                                     </div>
                                 </div>
@@ -1880,121 +2145,53 @@ function createMainPopup() {
                                 </div>
                             </div>
 
-                            <!-- ═══ 8. ПРОЗРАЧНОЕ МЕНЮ FOXEN ═══ -->
-                            <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
-                                <span>Прозрачное меню Foxen</span>
-                                <button class="btn btn-ghost" id="fxnOpenMenuSettingsModalBtn" type="button" style="padding:4px 10px;font-size:11.5px;display:flex;align-items:center;gap:5px;" title="Открыть плавающий инспектор для живой настройки окна">
-                                    <span class="material-symbols-rounded" style="font-size:15px;color:var(--fxn-active);">tune</span>
-                                    <span>Живой инспектор</span>
-                                </button>
+                            <!-- ═══ 8. ЗАТЕМНЕНИЕ СЗАДИ ОКНА FOXEN ═══ -->
+                            <div class="section-label">
+                                <span>Затемнение сзади окна Foxen</span>
                             </div>
                             <div class="group">
                                 <div class="row">
-                                    <div class="row-icon"><span class="material-symbols-rounded">opacity</span></div>
+                                    <div class="row-icon"><span class="material-symbols-rounded">filter_drama</span></div>
                                     <div class="row-text">
-                                        <div class="row-title">Прозрачность окна Foxen</div>
-                                        <div class="row-sub">Сделать фон попапа полупрозрачным с эффектом матового стекла</div>
+                                        <div class="row-title">Тёмный туман (затемнение) сзади окна</div>
+                                        <div class="row-sub">Включить затемняющую дымку на странице вокруг окна Foxen</div>
                                     </div>
-                                    <button class="switch" id="fxnMenuTransparentEnabled" data-toggle></button>
-                                </div>
-                                <div class="row" style="border-top:1px solid var(--fxn-divider-color);">
-                                    <div class="row-icon"><span class="material-symbols-rounded">blur_on</span></div>
-                                    <div class="row-text">
-                                        <div class="row-title">Размытие фона сайта (Scrim blur)</div>
-                                        <div class="row-sub">Размывать страницу позади затемнения окна Foxen</div>
-                                    </div>
-                                    <button class="switch on" id="fxnScrimBlurEnabled" data-toggle></button>
-                                </div>
-                                <div id="fxnMenuTransparentControls" class="fxn-nested-block" style="display:none;flex-direction:column;gap:12px;">
-                                    <!-- 1. Цвет подложки -->
-                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;">
-                                        <div>
-                                            <div style="font-size:13px;color:var(--fxn-text-main);font-weight:600;">Цвет подложки меню</div>
-                                            <div style="font-size:11.5px;color:var(--fxn-text-desc);">Оттенок полупрозрачного фона окна</div>
-                                        </div>
-                                        <input type="color" id="fxnMenuTintColor" value="#2a1033" class="fxn-input" style="width:54px;height:32px;padding:2px;cursor:pointer;border-radius:6px;">
-                                    </div>
-
-                                    <!-- 2. Плотность фона (menuOpacity) -->
-                                    <div class="fxn-slider-card">
-                                        <div class="fxn-slider-header">
-                                            <label class="field-label" for="fxnMenuOpacity" style="margin:0;">
-                                                <span class="material-symbols-rounded">tune</span>
-                                                <span>Плотность фона (Непрозрачность)</span>
-                                            </label>
-                                            <span class="slider-value" id="fxnMenuOpacityValue">3%</span>
-                                        </div>
-                                        <div class="slider-wrap">
-                                            <input type="range" id="fxnMenuOpacity" min="0" max="100" step="1" value="3">
-                                        </div>
-                                    </div>
-
-                                    <!-- 3. Размытие фона (menuBlurEnabled & menuBlur) -->
-                                    <div style="padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;display:flex;flex-direction:column;gap:10px;">
-                                        <div style="display:flex;align-items:center;justify-content:space-between;">
-                                            <div>
-                                                <div style="font-size:13px;color:var(--fxn-text-main);font-weight:600;">Размытие фона (Backdrop blur)</div>
-                                                <div style="font-size:11.5px;color:var(--fxn-text-desc);">Размытие страницы под окном Foxen</div>
-                                            </div>
-                                            <button class="switch on" id="fxnMenuBlurEnabled" data-toggle></button>
-                                        </div>
-                                        <div id="fxnMenuBlurControls" class="fxn-slider-card" style="margin:0;">
-                                            <div class="fxn-slider-header">
-                                                <label class="field-label" for="fxnMenuBlur" style="margin:0;">
-                                                    <span class="material-symbols-rounded">blur_on</span>
-                                                    <span>Сила размытия</span>
-                                                </label>
-                                                <span class="slider-value" id="fxnMenuBlurValue">8px</span>
-                                            </div>
-                                            <div class="slider-wrap">
-                                                <input type="range" id="fxnMenuBlur" min="0" max="20" step="1" value="8">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- 4. Контур текста -->
-                                    <div id="fxnTextOutlineGroup" style="padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;display:flex;flex-direction:column;gap:10px;">
-                                        <div style="display:flex;align-items:center;justify-content:space-between;">
-                                            <div>
-                                                <div style="font-size:13px;color:var(--fxn-text-main);font-weight:600;">Контур текста меню</div>
-                                                <div style="font-size:11.5px;color:var(--fxn-text-desc);">Обводка букв для читаемости на прозрачном фоне</div>
-                                            </div>
-                                            <button class="switch" id="fxnTextOutlineEnabled" data-toggle></button>
-                                        </div>
-                                        <div id="fxnTextOutlineControls" style="display:none;flex-direction:column;gap:10px;">
-                                            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;">
-                                                <label class="field-label" style="margin:0;">Цвет обводки</label>
-                                                <input type="color" id="fxnTextOutlineColor" value="#000000" class="fxn-input" style="width:54px;height:30px;padding:2px;cursor:pointer;border-radius:6px;">
-                                            </div>
-                                            <div class="fxn-slider-card" style="margin:0;">
-                                                <div class="fxn-slider-header">
-                                                    <label class="field-label" for="fxnTextOutlineWidth" style="margin:0;">
-                                                        <span class="material-symbols-rounded">line_weight</span>
-                                                        <span>Толщина контура</span>
-                                                    </label>
-                                                    <span class="slider-value" id="fxnTextOutlineWidthValue">1px</span>
-                                                </div>
-                                                <div class="slider-wrap">
-                                                    <input type="range" id="fxnTextOutlineWidth" min="0" max="5" step="0.5" value="1">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <button class="switch ${isScrimDisabled ? '' : 'on'}" id="fxnScrimEnabled" type="button"></button>
                                 </div>
                             </div>
 
                             <!-- ═══ 9. ДЕЙСТВИЯ С ТЕМОЙ ═══ -->
-                            <div class="section-label">Действия с темой</div>
-                            <div class="group" style="padding:16px;">
-                                <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;">
-                                    <button id="randomizeThemeBtn" class="btn btn-ghost" type="button"><span class="material-symbols-rounded" style="font-size:16px;">casino</span>Рандом</button>
-                                    <button id="exportThemeBtn" class="btn btn-ghost" type="button"><span class="material-symbols-rounded" style="font-size:16px;">download</span>Экспорт</button>
-                                    <button id="importThemeBtn" class="btn btn-ghost" type="button"><span class="material-symbols-rounded" style="font-size:16px;">upload</span>Импорт</button>
-                                    <input type="file" id="importThemeInput" accept=".fptheme" style="display:none;">
-                                    <button id="shareThemeBtn" class="btn btn-ghost" type="button"><span class="material-symbols-rounded" style="font-size:16px;">share</span>Бот</button>
+                            <div class="section-label">
+                                <span>Действия с темой</span>
+                            </div>
+                            <div class="group fxn-theme-actions-card">
+                                <div class="fxn-theme-actions-grid">
+                                    <button id="randomizeThemeBtn" class="fxn-theme-action-btn" type="button" title="Сгенерировать случайную гармоничную палитру цветов">
+                                        <div class="fxn-theme-action-icon random">
+                                            <span class="material-symbols-rounded">casino</span>
+                                        </div>
+                                        <div class="fxn-theme-action-text">
+                                            <div class="fxn-theme-action-title">Случайная палитра</div>
+                                            <div class="fxn-theme-action-desc">Сгенерировать цвета</div>
+                                        </div>
+                                    </button>
+
+                                    <button id="shareThemeBtn" class="fxn-theme-action-btn" type="button" title="Поделиться темой в каталоге Foxen (web.foxen.site)">
+                                        <div class="fxn-theme-action-icon share">
+                                            <span class="material-symbols-rounded">share</span>
+                                        </div>
+                                        <div class="fxn-theme-action-text">
+                                            <div class="fxn-theme-action-title">Поделиться темой</div>
+                                            <div class="fxn-theme-action-desc">Каталог тем Foxen</div>
+                                        </div>
+                                    </button>
                                 </div>
-                                <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--fxn-divider-color);">
-                                    <button id="resetThemeBtn" class="btn btn-ghost" style="width:100%;color:#ef4444;border-color:rgba(239,68,68,0.25);" type="button"><span class="material-symbols-rounded" style="font-size:16px;">restart_alt</span>Сбросить тему к стандартной</button>
+
+                                <div class="fxn-theme-actions-footer">
+                                    <button id="resetThemeBtn" class="fxn-theme-reset-btn" type="button" title="Сбросить все цвета и фоновые настройки к исходным">
+                                        <span class="material-symbols-rounded">restart_alt</span>
+                                        <span>Сбросить оформление к стандартному</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2006,13 +2203,31 @@ function createMainPopup() {
                             <div class="panel-header">
                                 <div class="panel-icon"><span class="material-symbols-rounded">grid_view</span></div>
                                 <div>
-                                    <div class="crumb">Кастомизация</div>
-                                    <h1>Каталог готовых тем</h1>
+                                    <div class="crumb">Кастомизация & Стиль</div>
+                                    <h1>Каталог тем</h1>
                                     <p>Подборка стильных тем и анимированных фонов сообщества</p>
+                                </div>
+                                <div class="status-pill" style="color: #ffffff; border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06);">
+                                    <span class="material-symbols-rounded" style="font-size: 14px; color: #ffffff;">construction</span>
+                                    <span>В РАЗРАБОТКЕ</span>
                                 </div>
                             </div>
 
-                            <div id="foxen-theme-gallery-mount"></div>
+                            <div class="group" style="padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.16); border-radius: 16px;">
+                                <div style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); display: flex; align-items: center; justify-content: center; color: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.05);">
+                                    <span class="material-symbols-rounded" style="font-size: 32px; color: #ffffff;">construction</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 6px; max-width: 480px;">
+                                    <div style="font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em;">Временно недоступно: находится в разработке</div>
+                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); line-height: 1.55;">
+                                        Мы полностью обновляем каталог тем Foxen Hub, онлайн-галерею пресетов и облачную синхронизацию тем сообщества.
+                                    </div>
+                                </div>
+                                <div style="display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;">
+                                    <span class="material-symbols-rounded" style="font-size: 16px; color: rgba(255, 255, 255, 0.8);">schedule</span>
+                                    <span>Скоро появится в следующем обновлении</span>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -2026,7 +2241,7 @@ function createMainPopup() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <div class="crumb">Кастомизация</div>
+                                    <div class="crumb">Кастомизация & Стиль</div>
                                     <h1>Эффекты & Курсор</h1>
                                     <p>Атмосферные частицы на странице, анимации курсора и интерактивные эффекты</p>
                                 </div>
@@ -2094,46 +2309,75 @@ function createMainPopup() {
                                         </svg>
                                     </div>
                                     <div class="row-text">
-                                        <div class="row-title">Включить эффекты курсора</div>
-                                        <div class="row-sub">Следы, частицы и анимация при движении мыши по сайту</div>
+                                        <div class="row-title">Эффекты шлейфа курсора</div>
+                                        <div class="row-sub">Стилизованные следы и геометрическая анимация мыши</div>
                                     </div>
                                     <button class="switch" id="cursorFxEnabled" data-toggle></button>
                                 </div>
                                 <div id="cursorFxControls" class="fxn-nested-block" style="display:none;flex-direction:column;gap:14px;padding:16px;">
-                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                                        <div>
-                                            <label class="field-label">Стиль следа</label>
-                                            <select id="cursorFxType" class="fxn-select" style="width:100%;">
-                                                <option value="sparkle">✨ Искры (Sparkles)</option>
-                                                <option value="trail">〰️ Неоновый шлейф (Neon Trail)</option>
-                                                <option value="snow">❄️ Снежинки (Snow)</option>
-                                                <option value="blood">🩸 Капли (Drops)</option>
-                                            </select>
+                                    <!-- Visual Trail Style Selector Chips -->
+                                    <div>
+                                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                                            <label class="field-label" style="margin:0;">Стиль шлейфа</label>
+                                            <span id="cursorFxActiveTypeLabel" style="font-size:11px;color:var(--fxn-accent,#c026d3);font-weight:600;">Коса</span>
                                         </div>
-                                        <div>
-                                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                                                <label class="field-label" style="margin:0;">Плотность эффекта</label>
-                                                <span class="slider-value" id="cursorFxCountValue">50%</span>
-                                            </div>
-                                            <input type="range" id="cursorFxCount" min="10" max="100" step="5" value="50">
+
+                                        <select id="cursorFxType" style="display:none;">
+                                            <option value="braid">Коса</option>
+                                            <option value="coil">Пружина</option>
+                                            <option value="circuit">Схема</option>
+                                            <option value="rails">Рельсы</option>
+                                            <option value="fan">Веер</option>
+                                            <option value="chain">Цепь</option>
+                                        </select>
+
+                                        <div class="fxn-trail-grid" id="fxnTrailPresets">
+                                            <button type="button" class="fxn-trail-chip active" data-type="braid" title="Двойное плетение нитей">
+                                                <span class="material-symbols-rounded fxn-trail-icon">waves</span>
+                                                <span class="fxn-trail-title">Коса</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="coil" title="Спиральный шнур">
+                                                <span class="material-symbols-rounded fxn-trail-icon">cyclone</span>
+                                                <span class="fxn-trail-title">Пружина</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="circuit" title="Кибер-микросхема">
+                                                <span class="material-symbols-rounded fxn-trail-icon">memory</span>
+                                                <span class="fxn-trail-title">Схема</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="rails" title="Параллельные рельсы">
+                                                <span class="material-symbols-rounded fxn-trail-icon">reorder</span>
+                                                <span class="fxn-trail-title">Рельсы</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="fan" title="Геометрический веер">
+                                                <span class="material-symbols-rounded fxn-trail-icon">radar</span>
+                                                <span class="fxn-trail-title">Веер</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="chain" title="Неоновая цепь">
+                                                <span class="material-symbols-rounded fxn-trail-icon">link</span>
+                                                <span class="fxn-trail-title">Цепь</span>
+                                            </button>
                                         </div>
                                     </div>
-                                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end;">
-                                        <div>
-                                            <label class="field-label" style="margin-bottom:6px;">Цвет 1</label>
-                                            <input type="color" id="cursorFxColor1" value="#FF6B6B" class="fxn-input" style="width:100%;height:34px;padding:2px;cursor:pointer;">
-                                            <div id="cursorFxColor1Swatch" style="display:none;"></div>
-                                        </div>
-                                        <div>
-                                            <label class="field-label" style="margin-bottom:6px;">Цвет 2</label>
-                                            <input type="color" id="cursorFxColor2" value="#C026D3" class="fxn-input" style="width:100%;height:34px;padding:2px;cursor:pointer;">
-                                            <div id="cursorFxColor2Swatch" style="display:none;"></div>
-                                        </div>
-                                        <div style="display:flex;flex-direction:column;justify-content:center;height:34px;">
-                                            <div style="display:flex;align-items:center;justify-content:space-between;">
-                                                <span style="font-size:12px;color:var(--fxn-text-main);font-weight:500;">Радуга (RGB)</span>
-                                                <button class="switch" id="cursorFxRgb" data-toggle></button>
+
+                                    <!-- Unified Color & RGB Control Bar -->
+                                    <div class="fxn-trail-color-bar" style="padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--fxn-divider-color);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                                        <div style="display:flex;align-items:center;gap:10px;">
+                                            <label class="field-label" style="margin:0;font-size:12px;">Цвет эффекта</label>
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <input type="color" id="cursorFxColor1" value="#c026d3" class="fxn-color-picker-dot" title="Выбрать цвет">
+                                                <div class="fxn-quick-swatches" id="cursorFxQuickSwatches">
+                                                    <span class="fxn-mini-swatch active" data-color="#c026d3" style="background:#c026d3;" title="Неон"></span>
+                                                    <span class="fxn-mini-swatch" data-color="#38bdf8" style="background:#38bdf8;" title="Голубой"></span>
+                                                    <span class="fxn-mini-swatch" data-color="#22c55e" style="background:#22c55e;" title="Изумруд"></span>
+                                                    <span class="fxn-mini-swatch" data-color="#f97316" style="background:#f97316;" title="Огонь"></span>
+                                                    <span class="fxn-mini-swatch" data-color="#ffffff" style="background:#ffffff;" title="Белый"></span>
+                                                </div>
                                             </div>
+                                        </div>
+
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <span style="font-size:12px;color:var(--fxn-text-main);font-weight:500;">Радуга (RGB)</span>
+                                            <button class="switch" id="cursorFxRgb" data-toggle></button>
                                         </div>
                                     </div>
                                 </div>
@@ -2155,43 +2399,20 @@ function createMainPopup() {
                                     <button class="switch" id="customCursorEnabled" data-toggle></button>
                                 </div>
                                 <div id="customCursorControls" class="fxn-nested-block" style="display:none;flex-direction:column;gap:14px;padding:16px;">
-                                    <label class="field-label" style="margin:0;">Стиль указателя</label>
-                                    <div class="fxn-cursor-grid" id="fxnCursorPresets">
-                                        <div class="fxn-cursor-card active" data-cursor="default">
-                                            <div class="fxn-cursor-icon">🖱️</div>
-                                            <div class="fxn-cursor-label">По умолчанию</div>
-                                        </div>
-                                        <div class="fxn-cursor-card" data-cursor="neon-dot">
-                                            <div class="fxn-cursor-icon">⚪</div>
-                                            <div class="fxn-cursor-label">Неоновая точка</div>
-                                        </div>
-                                        <div class="fxn-cursor-card" data-cursor="crosshair">
-                                            <div class="fxn-cursor-icon">✛</div>
-                                            <div class="fxn-cursor-label">Прицел</div>
-                                        </div>
-                                        <div class="fxn-cursor-card" data-cursor="sword">
-                                            <div class="fxn-cursor-icon">🗡️</div>
-                                            <div class="fxn-cursor-label">Меч</div>
-                                        </div>
-                                        <div class="fxn-cursor-card" data-cursor="wand">
-                                            <div class="fxn-cursor-icon">🪄</div>
-                                            <div class="fxn-cursor-label">Палочка</div>
-                                        </div>
-                                        <div class="fxn-cursor-card" data-cursor="custom">
-                                            <div class="fxn-cursor-icon">✨</div>
-                                            <div class="fxn-cursor-label">Свой (Файл/URL)</div>
-                                        </div>
-                                    </div>
-
-                                    <div id="customCursorUploadWrap" style="display:none;padding:12px;background:rgba(0,0,0,0.2);border-radius:10px;border:1px solid var(--fxn-divider-color);">
-                                        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
-                                            <div id="cursor-image-preview" style="width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,0.06);background-size:contain;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--fxn-text-desc);border:1px solid var(--fxn-divider-color);">Нет</div>
-                                            <input type="file" id="cursorImageInput" accept="image/*" style="display:none;">
-                                            <button type="button" id="uploadCursorImageBtn" class="btn btn-ghost btn-sm" style="display:flex;align-items:center;gap:6px;">
-                                                <span class="material-symbols-rounded" style="font-size:16px;">upload_file</span>
-                                                <span>Загрузить изображение</span>
-                                            </button>
-                                            <button type="button" id="removeCursorImageBtn" class="btn btn-ghost btn-sm" style="color:#ef4444;">Удалить</button>
+                                    <div id="customCursorUploadWrap" style="padding:14px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid var(--fxn-divider-color);display:flex;flex-direction:column;gap:12px;">
+                                        <div style="display:flex;gap:12px;align-items:center;">
+                                            <div id="cursor-image-preview" style="width:48px;height:48px;border-radius:10px;background:rgba(255,255,255,0.06);background-size:contain;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--fxn-text-desc);border:1px solid var(--fxn-divider-color);flex-shrink:0;">Нет</div>
+                                            <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                                                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                                    <input type="file" id="cursorImageInput" accept="image/*,.cur,.ico,.svg" style="display:none;">
+                                                    <button type="button" id="uploadCursorImageBtn" class="btn btn-ghost btn-sm" style="display:flex;align-items:center;gap:6px;">
+                                                        <span class="material-symbols-rounded" style="font-size:16px;">upload_file</span>
+                                                        <span>Загрузить курсор</span>
+                                                    </button>
+                                                    <button type="button" id="removeCursorImageBtn" class="btn btn-ghost btn-sm" style="color:#ef4444;">Удалить</button>
+                                                </div>
+                                                <div style="font-size:11px;color:var(--fxn-text-desc);">PNG, SVG, WEBP, ICO или CUR</div>
+                                            </div>
                                         </div>
                                         <input type="text" id="customCursorUrl" class="fxn-input" placeholder="Или вставьте прямую ссылку на изображение..." style="width:100%;">
                                     </div>
@@ -2225,131 +2446,6 @@ function createMainPopup() {
             <div class="fxn-window-resizer" title="Изменить размер окна"></div>
         </div>
 
-        <!-- FOXEN MENU LIVE INSPECTOR (Floating Palette - Embedded in popup) -->
-        <div class="fxn-menu-inspector" id="foxen-menu-settings-modal" style="display: none !important;">
-            <div class="fxn-inspector-header" id="fxnMenuInspectorHeader">
-                <div class="fxn-inspector-title-wrap">
-                    <div class="fxn-inspector-icon-badge">
-                        <span class="material-symbols-rounded">tune</span>
-                    </div>
-                    <div class="fxn-inspector-title-text">
-                        <div class="fxn-inspector-title">Инспектор окна Foxen</div>
-                        <div class="fxn-inspector-subtitle">Живая настройка прозрачности и стиля</div>
-                    </div>
-                </div>
-                <button class="fxn-inspector-close foxen-modal-close" type="button" title="Закрыть (Esc)">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-            </div>
-
-            <div class="fxn-inspector-body">
-                <!-- 1. Главный переключатель прозрачности -->
-                <div class="fxn-inspector-row fxn-inspector-toggle-card">
-                    <div class="fxn-inspector-row-label">
-                        <span class="fxn-inspector-label-title">Прозрачное окно Foxen</span>
-                        <span class="fxn-inspector-label-sub">Матовое стекло вместо сплошного фона</span>
-                    </div>
-                    <button class="switch" id="fxnModalMenuTransparent" data-toggle></button>
-                </div>
-
-                <!-- 2. Размытие фона страницы позади попапа (Scrim blur) -->
-                <div class="fxn-inspector-row fxn-inspector-toggle-card">
-                    <div class="fxn-inspector-row-label">
-                        <span class="fxn-inspector-label-title">Размытие фона сайта</span>
-                        <span class="fxn-inspector-label-sub">Размывать страницу позади меню Foxen</span>
-                    </div>
-                    <button class="switch on" id="fxnModalScrimBlurEnabled" data-toggle></button>
-                </div>
-
-                <!-- 3. Секции детальной настройки прозрачности (скрыты когда прозрачность выключена) -->
-                <div id="fxnModalMenuTransparentControls" style="display:none;" class="fxn-inspector-controls-wrap">
-                    
-                    <!-- Цвет подложки (Tint Color) -->
-                    <div class="fxn-inspector-card">
-                        <div class="fxn-inspector-card-header">
-                            <div>
-                                <span class="fxn-inspector-card-title">Оттенок стекла (Tint Color)</span>
-                                <div class="fxn-inspector-card-sub">Цветовой тон полупрозрачного фона</div>
-                            </div>
-                            <button type="button" class="fxn-inspector-color-pill" id="fxnModalMenuTintPickerBtn" title="Выбрать цвет оттенка">
-                                <span class="fxn-color-pill-dot" id="fxnModalMenuTintDot" style="background:#2a1033;"></span>
-                                <span class="fxn-color-pill-hex" id="fxnModalMenuTintHex">#2a1033</span>
-                            </button>
-                            <input type="hidden" id="fxnModalMenuTintColor" value="#2a1033">
-                        </div>
-                    </div>
-
-                    <!-- Плотность подложки (Opacity) -->
-                    <div class="fxn-inspector-card">
-                        <div class="fxn-inspector-card-header">
-                            <span class="fxn-inspector-card-title">Непрозрачность подложки</span>
-                            <span class="fxn-inspector-badge" id="fxnModalMenuOpacityValue">3%</span>
-                        </div>
-                        <input type="range" class="fxn-inspector-slider" id="fxnModalMenuOpacity" min="0" max="100" step="1" value="3">
-                        <div class="fxn-slider-ticks">
-                            <span>0% (Ультра-стекло)</span>
-                            <span>50%</span>
-                            <span>100%</span>
-                        </div>
-                    </div>
-
-                    <!-- Размытие фона (Backdrop blur) -->
-                    <div class="fxn-inspector-card">
-                        <div class="fxn-inspector-card-header">
-                            <div>
-                                <span class="fxn-inspector-card-title">Размытие фона (Backdrop blur)</span>
-                                <div class="fxn-inspector-card-sub">Размытие страницы под окном</div>
-                            </div>
-                            <button class="switch on" id="fxnModalMenuBlurEnabled" data-toggle></button>
-                        </div>
-                        <div id="fxnModalMenuBlurControls" class="fxn-inspector-subcontrols">
-                            <div class="fxn-inspector-slider-row">
-                                <span class="fxn-inspector-slider-label">Сила размытия</span>
-                                <span class="fxn-inspector-badge" id="fxnModalMenuBlurValue">8px</span>
-                            </div>
-                            <input type="range" class="fxn-inspector-slider" id="fxnModalMenuBlur" min="0" max="20" step="1" value="8">
-                        </div>
-                    </div>
-
-                    <!-- Контур текста для читаемости -->
-                    <div class="fxn-inspector-card" id="fxnModalTextOutlineGroup">
-                        <div class="fxn-inspector-card-header">
-                            <div>
-                                <span class="fxn-inspector-card-title">Контур текста меню</span>
-                                <div class="fxn-inspector-card-sub">Для идеальной читаемости букв</div>
-                            </div>
-                            <button class="switch" id="fxnModalTextOutlineEnabled" data-toggle></button>
-                        </div>
-                        <div id="fxnModalTextOutlineControls" style="display:none;" class="fxn-inspector-subcontrols">
-                            <div class="fxn-inspector-row" style="margin-bottom:6px;">
-                                <span class="fxn-inspector-slider-label">Цвет обводки</span>
-                                <button type="button" class="fxn-inspector-color-pill" id="fxnModalTextOutlinePickerBtn" title="Выбрать цвет контура">
-                                    <span class="fxn-color-pill-dot" id="fxnModalTextOutlineDot" style="background:#000000;"></span>
-                                    <span class="fxn-color-pill-hex" id="fxnModalTextOutlineHex">#000000</span>
-                                </button>
-                                <input type="hidden" id="fxnModalTextOutlineColor" value="#000000">
-                            </div>
-                            <div class="fxn-inspector-slider-row">
-                                <span class="fxn-inspector-slider-label">Толщина контура</span>
-                                <span class="fxn-inspector-badge" id="fxnModalTextOutlineWidthValue">1px</span>
-                            </div>
-                            <input type="range" class="fxn-inspector-slider" id="fxnModalTextOutlineWidth" min="0" max="5" step="0.5" value="1">
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="fxn-inspector-footer">
-                <button class="fxn-inspector-btn fxn-inspector-btn-ghost" id="fxnModalResetMenuBtn" type="button" title="Сбросить оформление меню к значениям по умолчанию">
-                    <span class="material-symbols-rounded">restart_alt</span>
-                    <span>Сбросить</span>
-                </button>
-                <button class="fxn-inspector-btn fxn-inspector-btn-solid foxen-modal-close" type="button">
-                    <span>Готово</span>
-                </button>
-            </div>
-        </div>
     `;
 
     // Modal close & Scrim click handlers
@@ -2359,6 +2455,9 @@ function createMainPopup() {
             if (typeof window.closeFoxenMenuSettings === 'function') {
                 window.closeFoxenMenuSettings();
             }
+            if (typeof window.fxnSyncDockbarActive === 'function') {
+                window.fxnSyncDockbarActive();
+            }
         });
     });
 
@@ -2367,6 +2466,9 @@ function createMainPopup() {
             popup.classList.remove('active');
             if (typeof window.closeFoxenMenuSettings === 'function') {
                 window.closeFoxenMenuSettings();
+            }
+            if (typeof window.fxnSyncDockbarActive === 'function') {
+                window.fxnSyncDockbarActive();
             }
         }
     });
@@ -2425,20 +2527,86 @@ function initMainPopupEvents(popup) {
         }
     };
 
-    // Restore saved Popup Theme (Light/Dark) & Accent Color
+    // Unified Popup Theme switcher (Dark / Light / Transparent)
+    const applyPopupTheme = (theme) => {
+        if (!windowEl) return;
+        windowEl.classList.remove('light-theme', 'transparent-theme');
+        popup.classList.remove('light-theme', 'fxn-menu-transparent', 'fxn-menu-blur');
+
+        const blurVal = window.__foxenGlassBlur || 16;
+        windowEl.style.setProperty('--fxn-glass-blur', `${blurVal}px`);
+        popup.style.setProperty('--fxn-glass-blur', `${blurVal}px`);
+        popup.style.setProperty('--fxn-menu-blur', `${blurVal}px`);
+
+        const transpSw = popup.querySelector('#fxnMenuTransparentEnabled');
+        const transpControls = popup.querySelector('#fxnMenuTransparentControls');
+
+        if (theme === 'light') {
+            windowEl.classList.add('light-theme');
+            popup.classList.add('light-theme');
+            updateLogoTheme(true);
+            if (transpSw) transpSw.classList.remove('on');
+            if (transpControls) transpControls.style.display = 'none';
+        } else if (theme === 'transparent') {
+            windowEl.classList.add('transparent-theme');
+            popup.classList.add('fxn-menu-transparent', 'fxn-menu-blur');
+            updateLogoTheme(false);
+            if (transpSw) transpSw.classList.add('on');
+            if (transpControls) transpControls.style.display = 'flex';
+        } else {
+            // dark default
+            updateLogoTheme(false);
+            if (transpSw) transpSw.classList.remove('on');
+            if (transpControls) transpControls.style.display = 'none';
+        }
+
+        const root = document.documentElement;
+        if (root) {
+            root.setAttribute('data-fxn-popup-theme', theme);
+            root.classList.toggle('fxn-popup-theme-light', theme === 'light');
+            root.classList.toggle('fxn-popup-theme-dark', theme === 'dark');
+            root.classList.toggle('fxn-popup-theme-transparent', theme === 'transparent');
+        }
+
+        const profileModal = popup.querySelector('#fxnSidebarProfileModal');
+        if (profileModal) {
+            profileModal.classList.toggle('transparent-theme', theme === 'transparent');
+            profileModal.classList.toggle('light-theme', theme === 'light');
+        }
+
+        if (typeof $ !== 'undefined') {
+            $('.actions').toggleClass('theme-light', theme === 'light');
+            $('.actions').toggleClass('theme-transparent', theme === 'transparent');
+        }
+    };
+
+    // Restore saved Popup Theme (Dark/Light/Transparent), Glassmorphism Blur, Scrim & Accent Color
     try {
         const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
         if (storage && storage.local) {
-            storage.local.get(['foxenPopupTheme', 'foxenAccentColor'], (res) => {
-                if (res?.foxenPopupTheme === 'light' && windowEl) {
-                    windowEl.classList.add('light-theme');
-                    const inspector = getMenuSettingsModal();
-                    if (inspector) inspector.classList.add('light-theme');
-                    updateLogoTheme(true);
+            storage.local.get(['foxenPopupTheme', 'foxenAccentColor', 'foxenGlassBlur', 'foxenScrimEnabled', 'fxnScrimEnabled', 'foxenTheme'], (res) => {
+                if (res?.foxenGlassBlur) {
+                    window.__foxenGlassBlur = parseInt(res.foxenGlassBlur, 10);
                 }
-                if (res?.foxenAccentColor) {
-                    const col = res.foxenAccentColor;
+                const savedTheme = res?.foxenPopupTheme || (res?.foxenTheme?.menuTransparent ? 'transparent' : null);
+                if (savedTheme) {
+                    applyPopupTheme(savedTheme);
+                }
+                const scrimVal = res?.foxenScrimEnabled ?? res?.fxnScrimEnabled;
+                if (scrimVal !== undefined) {
+                    const isScrimOn = !!scrimVal;
+                    popup.classList.toggle('fxn-no-scrim', !isScrimOn);
+                    const scrimSw = popup.querySelector('#fxnScrimEnabled');
+                    if (scrimSw) scrimSw.classList.toggle('on', isScrimOn);
+                    try {
+                        localStorage.setItem('foxenScrimEnabled', isScrimOn ? 'true' : 'false');
+                        sessionStorage.setItem('foxenScrimEnabled', isScrimOn ? 'true' : 'false');
+                    } catch (_) {}
+                }
+                const col = res?.foxenAccentColor || (function() { try { return localStorage.getItem('foxen_accent_color') || sessionStorage.getItem('foxen_accent_color'); } catch (_) { return null; } })();
+                if (col) {
                     window.__foxenAccentColor = col;
+                    window.__fptUserAccent = col;
                     if (windowEl) {
                         windowEl.style.setProperty('--fxn-active', col);
                         windowEl.style.setProperty('--fxn-accent', col);
@@ -2450,6 +2618,10 @@ function initMainPopupEvents(popup) {
                     document.documentElement.style.setProperty('--fxn-active', col);
                     document.documentElement.style.setProperty('--fxn-accent', col);
                     document.documentElement.style.setProperty('--fxn-btn-color', col);
+                    const headerBtn = document.getElementById('foxenButton');
+                    if (headerBtn) {
+                        headerBtn.style.setProperty('color', col, 'important');
+                    }
                 }
             });
         }
@@ -2499,21 +2671,30 @@ function initMainPopupEvents(popup) {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             popup.classList.remove('active');
-            closeMenuSettings();
+            if (typeof window.closeFoxenMenuSettings === 'function') {
+                window.closeFoxenMenuSettings();
+            }
+            if (typeof window.fxnSyncDockbarActive === 'function') {
+                window.fxnSyncDockbarActive();
+            }
             if (windowEl) windowEl.classList.remove('fullscreen');
         });
     });
 
-    // 2. Yellow button - Minimizes into Floating Mini HUD in corner
+    // 2. Yellow button - Transforms navbar button into stylish Apple-style Dockbar
     popup.querySelectorAll('.traffic-min').forEach(btn => {
-        btn.title = 'Свернуть в компактный мини-виджет';
+        btn.title = 'Превратить в стильный Dockbar (вместо кнопки в меню)';
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             popup.classList.remove('active');
-            closeMenuSettings();
-            fxnToggleFloatingHUD(true);
-            if (typeof showNotification === 'function') {
-                showNotification('Свернуто в мини-виджет', false);
+            if (typeof window.closeFoxenMenuSettings === 'function') {
+                window.closeFoxenMenuSettings();
+            }
+            if (typeof window.fxnSyncDockbarActive === 'function') {
+                window.fxnSyncDockbarActive();
+            }
+            if (typeof window.fxnEnableDockbar === 'function') {
+                window.fxnEnableDockbar(true);
             }
         });
     });
@@ -2548,81 +2729,11 @@ function initMainPopupEvents(popup) {
     if (scrim) {
         scrim.addEventListener('click', () => {
             popup.classList.remove('active');
-            closeMenuSettings(true);
         });
     }
 
-    // Foxen Menu Live Inspector (Docked flush to main menu)
-    const getMenuSettingsModal = () => document.getElementById('foxen-menu-settings-modal') || popup.querySelector('#foxen-menu-settings-modal');
-
-    let _inspectorDockSide = null; // 'right' | 'left' | 'constrained'
-    let _dockFlipTimer = null;
-    let _dockShiftTimer = null;
-
-    const positionInspector = (inspector, skipAnimation = false) => {
-        if (!inspector) return;
-        const win = popup.querySelector('.window');
-        if (!win) return;
-
-        const inspWidth = 320;
-        const gap = 12;
-        const screenW = window.innerWidth;
-        const screenH = window.innerHeight;
-
-        let rect = win.getBoundingClientRect();
-        const winW = win.offsetWidth;
-        const winH = win.offsetHeight;
-
-        // Exact height matching the main popup window
-        inspector.style.setProperty('height', `${winH}px`, 'important');
-        inspector.style.setProperty('max-height', `${winH}px`, 'important');
-
-        // Check horizontal fitting:
-        const canFitRight = (rect.right + gap + inspWidth <= screenW - gap);
-        const canFitLeft = (rect.left - gap - inspWidth >= gap);
-
-        let newDock = 'right';
-
-        if (canFitRight) {
-            newDock = 'right';
-            inspector.style.setProperty('left', `${Math.round(rect.right + gap)}px`, 'important');
-            inspector.style.setProperty('right', 'auto', 'important');
-        } else if (canFitLeft) {
-            newDock = 'left';
-            inspector.style.setProperty('left', `${Math.round(rect.left - gap - inspWidth)}px`, 'important');
-            inspector.style.setProperty('right', 'auto', 'important');
-        } else {
-            // Space is tight: dock on whichever side has more space, clamped to screen bounds
-            const spaceRight = screenW - rect.right;
-            const spaceLeft = rect.left;
-            if (spaceRight >= spaceLeft) {
-                newDock = 'right';
-                const clampLeft = Math.min(screenW - inspWidth - gap, Math.round(rect.right + gap));
-                inspector.style.setProperty('left', `${clampLeft}px`, 'important');
-                inspector.style.setProperty('right', 'auto', 'important');
-            } else {
-                newDock = 'left';
-                const clampLeft = Math.max(gap, Math.round(rect.left - gap - inspWidth));
-                inspector.style.setProperty('left', `${clampLeft}px`, 'important');
-                inspector.style.setProperty('right', 'auto', 'important');
-            }
-        }
-
-        // Trigger fluid slide animation when side changes (e.g. Right -> Left or Left -> Right)
-        if (!skipAnimation && _inspectorDockSide && _inspectorDockSide !== newDock) {
-            inspector.classList.add('fxn-dock-flipping');
-            clearTimeout(_dockFlipTimer);
-            _dockFlipTimer = setTimeout(() => {
-                inspector.classList.remove('fxn-dock-flipping');
-            }, 440);
-        }
-        _inspectorDockSide = newDock;
-
-        // Align top with main window
-        const winTop = Math.max(gap, Math.min(rect.top, screenH - winH - gap));
-        inspector.style.setProperty('top', `${Math.round(winTop)}px`, 'important');
-        inspector.style.setProperty('bottom', 'auto', 'important');
-    };
+    const getMenuSettingsModal = () => null;
+    window.closeFoxenMenuSettings = () => {};
 
     // Dragging of Main Popup window by hovering and dragging .titlebar (GitHub-style makePopupInteractive)
     const initWindowDragging = () => {
@@ -2823,247 +2934,284 @@ function initMainPopupEvents(popup) {
         });
     };
 
-    let _inspectorCloseTimer = null;
-
-    const openMenuSettings = () => {
-        const inspector = getMenuSettingsModal();
-        if (!inspector) return;
-
-        clearTimeout(_inspectorCloseTimer);
-        inspector.classList.remove('fxn-closing');
-
-        // Pre-dock layout without jump
-        if (!inspector.classList.contains('active')) {
-            inspector.classList.add('no-transition');
-            inspector.style.setProperty('display', 'flex', 'important');
-            positionInspector(inspector);
-            void inspector.offsetWidth; // force reflow
-            inspector.classList.remove('no-transition');
+    // Live Theme Controls & Real-Time Sync (Zero Reload Needed)
+    const initLiveThemeControls = () => {
+        if (typeof setupThemeCustomizationHandlers === 'function') {
+            try { setupThemeCustomizationHandlers(); } catch (_) {}
         }
-
-        inspector.classList.add('active');
-        popup.querySelector('#fxnTitlebarMenuSettingsBtn')?.classList.add('active');
-
-        const isLight = windowEl && windowEl.classList.contains('light-theme');
-        inspector.classList.toggle('light-theme', !!isLight);
-
-        // Direct close button handlers for 'X', 'foxen-modal-close' and 'Готово' buttons
-        inspector.querySelectorAll('.fxn-inspector-close, .foxen-modal-close, .fxn-inspector-btn-solid').forEach(btn => {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                closeMenuSettings();
-            };
-        });
-
-        // 1. Wire universal switch toggles inside inspector (idempotent, single listener)
-        inspector.querySelectorAll('.switch[data-toggle]').forEach(wireUniversalSwitch);
-
-        // 2. Wire Unified Foxen Pro Color Pickers for Tint and Text Outline
-        const wireColorPicker = (btnId, inputId, dotId, hexId, defaultColor) => {
-            const btn = inspector.querySelector(`#${btnId}`);
-            const input = inspector.querySelector(`#${inputId}`);
-            const dot = inspector.querySelector(`#${dotId}`);
-            const hex = inspector.querySelector(`#${hexId}`);
-            if (!btn || btn.dataset.pickerInit === 'true') return;
-            btn.dataset.pickerInit = 'true';
-
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const curVal = (input && input.value) || defaultColor;
-                if (typeof foxenOpenColorPicker === 'function') {
-                    foxenOpenColorPicker(btn, curVal, (newHex, isFinal) => {
-                        if (input) {
-                            input.value = newHex;
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                            if (isFinal) {
-                                input.dispatchEvent(new Event('change', { bubbles: true }));
-                            }
-                        }
-                        if (dot) dot.style.background = newHex;
-                        if (hex) hex.textContent = newHex;
-                    });
-                }
-            });
-        };
-
-        wireColorPicker('fxnModalMenuTintPickerBtn', 'fxnModalMenuTintColor', 'fxnModalMenuTintDot', 'fxnModalMenuTintHex', '#2a1033');
-        wireColorPicker('fxnModalTextOutlinePickerBtn', 'fxnModalTextOutlineColor', 'fxnModalTextOutlineDot', 'fxnModalTextOutlineHex', '#000000');
-
-        // Direct real-time badge updates for sliders
-        const wireSliderBadge = (sliderId, badgeId, unit = '', factor = 1) => {
-            const slider = inspector.querySelector(`#${sliderId}`);
-            const badge = inspector.querySelector(`#${badgeId}`);
-            if (!slider || !badge || slider.dataset.badgeInit === 'true') return;
-            slider.dataset.badgeInit = 'true';
-            slider.addEventListener('input', () => {
-                badge.textContent = `${Math.round(parseFloat(slider.value) * factor)}${unit}`;
-            });
-        };
-        wireSliderBadge('fxnModalMenuOpacity', 'fxnModalMenuOpacityValue', '%');
-        wireSliderBadge('fxnModalMenuBlur', 'fxnModalMenuBlurValue', 'px');
-        wireSliderBadge('fxnModalTextOutlineWidth', 'fxnModalTextOutlineWidthValue', 'px');
-
         if (typeof setupFptMenuTransparency === 'function') {
             try { setupFptMenuTransparency(); } catch (_) {}
-        }
-        if (typeof setupFptTextOutline === 'function') {
-            try { setupFptTextOutline(); } catch (_) {}
         }
         if (typeof syncFptMenuControls === 'function') {
             try { syncFptMenuControls(); } catch (_) {}
         }
 
-        positionInspector(inspector);
-    };
-
-    const closeMenuSettings = (immediate = false) => {
-        const inspector = getMenuSettingsModal();
-        popup.querySelector('#fxnTitlebarMenuSettingsBtn')?.classList.remove('active');
-
-        if (inspector) {
-            clearTimeout(_inspectorCloseTimer);
-            if (immediate || !popup.classList.contains('active')) {
-                inspector.classList.remove('active', 'fxn-closing');
-                inspector.style.setProperty('display', 'none', 'important');
-            } else if (inspector.classList.contains('active')) {
-                inspector.classList.remove('active');
-                inspector.classList.add('fxn-closing');
-                _inspectorCloseTimer = setTimeout(() => {
-                    inspector.classList.remove('fxn-closing');
-                    inspector.style.setProperty('display', 'none', 'important');
-                }, 240);
-            }
+        // Live Scrim toggle (Тёмный туман сзади окна)
+        const scrimToggle = popup.querySelector('#fxnScrimEnabled');
+        if (scrimToggle && scrimToggle.dataset.scrimWired !== 'true') {
+            scrimToggle.dataset.scrimWired = 'true';
+            scrimToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                scrimToggle.classList.toggle('on');
+                const isScrimOn = scrimToggle.classList.contains('on');
+                popup.classList.toggle('fxn-no-scrim', !isScrimOn);
+                try {
+                    localStorage.setItem('foxenScrimEnabled', isScrimOn ? 'true' : 'false');
+                    sessionStorage.setItem('foxenScrimEnabled', isScrimOn ? 'true' : 'false');
+                } catch (_) {}
+                try {
+                    const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                    if (storage && storage.local) {
+                        storage.local.set({ 
+                            foxenScrimEnabled: isScrimOn,
+                            fxnScrimEnabled: isScrimOn 
+                        });
+                    }
+                } catch (_) {}
+            });
         }
 
-        // Restore window back to centered layout if it was not dragged
-        const win = popup.querySelector('.window');
-        if (win && !win.classList.contains('fxn-dragged')) {
-            win.style.removeProperty('left');
-            win.style.removeProperty('right');
-            win.style.removeProperty('position');
-            win.style.removeProperty('margin');
-            try {
-                const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
-                if (storage && storage.local) {
-                    storage.local.get('foxenPopupSize', (res) => {
-                        const wVal = parseInt(res?.foxenPopupSize?.width, 10);
-                        const hVal = parseInt(res?.foxenPopupSize?.height, 10);
-                        if (!isNaN(wVal) && wVal >= 680) {
-                            win.style.setProperty('width', `${wVal}px`, 'important');
-                        } else {
-                            win.style.removeProperty('width');
-                        }
-                        if (!isNaN(hVal) && hVal >= 480) {
-                            win.style.setProperty('height', `${hVal}px`, 'important');
-                        } else {
-                            win.style.removeProperty('height');
-                        }
+        // Live Menu Transparent switch (Прозрачность окна Foxen)
+        const menuTranspToggle = popup.querySelector('#fxnMenuTransparentEnabled');
+        if (menuTranspToggle && menuTranspToggle.dataset.transpWired !== 'true') {
+            menuTranspToggle.dataset.transpWired = 'true';
+            menuTranspToggle.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                menuTranspToggle.classList.toggle('on');
+                const isTransp = menuTranspToggle.classList.contains('on');
+                applyPopupTheme(isTransp ? 'transparent' : 'dark');
+                try {
+                    const ext = typeof browser !== 'undefined' ? browser : chrome;
+                    const { foxenTheme = {} } = await ext.storage.local.get('foxenTheme');
+                    await ext.storage.local.set({ 
+                        foxenPopupTheme: isTransp ? 'transparent' : 'dark',
+                        foxenTheme: { ...foxenTheme, menuTransparent: isTransp }
                     });
+                } catch (_) {}
+            });
+        }
+
+        // Live Glassmorphism Toggle & Sliders
+        const glassToggle = popup.querySelector('#enableGlassmorphism');
+        const glassControls = popup.querySelector('#glassmorphismControls');
+        const glassBlurInput = popup.querySelector('#glassmorphismBlur');
+        const glassBlurVal = popup.querySelector('#glassmorphismBlurValue');
+        const glassOpacityInput = popup.querySelector('#glassContainerBgOpacity');
+        const glassOpacityVal = popup.querySelector('#glassContainerBgOpacityValue');
+        const themeOpacityInput = popup.querySelector('#themeContainerBgOpacity');
+        const themeOpacityVal = popup.querySelector('#themeContainerBgOpacityValue');
+
+        // Initial sync of Glassmorphism state from storage
+        try {
+            const ext = typeof browser !== 'undefined' ? browser : chrome;
+            ext.storage.local.get('foxenTheme', (res) => {
+                const ft = res?.foxenTheme || {};
+                const isGlass = !!ft.enableGlassmorphism;
+                if (glassToggle) glassToggle.classList.toggle('on', isGlass);
+                if (glassControls) glassControls.style.display = isGlass ? 'flex' : 'none';
+                if (ft.glassmorphismBlur !== undefined && glassBlurInput) {
+                    glassBlurInput.value = ft.glassmorphismBlur;
+                    if (glassBlurVal) glassBlurVal.textContent = `${ft.glassmorphismBlur}px`;
+                }
+                const op = ft.containerBgOpacity !== undefined ? Math.round(parseFloat(ft.containerBgOpacity) * 100) : (isGlass ? 75 : 100);
+                if (glassOpacityInput) glassOpacityInput.value = op;
+                if (glassOpacityVal) glassOpacityVal.textContent = `${op}%`;
+                if (themeOpacityInput) themeOpacityInput.value = op;
+                if (themeOpacityVal) themeOpacityVal.textContent = `${op}%`;
+            });
+        } catch (_) {}
+
+        const updateGlassmorphism = async (patch = {}) => {
+            try {
+                const ext = typeof browser !== 'undefined' ? browser : chrome;
+                const { foxenTheme = {} } = await ext.storage.local.get('foxenTheme');
+                const defTheme = (typeof DEFAULT_THEME !== 'undefined') ? DEFAULT_THEME : { containerBgOpacity: 1, glassmorphismBlur: 10 };
+                const nextTheme = { ...defTheme, ...foxenTheme, ...patch };
+                delete nextTheme.bgImage;
+                await ext.storage.local.set({ foxenTheme: nextTheme });
+                if (typeof applyCustomTheme === 'function') {
+                    await applyCustomTheme();
+                } else if (typeof window.applyCustomTheme === 'function') {
+                    await window.applyCustomTheme();
                 }
             } catch (_) {}
+        };
+
+        if (glassToggle && glassToggle.dataset.glassWired !== 'true') {
+            glassToggle.dataset.glassWired = 'true';
+            glassToggle.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                glassToggle.classList.toggle('on');
+                const isGlass = glassToggle.classList.contains('on');
+                if (glassControls) glassControls.style.display = isGlass ? 'flex' : 'none';
+                
+                const patch = { enableGlassmorphism: isGlass };
+                if (isGlass) {
+                    const curOp = glassOpacityInput ? parseFloat(glassOpacityInput.value) : 75;
+                    const normalizedOp = (curOp && curOp < 100) ? curOp / 100 : 0.75;
+                    patch.containerBgOpacity = normalizedOp;
+                    const percent = Math.round(normalizedOp * 100);
+                    if (glassOpacityInput) glassOpacityInput.value = percent;
+                    if (glassOpacityVal) glassOpacityVal.textContent = `${percent}%`;
+                    if (themeOpacityInput) themeOpacityInput.value = percent;
+                    if (themeOpacityVal) themeOpacityVal.textContent = `${percent}%`;
+                }
+                await updateGlassmorphism(patch);
+            });
+        }
+
+        if (glassBlurInput && glassBlurInput.dataset.wired !== 'true') {
+            glassBlurInput.dataset.wired = 'true';
+            glassBlurInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value, 10);
+                if (glassBlurVal) glassBlurVal.textContent = `${val}px`;
+                document.documentElement.style.setProperty('--fxn-theme-glass-blur', `${val}px`);
+                updateGlassmorphism({ glassmorphismBlur: val });
+            });
+        }
+
+        const syncOpacity = (val) => {
+            if (glassOpacityInput) glassOpacityInput.value = val;
+            if (glassOpacityVal) glassOpacityVal.textContent = `${val}%`;
+            if (themeOpacityInput) themeOpacityInput.value = val;
+            if (themeOpacityVal) themeOpacityVal.textContent = `${val}%`;
+            updateGlassmorphism({ containerBgOpacity: val / 100 });
+        };
+
+        if (glassOpacityInput && glassOpacityInput.dataset.wired !== 'true') {
+            glassOpacityInput.dataset.wired = 'true';
+            glassOpacityInput.addEventListener('input', (e) => {
+                syncOpacity(parseInt(e.target.value, 10));
+            });
+        }
+
+        if (themeOpacityInput && themeOpacityInput.dataset.wiredGlass !== 'true') {
+            themeOpacityInput.dataset.wiredGlass = 'true';
+            themeOpacityInput.addEventListener('input', (e) => {
+                syncOpacity(parseInt(e.target.value, 10));
+            });
+        }
+
+        // Live Section 8 Controls (Popup opacity, blur, tint)
+        const menuOpacityInput = popup.querySelector('#fxnMenuOpacity');
+        const menuOpacityVal = popup.querySelector('#fxnMenuOpacityValue');
+        if (menuOpacityInput && menuOpacityInput.dataset.wired !== 'true') {
+            menuOpacityInput.dataset.wired = 'true';
+            menuOpacityInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value, 10);
+                if (menuOpacityVal) menuOpacityVal.textContent = `${val}%`;
+                const tint = popup.querySelector('#fxnMenuTintColor')?.value || '#2a1033';
+                popup.style.setProperty('--fxn-menu-bg', hexToRgba(tint, val / 100));
+                updateGlassmorphism({ menuOpacity: val });
+            });
+        }
+
+        const menuBlurInput = popup.querySelector('#fxnMenuBlur');
+        const menuBlurVal = popup.querySelector('#fxnMenuBlurValue');
+        if (menuBlurInput && menuBlurInput.dataset.wired !== 'true') {
+            menuBlurInput.dataset.wired = 'true';
+            menuBlurInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value, 10);
+                if (menuBlurVal) menuBlurVal.textContent = `${val}px`;
+                popup.style.setProperty('--fxn-menu-blur', `${val}px`);
+                windowEl?.style.setProperty('--fxn-glass-blur', `${val}px`);
+                updateGlassmorphism({ menuBlur: val });
+            });
+        }
+
+        const menuTintInput = popup.querySelector('#fxnMenuTintColor');
+        if (menuTintInput && menuTintInput.dataset.wired !== 'true') {
+            menuTintInput.dataset.wired = 'true';
+            menuTintInput.addEventListener('input', (e) => {
+                const tint = e.target.value;
+                const op = menuOpacityInput ? parseFloat(menuOpacityInput.value) / 100 : 0.48;
+                popup.style.setProperty('--fxn-menu-bg', hexToRgba(tint, op));
+                updateGlassmorphism({ menuTintColor: tint });
+            });
         }
     };
-    window.closeFoxenMenuSettings = closeMenuSettings;
-
-    // Automatically close inspector whenever the main Foxen popup is closed
-    try {
-        const popupActiveObserver = new MutationObserver(() => {
-            if (!popup.classList.contains('active')) {
-                closeMenuSettings(true);
-            }
-        });
-        popupActiveObserver.observe(popup, { attributes: true, attributeFilter: ['class'] });
-    } catch (_) {}
-
-    // Toggle inspector on gear button click
-    popup.querySelector('#fxnTitlebarMenuSettingsBtn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const inspector = getMenuSettingsModal();
-        const isOpen = inspector && inspector.classList.contains('active') && !inspector.classList.contains('fxn-closing');
-        if (isOpen) {
-            closeMenuSettings();
-        } else {
-            openMenuSettings();
-        }
-    });
-
-    popup.querySelector('#fxnOpenMenuSettingsModalBtn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openMenuSettings();
-    });
-
-    document.addEventListener('click', (e) => {
-        const inspector = getMenuSettingsModal();
-        if (!inspector || (!inspector.classList.contains('active') && (inspector.style.display === 'none' || inspector.style.display === ''))) return;
-        if (e.target.closest('.foxen-modal-close') && inspector.contains(e.target)) {
-            e.stopPropagation();
-            closeMenuSettings();
-        }
-    });
+    initLiveThemeControls();
 
     // Close on Escape key
     if (!window.__fxnEscListenerAdded) {
         window.__fxnEscListenerAdded = true;
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                const inspector = getMenuSettingsModal();
-                if (inspector && (inspector.classList.contains('active') || (inspector.style.display !== 'none' && inspector.style.display !== ''))) {
-                    closeMenuSettings();
-                    return;
-                }
                 const activePopup = document.querySelector('.foxen-popup.active');
                 if (activePopup) {
                     activePopup.classList.remove('active');
-                    closeMenuSettings();
                 }
             }
         });
     }
 
     // Logo Brand Interactions:
-    // LMB -> Toggle Light / Dark Theme for popup
-    // RMB -> Open Accent Color Palette Popover
+    // LMB -> Cycle Theme: Dark -> Light -> Transparent -> Dark
+    // RMB -> Open Accent Color Palette Popover with Glassmorphism Slider
     const brandEl = popup.querySelector('.brand');
     if (brandEl) {
         brandEl.style.cursor = 'pointer';
-        brandEl.title = 'ЛКМ: Переключить светлую/тёмную тему | ПКМ: Выбрать акцентный цвет';
+        brandEl.title = 'ЛКМ: Переключить тему (Тёмная / Светлая / Прозрачная) | ПКМ: Палитра & Glassmorphism';
 
-        // LMB: Toggle Light / Dark Theme
+        // LMB: Cycle 3 Themes
         brandEl.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             if (windowEl) {
-                const isLight = windowEl.classList.toggle('light-theme');
-                const inspector = getMenuSettingsModal();
-                if (inspector) {
-                    inspector.classList.toggle('light-theme', isLight);
+                let currentTheme = 'dark';
+                if (windowEl.classList.contains('light-theme')) {
+                    currentTheme = 'light';
+                } else if (windowEl.classList.contains('transparent-theme') || popup.classList.contains('fxn-menu-transparent')) {
+                    currentTheme = 'transparent';
                 }
-                updateLogoTheme(isLight);
+
+                let nextTheme = 'light';
+                if (currentTheme === 'dark') nextTheme = 'light';
+                else if (currentTheme === 'light') nextTheme = 'transparent';
+                else nextTheme = 'dark';
+
+                applyPopupTheme(nextTheme);
+
                 try {
                     const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
                     if (storage && storage.local) {
-                        storage.local.set({ foxenPopupTheme: isLight ? 'light' : 'dark' });
+                        storage.local.set({ foxenPopupTheme: nextTheme });
                     }
                 } catch (_) {}
+
+                const labels = {
+                    'dark': 'Активирована тёмная тема',
+                    'light': 'Активирована светлая тема',
+                    'transparent': 'Активирована прозрачная тема (Glassmorphism)'
+                };
                 if (typeof showNotification === 'function') {
-                    showNotification(isLight ? 'Активирована светлая тема' : 'Активирована тёмная тема', false);
+                    showNotification(labels[nextTheme] || 'Тема переключена', false);
                 }
             }
         });
 
-        // RMB: Open Accent Color Popover using Unified Foxen Pro Color Picker
+        // RMB: Open Accent Color Popover with Glassmorphism Slider
         brandEl.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             e.stopPropagation();
 
-            const currentColor = window.__foxenAccentColor || '#c026d3';
+            const currentColor = window.__foxenAccentColor 
+                || (function() { try { return localStorage.getItem('foxen_accent_color') || sessionStorage.getItem('foxen_accent_color'); } catch (_) { return null; } })()
+                || '#c026d3';
+            const curGlass = window.__foxenGlassBlur 
+                || (function() { try { return parseInt(localStorage.getItem('foxen_glass_blur'), 10) || 16; } catch (_) { return 16; } })()
+                || 16;
             if (typeof foxenOpenColorPicker === 'function') {
                 foxenOpenColorPicker(brandEl, currentColor, (cleanHex) => {
                     window.__foxenAccentColor = cleanHex;
+                    window.__fptUserAccent = cleanHex;
+                    try {
+                        localStorage.setItem('foxen_accent_color', cleanHex);
+                        sessionStorage.setItem('foxen_accent_color', cleanHex);
+                    } catch (_) {}
                     if (windowEl) {
                         windowEl.style.setProperty('--fxn-active', cleanHex);
                         windowEl.style.setProperty('--fxn-accent', cleanHex);
@@ -3082,12 +3230,69 @@ function initMainPopupEvents(popup) {
                     if (headerBtn) {
                         headerBtn.style.setProperty('color', cleanHex, 'important');
                     }
+
+                    // Synchronize with "Акцентный цвет" in Appearance tab
+                    const swatch2 = document.getElementById('themeBgColor2Swatch');
+                    if (swatch2) swatch2.style.background = cleanHex;
+                    const input2 = document.getElementById('themeBgColor2') || document.getElementById('themeColor2');
+                    if (input2) input2.value = cleanHex;
+                    if (typeof applyLiveThemeProperty === 'function') {
+                        applyLiveThemeProperty('bgColor2', cleanHex);
+                    }
+
                     try {
                         const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
                         if (storage && storage.local) {
-                            storage.local.set({ foxenAccentColor: cleanHex });
+                            storage.local.get('foxenTheme', (res) => {
+                                const curTheme = res?.foxenTheme || {};
+                                curTheme.bgColor2 = cleanHex;
+                                storage.local.set({ 
+                                    foxenAccentColor: cleanHex,
+                                    foxenHeaderButtonStyles: { color: cleanHex },
+                                    foxenTheme: curTheme
+                                });
+                            });
                         }
                     } catch (_) {}
+                }, {
+                    showGlassSlider: true,
+                    initialGlass: curGlass,
+                    onGlassChange: (val) => {
+                        window.__foxenGlassBlur = val;
+                        try {
+                            localStorage.setItem('foxen_glass_blur', String(val));
+                            sessionStorage.setItem('foxen_glass_blur', String(val));
+                        } catch (_) {}
+                        if (windowEl) {
+                            windowEl.style.setProperty('--fxn-glass-blur', `${val}px`);
+                        }
+                        if (popup) {
+                            popup.style.setProperty('--fxn-glass-blur', `${val}px`);
+                            popup.style.setProperty('--fxn-menu-blur', `${val}px`);
+                        }
+                        document.documentElement.style.setProperty('--fxn-glass-blur', `${val}px`);
+                        if (!windowEl?.classList.contains('transparent-theme')) {
+                            applyPopupTheme('transparent');
+                            try {
+                                const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                                if (storage && storage.local) {
+                                    storage.local.set({ foxenPopupTheme: 'transparent' });
+                                }
+                            } catch (_) {}
+                        }
+                        try {
+                            const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                            if (storage && storage.local) {
+                                storage.local.set({ foxenGlassBlur: val });
+                            }
+                        } catch (_) {}
+                        const syncBlurInput = document.getElementById('fxnMenuBlur');
+                        if (syncBlurInput) {
+                            syncBlurInput.value = val;
+                            const badge = document.getElementById('fxnMenuBlurValue');
+                            if (badge) badge.textContent = `${val}px`;
+                        }
+                    }
                 });
             }
         });
@@ -3131,6 +3336,10 @@ function initMainPopupEvents(popup) {
             }
         }
 
+        if (typeof window.fxnSyncDockbarActive === 'function') {
+            window.fxnSyncDockbarActive();
+        }
+
         // Trigger subtab initializers
         if (effectiveId === 'accounts' && typeof renderAccountsList === 'function') {
             renderAccountsList();
@@ -3160,8 +3369,9 @@ function initMainPopupEvents(popup) {
             initializeLotIO();
         } else if (effectiveId === 'notes' && typeof initializeNotes === 'function') {
             initializeNotes();
-        } else if (effectiveId === 'settings_io' && typeof initializeSettingsIO === 'function') {
-            initializeSettingsIO();
+        } else if (effectiveId === 'settings_io') {
+            if (typeof initializeSettingsIO === 'function') initializeSettingsIO();
+            if (typeof initializeLotIO === 'function') initializeLotIO();
         } else if (effectiveId === 'theme' && typeof updateThemePreview === 'function') {
             updateThemePreview();
         } else if (effectiveId === 'effects' && typeof setupCursorFxHandlers === 'function') {
@@ -3219,6 +3429,11 @@ function initMainPopupEvents(popup) {
         if (firstSubitem) firstSubitem.classList.add('active');
     }
 
+    // Redirect button in lot_io to master hub
+    popup.querySelector('#lotIoGoMasterBtn')?.addEventListener('click', () => {
+        window.switchFoxenPanel('settings_io');
+    });
+
     // Universal Switch toggles (bidirectional sync with underlying controls & storage)
     popup.querySelectorAll('.switch[data-toggle]').forEach(wireUniversalSwitch);
 
@@ -3257,19 +3472,814 @@ function initMainPopupEvents(popup) {
     }
 }
 
-async function fxnUpdateSidebarAccountWidget(popupEl) {
+// --- Foxen Nickname Effects Dictionary & Helpers ---
+const NICKNAME_EFFECT_NAMES = {
+    liquidGold: 'Жидкое золото',
+    smokeVeil: 'Дымная вуаль',
+    plasmaThreads: 'Плазменные нити',
+    auroraFlow: 'Северное сияние',
+    rippleReflection: 'Водная рябь',
+    fallingLeaves: 'Золотые листья',
+    magneticSheen: 'Магнитный блик',
+    silverMercury: 'Ртутный металл',
+    haloRing: 'Кольцо гало',
+    auroraRibbon: 'Шёлковая лента',
+    mercuryChase: 'Ртутная капля',
+    gravityWells: 'Гравитационные вихри',
+    waveInterference: 'Интерференция волн',
+    chromeSweep: 'Хромовый блик',
+    typewriterCaret: 'Бегущая искра',
+    orbitRings: 'Орбитальные кольца',
+    oilSlick: 'Масляная плёнка'
+};
+
+function fxnFormatNicknameEffectName(effect) {
+    if (!effect) return 'Стандарт';
+    let raw = effect;
+    if (typeof raw === 'string') {
+        try {
+            if (raw.startsWith('{')) raw = JSON.parse(raw);
+        } catch (_) {}
+    }
+    const id = (typeof raw === 'object' && raw) ? (raw.id || raw.effect || raw.name) : String(raw);
+    if (!id || id === 'standard' || id === 'default' || id === 'none') {
+        return 'Стандарт';
+    }
+    return NICKNAME_EFFECT_NAMES[id] || (typeof raw === 'object' && (raw.title || raw.name)) || id;
+}
+
+/**
+ * Получение актуальной статистики FunPay (рейтинг и количество отзывов)
+ */
+async function fxnFetchFpUserStats(userId) {
+    if (!userId) return null;
     try {
+        // 1. Если пользователь находится на своей странице профиля, считываем напрямую из DOM
+        if (window.location.pathname.startsWith(`/users/${userId}`)) {
+            const rEl = document.querySelector('.rating .big, .user-profile-rating .big');
+            const revEl = document.querySelector('.reviews-count, a[href*="/reviews"]');
+            let rating = rEl ? rEl.textContent.trim().replace(/[^\d\.]/g, '') : null;
+            let reviews = null;
+            if (revEl) {
+                const m = revEl.textContent.match(/(\d[\d\s]*)/);
+                if (m) reviews = m[1].replace(/\s+/g, '');
+            }
+            if (rating || reviews) {
+                const stats = { rating: rating || '5.0', reviewsCount: reviews || '0', ts: Date.now() };
+                const api = typeof browser !== 'undefined' ? browser : chrome;
+                api?.storage?.local?.set({ foxen_user_fp_stats: stats });
+                return stats;
+            }
+        }
+
+        // 2. Фоновый same-origin запрос к странице профиля FunPay
+        const res = await fetch(`https://funpay.com/users/${encodeURIComponent(userId)}/`, {
+            credentials: 'include',
+            headers: { 'Accept': 'text/html' }
+        });
+        if (!res.ok) return null;
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        let rating = null;
+        const rEl = doc.querySelector('.rating .big, .user-profile-rating .big');
+        if (rEl) rating = rEl.textContent.trim().replace(/[^\d\.]/g, '');
+        if (!rating) {
+            const m = html.match(/class=["'](?:rating-value|big)["']>([\d\.]+)</i);
+            if (m) rating = m[1];
+        }
+
+        let reviews = null;
+        const revEl = doc.querySelector('.reviews-count, a[href*="/reviews"], .user-profile-rating');
+        if (revEl) {
+            const m = revEl.textContent.match(/(\d[\d\s]*)\s*(?:отзыв|отзыва|отзывов|reviews)/i);
+            if (m) reviews = m[1].replace(/\s+/g, '');
+        }
+        if (!reviews) {
+            const m = html.match(/(\d[\d\s]*)\s*(?:отзыв|отзыва|отзывов)/i);
+            if (m) reviews = m[1].replace(/\s+/g, '');
+        }
+
+        const stats = {
+            rating: rating || '5.0',
+            reviewsCount: reviews || '0',
+            ts: Date.now()
+        };
+        const api = typeof browser !== 'undefined' ? browser : chrome;
+        api?.storage?.local?.set({ foxen_user_fp_stats: stats });
+        return stats;
+    } catch (err) {
+        console.warn('[Foxen Profile] Error fetching user stats from FunPay:', err);
+        return null;
+    }
+}
+
+async function fxnUpdateSidebarAccountWidget(popupEl) {
+    if (!popupEl) return;
+
+    // Инициализируем модалку и слушатели событий
+    fxnInitSidebarProfileModal(popupEl);
+
+    try {
+        // 1. Быстрый сбор данных из DOM текущей страницы FunPay
         const usernameEl = document.querySelector('.user-link .user-link-name') || document.querySelector('.navbar-right .user-link');
-        const username = usernameEl ? usernameEl.textContent.trim() : 'FunPay Seller';
-        const avatarEl = document.querySelector('.user-link img') || document.querySelector('.navbar-right img');
-        const avatarSrc = avatarEl ? avatarEl.src : null;
+        const domUsername = usernameEl ? usernameEl.textContent.trim() : null;
+        
+        let domAvatar = null;
+        const avEl = document.querySelector('.user-link-dropdown .avatar-photo, .navbar-right .avatar-photo, .avatar-photo, .user-link img');
+        if (avEl) {
+            const bg = avEl.style?.backgroundImage || window.getComputedStyle(avEl).backgroundImage;
+            if (bg && bg !== 'none') {
+                const m = bg.match(/url\(["']?([^"')]+)["']?\)/);
+                if (m) domAvatar = m[1];
+            }
+            if (!domAvatar && avEl.getAttribute('src')) domAvatar = avEl.getAttribute('src');
+        }
 
-        const nameDisplay = popupEl.querySelector('#fxnSidebarUsername');
-        if (nameDisplay) nameDisplay.textContent = username;
+        let domUserId = null;
+        const userLinkEl = document.querySelector('.user-link[href*="/users/"], .navbar-right a[href*="/users/"]');
+        if (userLinkEl) {
+            const m = userLinkEl.getAttribute('href')?.match(/\/users\/(\d+)/);
+            if (m) domUserId = m[1];
+        }
 
-        const avatarImg = popupEl.querySelector('#fxnSidebarAvatar');
-        if (avatarImg && avatarSrc) avatarImg.src = avatarSrc;
-    } catch (_) {}
+        // 2. Чтение локального кэша для мгновенного отображения (0ms задержка)
+        const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+        let cached = null;
+        let storeData = null;
+        if (storage && storage.local) {
+            storeData = await storage.local.get([
+                'foxenUserProfileCache', 
+                'foxenUserProfile', 
+                'foxen_user_profile', 
+                'fpCurrentUserInfo', 
+                'fxn_my_nickname_effect', 
+                'foxen_user_fp_stats'
+            ]);
+            cached = storeData?.foxenUserProfileCache?.data || storeData?.foxenUserProfile || storeData?.foxen_user_profile || null;
+            if (!domUserId && storeData?.fpCurrentUserInfo?.userId) {
+                domUserId = String(storeData.fpCurrentUserInfo.userId);
+            }
+        }
+
+        // Определяем эффект ника из хранилища или runtime
+        let myEff = null;
+        if (typeof window.__foxenGetMyNicknameEffect === 'function') {
+            myEff = window.__foxenGetMyNicknameEffect();
+        }
+        if (!myEff && storeData?.fxn_my_nickname_effect) {
+            myEff = storeData.fxn_my_nickname_effect;
+        }
+        if (!myEff && storeData?.foxen_user_profile?.nickname_effect) {
+            myEff = storeData.foxen_user_profile.nickname_effect;
+        }
+        if (!myEff && storeData?.foxenUserProfile?.nickname_effect) {
+            myEff = storeData.foxenUserProfile.nickname_effect;
+        }
+        if (!myEff && cached?.nickname_effect) {
+            myEff = cached.nickname_effect;
+        }
+
+        const cachedStats = storeData?.foxen_user_fp_stats || null;
+
+        // Рендерим предварительные данные
+        const initialData = {
+            username: domUsername || cached?.fp_user || cached?.username || 'FunPay Seller',
+            avatar: domAvatar || cached?.avatar_url || cached?.avatarUrl || null,
+            userId: domUserId || cached?.fp_user_id || cached?.userId || null,
+            foxenId: cached?.foxen_id || cached?.FOXEN_ID || (domUserId ? `FX-${domUserId}` : 'FX-000000'),
+            subscription: cached?.subscription || (cached?.SUBSCRIPTION === 'free' ? { is_active: false } : { is_active: true, plan_id: cached?.SUBSCRIPTION || 'premium' }),
+            tgUsername: cached?.tg_username || cached?.TG_USER || null,
+            isVerified: Boolean(cached?.is_fp_verified),
+            nicknameEffect: myEff,
+            createdAt: cached?.created_at || cached?.CREATED_AT || null,
+            rating: cachedStats?.rating || null,
+            reviewsCount: cachedStats?.reviewsCount || null
+        };
+
+        fxnRenderSidebarProfileUI(popupEl, initialData);
+
+        // 3. Фоновый запрос актуальных данных из БД (Supabase / Worker / FunPay)
+        fxnRefreshSidebarProfileData(popupEl, false);
+    } catch (err) {
+        console.warn('[Foxen Profile] Error updating sidebar account:', err);
+    }
+}
+
+/**
+ * Инициализация обработчиков интерактивности модального окна профиля внутри сайдбара
+ */
+function fxnInitSidebarProfileModal(popupEl) {
+    if (!popupEl || popupEl._fxnSpmInitialized) return;
+    popupEl._fxnSpmInitialized = true;
+
+    const widget = popupEl.querySelector('#fxnSidebarAccountWidget');
+    const modal = popupEl.querySelector('#fxnSidebarProfileModal');
+    const backBtn = popupEl.querySelector('#fxnSpmBackBtn');
+    const refreshBtn = popupEl.querySelector('#fxnSpmRefreshBtn');
+    const copyIdBtn = popupEl.querySelector('#fxnSpmCopyIdBtn');
+    const effectRow = popupEl.querySelector('#fxnSpmEffectRow');
+    const ratingBox = popupEl.querySelector('#fxnSpmRatingBox');
+    const reviewsBox = popupEl.querySelector('#fxnSpmReviewsBox');
+    const statsBtn = popupEl.querySelector('#fxnSpmStatsBtn') || popupEl.querySelector('#fxnSpmStatsLink');
+    const sidebar = popupEl.querySelector('.sidebar');
+    const accountRow = popupEl.querySelector('.account');
+
+    if (!modal) return;
+
+    const openModal = () => {
+        const isTransparent = popupEl.classList.contains('fxn-menu-transparent') ||
+            popupEl.querySelector('.window')?.classList.contains('transparent-theme') ||
+            document.documentElement?.classList.contains('fxn-popup-theme-transparent') ||
+            document.documentElement?.getAttribute('data-fxn-popup-theme') === 'transparent';
+        modal.classList.toggle('transparent-theme', Boolean(isTransparent));
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        if (sidebar) {
+            sidebar.classList.add('has-profile-modal-open');
+            // Скрываем все соседние элементы сайдбара (категории, поиск, бренд, аккаунт), чтобы прозрачность не мешала чтению
+            sidebar.querySelectorAll('.brand, .sidebar-divider, .search, .nav, .account').forEach(el => {
+                el.style.setProperty('display', 'none', 'important');
+            });
+        }
+        fxnRefreshSidebarProfileData(popupEl, false);
+        // Запуск перерисовки эффекта ника на отображаемом имени в профиле
+        if (typeof window.__foxenScanAndApplyNicknameEffects === 'function') {
+            setTimeout(() => window.__foxenScanAndApplyNicknameEffects(), 60);
+        }
+    };
+
+    const closeModal = () => {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        if (sidebar) {
+            sidebar.classList.remove('has-profile-modal-open');
+            // Восстанавливаем видимость элементов сайдбара
+            sidebar.querySelectorAll('.brand, .sidebar-divider, .search, .nav, .account').forEach(el => {
+                el.style.removeProperty('display');
+            });
+        }
+    };
+
+    // Открытие по клику на плашку профиля в футере сайдбара
+    if (widget) {
+        widget.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (modal.classList.contains('open')) {
+                closeModal();
+            } else {
+                openModal();
+            }
+        });
+    }
+
+    // Закрытие по кнопке «Назад»
+    if (backBtn) {
+        backBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeModal();
+        });
+    }
+
+    // Принудительное обновление данных из БД
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fxnRefreshSidebarProfileData(popupEl, true);
+        });
+    }
+
+    // Копирование Foxen ID в буфер обмена с тактильной обратной связью
+    if (copyIdBtn) {
+        copyIdBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const idTag = popupEl.querySelector('#fxnSpmFoxenId');
+            const idText = idTag ? idTag.textContent.trim() : '';
+            if (!idText) return;
+
+            try {
+                await navigator.clipboard.writeText(idText);
+                const icon = copyIdBtn.querySelector('.material-symbols-rounded');
+                if (icon) {
+                    const prev = icon.textContent;
+                    icon.textContent = 'check';
+                    copyIdBtn.style.color = '#10b981';
+                    setTimeout(() => {
+                        icon.textContent = prev;
+                        copyIdBtn.style.color = '';
+                    }, 1800);
+                }
+            } catch (_) {}
+        });
+    }
+
+    // Интерактивный переход к странице эффектов при клике на строку «Эффект ника»
+    if (effectRow) {
+        effectRow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeModal();
+            const effectsItem = popupEl.querySelector('.nav-subitem[data-target="effects"]');
+            if (effectsItem) {
+                effectsItem.click();
+            }
+        });
+    }
+
+    // Интерактивный переход в профиль/отзывы при клике на плашки статистики
+    const getResolvedUserId = () => {
+        if (popupEl._fxnSpmCurrentUserId && popupEl._fxnSpmCurrentUserId !== '—') {
+            return String(popupEl._fxnSpmCurrentUserId);
+        }
+        const text = popupEl.querySelector('#fxnSpmFpUserId')?.textContent?.trim();
+        if (text && text !== '—' && text !== '') {
+            return text;
+        }
+        const linkHref = popupEl.querySelector('#fxnSpmFpUserLink')?.getAttribute('href');
+        const mHref = linkHref?.match(/\/users\/(\d+)/);
+        if (mHref) return mHref[1];
+        const domLink = document.querySelector('.user-link[href*="/users/"], .navbar-right a[href*="/users/"]');
+        const mDom = domLink?.getAttribute('href')?.match(/\/users\/(\d+)/);
+        if (mDom) return mDom[1];
+        const mPath = window.location.pathname.match(/\/users\/(\d+)/);
+        if (mPath) return mPath[1];
+        return null;
+    };
+
+    const openUserReviews = (hash = '') => {
+        const userId = getResolvedUserId();
+        const targetHash = hash ? (hash.startsWith('#') ? hash : '#' + hash) : '';
+        if (userId) {
+            // Если пользователь уже находится на своей странице профиля, скроллим к отзывам
+            if (window.location.pathname.startsWith(`/users/${userId}`) && targetHash) {
+                const el = document.querySelector(targetHash) || document.querySelector('.reviews, .review-list, .user-profile-reviews');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' });
+                    window.location.hash = targetHash.replace(/^#/, '');
+                    return;
+                }
+            }
+            const url = `https://funpay.com/users/${encodeURIComponent(userId)}/${targetHash}`;
+            window.open(url, '_blank');
+        } else {
+            if (targetHash) {
+                const el = document.querySelector(targetHash) || document.querySelector('.reviews, .review-list, .user-profile-reviews');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' });
+                    window.location.hash = targetHash.replace(/^#/, '');
+                }
+            }
+        }
+    };
+
+    if (ratingBox) ratingBox.addEventListener('click', () => openUserReviews('#reviews'));
+    if (reviewsBox) reviewsBox.addEventListener('click', () => openUserReviews('#reviews'));
+    if (statsBtn) statsBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openUserReviews(''); });
+
+    // Закрытие по нажатию клавиши Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) {
+            closeModal();
+        }
+    });
+}
+
+/**
+ * Отрисовка данных профиля в сайдбар и в модальное окно
+ */
+function fxnRenderSidebarProfileUI(popupEl, data) {
+    if (!popupEl || !data) return;
+
+    const username = data.username || 'FunPay Seller';
+    const avatar = data.avatar || (typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL('icons/icon48.png') : 'https://funpay.com/img/layout/avatar.png');
+    const foxenId = data.foxenId || 'FX-000000';
+    const userId = data.userId || null;
+    if (userId) {
+        popupEl._fxnSpmCurrentUserId = userId;
+    }
+    const sub = data.subscription || {};
+
+    const isLifetime = Boolean(sub.is_lifetime || sub.plan_id === 'lifetime' || (!sub.expires_at && (sub.is_active || data.is_premium)));
+    const isActive = Boolean(sub.is_active || isLifetime || data.is_premium || data.isPremium || (data.subscription && (data.subscription === 'premium' || data.subscription.is_active)));
+    
+    const tagText = isActive ? 'PREMIUM' : 'FREE';
+    const planName = isActive ? 'PREMIUM' : 'FREE';
+
+    // 1. Обновляем плашку в сайдбаре
+    const sbName = popupEl.querySelector('#fxnSidebarUsername');
+    if (sbName) sbName.textContent = username;
+
+    const sbAvatar = popupEl.querySelector('#fxnSidebarAvatar');
+    if (sbAvatar && avatar) sbAvatar.src = avatar;
+
+    const sbTag = popupEl.querySelector('#fxnSidebarTag');
+    if (sbTag) {
+        sbTag.textContent = tagText;
+        if (isActive) {
+            sbTag.style.background = 'var(--fxn-text-main)';
+            sbTag.style.color = 'var(--fxn-sidebar-color)';
+            sbTag.style.borderColor = 'var(--fxn-text-main)';
+        } else {
+            sbTag.style.background = 'transparent';
+            sbTag.style.color = 'var(--fxn-text-subtle)';
+            sbTag.style.borderColor = 'var(--fxn-divider-color)';
+        }
+    }
+
+    const sbSub = popupEl.querySelector('#fxnSidebarSub');
+    if (sbSub) {
+        sbSub.textContent = foxenId !== 'FX-000000' ? foxenId : 'Foxen active';
+    }
+
+    // 2. Обновляем модальное окно
+    const spmAvatar = popupEl.querySelector('#fxnSpmAvatar');
+    if (spmAvatar && avatar) spmAvatar.src = avatar;
+
+    const spmName = popupEl.querySelector('#fxnSpmUsername');
+    if (spmName) {
+        spmName.textContent = username;
+        if (typeof window.__foxenScanAndApplyNicknameEffects === 'function') {
+            setTimeout(() => window.__foxenScanAndApplyNicknameEffects(), 50);
+        }
+    }
+
+    const spmId = popupEl.querySelector('#fxnSpmFoxenId');
+    if (spmId) spmId.textContent = foxenId;
+
+    const spmFpUserId = popupEl.querySelector('#fxnSpmFpUserId');
+    const spmFpLink = popupEl.querySelector('#fxnSpmFpUserLink');
+    if (spmFpUserId && userId) {
+        spmFpUserId.textContent = userId;
+        if (spmFpLink) {
+            spmFpLink.href = `https://funpay.com/users/${encodeURIComponent(userId)}/`;
+            spmFpLink.style.display = 'inline-flex';
+        }
+    } else if (spmFpLink) {
+        spmFpLink.style.display = 'none';
+    }
+
+    // Подписка: тариф и статус (одно упоминание тарифа, без слова Foxen, стиль small caps + shimmer)
+    const spmSubPlan = popupEl.querySelector('#fxnSpmSubPlan');
+    if (spmSubPlan) {
+        spmSubPlan.textContent = planName;
+        spmSubPlan.classList.toggle('fxn-premium-shimmer', isActive);
+    }
+
+    const spmSubStatus = popupEl.querySelector('#fxnSpmSubStatus');
+    const spmStatusDot = popupEl.querySelector('#fxnSpmStatusDot');
+    if (spmSubStatus) {
+        spmSubStatus.textContent = isActive ? 'Активна' : 'Не активна';
+    }
+    if (spmStatusDot) {
+        spmStatusDot.className = `fxn-spm-status-dot ${isActive ? 'active' : ''}`;
+    }
+
+    // Срок действия
+    const spmSubExpiry = popupEl.querySelector('#fxnSpmSubExpiry');
+    if (spmSubExpiry) {
+        if (!isActive) {
+            spmSubExpiry.textContent = '—';
+        } else if (isLifetime || !sub.expires_at) {
+            spmSubExpiry.textContent = 'Бессрочно';
+        } else if (sub.expires_at) {
+            try {
+                spmSubExpiry.textContent = new Date(sub.expires_at).toLocaleDateString('ru-RU');
+            } catch (_) {
+                spmSubExpiry.textContent = String(sub.expires_at);
+            }
+        } else {
+            spmSubExpiry.textContent = 'Бессрочно';
+        }
+    }
+
+    // Экосистема: Telegram (простой текст без ссылок)
+    const spmTgUser = popupEl.querySelector('#fxnSpmTgUser');
+    if (spmTgUser) {
+        if (data.tgUsername) {
+            const cleanTg = String(data.tgUsername).replace(/^@+/, '').trim();
+            spmTgUser.textContent = cleanTg ? `@${cleanTg}` : 'Не привязан';
+        } else {
+            spmTgUser.textContent = 'Не привязан';
+        }
+    }
+
+    const spmVerifiedText = popupEl.querySelector('#fxnSpmVerifiedText');
+    if (spmVerifiedText) {
+        spmVerifiedText.textContent = data.isVerified ? 'Подтверждён' : 'Базовая';
+    }
+
+    // Эффект ника: простое текстовое название эффекта без плашек и иконок
+    const spmEffect = popupEl.querySelector('#fxnSpmEffectVal');
+    if (spmEffect) {
+        const effectName = fxnFormatNicknameEffectName(data.nicknameEffect);
+        spmEffect.textContent = effectName || 'Стандарт';
+    }
+
+    const spmCreated = popupEl.querySelector('#fxnSpmCreatedAt');
+    if (spmCreated) {
+        if (data.createdAt) {
+            try {
+                spmCreated.textContent = new Date(data.createdAt).toLocaleDateString('ru-RU');
+            } catch (_) {
+                spmCreated.textContent = String(data.createdAt).slice(0, 10);
+            }
+        } else {
+            spmCreated.textContent = '—';
+        }
+    }
+
+    // FunPay статистика: Рейтинг и Отзывы
+    const ratingVal = popupEl.querySelector('#fxnSpmRatingVal');
+    if (ratingVal) {
+        ratingVal.textContent = data.rating ? String(data.rating) : '5.0';
+    }
+
+    const reviewsVal = popupEl.querySelector('#fxnSpmReviewsVal');
+    if (reviewsVal) {
+        reviewsVal.textContent = data.reviewsCount !== null && data.reviewsCount !== undefined ? String(data.reviewsCount) : '—';
+    }
+}
+
+/**
+ * Запрос свежих данных профиля из БД через api.foxen.site / Worker / Supabase + FunPay Live Stats
+ */
+async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
+    if (!popupEl) return;
+
+    const refreshBtn = popupEl.querySelector('#fxnSpmRefreshBtn');
+    if (isManual && refreshBtn) {
+        refreshBtn.classList.add('fxn-spm-spinning');
+    }
+
+    try {
+        // Определяем идентификатор пользователя (fp_user_id, username или Foxen ID)
+        const usernameEl = document.querySelector('.user-link .user-link-name') || document.querySelector('.navbar-right .user-link');
+        const username = usernameEl ? usernameEl.textContent.trim() : null;
+
+        let domAvatar = null;
+        const avEl = document.querySelector('.user-link-dropdown .avatar-photo, .navbar-right .avatar-photo, .avatar-photo, .user-link img');
+        if (avEl) {
+            const bg = avEl.style?.backgroundImage || window.getComputedStyle(avEl).backgroundImage;
+            if (bg && bg !== 'none') {
+                const m = bg.match(/url\(["']?([^"')]+)["']?\)/);
+                if (m) domAvatar = m[1];
+            }
+            if (!domAvatar && avEl.getAttribute('src')) domAvatar = avEl.getAttribute('src');
+        }
+
+        const userLinkEl = document.querySelector('.user-link[href*="/users/"], .navbar-right a[href*="/users/"]');
+        if (userLinkEl) {
+            const m = userLinkEl.getAttribute('href')?.match(/\/users\/(\d+)/);
+            if (m) userId = m[1];
+        }
+
+        const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+        let cached = null;
+        let storeData = null;
+        if (storage && storage.local) {
+            storeData = await storage.local.get([
+                'foxenUserProfileCache', 
+                'foxenUserProfile', 
+                'foxen_user_profile', 
+                'fpCurrentUserInfo', 
+                'fxn_my_nickname_effect', 
+                'foxen_user_fp_stats'
+            ]);
+            cached = storeData?.foxenUserProfileCache?.data || storeData?.foxenUserProfile || storeData?.foxen_user_profile || null;
+            if (!userId && storeData?.fpCurrentUserInfo?.userId) {
+                userId = String(storeData.fpCurrentUserInfo.userId);
+            }
+        }
+
+        const identifier = userId || username || cached?.fp_user || cached?.username || cached?.foxen_id;
+        if (!identifier) {
+            if (isManual && refreshBtn) refreshBtn.classList.remove('fxn-spm-spinning');
+            return;
+        }
+
+        // Параллельно запрашиваем живую статистику FunPay (рейтинг и отзывы)
+        let liveStats = storeData?.foxen_user_fp_stats || null;
+        const statsPromise = userId ? fxnFetchFpUserStats(userId) : Promise.resolve(null);
+
+        let freshProfile = null;
+
+        // 1. Пробуем функцию из supabase_client.js
+        if (typeof fxnFetchProfileByFpUser === 'function') {
+            try {
+                freshProfile = await fxnFetchProfileByFpUser(identifier);
+            } catch (_) {}
+        }
+
+        // 2. Фоллбэк к Worker API
+        if (!freshProfile) {
+            try {
+                const apiRes = await fetch(`https://api.foxen.site/api/users/${encodeURIComponent(identifier)}`, {
+                    credentials: 'omit',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (apiRes.ok) {
+                    const json = await apiRes.json();
+                    if (json && json.ok && json.profile) {
+                        const p = json.profile;
+                        freshProfile = {
+                            FP_USER: p.fp_user || username,
+                            FP_USER_ID: p.fp_user_id || userId,
+                            FOXEN_ID: p.foxen_id,
+                            TG_USER: p.tg_username,
+                            SUBSCRIPTION: p.subscription,
+                            avatar_url: p.avatar_url,
+                            is_fp_verified: p.is_fp_verified,
+                            nickname_effect: p.nickname_effect,
+                            CREATED_AT: p.created_at,
+                            is_premium: Boolean(p.is_premium || p.subscription?.is_active)
+                        };
+                    }
+                }
+            } catch (_) {}
+        }
+
+        // 3. Прямой запрос к Supabase profiles
+        const supabaseUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
+        const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
+        if (!freshProfile || (!freshProfile.subscription?.is_active && !freshProfile.is_premium)) {
+            try {
+                const target = encodeURIComponent(identifier);
+                const q = `or=(foxen_id.eq.${target},fp_user.ilike.${target},fp_user_id.eq.${target})`;
+                const sbRes = await fetch(`${supabaseUrl}/rest/v1/profiles?${q}&select=*&limit=1`, {
+                    headers: {
+                        'apikey': apiKey,
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (sbRes.ok) {
+                    const sbList = await sbRes.json();
+                    if (sbList && sbList.length > 0) {
+                        const sbProf = sbList[0];
+                        if (!freshProfile) {
+                            freshProfile = {
+                                FP_USER: sbProf.fp_user || username,
+                                FP_USER_ID: sbProf.fp_user_id || userId,
+                                FOXEN_ID: sbProf.foxen_id,
+                                TG_USER: sbProf.tg_username,
+                                avatar_url: sbProf.avatar_url,
+                                is_fp_verified: sbProf.is_fp_verified,
+                                nickname_effect: sbProf.nickname_effect,
+                                CREATED_AT: sbProf.created_at,
+                                is_premium: sbProf.is_premium
+                            };
+                        }
+                        if (sbProf.is_premium) {
+                            freshProfile.is_premium = true;
+                            if (!freshProfile.subscription || !freshProfile.subscription.is_active) {
+                                freshProfile.subscription = {
+                                    is_active: true,
+                                    is_lifetime: true,
+                                    plan_id: 'premium',
+                                    status: 'active',
+                                    expires_at: null
+                                };
+                            }
+                        }
+                        if (sbProf.foxen_id) freshProfile.FOXEN_ID = sbProf.foxen_id;
+                        if (sbProf.nickname_effect) freshProfile.nickname_effect = sbProf.nickname_effect;
+                    }
+                }
+            } catch (_) {}
+        }
+
+        // 4. Запрос к таблице subscriptions для получения срока действия
+        const activeFid = freshProfile?.FOXEN_ID || freshProfile?.foxen_id;
+        if (activeFid) {
+            try {
+                const subRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?foxen_id=eq.${encodeURIComponent(activeFid)}&select=*&limit=1`, {
+                    headers: {
+                        'apikey': apiKey,
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (subRes.ok) {
+                    const sList = await subRes.json();
+                    if (sList && sList.length > 0) {
+                        const s = sList[0];
+                        const isSActive = s.status === 'active' || s.is_lifetime || (s.expires_at && new Date(s.expires_at) > new Date());
+                        if (isSActive) {
+                            freshProfile.subscription = {
+                                is_active: true,
+                                is_lifetime: Boolean(s.is_lifetime || s.plan_id === 'lifetime'),
+                                plan_id: 'premium',
+                                status: s.status || 'active',
+                                starts_at: s.starts_at,
+                                expires_at: s.expires_at
+                            };
+                            freshProfile.is_premium = true;
+                        }
+                    }
+                }
+            } catch (_) {}
+        }
+
+        // Ждем результат запроса статистики FunPay
+        const fetchedStats = await statsPromise;
+        if (fetchedStats) {
+            liveStats = fetchedStats;
+        }
+
+        // Определяем актуальный эффект ника
+        let myEff = freshProfile?.nickname_effect;
+        if (!myEff && typeof window.__foxenGetMyNicknameEffect === 'function') {
+            myEff = window.__foxenGetMyNicknameEffect();
+        }
+        if (!myEff && storeData?.fxn_my_nickname_effect) {
+            myEff = storeData.fxn_my_nickname_effect;
+        }
+        if (!myEff && storeData?.foxen_user_profile?.nickname_effect) {
+            myEff = storeData.foxen_user_profile.nickname_effect;
+        }
+
+        if (freshProfile) {
+            const rawSub = freshProfile.subscription || {};
+            const isPrem = Boolean(freshProfile.is_premium || rawSub.is_active || rawSub.is_lifetime);
+            const isLife = Boolean(rawSub.is_lifetime || rawSub.plan_id === 'lifetime' || !rawSub.expires_at);
+
+            const normalizedSub = {
+                is_active: isPrem,
+                is_lifetime: isLife,
+                plan_id: 'premium',
+                status: isPrem ? 'active' : 'inactive',
+                starts_at: rawSub.starts_at || null,
+                expires_at: rawSub.expires_at || null
+            };
+
+            const normalized = {
+                username: freshProfile.FP_USER || freshProfile.fp_user || username,
+                avatar: freshProfile.avatar_url || null,
+                userId: freshProfile.FP_USER_ID || freshProfile.fp_user_id || userId,
+                foxenId: freshProfile.FOXEN_ID || freshProfile.foxen_id || (userId ? `FX-${userId}` : 'FX-000000'),
+                subscription: normalizedSub,
+                is_premium: isPrem,
+                tgUsername: freshProfile.TG_USER || freshProfile.tg_username || null,
+                isVerified: Boolean(freshProfile.is_fp_verified),
+                nicknameEffect: myEff || freshProfile.nickname_effect || null,
+                createdAt: freshProfile.CREATED_AT || freshProfile.created_at || null,
+                rating: liveStats?.rating || null,
+                reviewsCount: liveStats?.reviewsCount || null
+            };
+
+            if (domAvatar && domAvatar.startsWith('http') && !domAvatar.includes('layout/avatar.png')) {
+                if (freshProfile && freshProfile.avatar_url !== domAvatar) {
+                    freshProfile.avatar_url = domAvatar;
+                    normalized.avatar = domAvatar;
+                }
+                // Асинхронно синхронизируем свежую аватарку с Supabase profiles для сайта
+                (async () => {
+                    try {
+                        const qTarget = encodeURIComponent(identifier);
+                        const patchFilter = `or=(foxen_id.eq.${qTarget},fp_user.ilike.${qTarget},fp_user_id.eq.${qTarget})`;
+                        await fetch(`${supabaseUrl}/rest/v1/profiles?${patchFilter}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'apikey': apiKey,
+                                'Authorization': `Bearer ${apiKey}`,
+                                'Content-Type': 'application/json',
+                                'Prefer': 'return=minimal'
+                            },
+                            body: JSON.stringify({
+                                avatar_url: domAvatar,
+                                updated_at: new Date().toISOString()
+                            })
+                        });
+                        console.log('[Foxen Profile] Synchronized updated avatar_url to Supabase profiles:', domAvatar);
+                    } catch(err) {
+                        console.warn('[Foxen Profile] Failed to sync avatar to Supabase:', err);
+                    }
+                })();
+            }
+
+            fxnRenderSidebarProfileUI(popupEl, normalized);
+
+            // Кэшируем в local storage
+            if (storage && storage.local) {
+                storage.local.set({
+                    foxenUserProfileCache: { data: freshProfile, ts: Date.now() }
+                });
+            }
+        } else if (liveStats) {
+            // Если профиль в БД не найден, но обновилась статистика FunPay
+            const rVal = popupEl.querySelector('#fxnSpmRatingVal');
+            if (rVal && liveStats.rating) rVal.textContent = String(liveStats.rating);
+            const rvVal = popupEl.querySelector('#fxnSpmReviewsVal');
+            if (rvVal && liveStats.reviewsCount) rvVal.textContent = String(liveStats.reviewsCount);
+        }
+    } catch (e) {
+        console.warn('[Foxen Profile] Error refreshing data:', e);
+    } finally {
+        if (refreshBtn) {
+            setTimeout(() => {
+                refreshBtn.classList.remove('fxn-spm-spinning');
+            }, 300);
+        }
+    }
 }
 
 function makePopupInteractive(popup) {

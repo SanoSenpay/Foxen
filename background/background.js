@@ -47,6 +47,217 @@ const IMPORT_PROCESS_KEY = 'foxenLotImportProcess';
 const RETRY_LIMIT = 5;
 const RETRY_DELAY = 5000; // 5 секунд
 
+// Универсальные обёртки над chrome.storage.local
+// В Firefox и Chrome MV2 методы storage.local.get/set/remove могут не возвращать Promise без callback.
+// Эти функции гарантированно возвращают валидный Promise через callback-API.
+function fxnStorageGet(keys) {
+    return new Promise((resolve) => {
+        try {
+            const api = (typeof browser !== 'undefined' && browser.storage) ? browser : chrome;
+            api.storage.local.get(keys, (res) => {
+                if (chrome.runtime && chrome.runtime.lastError) {}
+                resolve(res || {});
+            });
+        } catch (e) {
+            resolve({});
+        }
+    });
+}
+
+function fxnStorageSet(items) {
+    return new Promise((resolve) => {
+        try {
+            const api = (typeof browser !== 'undefined' && browser.storage) ? browser : chrome;
+            api.storage.local.set(items, () => {
+                if (chrome.runtime && chrome.runtime.lastError) {}
+                resolve();
+            });
+        } catch (e) {
+            resolve();
+        }
+    });
+}
+
+function fxnStorageRemove(keys) {
+    return new Promise((resolve) => {
+        try {
+            const api = (typeof browser !== 'undefined' && browser.storage) ? browser : chrome;
+            api.storage.local.remove(keys, () => {
+                if (chrome.runtime && chrome.runtime.lastError) {}
+                resolve();
+            });
+        } catch (e) {
+            resolve();
+        }
+    });
+}
+
+function storageRemove(keys) { return fxnStorageRemove(keys); }
+function storageGet(keys) { return fxnStorageGet(keys); }
+function storageSet(items) { return fxnStorageSet(items); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Универсальные обёртки над chrome.cookies / browser.cookies.
+// В MV2 Chrome метод cookies.get/set/remove не возвращает Promise, если передан без callback.
+// В Firefox browser.cookies возвращает Promise, но chrome.cookies может требовать callback.
+// Эти функции гарантированно работают везде.
+function fxnGetCookie(url, name, storeId = null) {
+    return new Promise((resolve) => {
+        try {
+            const details = { url, name };
+            if (storeId) details.storeId = storeId;
+            if (typeof browser !== 'undefined' && browser.cookies && browser.cookies.get) {
+                const p = browser.cookies.get(details);
+                if (p && typeof p.then === 'function') {
+                    return p.then(resolve).catch(() => resolve(null));
+                }
+            }
+            if (typeof chrome !== 'undefined' && chrome.cookies && chrome.cookies.get) {
+                chrome.cookies.get(details, (c) => resolve(c || null));
+                return;
+            }
+            resolve(null);
+        } catch (_) {
+            resolve(null);
+        }
+    });
+}
+
+function fxnGetAllCookies(details) {
+    return new Promise((resolve) => {
+        try {
+            if (typeof browser !== 'undefined' && browser.cookies && browser.cookies.getAll) {
+                const p = browser.cookies.getAll(details);
+                if (p && typeof p.then === 'function') {
+                    return p.then(resolve).catch(() => resolve([]));
+                }
+            }
+            if (typeof chrome !== 'undefined' && chrome.cookies && chrome.cookies.getAll) {
+                chrome.cookies.getAll(details, (list) => resolve(list || []));
+                return;
+            }
+            resolve([]);
+        } catch (_) {
+            resolve([]);
+        }
+    });
+}
+
+function fxnSetCookie(details) {
+    return new Promise((resolve) => {
+        try {
+            if (typeof browser !== 'undefined' && browser.cookies && browser.cookies.set) {
+                const p = browser.cookies.set(details);
+                if (p && typeof p.then === 'function') {
+                    return p.then(resolve).catch(() => resolve(null));
+                }
+            }
+            if (typeof chrome !== 'undefined' && chrome.cookies && chrome.cookies.set) {
+                chrome.cookies.set(details, (c) => resolve(c || null));
+                return;
+            }
+            resolve(null);
+        } catch (_) {
+            resolve(null);
+        }
+    });
+}
+
+function fxnRemoveCookie(details) {
+    return new Promise((resolve) => {
+        try {
+            if (typeof browser !== 'undefined' && browser.cookies && browser.cookies.remove) {
+                const p = browser.cookies.remove(details);
+                if (p && typeof p.then === 'function') {
+                    return p.then(resolve).catch(() => resolve(null));
+                }
+            }
+            if (typeof chrome !== 'undefined' && chrome.cookies && chrome.cookies.remove) {
+                chrome.cookies.remove(details, (res) => resolve(res || null));
+                return;
+            }
+            resolve(null);
+        } catch (_) {
+            resolve(null);
+        }
+    });
+}
+
+async function fxnFindGoldenKey(preferredStoreId = null) {
+    // 1) Если указан конкретный storeId (например, контейнер вкладки Firefox)
+    if (preferredStoreId) {
+        let c = await fxnGetCookie('https://funpay.com/', 'golden_key', preferredStoreId);
+        if (c?.value) return c;
+        let all = await fxnGetAllCookies({ name: 'golden_key', storeId: preferredStoreId });
+        let found = (all || []).find(item => item.value);
+        if (found) return found;
+    }
+    // 2) Прямые проверки по популярным адресам FunPay
+    for (const u of ['https://funpay.com/', 'https://funpay.com', 'https://www.funpay.com/', 'https://sfunpay.com/']) {
+        let c = await fxnGetCookie(u, 'golden_key');
+        if (c?.value) return c;
+    }
+    // 3) Поиск по известным доменам
+    for (const d of ['funpay.com', '.funpay.com', 'sfunpay.com']) {
+        const all = await fxnGetAllCookies({ domain: d });
+        const found = (all || []).find(item => item.name === 'golden_key' && item.value);
+        if (found) return found;
+    }
+    // 4) Поиск просто по имени golden_key (без фильтра по домену)
+    const byName = await fxnGetAllCookies({ name: 'golden_key' });
+    const foundByName = (byName || []).find(item => item.value);
+    if (foundByName) return foundByName;
+
+    // 5) В Firefox: перебираем ВСЕ хранилища кук (контейнеры)
+    if (typeof browser !== 'undefined' && browser.cookies && browser.cookies.getAllCookieStores) {
+        try {
+            const stores = await browser.cookies.getAllCookieStores();
+            for (const store of stores) {
+                const list = await fxnGetAllCookies({ name: 'golden_key', storeId: store.id });
+                const f = (list || []).find(item => item.value);
+                if (f) return f;
+            }
+        } catch (_) {}
+    }
+    return null;
+}
+
+async function fxnFindPhpSessId(preferredStoreId = null) {
+    if (preferredStoreId) {
+        let c = await fxnGetCookie('https://funpay.com/', 'PHPSESSID', preferredStoreId);
+        if (c?.value) return c;
+        let all = await fxnGetAllCookies({ name: 'PHPSESSID', storeId: preferredStoreId });
+        let found = (all || []).find(item => item.value);
+        if (found) return found;
+    }
+    for (const u of ['https://funpay.com/', 'https://funpay.com', 'https://www.funpay.com/', 'https://sfunpay.com/']) {
+        let c = await fxnGetCookie(u, 'PHPSESSID');
+        if (c?.value) return c;
+    }
+    for (const d of ['funpay.com', '.funpay.com', 'sfunpay.com']) {
+        const all = await fxnGetAllCookies({ domain: d });
+        const found = (all || []).find(item => item.name === 'PHPSESSID' && item.value);
+        if (found) return found;
+    }
+    const byName = await fxnGetAllCookies({ name: 'PHPSESSID' });
+    const foundByName = (byName || []).find(item => item.value);
+    if (foundByName) return foundByName;
+
+    if (typeof browser !== 'undefined' && browser.cookies && browser.cookies.getAllCookieStores) {
+        try {
+            const stores = await browser.cookies.getAllCookieStores();
+            for (const store of stores) {
+                const list = await fxnGetAllCookies({ name: 'PHPSESSID', storeId: store.id });
+                const f = (list || []).find(item => item.value);
+                if (f) return f;
+            }
+        } catch (_) {}
+    }
+    return null;
+}
+
+
+
 // Защита от ПАРАЛЛЕЛЬНЫХ циклов сбора. Если открыть пару вкладок /orders/ или
 // перезагрузить страницу, каждый запуск дёргал свой цикл — два цикла разом удваивают
 // нагрузку. Эти флаги не дают запуститься второму циклу.
@@ -76,6 +287,72 @@ async function fxnFetchResilient(url, options, { retries = 3, baseDelay = 700 } 
         }
     }
     throw lastErr || new Error('fxnFetchResilient: исчерпаны попытки');
+}
+
+// Выполнение запроса через открытую вкладку FunPay.
+// Это ГАРАНТИРУЕТ, что запрос отправляется из контекста https://funpay.com, с сессионными куками
+// активного аккаунта и с правильным Origin/Referer (полностью исключает 401 Authorization Required).
+async function fetchWithTabFallback(url, options = {}) {
+    const tabs = await new Promise(resolve => {
+        try {
+            if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.query) {
+                const p = browser.tabs.query({ url: "*://*.funpay.com/*" });
+                if (p && typeof p.then === 'function') return p.then(resolve).catch(() => resolve([]));
+            }
+            if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+                chrome.tabs.query({ url: "*://*.funpay.com/*" }, (t) => resolve(t || []));
+                return;
+            }
+            resolve([]);
+        } catch (_) { resolve([]); }
+    });
+
+    const activeTab = (tabs || []).find(t => t.active) || (tabs || []).find(t => !t.discarded) || (tabs && tabs[0]);
+    if (activeTab && activeTab.id) {
+        try {
+            const bodyStr = options.body instanceof URLSearchParams ? options.body.toString() : options.body;
+            const resp = await new Promise((res) => {
+                const timeout = setTimeout(() => res(null), 15000);
+                const msg = {
+                    action: 'foxenProxyFetch',
+                    url,
+                    options: {
+                        method: options.method || 'GET',
+                        headers: options.headers || {},
+                        body: bodyStr
+                    }
+                };
+                try {
+                    if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.sendMessage) {
+                        const p = browser.tabs.sendMessage(activeTab.id, msg);
+                        if (p && typeof p.then === 'function') {
+                            return p.then(r => { clearTimeout(timeout); res(r); }).catch(() => { clearTimeout(timeout); res(null); });
+                        }
+                    }
+                    chrome.tabs.sendMessage(activeTab.id, msg, (r) => {
+                        clearTimeout(timeout);
+                        res(r || null);
+                    });
+                } catch (_) {
+                    clearTimeout(timeout);
+                    res(null);
+                }
+            });
+
+            if (resp && resp.success) {
+                return {
+                    status: resp.status,
+                    ok: resp.ok,
+                    text: async () => resp.text,
+                    json: async () => JSON.parse(resp.text)
+                };
+            }
+        } catch (e) {
+            console.warn('[Foxen] fetchWithTabFallback failed via tab, using direct fetch:', e.message);
+        }
+    }
+
+    return await fxnFetchResilient(url, options);
 }
 
 // --- СБОР СТАТИСТИКИ ПРОДАЖ (IndexedDB) ---
@@ -111,8 +388,20 @@ async function runSalesUpdateCycle() {
             // пробуем снова, но НЕ держим паузу на каждой успешной странице.
             let response;
             for (let attempt = 0; attempt < 5; attempt++) {
-                response = await fetch(url, options);
-                if (response.status === 429 || response.status >= 500) {
+                try {
+                    response = await fetch(url, options);
+                } catch (netErr) {
+                    response = await fetchWithTabFallback(url, options);
+                    if (!response) throw netErr;
+                }
+                if (response && (response.status === 401 || response.status === 403)) {
+                    const fallbackResp = await fetchWithTabFallback(url, options);
+                    if (fallbackResp && (fallbackResp.ok || fallbackResp.status < 400)) {
+                        response = fallbackResp;
+                        break;
+                    }
+                }
+                if (response && (response.status === 429 || response.status >= 500)) {
                     await new Promise(r => setTimeout(r, 1500 * (attempt + 1) + Math.random() * 500));
                     continue;
                 }
@@ -242,10 +531,16 @@ async function runFinanceUpdateCycle() {
     _financeCycleRunning = true;
     console.log("Foxen: Запуск сбора статистики финансов...");
     try {
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenFinanceCollecting: true });
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ 
+            foxenFinanceCollecting: true,
+            foxenFinanceError: null 
+        });
         const auth = await getAuthDetailsForBackground();
-        if (!auth.golden_key) throw new Error("Не удалось получить golden_key для сбора финансов.");
-        const userId = auth.userId;
+        let userId = auth?.userId;
+        if (!userId) {
+            const stored = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['fpCurrentUserInfo', 'foxenProfileData']);
+            userId = stored.fpCurrentUserInfo?.userId || stored.foxenProfileData?.userId || null;
+        }
 
         const fetchPage = async (continueToken) => {
             const url = 'https://funpay.com/users/transactions';
@@ -259,22 +554,50 @@ async function runFinanceUpdateCycle() {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-Csrf-Token': auth.csrf_token,
+                    'X-Csrf-Token': auth.csrf_token || '',
                     'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
                 },
                 body: params
             };
             let response;
             for (let attempt = 0; attempt < 5; attempt++) {
-                response = await fetch(url, options);
-                if (response.status === 429 || response.status >= 500) {
+                try {
+                    response = await fetch(url, options);
+                } catch (netErr) {
+                    response = await fetchWithTabFallback(url, options);
+                    if (!response) throw netErr;
+                }
+                if (response && (response.status === 401 || response.status === 403)) {
+                    const fallbackResp = await fetchWithTabFallback(url, options);
+                    if (fallbackResp && (fallbackResp.ok || fallbackResp.status < 400)) {
+                        response = fallbackResp;
+                        break;
+                    }
+                }
+                if (response && (response.status === 429 || response.status >= 500)) {
                     await new Promise(r => setTimeout(r, 1500 * (attempt + 1) + Math.random() * 500));
                     continue;
                 }
                 break;
             }
-            if (!response.ok) throw new Error(`Ошибка сети (финансы): ${response.status}`);
-            const html = await response.text();
+            if (!response || !response.ok) {
+                const fallbackResp = await fetchWithTabFallback(url, options);
+                if (fallbackResp && (fallbackResp.ok || fallbackResp.status < 400)) {
+                    response = fallbackResp;
+                } else {
+                    throw new Error(`Ошибка сети (финансы): ${response ? response.status : 'нет ответа'}`);
+                }
+            }
+            let html = await response.text();
+            if (html && html.trim().startsWith('{') && (html.includes('"error":1') || html.includes('Необходимо авторизоваться'))) {
+                const fallbackResp = await fetchWithTabFallback(url, options);
+                if (fallbackResp && fallbackResp.ok) {
+                    html = await fallbackResp.text();
+                }
+                if (!html || (html.trim().startsWith('{') && html.includes('"error":1'))) {
+                    throw new Error("Необходимо авторизоваться на FunPay для просмотра баланса.");
+                }
+            }
             return await parseHtmlViaOffscreen(html, 'parseFinancePage');
         };
 
@@ -339,6 +662,7 @@ async function runFinanceUpdateCycle() {
         console.log(`Foxen: Финансы собраны, операций: ${total}.`);
     } catch (e) {
         console.error(`Foxen: Ошибка в цикле сбора финансов: ${e.message}`);
+        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenFinanceError: e.message });
     } finally {
         _financeCycleRunning = false;
         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
@@ -377,8 +701,20 @@ async function runPurchasesUpdateCycle() {
             // пробуем снова, но НЕ держим паузу на каждой успешной странице.
             let response;
             for (let attempt = 0; attempt < 5; attempt++) {
-                response = await fetch(url, options);
-                if (response.status === 429 || response.status >= 500) {
+                try {
+                    response = await fetch(url, options);
+                } catch (netErr) {
+                    response = await fetchWithTabFallback(url, options);
+                    if (!response) throw netErr;
+                }
+                if (response && (response.status === 401 || response.status === 403)) {
+                    const fallbackResp = await fetchWithTabFallback(url, options);
+                    if (fallbackResp && (fallbackResp.ok || fallbackResp.status < 400)) {
+                        response = fallbackResp;
+                        break;
+                    }
+                }
+                if (response && (response.status === 429 || response.status >= 500)) {
                     await new Promise(r => setTimeout(r, 1500 * (attempt + 1) + Math.random() * 500));
                     continue;
                 }
@@ -510,12 +846,24 @@ async function runPurchasesUpdateCycle() {
 // --- НАДЁЖНАЯ ФУНКЦИЯ АУТЕНТИФИКАЦИИ ---
 // 3.0: Upload an image to FunPay and send it to a chat via the runner - all in background.
 // Ported from Foxen (Account.upload_image + Account.send_image).
-async function sendChatImageInBackground(chatId, dataUrl, chatName) {
-    const auth = await getAuthDetailsForBackground();
-    if (!auth.golden_key || !auth.csrf_token) throw new Error('Нет авторизации для отправки изображения.');
-    const cookieStr = auth.phpsessid
-        ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
-        : `golden_key=${auth.golden_key}`;
+async function sendChatImageInBackground(chatId, dataUrl, chatName, clientCsrfToken = null) {
+    let auth = await getAuthDetailsForBackground();
+    let csrfToken = clientCsrfToken || auth.csrf_token;
+    if (!csrfToken) {
+        auth = await getAuthDetailsForBackground(true);
+        csrfToken = clientCsrfToken || auth.csrf_token;
+    }
+    if (!csrfToken) throw new Error('Нет авторизации для отправки изображения (CSRF токен не найден).');
+
+    const getHeaders = (baseHeaders = {}) => {
+        const h = { ...baseHeaders };
+        if (auth.golden_key && auth.golden_key !== 'active_session') {
+            h['cookie'] = auth.phpsessid
+                ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
+                : `golden_key=${auth.golden_key}`;
+        }
+        return h;
+    };
 
     // 1) dataURL → Blob
     const blob = await (await fetch(dataUrl)).blob();
@@ -527,7 +875,7 @@ async function sendChatImageInBackground(chatId, dataUrl, chatName) {
     const upRes = await fetch('https://funpay.com/file/addChatImage', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'cookie': cookieStr, 'x-requested-with': 'XMLHttpRequest' },
+        headers: getHeaders({ 'x-requested-with': 'XMLHttpRequest' }),
         body: fd
     });
     if (!upRes.ok) throw new Error(`Загрузка изображения: HTTP ${upRes.status}`);
@@ -535,22 +883,53 @@ async function sendChatImageInBackground(chatId, dataUrl, chatName) {
     const fileId = upJson.fileId;
     if (!fileId) throw new Error('FunPay не вернул fileId: ' + (upJson.msg || 'неизвестная ошибка'));
 
-    // 3) Send via runner with image_id (content empty), per Foxen's protocol.
-    const request = { action: 'chat_message', data: { node: chatId, last_message: -1, content: '', image_id: fileId } };
-    const payload = {
-        objects: JSON.stringify([{ type: 'chat_node', id: chatId, tag: '00000000', data: { node: chatId, last_message: -1, content: '' } }]),
-        request: JSON.stringify(request),
-        csrf_token: auth.csrf_token
+    // 3) Send via runner with image_id
+    const postRunner = async (token) => {
+        const request = { action: 'chat_message', data: { node: String(chatId), last_message: -1, content: '', image_id: fileId } };
+        const payload = {
+            objects: JSON.stringify([{ type: 'chat_node', id: String(chatId), tag: '00000000', data: { node: String(chatId), last_message: -1, content: '' } }]),
+            request: JSON.stringify(request),
+            csrf_token: token
+        };
+        const sendRes = await fetch('https://funpay.com/runner/', {
+            method: 'POST',
+            credentials: 'include',
+            headers: getHeaders({
+                'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'x-requested-with': 'XMLHttpRequest'
+            }),
+            body: new URLSearchParams(payload)
+        });
+        const sendJson = await sendRes.json().catch(() => null);
+        return { sendRes, sendJson };
     };
-    const sendRes = await fetch('https://funpay.com/runner/', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', 'x-requested-with': 'XMLHttpRequest', 'cookie': cookieStr },
-        body: new URLSearchParams(payload)
-    });
-    if (!sendRes.ok) throw new Error(`Отправка изображения: HTTP ${sendRes.status}`);
-    const sendJson = await sendRes.json().catch(() => null);
-    if (sendJson?.error) throw new Error(`FunPay runner: ${sendJson.error}`);
+
+    const isCsrfOrStale = (j, status) => {
+        if (status === 400) return true;
+        if (!j) return false;
+        const msg = String(j.msg || j.message || j.error || '');
+        return msg.includes('Обновите страницу') || msg.includes('csrf') || j.error === 1 || j.error === '1';
+    };
+
+    let { sendRes, sendJson } = await postRunner(csrfToken);
+
+    // If runner returned CSRF / session error, refresh token directly and retry
+    if (!sendRes.ok || isCsrfOrStale(sendJson, sendRes.status)) {
+        console.warn('Foxen: runner вернул ошибку CSRF/сессии при отправке изображения. Обновляем токен...');
+        _authCache = null;
+        auth = await getAuthDetailsForBackground(true);
+        if (auth.csrf_token && auth.csrf_token !== csrfToken) {
+            const retry = await postRunner(auth.csrf_token);
+            sendRes = retry.sendRes;
+            sendJson = retry.sendJson;
+        }
+    }
+
+    if (!sendRes.ok || sendJson?.error) {
+        const errMsg = sendJson?.msg || sendJson?.error || `HTTP ${sendRes.status}`;
+        throw new Error(errMsg);
+    }
+
     return { fileId };
 }
 
@@ -560,37 +939,66 @@ let _authCacheTime = 0;
 async function getAuthDetailsForBackground(forceRefresh = false) {
     const now = Date.now();
     if (!forceRefresh && _authCache && (now - _authCacheTime < 15000)) {
-
         return _authCache;
     }
 
-    const goldenKeyCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
-    if (!goldenKeyCookie || !goldenKeyCookie.value) {
-        console.error("Foxen: golden_key не найден. Пользователь не авторизован.");
-        return {};
-    }
-    const golden_key = goldenKeyCookie.value;
-    // FIX: PHPSESSID is required by FunPay runner alongside golden_key
-    const phpSessIdCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
-    const phpsessid = phpSessIdCookie?.value || '';
+    // 1) Ищем golden_key и PHPSESSID в cookies браузера
+    const goldenKeyCookie = await fxnFindGoldenKey();
+    const phpSessIdCookie = await fxnFindPhpSessId();
+    let golden_key = goldenKeyCookie?.value || '';
+    let phpsessid = phpSessIdCookie?.value || '';
 
-// Если не запрошено принудительное обновление, пробуем получить из открытой вкладки
-if (!forceRefresh) {
+    // 2) Если не запрошено принудительное обновление, пробуем получить из открытой вкладки FunPay
+    if (!forceRefresh) {
+        const tabs = await new Promise(resolve => {
+            try {
+                if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.query) {
+                    const p = browser.tabs.query({ url: "*://*.funpay.com/*" });
+                    if (p && typeof p.then === 'function') return p.then(resolve).catch(() => resolve([]));
+                }
+                if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+                    chrome.tabs.query({ url: "*://*.funpay.com/*" }, (t) => resolve(t || []));
+                    return;
+                }
+                resolve([]);
+            } catch (_) { resolve([]); }
+        });
 
-        const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
         for (const tab of tabs) {
             try {
                 if (tab.discarded) continue;
-                const response = await (typeof browser !== 'undefined' ? browser : chrome).tabs.sendMessage(tab.id, { action: "getAppData" });
+                let tabGoldenKey = golden_key;
+                let tabPhpSessId = phpsessid;
+                if (!tabGoldenKey && tab.cookieStoreId) {
+                    const c = await fxnFindGoldenKey(tab.cookieStoreId);
+                    if (c?.value) tabGoldenKey = c.value;
+                    const p = await fxnFindPhpSessId(tab.cookieStoreId);
+                    if (p?.value) tabPhpSessId = p.value;
+                }
+
+                const response = await new Promise(res => {
+                    if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.sendMessage) {
+                        const p = browser.tabs.sendMessage(tab.id, { action: "getAppData" });
+                        if (p && typeof p.then === 'function') return p.then(res).catch(() => res(null));
+                    }
+                    if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.sendMessage) {
+                        chrome.tabs.sendMessage(tab.id, { action: "getAppData" }, (r) => res(r || null));
+                        return;
+                    }
+                    res(null);
+                });
+
                 if (response && response.success) {
                     const appData = Array.isArray(response.data) ? response.data[0] : response.data;
                     if (appData && appData['csrf-token'] && appData.userId) {
                         const authRes = {
-                            golden_key: golden_key,
-                            phpsessid: phpsessid,
+                            golden_key: tabGoldenKey || golden_key || 'active_session',
+                            phpsessid: tabPhpSessId || phpsessid,
                             csrf_token: appData['csrf-token'],
                             userId: appData.userId,
-                            username: appData.userName,
+                            username: appData.userName || '',
+                            tabId: tab.id,
+                            cookieStoreId: tab.cookieStoreId || null
                         };
                         _authCache = authRes;
                         _authCacheTime = now;
@@ -598,22 +1006,23 @@ if (!forceRefresh) {
                     }
                 }
             } catch (e) {
-                console.warn(`Foxen: Не удалось получить appData из вкладки ${tab.id}. Пробую следующую.`);
+                // пробуем следующую вкладку
             }
         }
     }
 
-    console.log("Foxen: Получаю свежие Auth-данные напрямую с FunPay (cache: 'no-store')...");
+    // 3) Прямой сетевой запрос к funpay.com (браузер сам прикрепит куки сессии через credentials: 'include')
     try {
-        const cookieHeader = phpsessid ? `golden_key=${golden_key}; PHPSESSID=${phpsessid}` : `golden_key=${golden_key}`;
+        const headers = { 
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        };
+        if (golden_key) {
+            headers["Cookie"] = phpsessid ? `golden_key=${golden_key}; PHPSESSID=${phpsessid}` : `golden_key=${golden_key}`;
+        }
         const response = await fetch("https://funpay.com/", {
             credentials: 'include',
             cache: 'no-store',
-headers: { 
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Cookie": cookieHeader
-}
-
+            headers
         });
         if (!response.ok) throw new Error(`Статус ответа: ${response.status}`);
         const text = await response.text();
@@ -624,10 +1033,10 @@ headers: {
             const appData = JSON.parse(appDataString);
             const userData = Array.isArray(appData) ? appData[0] : appData;
             if (userData && userData['csrf-token'] && userData.userId) {
-                console.log("Foxen: Auth-данные успешно получены через прямой запрос.");
+                const updatedPhpSess = await fxnFindPhpSessId();
                 const authRes = {
-                    golden_key: golden_key,
-                    phpsessid: phpsessid,
+                    golden_key: golden_key || 'active_session',
+                    phpsessid: updatedPhpSess?.value || phpsessid,
                     csrf_token: userData['csrf-token'],
                     userId: userData.userId,
                     username: userData.userName || '',
@@ -637,10 +1046,13 @@ headers: {
                 return authRes;
             }
         }
-        throw new Error("Не удалось найти data-app-data в HTML страницы.");
+        throw new Error("Не удалось найти data-app-data в HTML страницы (возможно, требуется вход).");
     } catch (e) {
-        console.error("Foxen: Прямой запрос для получения appData также провалился.", e.message);
-        return { golden_key, phpsessid };
+        console.warn("Foxen: Ошибка получения auth через fetch:", e.message);
+        if (golden_key) {
+            return { golden_key, phpsessid };
+        }
+        return {};
     }
 }
 
@@ -1012,12 +1424,15 @@ async function cloneBuildFieldsInternal(auth, nodeId, attributes, attributePairs
     if (!nodeId) throw new Error('Неизвестна подкатегория (node) лота.');
     
     const editUrl = `https://funpay.com/lots/offerEdit?node=${nodeId}`;
-    const resp = await fxnFetchResilient(editUrl, {
+    const editHeaders = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    };
+    if (auth && auth.golden_key && auth.golden_key !== 'active_session') {
+        editHeaders['Cookie'] = auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`;
+    }
+    const resp = await fetchWithTabFallback(editUrl, {
         credentials: 'include',
-        headers: {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
-        }
+        headers: editHeaders
     });
     if (!resp.ok) throw new Error(`Не удалось открыть форму категории: ${resp.status}`);
     const html = await resp.text();
@@ -1038,12 +1453,14 @@ async function cloneCalcNetPrice(auth, nodeId, buyerPrice, currencyCode) {
     const headers = {
         'accept': '*/*',
         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'x-requested-with': 'XMLHttpRequest',
-        'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`
+        'x-requested-with': 'XMLHttpRequest'
     };
+    if (auth && auth.golden_key && auth.golden_key !== 'active_session') {
+        headers['Cookie'] = auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`;
+    }
     const base = 100; // как в плагине
     const body = new URLSearchParams({ nodeId: String(nodeId), price: String(base) });
-    const r = await fxnFetchResilient('https://funpay.com/lots/calc', { method: 'POST', headers, body });
+    const r = await fetchWithTabFallback('https://funpay.com/lots/calc', { method: 'POST', headers, body });
     if (!r.ok) return null;
     const j = await r.json();
     if (!j || j.error) return null;
@@ -1228,27 +1645,32 @@ async function runDiscordCheckCycle() {
 
 // --- ИЗМЕНЕННЫЙ БЛОК: ЭКСПОРТ И ИМПОРТ ЛОТОВ ---
 
-async function sendImportProgressUpdate(progressData) {
-    const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "*://funpay.com/*" });
-    tabs.forEach(tab => {
-        const b = typeof browser !== 'undefined' ? browser : chrome;
-        try {
-            const p = b.tabs.sendMessage(tab.id, {
-                action: 'lotImportProgressUpdate',
-                data: progressData
+function sendImportProgressUpdate(progressData) {
+    try {
+        const api = typeof browser !== 'undefined' ? browser : chrome;
+        api.tabs.query({ url: ["https://funpay.com/*", "https://*.funpay.com/*"] }, (tabs) => {
+            if (!tabs || !tabs.length) return;
+            tabs.forEach(tab => {
+                try {
+                    api.tabs.sendMessage(tab.id, {
+                        action: 'lotImportProgressUpdate',
+                        data: progressData
+                    }, () => {
+                        if (chrome.runtime && chrome.runtime.lastError) {}
+                    });
+                } catch (e) {}
             });
-            if (p && p.catch) p.catch(() => {});
-        } catch (e) {}
-    });
+        });
+    } catch (e) {}
 }
 
 async function processNextLotImport() {
-    const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
+    const { [IMPORT_PROCESS_KEY]: process } = await fxnStorageGet(IMPORT_PROCESS_KEY);
     
     // Если процесса нет, или он отложен, или закончен - выходим.
     if (!process || process.state === 'postponed' || process.currentIndex >= process.lots.length) {
         if (process && process.currentIndex >= process.lots.length) {
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(IMPORT_PROCESS_KEY);
+            await fxnStorageRemove(IMPORT_PROCESS_KEY);
             sendImportProgressUpdate({ finished: true, lots: process.lots || [] });
         }
         return;
@@ -1259,7 +1681,7 @@ async function processNextLotImport() {
     // Если лот уже успешно создан или пропущен, переходим к следующему
     if (currentLot.status === 'success' || currentLot.status === 'skipped') {
         process.currentIndex++;
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+        await fxnStorageSet({ [IMPORT_PROCESS_KEY]: process });
         processNextLotImport(); // Сразу переходим к следующему
         return;
     }
@@ -1268,56 +1690,138 @@ async function processNextLotImport() {
     if (currentLot.retries >= RETRY_LIMIT) {
         currentLot.status = 'error';
         currentLot.error = `Превышен лимит попыток (${RETRY_LIMIT}). Процесс остановлен.`;
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+        await fxnStorageSet({ [IMPORT_PROCESS_KEY]: process });
         sendImportProgressUpdate(process);
         return;
     }
 
     try {
+        // Используем кэш авторизации (сбрасывается при смене аккаунта через setGoldenKey).
+        // forceRefresh=true убран — он делал HTTP-запрос к funpay.com для КАЖДОГО лота (спам).
+        // При смене аккаунта _authCache = null уже выставляется в setGoldenKey-хендлере,
+        // поэтому первый лот после смены аккаунта всегда получает свежие данные.
         let auth = await getAuthDetailsForBackground();
-        if (!auth.csrf_token) {
+        if (!auth || (!auth.csrf_token && !auth.userId && !auth.golden_key)) {
             auth = await getAuthDetailsForBackground(true);
         }
-        if (!auth.csrf_token) throw new Error("Не удалось получить CSRF-токен.");
+        if (!auth || (!auth.csrf_token && !auth.userId && !auth.golden_key)) {
+            throw new Error("Не авторизован на FunPay. Откройте вкладку funpay.com и войдите в аккаунт.");
+        }
+        console.log(`[Foxen Import] Используется аккаунт: userId=${auth.userId || '?'} username=${auth.username || '?'}`);
 
-        // Автоматическая адаптация полей (FunPay использует name в одних категориях и summary в других, либо изменил API)
-        const d = { ...(currentLot.data || currentLot.fields || {}) };
-        if (d['fields[summary][ru]'] && !d['fields[name][ru]']) d['fields[name][ru]'] = d['fields[summary][ru]'];
-        if (d['fields[summary][en]'] && !d['fields[name][en]']) d['fields[name][en]'] = d['fields[summary][en]'];
-        if (d['fields[name][ru]'] && !d['fields[summary][ru]']) d['fields[summary][ru]'] = d['fields[name][ru]'];
-        if (d['fields[name][en]'] && !d['fields[summary][en]']) d['fields[summary][en]'] = d['fields[name][en]'];
+        // Поддерживаем разные форматы хранения данных лота
+        const rawData = currentLot.data || currentLot.fields || currentLot || {};
+        const d = { ...rawData };
 
-        const nodeId = d.node_id || d.node || d.nodeId || currentLot.nodeId || currentLot.node_id;
+        const nodeId = d.node_id || d.node || d.nodeId || currentLot.nodeId || currentLot.node_id || currentLot.node;
         if (!nodeId) {
             throw new Error(`У лота отсутствует ID категории (node_id). Невозможно создать предложение.`);
         }
 
-        const formData = new URLSearchParams();
-        for (const [k, v] of Object.entries(d)) {
-            if (v != null && typeof v !== 'object') formData.set(k, String(v));
+        // КРИТИЧНО: FunPay привязывает form_created_at и csrf_token к форме редактирования категории.
+        // Обязательно загружаем свежую форму категории перед сохранением каждого лота, иначе сервер возвращает:
+        // "{"msg":"Обновите страницу и повторите попытку.","error":1}"
+        const editUrl = `https://funpay.com/lots/offerEdit?node=${nodeId}`;
+        const editHeaders = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        };
+        if (auth.golden_key && auth.golden_key !== 'active_session') {
+            editHeaders['Cookie'] = auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`;
         }
-        formData.set('node_id', String(nodeId));
-        formData.set('offer_id', '0'); // Всегда создаем новый лот
-        formData.set('active', 'on'); // Активируем по умолчанию
-        if (!formData.get('location')) formData.set('location', 'offer');
+        const editResp = await fetchWithTabFallback(editUrl, {
+            credentials: 'include',
+            headers: editHeaders
+        });
+        if (!editResp.ok) throw new Error(`Не удалось открыть форму категории ${nodeId}: HTTP ${editResp.status}`);
+        const editHtml = await editResp.text();
 
-        const postOfferSave = async (curAuth) => {
-            formData.set('csrf_token', curAuth.csrf_token);
-            return await fetch("https://funpay.com/lots/offerSave", {
+        const baseForm = await parseHtmlViaOffscreen(editHtml, 'parseLotEditPage');
+        if (!baseForm) {
+            if (/account\/login|form-signin/i.test(editHtml)) {
+                throw new Error('Сессия FunPay истекла (перенаправление на вход).');
+            }
+            throw new Error(`Не удалось разобрать форму для категории ${nodeId}.`);
+        }
+
+        const freshCsrf = baseForm.csrf_token || auth.csrf_token;
+        const freshFormCreatedAt = baseForm.form_created_at;
+
+        // Список мета-полей, которые НЕ должны попадать в POST-запрос FunPay
+        const metaKeys = new Set([
+            'categoryName', 'sourceTitle', 'sourceCategory', 'title',
+            'nodeId', 'node', 'isOwn', 'rawPrice', 'priceCurrency',
+            'finalPrice', 'enDiffers', 'query', 'formError', 'csrf',
+            'csrf_token', 'form_created_at', 'status', 'retries', 'error', 'data', 'fields',
+            'autoDelivery', 'isChips'
+        ]);
+
+        const payload = { ...baseForm };
+
+        // Накладываем поля импортируемого лота
+        for (const [k, v] of Object.entries(d)) {
+            if (metaKeys.has(k)) continue;
+            if (v != null && typeof v !== 'object') {
+                payload[k] = String(v);
+            }
+        }
+
+        // Ключевые параметры FunPay для создания лота
+        payload.node_id = String(nodeId);
+        payload.offer_id = '0'; // Всегда создаем новый лот
+        payload.location = 'trade';
+        payload.active = 'on';
+
+        // Свежие токены из только что открытой формы
+        if (freshCsrf) payload.csrf_token = freshCsrf;
+        if (freshFormCreatedAt) payload.form_created_at = freshFormCreatedAt;
+
+        // Удаляем deleted если пустое/0
+        if (payload.deleted === '' || payload.deleted === '0' || !payload.deleted) {
+            delete payload.deleted;
+        }
+
+        // Автоматическая адаптация полей (FunPay summary vs name)
+        if (payload['fields[summary][ru]'] && !payload['fields[name][ru]']) payload['fields[name][ru]'] = payload['fields[summary][ru]'];
+        if (payload['fields[summary][en]'] && !payload['fields[name][en]']) payload['fields[name][en]'] = payload['fields[summary][en]'];
+        if (payload['fields[name][ru]'] && !payload['fields[summary][ru]']) payload['fields[summary][ru]'] = payload['fields[name][ru]'];
+        if (payload['fields[name][en]'] && !payload['fields[summary][en]']) payload['fields[summary][en]'] = payload['fields[name][en]'];
+
+        // Нормализация цены (не обрезаем дробные значения, заменяем запятую на точку)
+        if (payload.price != null && payload.price !== '') {
+            let str = String(payload.price).trim().replace(',', '.');
+            let n = parseFloat(str);
+            if (!Number.isNaN(n) && n > 0) {
+                payload.price = str;
+            }
+        }
+
+        // Нормализация количества
+        if (!payload.amount) {
+            payload.amount = '1';
+        }
+
+        const formData = new URLSearchParams(payload);
+
+        const postOfferSave = async (curToken) => {
+            formData.set('csrf_token', curToken);
+            const headers = { 
+                "X-Requested-With": "XMLHttpRequest", 
+                "X-Csrf-Token": curToken,
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Accept': 'application/json, text/javascript, */*; q=0.01'
+            };
+            if (auth.golden_key && auth.golden_key !== 'active_session') {
+                headers['Cookie'] = auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}`;
+            }
+            return await fetchWithTabFallback("https://funpay.com/lots/offerSave", {
                 method: "POST",
                 credentials: 'include',
-                headers: { 
-                    "X-Requested-With": "XMLHttpRequest", 
-                    "X-Csrf-Token": curAuth.csrf_token,
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01',
-                    'Cookie': curAuth.phpsessid ? `golden_key=${curAuth.golden_key}; PHPSESSID=${curAuth.phpsessid}` : `golden_key=${curAuth.golden_key}`
-                },
+                headers,
                 body: formData
             });
         };
 
-        let response = await postOfferSave(auth);
+        let response = await postOfferSave(freshCsrf || auth.csrf_token);
         let rawText = await response.text();
         let result = null;
         try { result = JSON.parse(rawText); } catch (_) {}
@@ -1325,38 +1829,59 @@ async function processNextLotImport() {
         const isCsrfOrSessionError = response.status === 400 || (result && (result.error === 1 || result.error === true) && /обновит|csrf|token|session|auth/i.test(result.msg || ''));
 
         if (isCsrfOrSessionError) {
-            // Сбрасываем кэш и принудительно запрашиваем свежий CSRF токен напрямую
             _authCache = null;
             _authCacheTime = 0;
             const freshAuth = await getAuthDetailsForBackground(true);
             if (freshAuth && freshAuth.csrf_token) {
                 auth = freshAuth;
-                response = await postOfferSave(auth);
+                response = await postOfferSave(auth.csrf_token);
                 rawText = await response.text();
                 try { result = JSON.parse(rawText); } catch (_) {}
             }
         }
 
-        if (result && result.url === 'https://funpay.com/') {
-            throw new Error('FunPay не создал лот (перенаправил на главную — проверьте категорию/node_id).');
-        }
+        const hasError = !result || result.error === 1 || result.error === true ||
+            (result.errors && (Array.isArray(result.errors) ? result.errors.length > 0 : Object.keys(result.errors).length > 0));
 
-        if (result && (result.error === 0 || result.error === false || (!result.error && (result.msg === '' || !result.msg)))) {
-            currentLot.status = 'success';
-            process.currentIndex++;
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
-            sendImportProgressUpdate(process);
-            setTimeout(processNextLotImport, 1500); // Задержка между запросами для предотвращения 429
-        } else {
-            const msg = result?.msg || (result?.error ? String(result.error) : `HTTP ${response.status}: ${rawText.slice(0, 80)}`);
+        if (hasError) {
+            let msg = result?.msg || 'Ошибка сохранения лота';
+            if (result?.errors) {
+                const parts = Array.isArray(result.errors)
+                    ? result.errors.map(e => Array.isArray(e) ? e[1] : e)
+                    : Object.values(result.errors);
+                if (parts.length) msg = parts.join('; ');
+            }
+            if (!result) msg = `HTTP ${response.status}: ${rawText.slice(0, 100)}`;
             throw new Error(msg);
         }
+
+        // Проверяем, действительно ли создан лот (FunPay возвращает url с id/offer или offer_id в json)
+        let createdOfferId = null;
+        const txt = JSON.stringify(result);
+        let m = txt.match(/"offer_id"\s*:\s*"?(\d+)"?/) || txt.match(/id=(\d+)/);
+        if (m) createdOfferId = m[1];
+        if (!createdOfferId && result.url) {
+            const um = String(result.url).match(/[?&]offer=(\d+)/) || String(result.url).match(/[?&]id=(\d+)/);
+            if (um) createdOfferId = um[1];
+        }
+
+        if (!createdOfferId && (result.url === 'https://funpay.com/' || result.url === 'https://funpay.com')) {
+            throw new Error('FunPay перенаправил на главную страницу (возможно, категория недоступна).');
+        }
+
+        currentLot.status = 'success';
+        currentLot.newId = createdOfferId || null;
+        currentLot.error = null;
+        process.currentIndex++;
+        await fxnStorageSet({ [IMPORT_PROCESS_KEY]: process });
+        sendImportProgressUpdate(process);
+        setTimeout(processNextLotImport, 800); // Задержка между запросами
 
     } catch (error) {
         currentLot.retries++;
         currentLot.status = 'pending';
         currentLot.error = error.message;
-        await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+        await fxnStorageSet({ [IMPORT_PROCESS_KEY]: process });
         sendImportProgressUpdate(process);
         
         // Если это была не последняя попытка, делаем таймаут
@@ -1383,12 +1908,23 @@ let _fxnSnapChain = Promise.resolve();
 
 function fxnSnapshotForKey(key) {
     const run = async () => {
-        // 1) Запоминаем текущую golden_key, чтобы вернуть её после запроса.
-        let original = null;
-        try { original = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' }); } catch (_) {}
+        // 1) Если прямо сейчас идёт процесс импорта лотов, НИ В КОЕМ СЛУЧАЕ не трогаем куки!
+        try {
+            const { [IMPORT_PROCESS_KEY]: importProc } = await new Promise(r => {
+                const api = (typeof browser !== 'undefined' && browser.storage) ? browser : chrome;
+                api.storage.local.get(IMPORT_PROCESS_KEY, r);
+            });
+            if (importProc && importProc.state === 'running') {
+                return null;
+            }
+        } catch (_) {}
+
+        // 2) Запоминаем текущую golden_key, чтобы вернуть её после запроса.
+        const original = await fxnFindGoldenKey();
+        const originalVal = original?.value || null;
 
         // Если ключ совпадает с активным - просто грузим главную как есть.
-        if (original && original.value === key) {
+        if (originalVal && originalVal === key) {
             try {
                 const resp = await fetch('https://funpay.com/', { credentials: 'include', cache: 'no-store' });
                 const html = await resp.text();
@@ -1396,9 +1932,15 @@ function fxnSnapshotForKey(key) {
             } catch (e) { return null; }
         }
 
+        // Если текущий ключ определить не удалось — не подменяем куку вслепую,
+        // чтобы не испортить активную сессию пользователя!
+        if (!originalVal) {
+            return null;
+        }
+
         const setKey = async (value) => {
-            return chrome.cookies.set({
-                url: 'https://funpay.com',
+            let res = await fxnSetCookie({
+                url: 'https://funpay.com/',
                 name: 'golden_key',
                 value,
                 domain: '.funpay.com',
@@ -1407,22 +1949,33 @@ function fxnSnapshotForKey(key) {
                 sameSite: 'lax',
                 expirationDate: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
             });
+            if (!res) {
+                await fxnSetCookie({
+                    url: 'https://funpay.com/',
+                    name: 'golden_key',
+                    value,
+                    path: '/',
+                    secure: true,
+                    sameSite: 'lax',
+                    expirationDate: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
+                });
+            }
         };
 
         try {
-            // 2) Ставим cookie целевого аккаунта.
+            // 3) Ставим cookie целевого аккаунта.
             await setKey(key);
-            // 3) Грузим главную под этим аккаунтом.
+            // 4) Грузим главную под этим аккаунтом.
             const resp = await fetch('https://funpay.com/', { credentials: 'include', cache: 'no-store' });
             const html = await resp.text();
             return await parseHtmlViaOffscreen(html, 'parseAccountSnapshot');
         } catch (e) {
             return null;
         } finally {
-            // 4) ВСЕГДА возвращаем исходную golden_key (или удаляем, если её не было).
+            // 5) ВСЕГДА возвращаем исходную golden_key активного аккаунта!
+            // НИ В КОЕМ СЛУЧАЕ не удаляем куку!
             try {
-                if (original && original.value) await setKey(original.value);
-                else await (typeof browser !== 'undefined' ? browser : chrome).cookies.remove({ url: 'https://funpay.com', name: 'golden_key' });
+                if (originalVal) await setKey(originalVal);
             } catch (_) {}
         }
     };
@@ -1432,6 +1985,87 @@ function fxnSnapshotForKey(key) {
     return next;
 }
 
+// Многоуровневый отказоустойчивый перевод в фоне (обход CORS и 429 блокировок Google)
+async function fxnBackgroundTranslate(text, targetLang = 'en', sourceLang = 'auto', useAi = false) {
+    if (!text || !text.trim()) return { success: true, text: '', provider: 'none', isAi: false };
+    const cleanText = text.trim();
+    const sl = encodeURIComponent(sourceLang || 'auto');
+    const tl = encodeURIComponent(targetLang || 'en');
+    const q = encodeURIComponent(cleanText);
+
+    // 1. Попытка через AI (если запрошен режим ИИ)
+    if (useAi) {
+        try {
+            const aiRes = await fetchAIResponse(cleanText, targetLang, '', 'translate');
+            if (aiRes && aiRes.success && aiRes.data && aiRes.data.trim()) {
+                return { success: true, text: aiRes.data.trim(), provider: 'ai', isAi: true };
+            }
+        } catch (e) {
+            console.warn('[Foxen BG Translate] AI error, falling back to multi-tier engine:', e);
+        }
+    }
+
+    // 2. Google clients5 (официальный эндпойнт Chrome-расширения, высокий лимит запросов)
+    try {
+        const u = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=${sl}&tl=${tl}&q=${q}`;
+        const res = await fetch(u);
+        if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                const tr = Array.isArray(data[0]) ? data[0][0] : data[0];
+                if (typeof tr === 'string' && tr.trim()) {
+                    return { success: true, text: tr.trim(), provider: 'google_clients5', isAi: false };
+                }
+            }
+        }
+    } catch (_) {}
+
+    // 3. Google translate.google.com (dj=1 JSON sentences format)
+    try {
+        const u = `https://translate.google.com/translate_a/single?client=at&dt=t&dj=1&sl=${sl}&tl=${tl}&q=${q}`;
+        const res = await fetch(u);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.sentences)) {
+                const tr = data.sentences.map(s => s.trans || '').join('');
+                if (tr.trim()) {
+                    return { success: true, text: tr.trim(), provider: 'google_dj', isAi: false };
+                }
+            }
+        }
+    } catch (_) {}
+
+    // 4. Google translate.googleapis.com (gtx)
+    try {
+        const u = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${q}`;
+        const res = await fetch(u);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data[0])) {
+                const tr = data[0].map(c => c[0] || '').join('');
+                if (tr.trim()) {
+                    return { success: true, text: tr.trim(), provider: 'google_gtx', isAi: false };
+                }
+            }
+        }
+    } catch (_) {}
+
+    // 5. MyMemory API (бесплатный независимый переводчик)
+    try {
+        const lp = (sourceLang && sourceLang !== 'auto') ? `${sourceLang}|${targetLang}` : `autodetect|${targetLang}`;
+        const u = `https://api.mymemory.translated.net/get?q=${q}&langpair=${encodeURIComponent(lp)}`;
+        const res = await fetch(u);
+        if (res.ok) {
+            const data = await res.json();
+            const tr = data?.responseData?.translatedText;
+            if (typeof tr === 'string' && tr.trim() && !tr.includes('MYMEMORY WARNING')) {
+                return { success: true, text: tr.trim(), provider: 'mymemory', isAi: false };
+            }
+        }
+    } catch (_) {}
+
+    throw new Error('Все серверы перевода временно недоступны. Попробуйте через несколько секунд.');
+}
 
 // --- Главный обработчик сообщений ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -1439,6 +2073,57 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         runBumpCycle()
             .then(res => sendResponse({ ok: true, summary: res || {} }))
             .catch(e => sendResponse({ ok: false, error: e && e.message }));
+        return true;
+    }
+
+    if (request && request.action === 'FOXEN_FORWARD_THEME_INSTALL_TO_FUNPAY') {
+        (async () => {
+            try {
+                const api = (typeof browser !== 'undefined' && browser.storage) ? browser : chrome;
+                // Всегда гарантированно сохраняем pendingThemeInstallModal в локальное хранилище
+                const modalPayload = {
+                    theme: request.theme,
+                    themeName: request.themeName,
+                    timestamp: Date.now()
+                };
+                if (api && api.storage && api.storage.local) {
+                    try {
+                        const p = api.storage.local.set({ pendingThemeInstallModal: modalPayload });
+                        if (p && typeof p.then === 'function') await p;
+                    } catch (_) {}
+                }
+
+                const tabs = await new Promise(r => chrome.tabs.query({ url: ['*://*.funpay.com/*', '*://funpay.com/*'] }, r));
+                if (Array.isArray(tabs) && tabs.length > 0) {
+                    const fpTab = tabs.find(t => t.active) || tabs[0];
+                    if (fpTab && fpTab.id) {
+                        await new Promise(r => chrome.tabs.update(fpTab.id, { active: true }, r));
+                        if (fpTab.windowId) {
+                            try { await new Promise(r => chrome.windows.update(fpTab.windowId, { focused: true }, r)); } catch(_) {}
+                        }
+                        chrome.tabs.sendMessage(fpTab.id, {
+                            action: 'FOXEN_SHOW_THEME_INSTALL_MODAL',
+                            theme: request.theme,
+                            themeName: request.themeName
+                        }, (resp) => {
+                            if (chrome.runtime.lastError || !resp) {
+                                // Если скрипты вкладки отвалились (например, при перезагрузке расширения разработчиком), перезагружаем вкладку для гарантированного подхвата модалки
+                                try { chrome.tabs.reload(fpTab.id); } catch(_) {}
+                            }
+                        });
+                        sendResponse({ ok: true, forwarded: true, tabId: fpTab.id });
+                        return;
+                    }
+                }
+
+                // Если вкладка FunPay не была открыта — открываем новую
+                chrome.tabs.create({ url: 'https://funpay.com/', active: true }, (newTab) => {
+                    sendResponse({ ok: true, createdTab: true, tabId: newTab?.id });
+                });
+            } catch(err) {
+                sendResponse({ ok: false, error: err.message });
+            }
+        })();
         return true;
     }
     // 3.0: offscreen keepalive ping - receiving it resets the worker idle timer.
@@ -1461,7 +2146,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'fxnSendImage') {
         (async () => {
             try {
-                const result = await sendChatImageInBackground(request.chatId, request.dataUrl, request.chatName);
+                const result = await sendChatImageInBackground(request.chatId, request.dataUrl, request.chatName, request.csrfToken);
                 sendResponse({ ok: true, result });
             } catch (e) {
                 sendResponse({ ok: false, error: e.message });
@@ -1474,25 +2159,58 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'fxnSendChatText') {
         (async () => {
             try {
-                const auth = await getAuthDetailsForBackground();
-                if (!auth.golden_key || !auth.csrf_token) throw new Error('Нет авторизации.');
-                const cookieStr = auth.phpsessid
-                    ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
-                    : `golden_key=${auth.golden_key}`;
-                const payload = {
-                    objects: JSON.stringify([{ type: 'chat_node', id: request.chatId, tag: '00000000', data: { node: request.chatId, last_message: -1, content: '' } }]),
-                    request: JSON.stringify({ action: 'chat_message', data: { node: request.chatId, last_message: -1, content: request.text } }),
-                    csrf_token: auth.csrf_token
+                let auth = await getAuthDetailsForBackground();
+                let csrfToken = request.csrfToken || auth.csrf_token;
+                if (!csrfToken) {
+                    auth = await getAuthDetailsForBackground(true);
+                    csrfToken = request.csrfToken || auth.csrf_token;
+                }
+                if (!csrfToken) throw new Error('Нет авторизации.');
+
+                const getHeaders = (baseHeaders = {}) => {
+                    const h = { ...baseHeaders };
+                    if (auth.golden_key && auth.golden_key !== 'active_session') {
+                        h['cookie'] = auth.phpsessid
+                            ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}`
+                            : `golden_key=${auth.golden_key}`;
+                    }
+                    return h;
                 };
-                const res = await fetch('https://funpay.com/runner/', {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', 'x-requested-with': 'XMLHttpRequest', 'cookie': cookieStr },
-                    body: new URLSearchParams(payload)
-                });
-                const json = await res.json().catch(() => null);
-                if (json?.error) throw new Error(json.error);
-                sendResponse({ ok: res.ok });
+
+                const postText = async (token) => {
+                    const payload = {
+                        objects: JSON.stringify([{ type: 'chat_node', id: String(request.chatId), tag: '00000000', data: { node: String(request.chatId), last_message: -1, content: '' } }]),
+                        request: JSON.stringify({ action: 'chat_message', data: { node: String(request.chatId), last_message: -1, content: request.text } }),
+                        csrf_token: token
+                    };
+                    const res = await fetch('https://funpay.com/runner/', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: getHeaders({
+                            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'x-requested-with': 'XMLHttpRequest'
+                        }),
+                        body: new URLSearchParams(payload)
+                    });
+                    const json = await res.json().catch(() => null);
+                    return { res, json };
+                };
+
+                let { res, json } = await postText(csrfToken);
+                if (!res.ok || json?.error) {
+                    _authCache = null;
+                    auth = await getAuthDetailsForBackground(true);
+                    if (auth.csrf_token && auth.csrf_token !== csrfToken) {
+                        const retry = await postText(auth.csrf_token);
+                        res = retry.res;
+                        json = retry.json;
+                    }
+                }
+
+                if (!res.ok || json?.error) {
+                    throw new Error(json?.msg || json?.error || `HTTP ${res.status}`);
+                }
+                sendResponse({ ok: true });
             } catch (e) {
                 sendResponse({ ok: false, error: e.message });
             }
@@ -1772,6 +2490,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     fpCurrentUserInfo: { userId: profileData.userId, username: profileData.username }
                 });
 
+                // Синхронизируем avatar_url в Supabase profiles для сайта
+                if (avatarUrl && avatarUrl.startsWith('http') && !avatarUrl.includes('layout/avatar.png')) {
+                    (async () => {
+                        try {
+                            const supabaseUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
+                            const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
+                            const target = encodeURIComponent(userId);
+                            const uTarget = encodeURIComponent(username);
+                            await fetch(`${supabaseUrl}/rest/v1/profiles?or=(fp_user_id.eq.${target},fp_user.ilike.${uTarget})`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'apikey': apiKey,
+                                    'Authorization': `Bearer ${apiKey}`,
+                                    'Content-Type': 'application/json',
+                                    'Prefer': 'return=minimal'
+                                },
+                                body: JSON.stringify({
+                                    avatar_url: avatarUrl,
+                                    updated_at: new Date().toISOString()
+                                })
+                            });
+                            console.log('[Foxen BG] avatar_url synced to Supabase profiles:', avatarUrl);
+                        } catch(e) {}
+                    })();
+                }
+
                 sendResponse({ ok: true, profile: profileData });
             } catch (e) {
                 console.error('[Foxen BG] Ошибка FOXEN_GET_FUNPAY_PROFILE:', e);
@@ -1830,46 +2574,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === 'fetchDonaters') {
-        (async () => {
-            // Уникальный bust на каждый запрос: пробивает и HTTP-кэш браузера,
-            // и залипший edge-кэш jsdelivr по @main.
-            const bust = Date.now() + '_' + Math.random().toString(36).slice(2);
-
-            // Несколько источников по очереди. raw github отдаёт актуальное
-            // сразу после коммита и не кэшируется как CDN, поэтому он первый.
-            // Дальше - оба репозитория через оба способа, на всякий случай.
-            const sources = [
-                `https://raw.githubusercontent.com/XaviersDev/FunPayTools-Site/main/donaters.json?t=${bust}`,
-                `https://raw.githubusercontent.com/XaviersDev/FunPay-Tools/main/donaters.json?t=${bust}`,
-                `https://cdn.jsdelivr.net/gh/XaviersDev/FunPayTools-Site@main/donaters.json?t=${bust}`,
-                `https://cdn.jsdelivr.net/gh/XaviersDev/FunPay-Tools@main/donaters.json?t=${bust}`
-            ];
-
-            const fetchOpts = {
-                method: 'GET',
-                cache: 'no-store',          // запрет HTTP-кэша браузера
-                headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-            };
-
-            let lastErr = null;
-            for (const url of sources) {
-                try {
-                    const res = await fetch(url, fetchOpts);
-                    if (!res.ok) { lastErr = new Error(`HTTP ${res.status} @ ${url}`); continue; }
-                    const json = await res.json();
-                    // Принимаем только непустой объект - отсекаем битые/пустые ответы.
-                    if (json && typeof json === 'object' && Object.keys(json).length > 0) {
-                        sendResponse({ success: true, data: json });
-                        return;
-                    }
-                    lastErr = new Error(`Empty/invalid JSON @ ${url}`);
-                } catch (e) {
-                    lastErr = e;
-                }
-            }
-            sendResponse({ success: false, error: String(lastErr) });
-        })();
-        return true;
+        sendResponse({ success: true, data: {} });
+        return false;
     }
 
     // AI HANDLERS
@@ -1883,6 +2589,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     if (request.action === "translateLotText") {
         fetchAITranslation(request.data).then(sendResponse);
+        return true;
+    }
+    if (request.action === "fxnTranslateText") {
+        (async () => {
+            try {
+                const res = await fxnBackgroundTranslate(request.text, request.targetLang, request.sourceLang, request.useAi);
+                sendResponse(res);
+            } catch (e) {
+                sendResponse({ success: false, error: e?.message || String(e) });
+            }
+        })();
         return true;
     }
     if (request.action === "getAIImageSettings") {
@@ -1930,7 +2647,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const editUrl = request.nodeId
                     ? `https://funpay.com/lots/offerEdit?node=${request.nodeId}&offer=${request.offerId}`
                     : `https://funpay.com/lots/offerEdit?offer=${request.offerId}`;
-                const response = await fxnFetchResilient(editUrl, {
+                const response = await fetchWithTabFallback(editUrl, {
                     credentials: 'include',
                     headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` }
                 });
@@ -1939,6 +2656,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const data = await parseHtmlViaOffscreen(html, 'parseLotEditPage');
                 if (!data) throw new Error('Не удалось разобрать форму лота.');
                 if (!data.node_id && request.nodeId) data.node_id = String(request.nodeId);
+                delete data.csrf_token;
+                delete data.csrf;
+                data.offer_id = '0';
+                data.location = 'trade';
                 sendResponse({ success: true, data: data });
             } catch (e) {
                 sendResponse({ success: false, error: e.message });
@@ -1963,7 +2684,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const editUrl = request.nodeId
                     ? `https://funpay.com/lots/offerEdit?node=${request.nodeId}&offer=${offerId}`
                     : `https://funpay.com/lots/offerEdit?offer=${offerId}`;
-                const resp = await fxnFetchResilient(editUrl, {
+                const resp = await fetchWithTabFallback(editUrl, {
                     credentials: 'include',
                     headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` }
                 });
@@ -2016,7 +2737,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (!offerId) throw new Error('Не передан ID лота.');
 
                 const ck = { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` };
-                const waitIfBatch = async () => { if (request.batch) await new Promise(r => setTimeout(r, 1000)); };
+                const waitIfBatch = async () => {}; // Паузы между лотами контролируются вызывающим процессом
 
                 let ownLotData = null;
                 let rawPrice = '';
@@ -2026,8 +2747,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 // 1) Сначала пробуем offerEdit (если это СВОЙ лот - там есть абсолютно всё без угадываний)
                 try {
-                    await waitIfBatch();
-                    const edResp = await fxnFetchResilient(
+                    const edResp = await fetchWithTabFallback(
                         `https://funpay.com/lots/offerEdit?offer=${offerId}&location=offer`,
                         { credentials: 'include', headers: ck });
                     if (edResp.ok) {
@@ -2044,7 +2764,46 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     }
                 } catch (_) {}
 
-                // 2) Загружаем публичную страницу лота
+                // Если это свой лот — сразу формируем ответ БЕЗ лишних сетевых запросов к публичной странице
+                if (ownLotData && (ownLotData.node_id || discoveredNodeId)) {
+                    const finalNodeId = String(ownLotData.node_id || discoveredNodeId || '');
+                    const fields = { ...ownLotData };
+                    fields.offer_id = '0';
+                    fields.node_id = finalNodeId;
+                    fields.active = 'on';
+
+                    let finalPrice = null;
+                    if (rawPrice) {
+                        const rawNum = parseFloat(String(rawPrice).replace(',', '.'));
+                        if (!Number.isNaN(rawNum) && rawNum > 0) finalPrice = rawNum;
+                    }
+
+                    const source = {
+                        isOwn: true,
+                        offerId: String(offerId),
+                        nodeId: finalNodeId,
+                        summary: ownLotData['fields[summary][ru]'] || '',
+                        summary_ru: ownLotData['fields[summary][ru]'] || '',
+                        desc_ru: ownLotData['fields[desc][ru]'] || '',
+                        summary_en: ownLotData['fields[summary][en]'] || '',
+                        desc_en: ownLotData['fields[desc][en]'] || '',
+                        payment_msg_ru: ownLotData['fields[payment_msg][ru]'] || '',
+                        payment_msg_en: ownLotData['fields[payment_msg][en]'] || '',
+                        secrets: ownLotData['secrets'] || '',
+                        autoDelivery: !!ownLotData['auto_delivery'],
+                        enDiffers: !!(ownLotData['fields[summary][en]'] || ownLotData['fields[desc][en]']),
+                        rawPrice: rawPrice || ownLotData['price'] || '',
+                        priceCurrency: priceCurrency || 'rub',
+                        finalPrice: finalPrice,
+                        categoryName: ownLotData.categoryName || '',
+                        amount: ownLotData['amount'] || '1'
+                    };
+
+                    sendResponse({ success: true, source, fields, formError: null, csrf: auth.csrf_token });
+                    return;
+                }
+
+                // 2) Загружаем публичную страницу лота (только для чужих лотов)
                 let ruResp;
                 try {
                     ruResp = await fxnFetchResilient(`https://funpay.com/lots/offer?id=${offerId}`, { credentials: 'include', headers: ck });
@@ -2229,7 +2988,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const postCreate = async (curAuth) => {
                     payload.csrf_token = curAuth.csrf_token;
                     const body = new URLSearchParams(payload);
-                    return await fxnFetchResilient('https://funpay.com/en/lots/offerSave', {
+                    return await fetchWithTabFallback('https://funpay.com/lots/offerSave', {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
@@ -2314,7 +3073,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     deleted: '1',
                     csrf_token: auth.csrf_token
                 });
-                const response = await fetch('https://funpay.com/lots/offerSave', {
+                const response = await fetchWithTabFallback('https://funpay.com/lots/offerSave', {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -2363,7 +3122,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         const editUrl = nodeId
                             ? `https://funpay.com/lots/offerEdit?node=${nodeId}&offer=${payload.offer_id}`
                             : `https://funpay.com/lots/offerEdit?offer=${payload.offer_id}`;
-                        const r = await fxnFetchResilient(editUrl, {
+                        const r = await fetchWithTabFallback(editUrl, {
                             credentials: 'include',
                             headers: { 'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` }
                         });
@@ -2396,7 +3155,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     cleanData.csrf_token = curAuth.csrf_token;
                     const formData = new URLSearchParams(cleanData);
 
-                    return await fxnFetchResilient('https://funpay.com/lots/offerSave', {
+                    return await fetchWithTabFallback('https://funpay.com/lots/offerSave', {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
@@ -2490,7 +3249,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 lots: request.lots.map(lot => ({ ...lot, status: 'pending', retries: 0, error: null })),
                 currentIndex: 0
             };
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: importProcess });
+            await fxnStorageSet({ [IMPORT_PROCESS_KEY]: importProcess });
             sendImportProgressUpdate(importProcess);
             sendResponse({ success: true });
             processNextLotImport();
@@ -2500,7 +3259,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === 'resumeLotImport') {
         (async () => {
-             const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
+             const { [IMPORT_PROCESS_KEY]: process } = await fxnStorageGet(IMPORT_PROCESS_KEY);
              if (process) {
                 process.state = 'running'; // Меняем статус на "в процессе"
                 // Сбрасываем счетчик попыток для всех лотов с ошибками
@@ -2510,7 +3269,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         lot.status = 'pending';
                     }
                 });
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+                await fxnStorageSet({ [IMPORT_PROCESS_KEY]: process });
                 sendResponse({ success: true });
                 processNextLotImport(); // Запускаем процесс
              } else {
@@ -2521,17 +3280,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === 'cancelLotImport') {
-        const extApi = typeof browser !== 'undefined' ? browser : chrome;
-        extApi.storage.local.remove(IMPORT_PROCESS_KEY, () => sendResponse({success: true}));
+        fxnStorageRemove(IMPORT_PROCESS_KEY).then(() => sendResponse({success: true}));
         return true;
     }
 
     if (request.action === 'postponeLotImport') {
         (async () => {
-            const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
+            const { [IMPORT_PROCESS_KEY]: process } = await fxnStorageGet(IMPORT_PROCESS_KEY);
             if (process) {
                 process.state = 'postponed';
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+                await fxnStorageSet({ [IMPORT_PROCESS_KEY]: process });
                 sendResponse({ success: true });
             } else {
                 sendResponse({ success: false, error: 'Процесс для откладывания не найден.' });
@@ -2542,12 +3300,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === 'skipLotImportItem') {
         (async () => {
-            const { [IMPORT_PROCESS_KEY]: process } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(IMPORT_PROCESS_KEY);
+            const { [IMPORT_PROCESS_KEY]: process } = await fxnStorageGet(IMPORT_PROCESS_KEY);
             if (process && process.lots[request.index]) {
                 const lot = process.lots[request.index];
                 lot.status = 'skipped';
                 lot.error = 'Пропущено пользователем';
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [IMPORT_PROCESS_KEY]: process });
+                await fxnStorageSet({ [IMPORT_PROCESS_KEY]: process });
                 sendImportProgressUpdate(process);
                 
                 // Если пропущенный лот был текущим, немедленно запускаем следующий
@@ -2566,7 +3324,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === 'getGoldenKey') {
         (async () => {
-            const cookie = await new Promise(resolve => chrome.cookies.get({ url: "https://funpay.com", name: "golden_key" }, resolve));
+            const cookie = await fxnFindGoldenKey();
             sendResponse({ success: !!cookie, key: cookie ? cookie.value : null });
         })();
         return true;
@@ -2576,40 +3334,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 if (!request.key) throw new Error('Пустой ключ аккаунта.');
 
-                // --- Логика входа повторяет то, что делает cookie-editor ---
-                // Кук-эдитор просто МЕНЯЕТ значение golden_key и НЕ трогает PHPSESSID —
-                // FunPay сам перепривязывает сессию к новому ключу на следующем запросе.
-                // Прошлые версии УДАЛЯЛИ PHPSESSID и так роняли в пустую сессию.
-                //
-                // Важные детали, без которых вход не срабатывал:
-                //  1. FunPay ставит golden_key как httpOnly на домен ".funpay.com".
-                //     chrome.cookies.set НЕ может пометить куку httpOnly, поэтому если
-                //     просто записать новую — она будет ОТДЕЛЬНОЙ (non-httpOnly), а сервер
-                //     продолжит видеть старую httpOnly → пустая/старая сессия.
-                //     Поэтому СНАЧАЛА удаляем все существующие golden_key (remove умеет
-                //     убирать и httpOnly-куки), и только потом ставим новую.
-                //  2. domain ставим как у FunPay — с ведущей точкой ".funpay.com".
-
-                // 1) Снимаем все варианты golden_key (host-only и доменные, вкл. httpOnly).
+                // 1) Снимаем ВСЕ golden_key куки для funpay.com (включая host-only и httpOnly).
                 try {
-                    const existing = await new Promise(resolve => chrome.cookies.getAll({ name: 'golden_key', domain: 'funpay.com' }, resolve));
-                    for (const c of existing) {
+                    const existing = await fxnGetAllCookies({ domain: 'funpay.com' });
+                    for (const c of (existing || [])) {
+                        if (c.name !== 'golden_key') continue;
                         const proto = c.secure ? 'https' : 'http';
                         const host = c.domain.replace(/^\./, '');
-                        try {
-                            await new Promise(resolve => chrome.cookies.remove({
-                                url: `${proto}://${host}${c.path || '/'}`,
-                                name: 'golden_key',
-                                storeId: c.storeId
-                            }, resolve));
-                        } catch (_) {}
+                        await fxnRemoveCookie({
+                            url: `${proto}://${host}${c.path || '/'}`,
+                            name: 'golden_key',
+                            storeId: c.storeId
+                        });
                     }
                 } catch (_) {}
 
-                // 2) Ставим новый golden_key так же, как FunPay: domain ".funpay.com",
-                //    secure, path "/", долгий срок. PHPSESSID НЕ трогаем — пусть FunPay
-                //    перепривяжет сессию сам (как при смене ключа в cookie-editor).
-                let setResult = await new Promise(resolve => chrome.cookies.set({
+                // 2) Ставим новый golden_key.
+                let setResult = await fxnSetCookie({
                     url: 'https://funpay.com/',
                     name: 'golden_key',
                     value: request.key,
@@ -2618,12 +3359,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     secure: true,
                     sameSite: 'lax',
                     expirationDate: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
-                }, resolve));
+                });
 
-                // Подстраховка: некоторые сборки Chrome капризничают с domain+url.
-                // Пробуем host-only вариант, если доменный не записался.
+                // Подстраховка: пробуем host-only вариант
                 if (!setResult) {
-                    setResult = await new Promise(resolve => chrome.cookies.set({
+                    setResult = await fxnSetCookie({
                         url: 'https://funpay.com/',
                         name: 'golden_key',
                         value: request.key,
@@ -2631,16 +3371,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         secure: true,
                         sameSite: 'lax',
                         expirationDate: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
-                    }, resolve));
+                    });
                 }
 
                 if (!setResult) {
                     throw new Error('Не удалось записать куку аккаунта (cookies.set вернул null).');
                 }
 
-                // 3) Перезагружаем вкладку — FunPay выдаст/перепривяжет сессию под новый ключ.
+                // 3) Сбрасываем кэш авторизации — иначе processNextLotImport может
+                //    использовать устаревший golden_key предыдущего аккаунта.
+                _authCache = null;
+                _authCacheTime = 0;
+
+                // 4) Перезагружаем вкладку — FunPay выдаст/перепривяжет сессию под новый ключ.
                 const tabId = sender.tab && sender.tab.id;
-                if (tabId != null) chrome.tabs.reload(tabId);
+                if (tabId != null) {
+                    try { (typeof browser !== 'undefined' ? browser : chrome).tabs.reload(tabId); } catch (_) {}
+                }
                 sendResponse({ success: true });
             } catch (e) {
                 console.error('Foxen: setGoldenKey error:', e);
@@ -2729,7 +3476,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 await FPTSalesDB.clearAll();
                 await FPTSalesDB.setMeta('migratedFromLocal', true); // не тянуть старьё обратно
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove([
+                await storageRemove([
                     'foxenSalesData', 'foxenFirstOrderId', 'foxenLastOrderId', 'foxenSalesLastUpdate'
                 ]);
                 sendResponse({ success: true });
@@ -2771,7 +3518,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 await FPTPurchasesDB.clearAll();
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['foxenPurchasesLastUpdate']);
+                await storageRemove(['foxenPurchasesLastUpdate']);
                 sendResponse({ success: true });
             } catch (e) {
                 sendResponse({ success: false, error: e.message });
@@ -2811,7 +3558,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 await FPTFinanceDB.clearAll();
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.remove(['foxenFinanceLastUpdate', 'foxenFinanceCount']);
+                await storageRemove(['foxenFinanceLastUpdate', 'foxenFinanceCount']);
                 sendResponse({ success: true });
             } catch (e) {
                 sendResponse({ success: false, error: e.message });
@@ -2877,8 +3624,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         request.action === 'supportAddComment' || request.action === 'supportCloseTicket') {
         (async () => {
             try {
-                const gkCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'golden_key' });
-                const phpCookie = await (typeof browser !== 'undefined' ? browser : chrome).cookies.get({ url: 'https://funpay.com', name: 'PHPSESSID' });
+                const gkCookie = await fxnFindGoldenKey();
+                const phpCookie = await fxnFindPhpSessId();
                 if (!gkCookie) { sendResponse({ success: false, error: 'Не авторизован на FunPay' }); return; }
                 const baseCookie = `golden_key=${gkCookie.value}${phpCookie ? '; PHPSESSID=' + phpCookie.value : ''}`;
                 const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
