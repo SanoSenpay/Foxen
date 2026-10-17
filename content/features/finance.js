@@ -70,19 +70,37 @@
         return _txns.filter(t => t.status === 'complete' && inPeriod(t));
     }
 
+    function normCur(c) {
+        if (!c) return 'RUB';
+        const s = String(c).toUpperCase().trim();
+        if (s === 'USD' || s === '$') return 'USD';
+        if (s === 'EUR' || s === '€') return 'EUR';
+        return 'RUB';
+    }
+
     function aggregate() {
         const list = effective();
         const inByCur = {}, outByCur = {};
         const byType = {}; // type -> { in:{}, out:{}, count }
         const byMonth = {}; // 'YYYY-MM' -> { in:rub, out:rub }
         const byDay = {};   // 'YYYY-MM-DD' -> { in:rub, out:rub }
-        const rates = { RUB: 1, USD: 90, EUR: 98, UNKNOWN: 0 }; // грубая нормализация к ₽ для графика
+        const rates = { RUB: 1, USD: 90, EUR: 98 }; // нормализация к ₽ для графика
         for (const t of list) {
-            const cur = t.currency || 'UNKNOWN';
-            const val = Math.abs(t.signed);
+            const cur = normCur(t.currency);
+            let val = 0;
+            if (typeof t.signed === 'number' && !isNaN(t.signed)) {
+                val = Math.abs(t.signed);
+            } else if (typeof t.amount === 'number' && !isNaN(t.amount)) {
+                val = Math.abs(t.amount);
+            } else if (t.amount) {
+                val = Math.abs(parseFloat(String(t.amount).replace(/[^\d.,]/g, '').replace(',', '.')) || 0);
+            }
+
+            const isPositive = (typeof t.signed === 'number' && !isNaN(t.signed))
+                ? (t.signed >= 0)
+                : (t.type !== 'withdraw');
 
             if (t.type === 'withdraw_cancel') {
-                // Отмена вывода уменьшает расходы/выводы (outByCur), а не завышает приход
                 outByCur[cur] = Math.max(0, (outByCur[cur] || 0) - val);
                 if (!byType['withdraw']) byType['withdraw'] = { in: {}, out: {}, count: 0 };
                 byType['withdraw'].out[cur] = Math.max(0, (byType['withdraw'].out[cur] || 0) - val);
@@ -93,27 +111,36 @@
                 continue;
             }
 
-            const acc = t.signed >= 0 ? inByCur : outByCur;
+            const acc = isPositive ? inByCur : outByCur;
             acc[cur] = (acc[cur] || 0) + val;
             if (!byType[t.type]) byType[t.type] = { in: {}, out: {}, count: 0 };
-            const tacc = t.signed >= 0 ? byType[t.type].in : byType[t.type].out;
+            const tacc = isPositive ? byType[t.type].in : byType[t.type].out;
             tacc[cur] = (tacc[cur] || 0) + val;
             byType[t.type].count++;
             const d = new Date(t.date);
             const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             const dk = `${mk}-${String(d.getDate()).padStart(2, '0')}`;
-            const rub = val * (rates[cur] || 0);
+            const rub = val * (rates[cur] || 1);
             if (!byMonth[mk]) byMonth[mk] = { in: 0, out: 0 };
             if (!byDay[dk]) byDay[dk] = { in: 0, out: 0 };
-            if (t.signed >= 0) { byMonth[mk].in += rub; byDay[dk].in += rub; }
+            if (isPositive) { byMonth[mk].in += rub; byDay[dk].in += rub; }
             else { byMonth[mk].out += rub; byDay[dk].out += rub; }
         }
         return { list, inByCur, outByCur, byType, byMonth, byDay, count: list.length };
     }
 
     function sumLine(obj) {
-        const parts = Object.entries(obj).filter(([c, v]) => v > 0 && c !== 'UNKNOWN')
-            .map(([c, v]) => money(v, c));
+        const parts = Object.entries(obj).filter(([c, v]) => v > 0)
+            .map(([c, v]) => money(v, normCur(c)));
+        return parts.length ? parts.join(' · ') : '0 ₽';
+    }
+    function netLine(inObj, outObj) {
+        const curs = new Set([...Object.keys(inObj), ...Object.keys(outObj)].map(normCur));
+        const parts = [];
+        for (const c of curs) {
+            const net = (inObj[c] || 0) - (outObj[c] || 0);
+            if (Math.abs(net) > 0.005) parts.push(money(net, c));
+        }
         return parts.length ? parts.join(' · ') : '0 ₽';
     }
     function netLine(inObj, outObj) {
@@ -485,7 +512,8 @@
     async function load(forceUpdate) {
         ensureStyles();
         _txns = await FPTFinanceDB.getAllAsArray();
-        if (forceUpdate || _txns.length === 0) {
+        const hasZeros = _txns.length > 0 && _txns.every(t => (t.amount === 0 || !t.amount) && (t.signed === 0 || !t.signed));
+        if (forceUpdate || _txns.length === 0 || hasZeros) {
             showLoading();
             // живой счётчик
             const tick = setInterval(async () => {
@@ -535,7 +563,10 @@
         document.getElementById('fxn-fin-period').addEventListener('change', (e) => {
             _period = e.target.value; render();
         });
-        document.getElementById('fxn-fin-refresh').addEventListener('click', () => load(true));
+        document.getElementById('fxn-fin-refresh').addEventListener('click', async () => {
+            try { await FPTFinanceDB.reset(); } catch (_) {}
+            load(true);
+        });
         load(false);
     }
 

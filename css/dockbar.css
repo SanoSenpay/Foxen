@@ -561,3 +561,52 @@ html.fxn-popup-theme-transparent .fxn-dock-shell {
 .fxn-dock-popover-item.selected .fxn-dock-checkbox::after {
     display: block;
 }
+
+/* --- Mobile Responsiveness for Foxen Floating Dockbar --- */
+@media (max-width: 768px) {
+    .fxn-dock-container {
+        transform: scale(0.92);
+        transform-origin: center bottom;
+    }
+
+    .fxn-dock-shell {
+        padding: 5px 8px !important;
+        border-radius: 16px !important;
+        gap: 6px !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(18, 19, 24, 0.96) !important;
+    }
+
+    .fxn-dock-item {
+        width: 38px !important;
+        height: 38px !important;
+    }
+
+    .fxn-dock-popover {
+        width: min(290px, 90vw) !important;
+        max-width: 90vw !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(22, 24, 30, 0.98) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .fxn-dock-container {
+        transform: scale(0.85);
+    }
+
+    .fxn-dock-item {
+        width: 34px !important;
+        height: 34px !important;
+    }
+
+    .fxn-dock-popover {
+        width: calc(100vw - 24px) !important;
+        max-width: calc(100vw - 24px) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+}
+

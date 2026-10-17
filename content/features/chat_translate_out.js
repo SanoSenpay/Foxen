@@ -80,15 +80,32 @@
 
     // Проверка статуса подписки Foxen Premium
     async function isFoxenPremiumUser() {
+        if (typeof window.isFoxenPremiumUser === 'function') {
+            return await window.isFoxenPremiumUser();
+        }
         try {
             if (typeof fxnGetCachedProfile === 'function') {
                 const p = await fxnGetCachedProfile();
-                if (p && p.SUBSCRIPTION && p.SUBSCRIPTION !== 'free') return true;
+                if (p) {
+                    if (p.is_premium || p.has_premium) return true;
+                    if (p.SUBSCRIPTION && p.SUBSCRIPTION !== 'free') return true;
+                    if (p.subscription?.is_active) {
+                        if (p.subscription.expires_at && new Date(p.subscription.expires_at).getTime() <= Date.now()) return false;
+                        return true;
+                    }
+                }
             }
             const st = await (typeof browser !== 'undefined' ? browser : chrome).storage?.local?.get(['foxenUserProfileCache', 'foxen_user_profile', 'foxen_is_premium', 'cached_profile']);
             if (st) {
                 const prof = st.foxenUserProfileCache?.data || st.foxen_user_profile || st.cached_profile;
-                if (prof && prof.SUBSCRIPTION && prof.SUBSCRIPTION !== 'free') return true;
+                if (prof) {
+                    if (prof.is_premium || prof.has_premium) return true;
+                    if (prof.SUBSCRIPTION && prof.SUBSCRIPTION !== 'free') return true;
+                    if (prof.subscription?.is_active) {
+                        if (prof.subscription.expires_at && new Date(prof.subscription.expires_at).getTime() <= Date.now()) return false;
+                        return true;
+                    }
+                }
                 if (st.foxen_is_premium) return true;
             }
         } catch (_) {}

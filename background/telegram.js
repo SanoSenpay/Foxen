@@ -400,34 +400,91 @@ async function handleReplyToFunPayChat(msg, cfg) {
     return true;
 }
 
-// Проверка токена + (опц.) автоопределение chatId через getUpdates.
-// Возвращает { ok, botName, chatId } или { ok:false, error }.
-async function telegramValidateAndResolve(token) {
+// Проверка токена + (опц.) автоопределение chatId через getUpdates или ручной ввод.
+// Возвращает { ok, botName, username, chatId } или { ok:false, error }.
+async function telegramValidateAndResolve(token, explicitChatId = null) {
     try {
         const me = await tgApi(token, 'getMe', {});
         if (!me.ok) return { ok: false, error: me.description || 'Неверный токен бота.' };
         const botName = me.result.username ? '@' + me.result.username : me.result.first_name;
+        const botUsername = me.result.username || '';
 
         // Синхронизируем описание бота и поле "what can this bot do?" в Telegram при валидации/активации
         tgSyncBotInfo(token).catch(() => {});
 
-        // Если этот бот уже был подключен ранее — сохраняем существующий chatId
-        const curCfg = await tgGet();
-        let chatId = (curCfg && curCfg.token === token && curCfg.chatId) ? String(curCfg.chatId) : '';
+        // Временно останавливаем фоновый long-polling, чтобы избежать ошибки 409 Conflict при вызове getUpdates
+        stopTelegramPolling();
+        await new Promise(r => setTimeout(r, 200));
 
-        // Пытаемся найти свежий chatId из последних апдейтов (если пользователь только что написал боту)
-        const upd = await tgApi(token, 'getUpdates', { timeout: 0, limit: 20 });
-        if (upd.ok && Array.isArray(upd.result) && upd.result.length > 0) {
-            for (let i = upd.result.length - 1; i >= 0; i--) {
-                const m = upd.result[i].message || upd.result[i].edited_message || upd.result[i].callback_query?.message;
-                if (m && m.chat && m.chat.id) {
-                    chatId = String(m.chat.id);
-                    break;
+        // 1. Проверяем explicitChatId (если введен пользователем вручную) или сохраненный ранее chatId
+        const curCfg = await tgGet();
+        let chatId = '';
+        if (explicitChatId && String(explicitChatId).trim()) {
+            chatId = String(explicitChatId).trim();
+        } else if (curCfg && curCfg.token === token && curCfg.chatId) {
+            chatId = String(curCfg.chatId);
+        }
+
+        // 2. Если chatId не был задан явно, пытаемся найти его через getUpdates
+        if (!chatId) {
+            // Удаляем возможный зависший webhook, сохраняя сообщения в очереди
+            await tgApi(token, 'deleteWebhook', { drop_pending_updates: false }).catch(() => {});
+
+            // Сначала пробуем получить последние обновления с отрицательным offset (вернёт последние 10 сообщений)
+            let upd = await tgApi(token, 'getUpdates', { offset: -10, limit: 20 }).catch(() => null);
+            if (!upd || !upd.ok || !Array.isArray(upd.result) || upd.result.length === 0) {
+                // Если с отрицательным offset пусто, пробуем стандартный getUpdates
+                upd = await tgApi(token, 'getUpdates', { timeout: 0, limit: 20 }).catch(() => null);
+            }
+
+            if (upd && upd.ok && Array.isArray(upd.result) && upd.result.length > 0) {
+                for (let i = upd.result.length - 1; i >= 0; i--) {
+                    const u = upd.result[i];
+                    const m = u.message || u.edited_message || u.channel_post || u.callback_query?.message || u.my_chat_member || u.chat_member;
+                    const foundId = m?.chat?.id || u.my_chat_member?.chat?.id || u.chat_member?.chat?.id || u.message?.from?.id;
+                    if (foundId) {
+                        chatId = String(foundId);
+                        break;
+                    }
                 }
             }
         }
-        return { ok: true, botName, chatId };
+
+        if (chatId) {
+            // Сохраняем в конфиг
+            await tgSet({ token, chatId, enabled: true });
+
+            // Отправляем приветственное сообщение в Telegram
+            try {
+                await tgApi(token, 'sendMessage', {
+                    chat_id: chatId,
+                    text: `✅ <b>Foxen успешно подключен!</b>\nТеперь сюда будут приходить уведомления из FunPay, а также доступно быстрое управление через меню.`,
+                    parse_mode: 'HTML',
+                    reply_markup: TG_MAIN_KEYBOARD
+                });
+            } catch (sendErr) {
+                console.warn('Foxen TG: приветственное сообщение не отправлено:', sendErr.message);
+            }
+
+            // Перезапускаем фоновый опрос
+            telegramSyncAlarm();
+            return { ok: true, botName, username: botUsername, chatId };
+        }
+
+        // Если chat ID пока не найден, сохраняем токен и перезапускаем опрос
+        // (чтобы бот сразу перехватил сообщение, когда пользователь его напишет!)
+        await tgSet({ token, enabled: true });
+        telegramSyncAlarm();
+
+        return {
+            ok: true,
+            botName,
+            username: botUsername,
+            chatId: '',
+            error: 'no_chat'
+        };
     } catch (e) {
+        telegramSyncAlarm().catch(() => {});
         return { ok: false, error: e.message };
     }
 }
@@ -717,15 +774,25 @@ async function telegramPollOnce(isLongPoll = false) {
         let maxId = cfg.lastUpdateId || 0;
         for (const u of upd.result) {
             if (u.update_id > maxId) maxId = u.update_id;
-            const msg = u.message;
+            const msg = u.message || u.edited_message;
             if (!msg) continue;
 
-            // Принимаем команды только из авторизованного chatId
-            if (cfg.chatId && String(msg.chat.id) !== String(cfg.chatId)) {
-                if (!cfg.chatId) await tgSet({ chatId: String(msg.chat.id) });
-                else continue;
+            const senderChatId = msg.chat?.id ? String(msg.chat.id) : (msg.from?.id ? String(msg.from.id) : null);
+            if (!senderChatId) continue;
+
+            // Если chatId еще не был привязан (пользователь впервые написал боту для подключения) — автоматически привязываем его!
+            if (!cfg.chatId) {
+                console.log('Foxen TG: Автоматически привязан Chat ID из входящего сообщения:', senderChatId);
+                cfg = await tgSet({ chatId: senderChatId, enabled: true });
+                await tgSendMessage('✅ <b>Foxen успешно подключен!</b>\nТеперь сюда будут приходить уведомления из FunPay, а также доступно управление через меню.', {
+                    reply_markup: TG_MAIN_KEYBOARD
+                }).catch(() => {});
+            } else if (String(senderChatId) !== String(cfg.chatId)) {
+                // Игнорируем команды из неавторизованных чатов
+                continue;
             }
-            await handleTelegramMessage(msg, await tgGet());
+
+            await handleTelegramMessage(msg, cfg);
         }
         await tgSet({ lastUpdateId: maxId });
     } catch (e) {

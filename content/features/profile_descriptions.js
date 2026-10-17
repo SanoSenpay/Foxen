@@ -6,7 +6,7 @@
   const VERIFY_NODE_ID = '2046';
   const VERIFY_TITLE = 'FPT Verify';
   const VERIFY_PRICE = '1000';
-  const DESCRIPTION_MAX = 600;
+  const DESCRIPTION_MAX = 150;
   const MAX_LINES = 4;
   const ROOT = 'fxn-pd';
   const ROW = 'fxn-pd-row';
@@ -94,19 +94,30 @@
   async function saveSession(s) { await storageSet({ [sessionKeyFor(s.funpayUserId)]: s }); }
   async function cacheRead(id) {
     const all = (await storageGet([CACHE_KEY]))[CACHE_KEY] || {};
-    const e = all[id];
+    const e = all[id] || all[String(id)];
+    if (e && e.description) return e; // Всегда возвращаем сохранённое описание
     if (e && Date.now() - e.t < CLIENT_CACHE_TTL && e.lastDescUpdate !== undefined) return e;
+    const backupKey = 'fxn_saved_desc_' + id;
+    const bkp = (await storageGet([backupKey]))[backupKey];
+    if (bkp) return { description: bkp, bannerId: null, lastDescUpdate: 0, lastBannerUpdate: 0 };
     return null;
   }
   async function cacheWrite(id, profile) {
     const all = (await storageGet([CACHE_KEY]))[CACHE_KEY] || {};
-    all[id] = {
-      description: profile && profile.description != null ? profile.description : null,
-      bannerId: profile && profile.bannerId != null ? profile.bannerId : null,
-      lastDescUpdate: profile && profile.lastDescUpdate || 0,
-      lastBannerUpdate: profile && profile.lastBannerUpdate || 0,
+    const prev = all[id] || all[String(id)] || {};
+    const descToSave = (profile && profile.description != null) ? profile.description : (prev.description || null);
+    const bannerToSave = (profile && profile.bannerId != null) ? profile.bannerId : (prev.bannerId || null);
+
+    all[String(id)] = {
+      description: descToSave,
+      bannerId: bannerToSave,
+      lastDescUpdate: (profile && profile.lastDescUpdate) || prev.lastDescUpdate || 0,
+      lastBannerUpdate: (profile && profile.lastBannerUpdate) || prev.lastBannerUpdate || 0,
       t: Date.now(),
     };
+    if (descToSave) {
+      await storageSet({ ['fxn_saved_desc_' + id]: descToSave });
+    }
     const keys = Object.keys(all);
     if (keys.length > 300) {
       keys.sort((a, b) => all[a].t - all[b].t).slice(0, keys.length - 300).forEach((k) => delete all[k]);
@@ -185,29 +196,20 @@
    * Загрузка свежего каталога баннеров с удаленного сервера
    */
   async function fetchServerCatalog() {
-    // 1. Попытка загрузки актуального каталога с CDN Foxen или GitHub Raw (с тэг-параметром против кэширования)
+    // 1. Попытка загрузки актуального каталога с CDN Foxen (Cloudflare R2)
     const t = Date.now();
-    const ghUrls = [
-      `https://cdn.foxen.site/download/Catalog/Banners/banners-catalog.json?_t=${t}`,
-      `https://cdn.jsdelivr.net/gh/SanoSenpay/FoxenThemes@main/banners-catalog.json?_t=${t}`,
-      `https://cdn.jsdelivr.net/gh/SanoSenpay/FoxenThemes@main/banners/banners-catalog.json?_t=${t}`,
-      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners-catalog.json?_t=${t}`,
-      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/banners-catalog.json?_t=${t}`,
-      `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners.json?_t=${t}`
-    ];
-    for (const url of ghUrls) {
-      try {
-        const r = await fetch(url, { cache: 'no-store' });
-        if (r.ok) {
-          const data = await r.json();
-          if (data && Array.isArray(data.banners) && data.banners.length > 0) {
-            _catalog = data;
-            await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
-            return _catalog;
-          }
+    const r2BannerCatalogUrl = `https://cdn.foxen.site/download/Catalog/Banners/banners-catalog.json?_t=${t}`;
+    try {
+      const r = await fetch(r2BannerCatalogUrl, { cache: 'no-store' });
+      if (r.ok) {
+        const data = await r.json();
+        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
+          _catalog = data;
+          await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
+          return _catalog;
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
 
     // 2. Воркер в качестве резерва (при наличии развернутого эндпоинта)
     try {
@@ -478,8 +480,7 @@
       '.' + CARD + ' .profile h1, .' + CARD + ' h1.mb40, .' + CARD + ' .media-body > h1, .' + CARD + ' .profile > h1{display:none !important;}' +
       '.' + IDENTITY + '{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}' +
       '.fxn-profile-name{font-size:26px;font-weight:700;color:#fff;line-height:1.2;}' +
-      '.fxn-profile-status{font-size:14px;font-weight:500;color:#888;line-height:1.2;}' +
-      '.fxn-profile-status.fxn-online{color:#22c55e;}' +
+      '.fxn-profile-status{display:none !important;}' +
       '.' + IDENTITY + ' .user-badges{margin:0;}' +
       '.fxn-avatar-status{position:absolute !important;bottom:3px !important;right:3px !important;width:20px !important;height:20px !important;border-radius:50% !important;background-color:#23a55a !important;border:3.5px solid #121318 !important;box-sizing:border-box !important;z-index:15 !important;pointer-events:auto !important;box-shadow:0 2px 6px rgba(0,0,0,0.4) !important;}' +
       '.fxn-avatar-status.fxn-status-online{background-color:#23a55a !important;}' +
@@ -620,15 +621,6 @@
 
         const badges = h1.querySelector('.user-badges');
         if (badges) identity.appendChild(badges.cloneNode(true));
-
-        const statusEl = h1.querySelector('.media-user-status');
-        const st = parseProfileStatus(h1, statusEl);
-        if (st.text && !st.online) {
-          const status = document.createElement('span');
-          status.className = 'fxn-profile-status';
-          status.textContent = st.text;
-          identity.appendChild(status);
-        }
 
         if (h1.parentNode) {
           h1.parentNode.insertBefore(identity, h1);
@@ -812,8 +804,13 @@
     root.appendChild(actions);
     cancel.addEventListener('click', () => renderView(root, state));
     save.addEventListener('click', async () => {
-      const text = ta.value;
+      let text = (ta.value || '').trim();
       if (text === state.description) { renderView(root, state); return; }
+
+      if (text.length > DESCRIPTION_MAX) {
+        toast(`Описание не должно превышать ${DESCRIPTION_MAX} символов (сейчас: ${text.length}).`, true);
+        return;
+      }
 
       if (hasProhibitedContacts(text)) {
         toast('В описании обнаружены контакты (Telegram / ссылки / телефон). Указывать контакты запрещено.', true);

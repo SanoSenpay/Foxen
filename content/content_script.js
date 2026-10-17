@@ -3,6 +3,10 @@
 (function() {
     'use strict';
 
+    if (window.location && window.location.hostname === 'support.funpay.com') {
+        return;
+    }
+
     // --- ПИНГ ДЛЯ АВТОПОДНЯТИЯ (Решение проблемы засыпания) ---
     // Каждые 30 секунд отправляем пинг в фоновый скрипт.
     // Если фоновый скрипт спал (проблема MV3 / Firefox), это его разбудит.
@@ -185,8 +189,62 @@
     }
     window.__fpEnsurePopup = ensureFpToolsPopup;
 
+    function fxnCloseAllDropdowns() {
+        try {
+            const openDropdowns = document.querySelectorAll('.dropdown.open, .btn-group.open, .open, .show, [data-toggle="dropdown"][aria-expanded="true"]');
+            openDropdowns.forEach(el => {
+                el.classList.remove('open');
+                el.classList.remove('show');
+                if (el.hasAttribute('aria-expanded')) {
+                    el.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.parentElement && (menu.parentElement.classList.contains('open') || menu.parentElement.classList.contains('show'))) {
+                    menu.parentElement.classList.remove('open');
+                    menu.parentElement.classList.remove('show');
+                }
+                if (menu.style && menu.style.display === 'block') {
+                    menu.style.display = '';
+                }
+            });
+
+            if (typeof window.$ === 'function') {
+                try {
+                    window.$('.dropdown.open, .btn-group.open, .open').removeClass('open show');
+                    window.$('[data-toggle="dropdown"]').attr('aria-expanded', 'false');
+                    window.$('.dropdown-backdrop').remove();
+                } catch (_) {}
+            }
+
+            document.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        } catch (e) {
+            console.warn('[Foxen] Failed to close dropdowns:', e);
+        }
+    }
+    window.fxnCloseAllDropdowns = fxnCloseAllDropdowns;
+
+    function fxnIsMobileDevice() {
+        try {
+            const ua = navigator.userAgent || '';
+            const isMobileUA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|webOS/i.test(ua);
+            const hasTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+            const isNarrowScreen = window.innerWidth <= 992;
+            const isCoarsePointer = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+            const isMobileMedia = window.matchMedia && window.matchMedia('(max-width: 992px)').matches;
+
+            return isMobileUA || isCoarsePointer || (hasTouch && isNarrowScreen) || isMobileMedia;
+        } catch (_) {
+            return window.innerWidth <= 992;
+        }
+    }
+    window.fxnIsMobileDevice = fxnIsMobileDevice;
+
     // Dedicated, foolproof global popup toggle
     window.__fpTogglePopup = function() {
+        fxnCloseAllDropdowns();
+
         let popup = document.querySelector('.foxen-popup') || document.getElementById('foxenMainPopup');
         if (!popup) {
             popup = ensureFpToolsPopup();
@@ -196,15 +254,46 @@
             return;
         }
 
+        const win = popup.querySelector('.window');
+        const isMobile = fxnIsMobileDevice();
+
         if (popup.classList.contains('active')) {
             popup.classList.remove('active');
+            popup.classList.remove('mobile-sidebar-open');
+            document.body.classList.remove('fxn-popup-open');
             if (typeof window.closeFoxenMenuSettings === 'function') {
                 try { window.closeFoxenMenuSettings(); } catch (_) {}
             }
             if (typeof window.fxnSyncDockbarActive === 'function') {
                 window.fxnSyncDockbarActive();
             }
+            fxnCloseAllDropdowns();
         } else {
+            document.body.classList.add('fxn-popup-open');
+            if (isMobile) {
+                popup.classList.add('fxn-mobile-device');
+                document.body.classList.add('fxn-is-mobile');
+                if (win) {
+                    win.classList.add('fullscreen', 'mobile-fullscreen');
+                    win.classList.remove('fxn-dragged');
+                    win.style.removeProperty('top');
+                    win.style.removeProperty('left');
+                    win.style.removeProperty('right');
+                    win.style.removeProperty('bottom');
+                    win.style.removeProperty('width');
+                    win.style.removeProperty('height');
+                    win.style.removeProperty('margin');
+                    win.style.removeProperty('position');
+                    win.style.removeProperty('transform');
+                }
+            } else {
+                popup.classList.remove('fxn-mobile-device');
+                document.body.classList.remove('fxn-is-mobile');
+                if (win) {
+                    win.classList.remove('mobile-fullscreen');
+                }
+            }
+
             try {
                 const cachedScrim = localStorage.getItem('foxenScrimEnabled') ?? sessionStorage.getItem('foxenScrimEnabled');
                 if (cachedScrim !== null) {
@@ -234,6 +323,7 @@
             if (typeof window.fxnSyncDockbarActive === 'function') {
                 window.fxnSyncDockbarActive();
             }
+            fxnCloseAllDropdowns();
         }
     };
 
@@ -245,6 +335,9 @@
             if (btn) {
                 e.preventDefault();
                 e.stopPropagation();
+                if (typeof window.fxnCloseAllDropdowns === 'function') {
+                    window.fxnCloseAllDropdowns();
+                }
                 window.__fpTogglePopup();
             }
         }, true);
@@ -291,6 +384,7 @@
         button?.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            fxnCloseAllDropdowns();
             window.__fpTogglePopup();
         });
         
@@ -828,8 +922,10 @@
         (async () => {
             const foxenSalesData = await FPTSalesDB.getAllAsArray();
             if (!foxenSalesData.length) return;
-            const cutoff = days >= 9999 ? 0 : Date.now() - days * 24 * 60 * 60 * 1000;
-            const filtered = foxenSalesData.filter(o => o.orderDate >= cutoff);
+            const getTs = (o) => (typeof window.fxnNormalizeOrderTimestamp === 'function')
+                ? window.fxnNormalizeOrderTimestamp(o)
+                : (typeof o.orderDate === 'number' && o.orderDate > 0 ? o.orderDate : Number(o.orderDate) || 0);
+            const filtered = foxenSalesData.filter(o => getTs(o) >= cutoff);
             const total = filtered.reduce((s, o) => s + (o.price || 0), 0);
             const countEl = document.getElementById('fp-sales-count');
             const totalEl = document.getElementById('fp-sales-total');

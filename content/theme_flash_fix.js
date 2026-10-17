@@ -136,7 +136,8 @@
             html { background-color: #0b0b0b !important; color-scheme: dark !important; }
             body, body.bg-light-style, .wrapper, .bg-light-style .wrapper, .content-orders, .bg-light-style .content-orders, .bg-light-color #header, .bg-light-color #footer, .wrapper-footer, .bg-light-style .wrapper-footer, #footer, .bg-light-style #footer { background: transparent !important; }
             .wrapper-content, .bg-light-style .wrapper-content, .wrapper-footer, .bg-light-style .wrapper-footer { background: transparent !important; background-color: rgba(0,0,0,0.4) !important; }
-            #header, .navbar-default, header, #header.navbar-default, .bg-light-style #header, .bg-light-style .navbar-default, .bg-light-color #header { background: rgba(0,0,0,0.08) !important; background-color: rgba(0,0,0,0.08) !important; border-color: rgba(228, 228, 228, 0.4) !important; }
+            #header, header, #header.navbar-default, .bg-light-style #header, .bg-light-color #header { background: rgba(0,0,0,0.08) !important; background-color: rgba(0,0,0,0.08) !important; border-color: rgba(228, 228, 228, 0.4) !important; }
+            #header .navbar, #header .navbar-default, #header .container, #header .navbar-header, #header .navbar-collapse { background: transparent !important; background-color: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-color: transparent !important; }
             body { font-family: '${settings.font}', Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.428571429; color: #TEXT_COLOR# !important; }
             .profile-cover-img { background-clip: border-box; background: url(https://funpay.com/img/layout/profile-header.jpg) no-repeat center bottom; background-size: 100% auto; }
             .profile-cover { overflow: unset; }
@@ -331,12 +332,25 @@
             const glassBg = hexToRgba(settings.containerBgColor || '#0b0b0b', opVal);
             const safeBlur = Math.min(30, Math.max(2, parseInt(settings.glassmorphismBlur, 10) || 12));
             themedCss += `
-                #header, .navbar-default, header, #header.navbar-default, .bg-light-style #header, .bg-light-style .navbar-default {
+                #header, header, #header.navbar-default, .bg-light-style #header {
                     background: ${glassBg} !important;
                     background-color: ${glassBg} !important;
                     backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
                     -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
                     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+                }
+                #header .navbar,
+                #header .navbar-default,
+                #header .container,
+                #header .navbar-header,
+                #header .navbar-collapse {
+                    background: transparent !important;
+                    background-color: transparent !important;
+                    backdrop-filter: none !important;
+                    -webkit-backdrop-filter: none !important;
+                    border: none !important;
+                    border-color: transparent !important;
+                    box-shadow: none !important;
                 }
                 .offer, 
                 .tc:not(.offer .tc), 
@@ -357,7 +371,11 @@
                 .details, 
                 .form-narrow, 
                 .user-card,
-                .fxn-peek-panel {
+                .fxn-peek-panel,
+                .foxen-stats-container,
+                .fp-stat-card,
+                .fp-stats-card,
+                .col-lg-9 {
                     background: ${glassBg} !important;
                     background-color: ${glassBg} !important;
                     backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
@@ -454,11 +472,13 @@
             const accent = sessionStorage.getItem('foxen_accent_color') ?? localStorage.getItem('foxen_accent_color');
             const glass = sessionStorage.getItem('foxen_glass_blur') ?? localStorage.getItem('foxen_glass_blur');
             const popupTheme = sessionStorage.getItem('foxen_popup_theme') ?? localStorage.getItem('foxen_popup_theme');
+            const headerBottomStr = sessionStorage.getItem('foxen_header_bottom') ?? localStorage.getItem('foxen_header_bottom');
             const enabled = enabledStr === null ? true : enabledStr !== '0';
             const theme = cacheStr ? JSON.parse(cacheStr) : null;
-            return { enabled, theme, accent, glass, popupTheme };
+            const isBottom = headerBottomStr === '1' || theme?.headerPosition === 'bottom';
+            return { enabled, theme, accent, glass, popupTheme, isBottom };
         } catch (_) {
-            return { enabled: true, theme: null, accent: null, glass: null, popupTheme: null };
+            return { enabled: true, theme: null, accent: null, glass: null, popupTheme: null, isBottom: false };
         }
     }
 
@@ -472,6 +492,11 @@
                 const str = JSON.stringify(copy);
                 sessionStorage.setItem('foxen_theme_cache', str);
                 localStorage.setItem('foxen_theme_cache', str);
+                if (typeof theme.headerPosition !== 'undefined') {
+                    const isB = theme.headerPosition === 'bottom';
+                    sessionStorage.setItem('foxen_header_bottom', isB ? '1' : '0');
+                    localStorage.setItem('foxen_header_bottom', isB ? '1' : '0');
+                }
             }
         } catch (_) {}
     }
@@ -490,6 +515,7 @@
     if (document.documentElement) {
         document.documentElement.classList.toggle('fxn-custom-theme-on', isThemeOn);
         document.documentElement.classList.toggle('fxn-custom-theme-off', !isThemeOn);
+        document.documentElement.classList.toggle('fxn-header-bottom', !!cached.isBottom);
         if (cached.accent) {
             document.documentElement.style.setProperty('--fxn-accent', cached.accent);
             document.documentElement.style.setProperty('--fxn-active', cached.accent);
@@ -582,6 +608,7 @@
                 'foxenTheme',
                 'foxenThemeBgImage',
                 'foxenThemeBgIsAnimated',
+                'headerPositionBottom',
                 'hideBalance',
                 'foxenDisabledFeatures',
                 'foxenLiveStyles',
@@ -594,7 +621,13 @@
             const enableCustomTheme = data.enableCustomTheme !== false;
             const bgImage = data.foxenThemeBgImage || data.foxenTheme?.bgImage || null;
             const isAnim = !!data.foxenThemeBgIsAnimated || isAnimatedBackground(bgImage);
-            const settings = { ...DEFAULT_THEME, ...(data.foxenTheme || {}), bgImage };
+            const isBottom = data.headerPositionBottom === true || data.foxenTheme?.headerPosition === 'bottom';
+            const settings = { 
+                ...DEFAULT_THEME, 
+                ...(data.foxenTheme || {}), 
+                headerPosition: isBottom ? 'bottom' : 'top',
+                bgImage 
+            };
 
             // Обновляем кеш
             setCachedThemeData(enableCustomTheme, settings);
@@ -604,6 +637,8 @@
             const glassBlur = data.foxenGlassBlur || cached.glass || 16;
 
             try {
+                sessionStorage.setItem('foxen_header_bottom', isBottom ? '1' : '0');
+                localStorage.setItem('foxen_header_bottom', isBottom ? '1' : '0');
                 sessionStorage.setItem('foxen_accent_color', accentColor);
                 localStorage.setItem('foxen_accent_color', accentColor);
                 sessionStorage.setItem('foxen_glass_blur', String(glassBlur));
@@ -615,6 +650,7 @@
             if (document.documentElement) {
                 document.documentElement.classList.toggle('fxn-custom-theme-on', enableCustomTheme);
                 document.documentElement.classList.toggle('fxn-custom-theme-off', !enableCustomTheme);
+                document.documentElement.classList.toggle('fxn-header-bottom', isBottom);
                 document.documentElement.classList.toggle('fxn-animated-bg', enableCustomTheme && !!isAnim);
                 document.documentElement.setAttribute('data-fxn-popup-theme', popupTheme);
                 document.documentElement.classList.toggle('fxn-popup-theme-light', popupTheme === 'light');
@@ -759,6 +795,15 @@
                                 localStorage.setItem('foxen_glass_blur', String(newBlur));
                             } catch (_) {}
                             root.style.setProperty('--fxn-glass-blur', `${newBlur}px`);
+                        }
+                        if (changes.headerPositionBottom || changes.foxenTheme) {
+                            const newBottom = changes.headerPositionBottom?.newValue === true || changes.foxenTheme?.newValue?.headerPosition === 'bottom';
+                            try {
+                                sessionStorage.setItem('foxen_header_bottom', newBottom ? '1' : '0');
+                                localStorage.setItem('foxen_header_bottom', newBottom ? '1' : '0');
+                            } catch (_) {}
+                            root.classList.toggle('fxn-header-bottom', newBottom);
+                            if (document.body) document.body.classList.toggle('fxn-header-bottom', newBottom);
                         }
                     });
                 }

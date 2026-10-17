@@ -299,10 +299,7 @@
     async function fetchThemesCatalogForBridge() {
         if (_catalogThemesCache && _catalogThemesCache.length > 0) return _catalogThemesCache;
         try {
-            let resp = await fetch('https://cdn.foxen.site/download/Catalog/Themes/index.json').catch(() => null);
-            if (!resp || !resp.ok) {
-                resp = await fetch('https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/index.json').catch(() => null);
-            }
+            const resp = await fetch('https://cdn.foxen.site/download/Catalog/Themes/index.json', { cache: 'no-store' }).catch(() => null);
             if (resp && resp.ok) {
                 const data = await resp.json();
                 _catalogThemesCache = Array.isArray(data) ? data : (data.themes || []);

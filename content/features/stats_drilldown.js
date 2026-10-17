@@ -55,8 +55,11 @@
     }
 
     function inRange(o, r) {
-        if (r.start && o.orderDate < r.start) return false;
-        if (r.end && o.orderDate > r.end) return false;
+        const ts = (typeof window.fxnNormalizeOrderTimestamp === 'function')
+            ? window.fxnNormalizeOrderTimestamp(o)
+            : (typeof o.orderDate === 'number' && o.orderDate > 0 ? o.orderDate : Number(o.orderDate) || 0);
+        if (r.start && (!ts || ts < r.start)) return false;
+        if (r.end && (!ts || ts > r.end)) return false;
         return true;
     }
 
@@ -221,7 +224,10 @@
 
     // Собирает заказы по предикату + период + (опц.) фильтры статусов + выбранный лот.
     async function collect(predicate, applyStatusFilter) {
-        const all = await db().getAllAsArray();
+        let all = await db().getAllAsArray();
+        if ((!all || all.length === 0) && window._fxnOrdersMap) {
+            all = Object.values(window._fxnOrdersMap);
+        }
         const r = periodRange();
         const flt = statusFilters();
         const selectedLot = (typeof window.fxnGetSelectedLot === 'function') ? window.fxnGetSelectedLot() : null;

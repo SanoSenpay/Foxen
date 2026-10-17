@@ -484,11 +484,12 @@ function createTemplateButton(config) {
         // and measure AFTER layout so the box wraps the full text before we place it.
         let tip = null;
         const show = () => {
+            if (tip) return;
             tip = document.createElement('div');
             tip.className = 'foxen-template-preview fxn-preview-fixed';
             tip.textContent = cleanText;
             tip.style.cssText = [
-                'position:fixed', 'left:0', 'top:0', 'margin:0',
+                'position:fixed', 'left:-9999px', 'top:-9999px', 'margin:0',
                 'z-index:2147483647', 'box-sizing:border-box',
                 'display:block', 'width:max-content', 'max-width:300px',
                 'height:auto', 'max-height:none', 'min-height:0',
@@ -496,7 +497,7 @@ function createTemplateButton(config) {
                 'background:#0c0c10', 'color:#fff',
                 'font-size:12.5px', 'line-height:1.45', 'text-align:left',
                 'white-space:pre-wrap', 'word-break:break-word', 'overflow:visible',
-                'box-shadow:0 10px 30px rgba(0,0,0,.5)', 'pointer-events:none',
+                'box-shadow:0 10px 30px rgba(0,0,0,.5)', 'pointer-events:none !important',
                 'opacity:0', 'transition:opacity .12s ease'
             ].join(';') + ';';
             document.documentElement.appendChild(tip);
@@ -506,14 +507,23 @@ function createTemplateButton(config) {
                 if (!tip) return;
                 const r = btn.getBoundingClientRect();
                 const tr = tip.getBoundingClientRect();
-                let left = Math.max(8, Math.min(r.left, window.innerWidth - tr.width - 8));
+                const isSidebarBtn = isSidebar || !!btn.closest('.chat-detail-list, .fxn-sb-templates-card, .foxen-template-sidebar');
+                let left;
                 let top;
-                if (pos === 'sidebar_bottom') {
+                if (isSidebarBtn) {
+                    left = r.left - tr.width - 12;
+                    if (left < 8) {
+                        left = Math.min(window.innerWidth - tr.width - 8, r.right + 12);
+                    }
+                    top = Math.max(8, Math.min(r.top, window.innerHeight - tr.height - 8));
+                } else if (pos === 'sidebar_bottom') {
                     top = r.bottom + 8;
                     if (top + tr.height > window.innerHeight - 8) top = r.top - tr.height - 8;
+                    left = Math.max(8, Math.min(r.left, window.innerWidth - tr.width - 8));
                 } else {
                     top = r.top - tr.height - 8;
                     if (top < 8) top = r.bottom + 8;
+                    left = Math.max(8, Math.min(r.left, window.innerWidth - tr.width - 8));
                 }
                 tip.style.left = `${Math.round(left)}px`;
                 tip.style.top = `${Math.round(top)}px`;
@@ -600,48 +610,103 @@ async function addChatTemplateButtons() {
 
     let buttonsContainer;
 
-    if (position === 'sidebar_top' || position === 'sidebar_bottom') {
-        // On the orders page (/orders/), when one of the "в панели" layouts is active,
-        // ALSO drop the paperclip popover trigger into the composer so the quick
-        // templates "скрепка" button is reachable right next to the message box.
-        if (window.location.pathname.includes('/orders/')) {
-            setupTemplatePopover();
+    let chatDetail = document.querySelector('.chat-detail-list');
+    if (chatDetail && position !== 'popover') {
+        let card = chatDetail.querySelector('.fxn-sb-templates-card');
+        if (!card) {
+            card = createElement('div', { class: 'fxn-sb-templates-card' });
+            chatDetail.appendChild(card);
         }
-        let chatDetail = document.querySelector('.chat-detail-list');
-        if (!chatDetail) {
-             const detailContainer = document.querySelector('.chat-detail');
-             if(detailContainer) {
-                chatDetail = createElement('div', {class: 'chat-detail-list custom-scroll'});
-                detailContainer.appendChild(chatDetail);
-             } else {
-                return;
-             }
+        let existingSidebar = card.querySelector('.foxen-template-sidebar');
+        if (!existingSidebar) {
+            card.innerHTML = `
+                <div class="fxn-sb-card-head">
+                    <div class="fxn-sb-card-title">
+                        <span class="material-symbols-rounded">chat</span>
+                        <span>Шаблоны ответов</span>
+                    </div>
+                </div>
+            `;
+            buttonsContainer = createElement('div', { class: 'foxen-template-sidebar' });
+            applyTemplateDisplayAttrs(buttonsContainer);
+            fillTemplateContainer(buttonsContainer);
+            card.appendChild(buttonsContainer);
+        } else if (existingSidebar.children.length === 0) {
+            buttonsContainer = existingSidebar;
+            applyTemplateDisplayAttrs(buttonsContainer);
+            fillTemplateContainer(buttonsContainer);
         }
-        buttonsContainer = createElement('div', { class: 'foxen-template-sidebar' });
-        applyTemplateDisplayAttrs(buttonsContainer);
-        const head = createElement('div', { class: 'fxn-sidebar-head' });
-        head.textContent = 'Быстрые ответы';
-        buttonsContainer.appendChild(head);
-        fillTemplateContainer(buttonsContainer);
 
-        if (position === 'sidebar_top') {
-            buttonsContainer.setAttribute('data-fxn-pin', 'top');
-            chatDetail.prepend(buttonsContainer);
-        } else {
-            // "В панели снизу" - pin to the very FLOOR of the right panel (like the
-            // competitor's #bind-right: panel becomes position:relative and the strip is
-            // absolutely anchored to bottom:0). Borderless/transparent per the screenshot.
-            buttonsContainer.setAttribute('data-fxn-pin', 'bottom');
-            chatDetail.style.position = 'relative';
-            // ensure the panel reserves room so pinned buttons don't overlap content
-            chatDetail.classList.add('fxn-has-bottom-binds');
-            chatDetail.appendChild(buttonsContainer);
-            // reserve bottom padding equal to the strip height so info isn't covered
-            requestAnimationFrame(() => {
-                const h = buttonsContainer.offsetHeight;
-                if (h) chatDetail.style.paddingBottom = (h + 12) + 'px';
+        // Разделитель и тумблер мгновенной отправки внизу блока шаблонов
+        let footer = card.querySelector('.fxn-sb-templates-footer');
+        if (!footer) {
+            footer = createElement('div', { class: 'fxn-sb-templates-footer' });
+            footer.innerHTML = `
+                <div class="fxn-sb-divider"></div>
+                <div class="fxn-sb-instant-row">
+                    <span class="fxn-sb-instant-label">Мгновенная отправка</span>
+                    <button type="button" class="switch fxn-sb-instant-switch" id="fxnSbInstantSendSwitch" data-toggle title="Мгновенная отправка сообщения по клику на шаблон"></button>
+                </div>
+            `;
+            card.appendChild(footer);
+        }
+
+        const instantSwitch = footer.querySelector('#fxnSbInstantSendSwitch');
+        if (instantSwitch && !instantSwitch.dataset.wired) {
+            instantSwitch.dataset.wired = 'true';
+
+            const syncInstantUI = (isOn) => {
+                instantSwitch.classList.toggle('on', isOn);
+            };
+
+            const currentOn = templateSettings.sendTemplatesImmediately !== false;
+            syncInstantUI(currentOn);
+
+            instantSwitch.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const nextVal = !(templateSettings.sendTemplatesImmediately !== false);
+                templateSettings.sendTemplatesImmediately = nextVal;
+                syncInstantUI(nextVal);
+
+                try {
+                    const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
+                    storage.get(['foxenTemplateSettings'], (res) => {
+                        const cur = res?.foxenTemplateSettings || {};
+                        cur.sendTemplatesImmediately = nextVal;
+                        storage.set({
+                            foxenTemplateSettings: cur,
+                            sendTemplatesImmediately: nextVal
+                        });
+                    });
+                } catch (_) {}
+
+                // Sync main settings popup toggle if open
+                const mainSw = document.getElementById('sendTemplatesImmediately');
+                if (mainSw) {
+                    mainSw.classList.toggle('on', nextVal);
+                    if (mainSw.type === 'checkbox') mainSw.checked = nextVal;
+                }
+
+                if (typeof showNotification === 'function') {
+                    showNotification(nextVal ? '⚡ Мгновенная отправка шаблонов включена' : '📝 Мгновенная отправка отключена (шаблон только вставляется)', false);
+                }
             });
         }
+
+        // Apply sidebar visibility settings
+        (typeof browser !== 'undefined' ? browser : chrome).storage?.local?.get(['foxenChatSidebarSettings'], (res) => {
+            const sbCfg = res?.foxenChatSidebarSettings || {};
+            const isHidden = sbCfg.showTemplates === false;
+            card.classList.toggle('fxn-hidden', isHidden);
+            if (isHidden) {
+                card.style.setProperty('display', 'none', 'important');
+            } else {
+                card.style.removeProperty('display');
+            }
+        });
+
+        document.querySelectorAll('.chat-buttons-container').forEach(el => el.remove());
         return;
     }
 
@@ -811,3 +876,7 @@ async function openTemplateSettings() {
     const navItem = popup.querySelector('.foxen-nav li[data-page="templates"]');
     if (navItem) navItem.click();
 }
+
+window.addChatTemplateButtons = addChatTemplateButtons;
+window.fillTemplateContainer = fillTemplateContainer;
+window.useTemplate = useTemplate;

@@ -585,7 +585,7 @@
     }
 
     // --- Окно просмотра и добавления отзывов ---
-    const ADMIN_USER_ID = '15508026';
+    const ADMIN_USER_IDS = ['15508026', '13781813'];
     function openReviewsModal(buyerId, buyerUsername, totalRating, reviews, currentUserId = '') {
         document.getElementById('fxn-buyer-reviews-modal')?.remove();
 
@@ -635,7 +635,7 @@
 
         // 1. Список отзывов
         const listWrap = modal.querySelector('#fxn-reviews-list-wrap');
-        const isAdmin = currentUserId === ADMIN_USER_ID;
+        const isAdmin = ADMIN_USER_IDS.includes(String(currentUserId));
 
         function renderReviewsList(reviewsArr) {
             listWrap.innerHTML = '';
@@ -1169,16 +1169,21 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
 
-    // Наблюдатель MutationObserver для всего body (чтобы перехватывать рендеринг настроек и чата)
+    // Наблюдатель MutationObserver для всего body (дебаунсированный для устранения фризов)
+    let _brMutationTimer = null;
     new MutationObserver(() => {
-        // Поиск и инжекция рейтинга рядом с датой регистрации
-        loadAndInjectRatingBadge();
+        if (_brMutationTimer) return;
+        _brMutationTimer = setTimeout(() => {
+            _brMutationTimer = null;
+            // Поиск и инжекция рейтинга рядом с датой регистрации
+            loadAndInjectRatingBadge();
 
-        // Настройки
-        const settingsContainer = document.querySelector('.foxen-page-content[data-page="settings_io"]');
-        if (settingsContainer && !settingsContainer.querySelector('#fxn-supabase-settings')) {
-            injectSupabaseSettings(settingsContainer);
-        }
+            // Настройки
+            const settingsContainer = document.querySelector('.foxen-page-content[data-page="settings_io"]');
+            if (settingsContainer && !settingsContainer.querySelector('#fxn-supabase-settings')) {
+                injectSupabaseSettings(settingsContainer);
+            }
+        }, 350);
     }).observe(document.body, { childList: true, subtree: true });
 
 })();

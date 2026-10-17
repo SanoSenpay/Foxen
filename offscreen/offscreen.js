@@ -44,62 +44,107 @@ function fxnNormalizeText(text) {
 // --- КОД ДЛЯ СТАТИСТИКИ ---
 
 const RUSSIAN_MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+const EN_MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+const RU_SHORT = ["янв", "фев", "мар", "апр", "май", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const EN_SHORT = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+function findMonthIndex(str) {
+    if (!str) return -1;
+    const s = str.toLowerCase().trim();
+    let idx = RUSSIAN_MONTHS.indexOf(s);
+    if (idx !== -1) return idx;
+    idx = EN_MONTHS.indexOf(s);
+    if (idx !== -1) return idx;
+    idx = RU_SHORT.findIndex(m => s.startsWith(m));
+    if (idx !== -1) return idx;
+    idx = EN_SHORT.findIndex(m => s.startsWith(m));
+    if (idx !== -1) return idx;
+    return -1;
+}
 
 function parseFunPayDate(dateString) {
+    if (!dateString) return Date.now();
     const now = new Date();
-    // FIX 2.8.6: «сегодня»/«вчера» FunPay показывает по московскому календарю.
-    // Раньше день/месяц/год для них брались из ЛОКАЛЬНОГО времени пользователя -
-    // если пояс пользователя позади MSK, около полуночи «сегодня» на FunPay
-    // соответствовало уже другому локальному дню, и заказы попадали не в те сутки
-    // (отсюда «1520 вместо 1290» - прихватывались вчерашние). Берём текущий момент
-    // в MSK и из него calendar-день.
     const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
     const mskNowDate = new Date(now.getTime() + MSK_OFFSET_MS); // компоненты .getUTC* = MSK
-    let year = mskNowDate.getUTCFullYear();
+    const currentYear = mskNowDate.getUTCFullYear();
+    const currentMonth = mskNowDate.getUTCMonth();
     const normalizedDate = dateString.trim().toLowerCase().replace(/\s+/g, ' ');
-    let day, monthIndex, hours, minutes;
-    let match = normalizedDate.match(/(\d{1,2})\s(.+?)\s(\d{4}),\s(\d{1,2}):(\d{2})/);
-    if (match) {
-        day = parseInt(match[1], 10);
-        monthIndex = RUSSIAN_MONTHS.indexOf(match[2]);
-        year = parseInt(match[3], 10);
-        hours = parseInt(match[4], 10);
-        minutes = parseInt(match[5], 10);
-    } else {
-        match = normalizedDate.match(/(\d{1,2})\s(.+?),\s(\d{1,2}):(\d{2})/);
-        if (match) {
-            day = parseInt(match[1], 10);
-            monthIndex = RUSSIAN_MONTHS.indexOf(match[2]);
-            hours = parseInt(match[3], 10);
-            minutes = parseInt(match[4], 10);
-        } else if (normalizedDate.startsWith("сегодня,")) {
-            match = normalizedDate.match(/сегодня,\s(\d{1,2}):(\d{2})/);
-            day = mskNowDate.getUTCDate();
-            monthIndex = mskNowDate.getUTCMonth();
-            year = mskNowDate.getUTCFullYear();
-            hours = parseInt(match[1], 10);
-            minutes = parseInt(match[2], 10);
-        } else if (normalizedDate.startsWith("вчера,")) {
-             match = normalizedDate.match(/вчера,\s(\d{1,2}):(\d{2})/);
-             // вчерашний MSK-день
-             const mskYesterday = new Date(mskNowDate.getTime() - 24 * 60 * 60 * 1000);
-             day = mskYesterday.getUTCDate();
-             monthIndex = mskYesterday.getUTCMonth();
-             year = mskYesterday.getUTCFullYear();
-             hours = parseInt(match[1], 10);
-             minutes = parseInt(match[2], 10);
-        } else {
-            console.warn("Неизвестный формат даты:", dateString);
-            return Date.now();
+
+    // 1. Относительные даты ("2 недели назад", "месяц назад", "1 год назад", "5 дней назад", "2 часа назад")
+    const relMinMatch = normalizedDate.match(/(\d+)\s*(?:мин|минут\w*)\s*назад/i);
+    if (relMinMatch) return now.getTime() - parseInt(relMinMatch[1], 10) * 60 * 1000;
+
+    const relHourMatch = normalizedDate.match(/(\d+)\s*(?:ч|час\w*)\s*назад/i);
+    if (relHourMatch) return now.getTime() - parseInt(relHourMatch[1], 10) * 3600 * 1000;
+
+    const relDayMatch = normalizedDate.match(/(\d+)\s*(?:дн\w*|день|дня)\s*назад/i);
+    if (relDayMatch) return now.getTime() - parseInt(relDayMatch[1], 10) * 86400 * 1000;
+
+    const relWeekMatch = normalizedDate.match(/(\d+)\s*(?:нед\w*|недел\w*)\s*назад/i);
+    if (relWeekMatch) return now.getTime() - parseInt(relWeekMatch[1], 10) * 7 * 86400 * 1000;
+
+    const relMonthMatch = normalizedDate.match(/(?:(\d+)\s*)?(?:мес\w*|месяц\w*)\s*назад/i);
+    if (relMonthMatch && !normalizedDate.includes(':')) {
+        const count = relMonthMatch[1] ? parseInt(relMonthMatch[1], 10) : 1;
+        return now.getTime() - count * 30 * 86400 * 1000;
+    }
+
+    const relYearMatch = normalizedDate.match(/(?:(\d+)\s*)?(?:год\w*|лет)\s*назад/i);
+    if (relYearMatch && !normalizedDate.includes(':')) {
+        const count = relYearMatch[1] ? parseInt(relYearMatch[1], 10) : 1;
+        return now.getTime() - count * 365 * 86400 * 1000;
+    }
+
+    // 2. Сегодня / Вчера
+    if (normalizedDate.includes("сегодня") || normalizedDate.includes("today")) {
+        const match = normalizedDate.match(/(?:сегодня|today)[,\s]+(?:в\s+|at\s+)?(\d{1,2}):(\d{2})/i);
+        const hours = match ? parseInt(match[1], 10) : 0;
+        const minutes = match ? parseInt(match[2], 10) : 0;
+        return Date.UTC(currentYear, currentMonth, mskNowDate.getUTCDate(), hours, minutes) - MSK_OFFSET_MS;
+    }
+
+    if (normalizedDate.includes("вчера") || normalizedDate.includes("yesterday")) {
+        const match = normalizedDate.match(/(?:вчера|yesterday)[,\s]+(?:в\s+|at\s+)?(\d{1,2}):(\d{2})/i);
+        const mskYesterday = new Date(mskNowDate.getTime() - 24 * 60 * 60 * 1000);
+        const hours = match ? parseInt(match[1], 10) : 0;
+        const minutes = match ? parseInt(match[2], 10) : 0;
+        return Date.UTC(mskYesterday.getUTCFullYear(), mskYesterday.getUTCMonth(), mskYesterday.getUTCDate(), hours, minutes) - MSK_OFFSET_MS;
+    }
+
+    // 3. Формат "15 мая 2025, 14:30", "15 мая 2025 г., 14:30", "15 мая, 14:30", "15 мая 2025", "15 мая 2025 г."
+    const textDateMatch = normalizedDate.match(/(\d{1,2})\s+([a-zа-яё.]+?)(?:\s+(\d{4}))?(?:\s*г\.?)?(?:[,\s]+(?:в\s+|at\s+)?(\d{1,2}):(\d{2}))?(?:\s|$)/i);
+    if (textDateMatch) {
+        const day = parseInt(textDateMatch[1], 10);
+        const mi = findMonthIndex(textDateMatch[2]);
+        if (mi !== -1) {
+            const y = textDateMatch[3] ? parseInt(textDateMatch[3], 10) : (mi > currentMonth ? currentYear - 1 : currentYear);
+            const hours = textDateMatch[4] ? parseInt(textDateMatch[4], 10) : 0;
+            const minutes = textDateMatch[5] ? parseInt(textDateMatch[5], 10) : 0;
+            return Date.UTC(y, mi, day, hours, minutes) - MSK_OFFSET_MS;
         }
     }
-    if (monthIndex === -1) {
-        console.warn("Не удалось распознать месяц:", dateString);
-        return Date.now();
+
+    // 4. Цифровой формат: "15.05.2025, 14:30", "15.05.2025", "15.05.25"
+    const numDateMatch = normalizedDate.match(/(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?(?:[,\s]+(?:в\s+|at\s+)?(\d{1,2}):(\d{2}))?/);
+    if (numDateMatch) {
+        const day = parseInt(numDateMatch[1], 10);
+        const monthIdx = parseInt(numDateMatch[2], 10) - 1;
+        if (monthIdx >= 0 && monthIdx <= 11) {
+            let y = currentYear;
+            if (numDateMatch[3]) {
+                const rawY = parseInt(numDateMatch[3], 10);
+                y = rawY < 100 ? (rawY > 50 ? 1900 + rawY : 2000 + rawY) : rawY;
+            } else if (monthIdx > currentMonth) {
+                y = currentYear - 1;
+            }
+            const hours = numDateMatch[4] ? parseInt(numDateMatch[4], 10) : 0;
+            const minutes = numDateMatch[5] ? parseInt(numDateMatch[5], 10) : 0;
+            return Date.UTC(y, monthIdx, day, hours, minutes) - MSK_OFFSET_MS;
+        }
     }
-    // FunPay показывает время заказов по Москве (MSK, UTC+3). Строим момент времени
-    // явно как MSK: UTC-таймстамп минус 3 часа смещения МSK.
-    return Date.UTC(year, monthIndex, day, hours, minutes) - MSK_OFFSET_MS;
+
+    return Date.UTC(currentYear, currentMonth, 1, 0, 0) - MSK_OFFSET_MS;
 }
 
 function parseFinancePage(html) {
@@ -149,16 +194,52 @@ function parseFinancePage(html) {
                 else if (/^Вывод денег/i.test(title)) type = "withdraw";
                 else if (/^Пополнение баланса/i.test(title)) type = "payment";
                 // сумма и знак
-                const priceText = (row.querySelector(".tc-price")?.textContent || "").replace(/\u00a0/g, " ");
-                // знак: минус (− U+2212 или -) в начале = расход
-                const isNegative = /^\s*[−-]/.test(priceText.trim());
-                const amountRaw = priceText.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", ".");
-                const amount = parseFloat(amountRaw) || 0;
-                const signed = isNegative ? -amount : amount;
-                let currency = "UNKNOWN";
-                if (priceText.includes("₽")) currency = "RUB";
-                else if (priceText.includes("$")) currency = "USD";
-                else if (priceText.includes("€")) currency = "EUR";
+                const priceEl = row.querySelector(".tc-price, .tc-item-price, [class*='price']");
+                const rawPriceText = (priceEl ? priceEl.textContent : "") || "";
+                const normPriceText = rawPriceText.replace(/[\u00a0\u202f\u2009\s]+/g, " ").trim();
+
+                // Валюта: RUB по умолчанию (рубли на FunPay могут отображаться как ₽, руб, RUB или ¤)
+                let currency = "RUB";
+                const checkCurText = (normPriceText + " " + (row.textContent || "")).toLowerCase();
+                if (normPriceText.includes("$") || /usd/i.test(checkCurText)) {
+                    currency = "USD";
+                } else if (normPriceText.includes("€") || /eur/i.test(checkCurText)) {
+                    currency = "EUR";
+                } else if (normPriceText.includes("₽") || /rub|руб|¤/i.test(checkCurText)) {
+                    currency = "RUB";
+                } else {
+                    currency = "RUB";
+                }
+
+                // Извлечение суммы
+                let amount = 0;
+                if (priceEl && priceEl.getAttribute("data-s")) {
+                    amount = parseFloat(priceEl.getAttribute("data-s")) || 0;
+                }
+                if (!amount && normPriceText) {
+                    const digitsOnly = normPriceText.replace(/[^\d.,]/g, "").replace(/\s+/g, "");
+                    let cleanNum = digitsOnly;
+                    if (cleanNum.includes(",") && cleanNum.includes(".")) {
+                        if (cleanNum.lastIndexOf(",") > cleanNum.lastIndexOf(".")) {
+                            cleanNum = cleanNum.replace(/\./g, "").replace(",", ".");
+                        } else {
+                            cleanNum = cleanNum.replace(/,/g, "");
+                        }
+                    } else if (cleanNum.includes(",")) {
+                        cleanNum = cleanNum.replace(",", ".");
+                    }
+                    const numMatch = cleanNum.match(/\d+(?:\.\d+)?/);
+                    if (numMatch) {
+                        amount = parseFloat(numMatch[0]) || 0;
+                    }
+                }
+
+                // Знак операции: минус в строке, или класс text-danger, или тип операции
+                let isNegative = /^[−\-–—]/.test(normPriceText) || /[−\-–—]/.test(normPriceText.split(/\d/)[0] || "");
+                if (type === "withdraw") isNegative = true;
+                if (type === "withdraw_cancel" || type === "payment") isNegative = false;
+                const signed = isNegative ? -Math.abs(amount) : Math.abs(amount);
+
                 const dateText = row.querySelector(".tc-date-time")?.textContent.trim() || "";
                 const date = parseFunPayDate(dateText);
                 // номер платёжной системы / реквизит (для выводов/пополнений) — необязательно
@@ -184,8 +265,21 @@ function parseFinancePage(html) {
 function parseSalesPage(html) {
     try {
         const doc = new DOMParser().parseFromString(html, "text/html");
-        const continueInput = doc.querySelector("input[type='hidden'][name='continue']");
-        const nextOrderId = continueInput ? continueInput.value : null;
+        let nextOrderId = null;
+        const continueInput = doc.querySelector("input[name='continue'], [name='continue'], [data-continue]");
+        if (continueInput) {
+            const val = (continueInput.value || continueInput.getAttribute('data-continue') || "").trim();
+            if (val) nextOrderId = val;
+        }
+        if (!nextOrderId) {
+            const continueLink = doc.querySelector("a[href*='continue='], [data-href*='continue=']");
+            if (continueLink) {
+                const href = continueLink.getAttribute('href') || continueLink.getAttribute('data-href') || '';
+                const m = href.match(/[?&]continue=([^&#]+)/);
+                if (m) nextOrderId = decodeURIComponent(m[1]).trim();
+            }
+        }
+
         const orderRows = doc.querySelectorAll(".tc-item");
         if (!orderRows || orderRows.length === 0) {
             return { nextOrderId: null, orders: [] };
@@ -194,36 +288,62 @@ function parseSalesPage(html) {
         orderRows.forEach(row => {
             try {
                 const classList = row.classList;
-                let orderStatus;
-                if (classList.contains("warning")) orderStatus = "refunded";
-                else if (classList.contains("info")) orderStatus = "paid";
-                else orderStatus = "closed";
-                const orderId = row.querySelector(".tc-order")?.textContent?.substring(1);
+                const rowText = row.textContent || "";
+                let orderStatus = "closed";
+                if (classList.contains("warning") || rowText.includes("Возврат") || rowText.includes("Отменен") || /refund/i.test(rowText)) {
+                    orderStatus = "refunded";
+                } else if (classList.contains("info") || rowText.includes("Оплачен") || /paid/i.test(rowText)) {
+                    orderStatus = "paid";
+                } else {
+                    orderStatus = "closed";
+                }
+
+                const orderId = row.querySelector(".tc-order")?.textContent?.replace(/^[#\s]+/, '').trim();
                 if (!orderId) return;
-                const description = row.querySelector(".order-desc div")?.textContent.trim() || "";
+                const description = row.querySelector(".order-desc div, .tc-desc-text")?.textContent.trim() || "";
                 const subcategoryName = row.querySelector(".text-muted")?.textContent.trim() || "";
                 const priceText = row.querySelector(".tc-price")?.textContent || "";
-                const priceRaw = priceText.replace(/\s/g, "");
-                const price = parseFloat(priceRaw) || 0;
-                let currency = "UNKNOWN";
-                if (priceText.includes("₽")) currency = "RUB";
-                else if (priceText.includes("$")) currency = "USD";
-                else if (priceText.includes("€")) currency = "EUR";
-                // 2.9: detect payment type (deal/safe = сделка, regular)
+                const cleanPrice = priceText.replace(/[\s\u00A0\u202F]/g, "").replace(",", ".");
+                const pMatch = cleanPrice.match(/-?\d+(?:\.\d+)?/);
+                const price = pMatch ? parseFloat(pMatch[0]) : 0;
+                let currency = "RUB";
+                if (priceText.includes("₽") || /rub|руб/i.test(priceText)) currency = "RUB";
+                else if (priceText.includes("$") || /usd/i.test(priceText)) currency = "USD";
+                else if (priceText.includes("€") || /eur/i.test(priceText)) currency = "EUR";
+
                 const isDeal = row.classList.contains("deal") || !!row.querySelector(".deal-icon, .tc-deal");
-                const isPaid = row.classList.contains("info");
                 const paymentType = isDeal ? "deal" : "regular";
-                const buyerEl = row.querySelector(".media-user-name span");
+                const buyerEl = row.querySelector(".media-user-name span, .media-user-name a, .tc-user a, .tc-user span, .tc-user .pseudo-a");
                 const buyerUsername = buyerEl?.textContent.trim() || "";
-                const buyerHref = buyerEl?.getAttribute("data-href")?.split("/");
-                const buyerId = buyerHref ? parseInt(buyerHref[buyerHref.length - 2] || "0", 10) : 0;
-                const orderDateText = row.querySelector(".tc-date-time")?.textContent.trim() || "";
+                const rawBuyerHref = buyerEl?.getAttribute("data-href") || buyerEl?.getAttribute("href") || "";
+                const buyerIdMatch = rawBuyerHref.match(/\/users\/(\d+)/);
+                const buyerId = buyerIdMatch ? buyerIdMatch[1] : (rawBuyerHref.split("/").filter(Boolean).pop() || "");
+                const dtEl = row.querySelector(".tc-date-time");
+                let orderDateText = "";
+                if (dtEl) {
+                    orderDateText = dtEl.textContent.trim();
+                } else {
+                    const dateContainer = row.querySelector(".tc-date");
+                    if (dateContainer) {
+                        const clone = dateContainer.cloneNode(true);
+                        clone.querySelectorAll(".tc-date-left, .tc-date-ago, .tc-date-passed").forEach(el => el.remove());
+                        orderDateText = clone.textContent.trim();
+                    }
+                }
                 const orderDate = parseFunPayDate(orderDateText);
                 orders.push({ orderId, description, subcategoryName, price, currency, buyerUsername, buyerId, orderStatus, orderDate, orderDateText, paymentType });
             } catch (e) {
                 console.error("Foxen Offscreen: Ошибка при парсинге одного заказа:", e, row);
             }
         });
+
+        // Резервный курсор: если форма/ссылка не отдали токен continue, но на странице
+        // есть заказы (полная страница = 16 или >= 10), используем id последнего заказа
+        if (!nextOrderId && orders.length >= 10) {
+            const lastO = orders[orders.length - 1];
+            if (lastO && lastO.orderId) nextOrderId = lastO.orderId;
+        }
+
         return { nextOrderId, orders };
     } catch (e) {
         console.error("Foxen Offscreen: Глобальная ошибка парсинга страницы продаж:", e);

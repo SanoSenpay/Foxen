@@ -25,10 +25,13 @@
     // период из выпадающего списка статистики
     function getPeriodRange() {
         const sel = document.getElementById('fpTools-stats-period');
-        const period = sel ? sel.value : '7d';
+        const period = sel ? sel.value : '30d';
         const now = Date.now();
         const oneDay = 24 * 3600 * 1000;
-        const today = new Date(); const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+        const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
+        const mskNow = now + MSK_OFFSET_MS;
+        const mskMidnight = Math.floor(mskNow / oneDay) * oneDay;
+        const todayStart = mskMidnight - MSK_OFFSET_MS;
         switch (period) {
             case 'today': return { start: todayStart, end: null, label: 'сегодня' };
             case 'yesterday': return { start: todayStart - oneDay, end: todayStart, label: 'вчера' };
@@ -57,45 +60,59 @@
         try { localStorage.setItem(FILTER_KEY, JSON.stringify(filters)); } catch (_) {}
     }
 
+    function _smNormalizeStatus(st) {
+        if (!st) return 'closed';
+        const s = String(st).toLowerCase().trim();
+        if (s === 'refunded' || s === 'warning' || s.includes('возврат') || s.includes('отмен') || s.includes('refund') || s.includes('cancel')) return 'refunded';
+        if (s === 'paid' || s === 'info' || s.includes('оплач') || s.includes('в работе') || s.includes('active') || s.includes('pending')) return 'paid';
+        return 'closed';
+    }
+
     function statusAllowed(status) {
-        if (status === 'refunded') return filters.stRefunded;
-        if (status === 'paid') return filters.stPaid;
-        if (status === 'closed') return filters.stClosed;
-        return true; // неизвестные статусы не прячем
+        const st = _smNormalizeStatus(status);
+        if (st === 'refunded') return filters.stRefunded !== false;
+        if (st === 'paid') return filters.stPaid !== false;
+        if (st === 'closed') return filters.stClosed !== false;
+        return true;
     }
 
     function sortOrders(arr) {
         const a = arr.slice();
+        const getTs = (o) => (typeof window.fxnNormalizeOrderTimestamp === 'function')
+            ? window.fxnNormalizeOrderTimestamp(o)
+            : (typeof o.orderDate === 'number' && o.orderDate > 0 ? o.orderDate : Number(o.orderDate) || 0);
         switch (filters.sort) {
-            case 'date-asc': a.sort((x, y) => (x.orderDate || 0) - (y.orderDate || 0)); break;
+            case 'date-asc': a.sort((x, y) => getTs(x) - getTs(y)); break;
             case 'price-desc': a.sort((x, y) => (y.price || 0) - (x.price || 0)); break;
             case 'price-asc': a.sort((x, y) => (x.price || 0) - (y.price || 0)); break;
             case 'date-desc':
-            default: a.sort((x, y) => (y.orderDate || 0) - (x.orderDate || 0)); break;
+            default: a.sort((x, y) => getTs(y) - getTs(x)); break;
         }
         return a;
     }
 
     function getOrders(range) {
         return new Promise(async resolve => {
-            const all = await (window.fxnOrdersDB || FPTSalesDB).getAllAsArray();
-            {
-                const selectedLot = (typeof window.fxnGetSelectedLot === 'function') ? window.fxnGetSelectedLot() : null;
-                let filtered = all.filter(o => {
-                    if (range.start && o.orderDate < range.start) return false;
-                    if (range.end && o.orderDate > range.end) return false;
-                    if (!statusAllowed(o.orderStatus)) return false;
-                    if (selectedLot) {
-                        const matchesFn = (typeof window.fxnMatchesLot === 'function')
-                            ? window.fxnMatchesLot
-                            : (d, l) => (d || '').trim() === (l || '').trim();
-                        if (!matchesFn(o.description, selectedLot)) return false;
-                    }
-                    return true;
-                });
-                filtered = sortOrders(filtered);
-                resolve(filtered);
+            let all = await (window.fxnOrdersDB || FPTSalesDB).getAllAsArray();
+            if ((!all || all.length === 0) && window._fxnOrdersMap) {
+                all = Object.values(window._fxnOrdersMap);
             }
+            const selectedLot = (typeof window.fxnGetSelectedLot === 'function') ? window.fxnGetSelectedLot() : null;
+            let filtered = all.filter(o => {
+                const oDate = typeof window.fxnNormalizeOrderTimestamp === 'function' ? window.fxnNormalizeOrderTimestamp(o) : (o.orderDate || 0);
+                if (range.start && (!oDate || oDate < range.start)) return false;
+                if (range.end && (!oDate || oDate > range.end)) return false;
+                if (!statusAllowed(o.orderStatus)) return false;
+                if (selectedLot) {
+                    const matchesFn = (typeof window.fxnMatchesLot === 'function')
+                        ? window.fxnMatchesLot
+                        : (d, l) => (d || '').trim() === (l || '').trim();
+                    if (!matchesFn(o.description, selectedLot)) return false;
+                }
+                return true;
+            });
+            filtered = sortOrders(filtered);
+            resolve(filtered);
         });
     }
 

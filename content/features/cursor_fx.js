@@ -22,13 +22,40 @@ class CursorFX {
         this.init();
     }
 
+    isTouchDevice() {
+        try {
+            const hasCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            const hasFine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+            if (hasCoarse && !hasFine) return true;
+            if ((window.innerWidth <= 900 || screen.width <= 900) && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0))) {
+                return true;
+            }
+        } catch (_) {}
+        return false;
+    }
+
+    ensureCanvas() {
+        if (!this.canvas.parentNode && document.body) {
+            document.body.appendChild(this.canvas);
+        }
+    }
+
+    removeCanvas() {
+        if (this.canvas.parentNode) {
+            this.canvas.parentNode.removeChild(this.canvas);
+        }
+    }
+
     init() {
+        if (this.isTouchDevice()) {
+            return;
+        }
+
         Object.assign(this.canvas.style, {
             position: 'fixed', top: '0', left: '0',
             width: '100vw', height: '100vh',
             pointerEvents: 'none', zIndex: '999999'
         });
-        document.body.appendChild(this.canvas);
         
         this.customCursor = createElement('div', { id: 'foxen-custom-cursor' });
         Object.assign(this.customCursor.style, {
@@ -47,13 +74,14 @@ class CursorFX {
         this.cursorHideStyleTag = createElement('style', { id: 'foxen-cursor-hide-style' });
         document.documentElement.appendChild(this.cursorHideStyleTag);
 
-        window.addEventListener('resize', this.resize.bind(this));
-        this.resize();
+        window.addEventListener('resize', this.resize.bind(this), { passive: true });
 
         document.addEventListener('mouseleave', () => {
             this.live = false;
             this.pts = [];
-            this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            if (this.canvas.parentNode) {
+                this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            }
             if (this._customCursorActive && this.customCursor) {
                 this.customCursor.style.display = 'none';
             }
@@ -93,13 +121,15 @@ class CursorFX {
         };
 
         window.addEventListener('mousemove', e => {
+            if (!this.isEnabled && !this._customCursorActive) return;
+
             this.mouse.x = e.clientX;
             this.mouse.y = e.clientY;
             this.live = true;
 
             // When hovering an element that changes cursor to another type (pointer, text, etc.),
             // hide custom cursor and let the native system pointer for that element display.
-            if (this._customCursorActive) {
+            if (this._customCursorActive && this.customCursor) {
                 const isSpecial = isCursorSpecial(e.target);
                 if (isSpecial) {
                     if (this.customCursor.style.display !== 'none') {
@@ -117,10 +147,11 @@ class CursorFX {
             if (this.isEnabled && !this.animationFrame) {
                 this.animationFrame = requestAnimationFrame(t => this.animate(t));
             }
-        });
+        }, { passive: true });
     }
 
     resize() {
+        if (this.isTouchDevice()) return;
         const d = Math.min(window.devicePixelRatio || 1, 2);
         this.canvas.width = window.innerWidth * d;
         this.canvas.height = window.innerHeight * d;
@@ -128,28 +159,32 @@ class CursorFX {
     }
     
     updateCustomCursor(newConfig) {
+        if (this.isTouchDevice()) return;
         this.customCursorConfig = { ...this.customCursorConfig, ...newConfig };
         
         if (this.customCursorConfig.enabled && this.customCursorConfig.image) {
             this._customCursorActive = true;
-            this.customCursor.style.display = 'block';
-            
+            if (this.customCursor) {
+                this.customCursor.style.display = 'block';
+                this.customCursor.style.backgroundImage = `url("${this.customCursorConfig.image}")`;
+                const size = this.customCursorConfig.size || 32;
+                this.customCursor.style.width = `${size}px`;
+                this.customCursor.style.height = `${size}px`;
+                this.customCursor.style.opacity = (this.customCursorConfig.opacity !== undefined ? this.customCursorConfig.opacity : 100) / 100;
+                this.customCursor.style.transform = `translate(calc(${this.mouse.x}px - 50%), calc(${this.mouse.y}px - 50%))`;
+            }
             this.applyHideSystemCursor(this.customCursorConfig.hideSystem !== false);
-            
-            this.customCursor.style.backgroundImage = `url("${this.customCursorConfig.image}")`;
-            const size = this.customCursorConfig.size || 32;
-            this.customCursor.style.width = `${size}px`;
-            this.customCursor.style.height = `${size}px`;
-            this.customCursor.style.opacity = (this.customCursorConfig.opacity !== undefined ? this.customCursorConfig.opacity : 100) / 100;
-            this.customCursor.style.transform = `translate(calc(${this.mouse.x}px - 50%), calc(${this.mouse.y}px - 50%))`;
         } else {
             this._customCursorActive = false;
-            this.customCursor.style.display = 'none';
+            if (this.customCursor) {
+                this.customCursor.style.display = 'none';
+            }
             this.applyHideSystemCursor(false);
         }
     }
 
     applyHideSystemCursor(hide) {
+        if (this.isTouchDevice()) return;
         if (!this.cursorHideStyleTag) {
             this.cursorHideStyleTag = createElement('style', { id: 'foxen-cursor-hide-style' });
         }
@@ -180,10 +215,11 @@ class CursorFX {
     }
 
     updateConfig(newConfig) {
+        if (this.isTouchDevice()) return;
         const wasEnabled = this.isEnabled;
         const typeChanged = newConfig.type && newConfig.type !== this.config.type;
         this.config = { ...this.config, ...newConfig };
-        if (typeChanged) {
+        if (typeChanged && this.canvas.parentNode) {
             this.pts = [];
             this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
         }
@@ -195,7 +231,10 @@ class CursorFX {
     }
 
     start() {
+        if (this.isTouchDevice()) return;
         if (this.isEnabled) return;
+        this.ensureCanvas();
+        this.resize();
         this.isEnabled = true;
         if (!this.animationFrame) {
             this.animationFrame = requestAnimationFrame(t => this.animate(t));
@@ -210,7 +249,10 @@ class CursorFX {
             cancelAnimationFrame(this.animationFrame);
             this.animationFrame = null;
         }
-        this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        if (this.canvas.parentNode) {
+            this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            this.removeCanvas();
+        }
     }
 
     /* Плавная кривая через середины отрезков; fn(i) -> [толщина, прозрачность] */
@@ -488,6 +530,15 @@ function setupCursorFxHandlers() {
 
     if (colorInput && !colorInput.dataset.fxnBound) {
         colorInput.dataset.fxnBound = '1';
+        colorInput.addEventListener('click', (e) => {
+            if (typeof foxenOpenColorPicker === 'function') {
+                e.preventDefault();
+                foxenOpenColorPicker(colorInput, colorInput.value || '#c026d3', (newHex) => {
+                    colorInput.value = newHex;
+                    saveColor(newHex);
+                });
+            }
+        });
         colorInput.addEventListener('input', (e) => saveColor(e.target.value));
         colorInput.addEventListener('change', (e) => saveColor(e.target.value));
     }

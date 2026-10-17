@@ -419,6 +419,225 @@ function applyPageTableFilter(targetLot, isEnabled) {
 }
 window.fxnApplyPageTableFilter = applyPageTableFilter;
 
+function parseFunPayDateInContent(dateString) {
+    if (!dateString) return 0;
+    const now = new Date();
+    const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
+    const mskNowDate = new Date(now.getTime() + MSK_OFFSET_MS);
+    const currentYear = mskNowDate.getUTCFullYear();
+    const currentMonth = mskNowDate.getUTCMonth();
+    const normalized = String(dateString).trim().toLowerCase().replace(/\s+/g, ' ');
+
+    const RU_MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+    const RU_SHORT = ["янв", "фев", "мар", "апр", "май", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+    const EN_MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+    const EN_SHORT = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+    function findMIdx(s) {
+        if (!s) return -1;
+        const clean = s.toLowerCase().replace(/[^a-zа-яё]/gi, '');
+        let idx = RU_MONTHS.indexOf(clean);
+        if (idx !== -1) return idx;
+        idx = EN_MONTHS.indexOf(clean);
+        if (idx !== -1) return idx;
+        idx = RU_SHORT.findIndex(p => clean.startsWith(p));
+        if (idx !== -1) return idx;
+        idx = EN_SHORT.findIndex(p => clean.startsWith(p));
+        if (idx !== -1) return idx;
+        return -1;
+    }
+
+    // 1. Формат даты с текстом: "20 сентября, 21:28", "14 июля 2025, 19:14", "15 мая 2025 г., 14:30"
+    const textDateMatch = normalized.match(/(\d{1,2})\s+([a-zа-яё.]+?)(?:\s+(\d{4}))?(?:\s*г\.?)?(?:[,\s]+(?:в\s+|at\s+)?(\d{1,2}):(\d{2}))?(?:\s|$)/i);
+    if (textDateMatch) {
+        const day = parseInt(textDateMatch[1], 10);
+        const mi = findMIdx(textDateMatch[2]);
+        if (mi !== -1) {
+            let y = textDateMatch[3] ? parseInt(textDateMatch[3], 10) : (mi > currentMonth ? currentYear - 1 : currentYear);
+            const hours = textDateMatch[4] ? parseInt(textDateMatch[4], 10) : 0;
+            const minutes = textDateMatch[5] ? parseInt(textDateMatch[5], 10) : 0;
+            return Date.UTC(y, mi, day, hours, minutes) - MSK_OFFSET_MS;
+        }
+    }
+
+    // 2. Сегодня / Вчера
+    if (normalized.includes("сегодня") || normalized.includes("today")) {
+        const match = normalized.match(/(?:сегодня|today)[,\s]+(?:в\s+|at\s+)?(\d{1,2}):(\d{2})/i);
+        const hours = match ? parseInt(match[1], 10) : 0;
+        const minutes = match ? parseInt(match[2], 10) : 0;
+        return Date.UTC(currentYear, currentMonth, mskNowDate.getUTCDate(), hours, minutes) - MSK_OFFSET_MS;
+    }
+
+    if (normalized.includes("вчера") || normalized.includes("yesterday")) {
+        const match = normalized.match(/(?:вчера|yesterday)[,\s]+(?:в\s+|at\s+)?(\d{1,2}):(\d{2})/i);
+        const mskYesterday = new Date(mskNowDate.getTime() - 24 * 60 * 60 * 1000);
+        const hours = match ? parseInt(match[1], 10) : 0;
+        const minutes = match ? parseInt(match[2], 10) : 0;
+        return Date.UTC(mskYesterday.getUTCFullYear(), mskYesterday.getUTCMonth(), mskYesterday.getUTCDate(), hours, minutes) - MSK_OFFSET_MS;
+    }
+
+    // 3. Цифровой формат: "15.05.2025, 14:30", "15.05.2025", "15.05.25"
+    const numDateMatch = normalized.match(/(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?(?:[,\s]+(?:в\s+|at\s+)?(\d{1,2}):(\d{2}))?/);
+    if (numDateMatch) {
+        const day = parseInt(numDateMatch[1], 10);
+        const monthIdx = parseInt(numDateMatch[2], 10) - 1;
+        if (monthIdx >= 0 && monthIdx <= 11) {
+            let y = currentYear;
+            if (numDateMatch[3]) {
+                const rawY = parseInt(numDateMatch[3], 10);
+                y = rawY < 100 ? (rawY > 50 ? 1900 + rawY : 2000 + rawY) : rawY;
+            } else if (monthIdx > currentMonth) {
+                y = currentYear - 1;
+            }
+            const hours = numDateMatch[4] ? parseInt(numDateMatch[4], 10) : 0;
+            const minutes = numDateMatch[5] ? parseInt(numDateMatch[5], 10) : 0;
+            return Date.UTC(y, monthIdx, day, hours, minutes) - MSK_OFFSET_MS;
+        }
+    }
+
+    // 4. Относительные даты (только если нет двоеточия/точного времени)
+    if (!normalized.includes(':')) {
+        const relMinMatch = normalized.match(/(\d+)\s*(?:мин|минут\w*)\s*назад/i);
+        if (relMinMatch) return now.getTime() - parseInt(relMinMatch[1], 10) * 60 * 1000;
+
+        const relHourMatch = normalized.match(/(\d+)\s*(?:ч|час\w*)\s*назад/i);
+        if (relHourMatch) return now.getTime() - parseInt(relHourMatch[1], 10) * 3600 * 1000;
+
+        const relDayMatch = normalized.match(/(\d+)\s*(?:дн\w*|день|дня)\s*назад/i);
+        if (relDayMatch) return now.getTime() - parseInt(relDayMatch[1], 10) * 86400 * 1000;
+
+        const relWeekMatch = normalized.match(/(\d+)\s*(?:нед\w*|недел\w*)\s*назад/i);
+        if (relWeekMatch) return now.getTime() - parseInt(relWeekMatch[1], 10) * 7 * 86400 * 1000;
+
+        const relMonthMatch = normalized.match(/(?:(\d+)\s*)?(?:мес\w*|месяц\w*)\s*назад/i);
+        if (relMonthMatch) {
+            const count = relMonthMatch[1] ? parseInt(relMonthMatch[1], 10) : 1;
+            return now.getTime() - count * 30 * 86400 * 1000;
+        }
+
+        const relYearMatch = normalized.match(/(?:(\d+)\s*)?(?:год\w*|лет)\s*назад/i);
+        if (relYearMatch) {
+            const count = relYearMatch[1] ? parseInt(relYearMatch[1], 10) : 1;
+            return now.getTime() - count * 365 * 86400 * 1000;
+        }
+    }
+
+    return 0;
+}
+
+function normalizeOrderTimestamp(order) {
+    if (!order) return 0;
+    const rawVal = (order.orderDate !== undefined && order.orderDate !== null) ? order.orderDate
+                 : ((order.orderDateText !== undefined && order.orderDateText !== null) ? order.orderDateText
+                 : ((order.date !== undefined && order.date !== null) ? order.date
+                 : ((order.dateText !== undefined && order.dateText !== null) ? order.dateText
+                 : ((order.timestamp !== undefined && order.timestamp !== null) ? order.timestamp : 0))));
+
+    let ts = 0;
+    if (typeof rawVal === 'number' && !isNaN(rawVal) && isFinite(rawVal) && rawVal > 0) {
+        ts = rawVal < 1e11 ? rawVal * 1000 : rawVal;
+    } else if (rawVal instanceof Date) {
+        ts = rawVal.getTime();
+    } else if (typeof rawVal === 'string') {
+        const trimmed = rawVal.trim();
+        const num = Number(trimmed);
+        if (!isNaN(num) && num > 0) {
+            ts = num < 1e11 ? num * 1000 : num;
+        } else {
+            const parsed = Date.parse(trimmed);
+            if (!isNaN(parsed) && parsed > 0) {
+                ts = parsed;
+            } else {
+                ts = parseFunPayDateInContent(trimmed);
+            }
+        }
+    }
+
+    if (!ts && (order.orderDateText || order.dateText || order.orderDate)) {
+        const fallbackStr = String(order.orderDateText || order.dateText || order.orderDate || '').trim();
+        if (fallbackStr) {
+            try {
+                ts = parseFunPayDateInContent(fallbackStr);
+            } catch (_) {}
+        }
+    }
+
+    return ts || 0;
+}
+window.fxnNormalizeOrderTimestamp = normalizeOrderTimestamp;
+
+function parseOrdersFromDocument() {
+    const rows = document.querySelectorAll('a.tc-item[href*="/orders/"], .tc-item[href*="/orders/"], .orders-table a.tc-item, .orders-table .tc-item');
+    if (!rows || rows.length === 0) return [];
+    const orders = [];
+    rows.forEach(row => {
+        try {
+            const href = row.getAttribute('href') || '';
+            const idMatch = href.match(/\/orders\/([A-Za-z0-9]+)/);
+            const orderId = idMatch ? idMatch[1] : (row.querySelector('.tc-order')?.textContent?.replace(/^[#\s]+/, '').trim() || '');
+            if (!orderId) return;
+
+            const dtEl = row.querySelector('.tc-date-time');
+            let orderDateText = '';
+            if (dtEl) {
+                orderDateText = dtEl.textContent.trim();
+            } else {
+                const dateContainer = row.querySelector('.tc-date');
+                if (dateContainer) {
+                    const clone = dateContainer.cloneNode(true);
+                    clone.querySelectorAll('.tc-date-left, .tc-date-ago, .tc-date-passed').forEach(el => el.remove());
+                    orderDateText = clone.textContent.trim();
+                }
+            }
+            const orderDate = parseFunPayDateInContent(orderDateText);
+
+            const priceEl = row.querySelector('.tc-price');
+            const priceText = priceEl?.textContent || '';
+            let currency = 'RUB';
+            if (priceText.includes('$') || /usd/i.test(priceText)) currency = 'USD';
+            else if (priceText.includes('€') || /eur/i.test(priceText)) currency = 'EUR';
+            else if (priceText.includes('₽') || /rub|руб/i.test(priceText)) currency = 'RUB';
+
+            const cleanPrice = priceText.replace(/[\s\u00A0\u202F]/g, '').replace(',', '.');
+            const pMatch = cleanPrice.match(/-?\d+(?:\.\d+)?/);
+            const price = pMatch ? parseFloat(pMatch[0]) : 0;
+
+            const classList = row.classList;
+            const rowText = row.textContent || '';
+            let orderStatus = 'closed';
+            if (classList.contains('warning') || rowText.includes('Возврат') || rowText.includes('Отменен') || /refund/i.test(rowText)) {
+                orderStatus = 'refunded';
+            } else if (classList.contains('info') || rowText.includes('Оплачен') || /paid/i.test(rowText)) {
+                orderStatus = 'paid';
+            }
+
+            const description = row.querySelector('.order-desc div, .tc-desc-text')?.textContent.trim() || '';
+            const subcategoryName = row.querySelector('.text-muted')?.textContent.trim() || '';
+            const buyerEl = row.querySelector('.media-user-name span, .media-user-name a, .tc-user a, .tc-user span, .tc-user .pseudo-a');
+            const buyerUsername = buyerEl?.textContent.trim() || '';
+            const rawBuyerHref = buyerEl?.getAttribute('data-href') || buyerEl?.getAttribute('href') || '';
+            const buyerIdMatch = rawBuyerHref.match(/\/users\/(\d+)/);
+            const buyerId = buyerIdMatch ? buyerIdMatch[1] : (rawBuyerHref.split('/').filter(Boolean).pop() || '');
+
+            orders.push({
+                orderId,
+                description,
+                subcategoryName,
+                price,
+                currency,
+                buyerUsername,
+                buyerId,
+                orderStatus,
+                orderDate,
+                orderDateText,
+                paymentType: (classList.contains('deal') || !!row.querySelector('.deal-icon, .tc-deal')) ? 'deal' : 'regular'
+            });
+        } catch (_) {}
+    });
+    return orders;
+}
+window.fxnParseOrdersFromDocument = parseOrdersFromDocument;
+
 async function calculateSalesStats(allOrders, startDate, endDate, targetLot = null) {
     const stats = {
         totalOrders: 0, totalClosed: 0, totalPending: 0, totalRefunded: 0,
@@ -458,12 +677,26 @@ async function calculateSalesStats(allOrders, startDate, endDate, targetLot = nu
 
     for (const orderId in allOrders) {
         const order = allOrders[orderId];
-        if ((startDate && order.orderDate < startDate) || (endDate && order.orderDate > endDate)) continue;
+        if (!order) continue;
+        const orderTimestamp = normalizeOrderTimestamp(order);
+        if (startDate && (!orderTimestamp || orderTimestamp < startDate)) continue;
+        if (endDate && (!orderTimestamp || orderTimestamp > endDate)) continue;
 
-        if (statusOk(order.orderStatus)) {
+        const rawSt = String(order.orderStatus || order.status || '').toLowerCase().trim();
+        const orderStatus = (rawSt === 'paid' || rawSt === 'info' || rawSt.includes('оплач') || rawSt.includes('в работе') || rawSt.includes('pending')) ? 'paid'
+            : (rawSt === 'refunded' || rawSt === 'warning' || rawSt.includes('возврат') || rawSt.includes('отмен') || rawSt.includes('refund') || rawSt.includes('cancel')) ? 'refunded'
+            : 'closed';
+
+        const rawCur = String(order.currency || '').toUpperCase().trim();
+        const currency = (rawCur === 'USD' || rawCur.includes('USD')) ? 'USD' : (rawCur === 'EUR' || rawCur.includes('EUR')) ? 'EUR' : 'RUB';
+
+        const price = typeof order.price === 'number' ? (isNaN(order.price) ? 0 : order.price)
+            : (parseFloat(String(order.price || '0').replace(/[\s\u00A0\u202F]/g, '').replace(',', '.')) || 0);
+
+        if (statusOk(orderStatus)) {
             storeOrdersCount++;
-            if ((order.orderStatus === "paid" || order.orderStatus === "closed") && validCurrencies.has(order.currency)) {
-                storeRevenueRUB += (order.price || 0) * (toRUB[order.currency] || 1);
+            if (orderStatus === "paid" || orderStatus === "closed") {
+                storeRevenueRUB += price * (toRUB[currency] || 1);
             }
         }
 
@@ -473,35 +706,41 @@ async function calculateSalesStats(allOrders, startDate, endDate, targetLot = nu
         }
 
         // Сумму возвратов считаем ВСЕГДА (даже если возвраты скрыты фильтром)
-        if (order.orderStatus === "refunded" && validCurrencies.has(order.currency)) {
-            stats.refundedRevenue[order.currency] = (stats.refundedRevenue[order.currency] || 0) + (order.price || 0);
+        if (orderStatus === "refunded") {
+            stats.refundedRevenue[currency] = (stats.refundedRevenue[currency] || 0) + price;
         }
 
-        if (!statusOk(order.orderStatus)) continue;
+        if (!statusOk(orderStatus)) continue;
 
         stats.totalOrders++;
-        stats.uniqueBuyers.add(order.buyerId);
+        if (order.buyerId) stats.uniqueBuyers.add(order.buyerId);
         
-        if (validCurrencies.has(order.currency) && (order.orderStatus === "paid" || order.orderStatus === "closed")) {
-            stats.totalRevenue[order.currency] += order.price;
-            lotRevenueRUB += (order.price || 0) * (toRUB[order.currency] || 1);
+        if (orderStatus === "paid" || orderStatus === "closed") {
+            stats.totalRevenue[currency] += price;
+            lotRevenueRUB += price * (toRUB[currency] || 1);
         }
 
-        productCount.set(order.description, (productCount.get(order.description) || 0) + 1);
-        categoryCount.set(order.subcategoryName, (categoryCount.get(order.subcategoryName) || 0) + 1);
+        if (order.description) {
+            productCount.set(order.description, (productCount.get(order.description) || 0) + 1);
+        }
+        if (order.subcategoryName) {
+            categoryCount.set(order.subcategoryName, (categoryCount.get(order.subcategoryName) || 0) + 1);
+        }
         
-        const buyerKey = `${order.buyerUsername}|${order.buyerId}`;
-        buyerCount.set(buyerKey, (buyerCount.get(buyerKey) || 0) + 1);
+        const buyerKey = `${order.buyerUsername || ''}|${order.buyerId || ''}`;
+        if (order.buyerUsername || order.buyerId) {
+            buyerCount.set(buyerKey, (buyerCount.get(buyerKey) || 0) + 1);
+        }
 
-        if (order.orderStatus === "paid") stats.totalPending++;
-        else if (order.orderStatus === "closed") stats.totalClosed++;
-        else if (order.orderStatus === "refunded") stats.totalRefunded++;
+        if (orderStatus === "paid") stats.totalPending++;
+        else if (orderStatus === "closed") stats.totalClosed++;
+        else if (orderStatus === "refunded") stats.totalRefunded++;
         
-        if (validCurrencies.has(order.currency) && (order.orderStatus === "paid" || order.orderStatus === "closed")) {
-             const saleValueUSD = order.price * (exchangeRates[order.currency] || 0);
+        if (orderStatus === "paid" || orderStatus === "closed") {
+             const saleValueUSD = price * (exchangeRates[currency] || 0);
              const topSaleValueUSD = stats.mostExpensiveSale.price * (exchangeRates[stats.mostExpensiveSale.currency] || 0);
-             if(saleValueUSD > topSaleValueUSD) {
-                 stats.mostExpensiveSale = { price: order.price, currency: order.currency, orderId: order.orderId };
+             if (saleValueUSD > topSaleValueUSD) {
+                 stats.mostExpensiveSale = { price: price, currency: currency, orderId: order.orderId || orderId };
              }
         }
     }
@@ -615,10 +854,28 @@ function _showStatsCollectError(errorMsg) {
 async function displaySalesStats() {
     if (!document.getElementById("fpTools-stats-period")) return;
     
-    const foxenSalesData = await (window.fxnOrdersDB || FPTSalesDB).getAllAsMap();
+    let foxenSalesData = await (window.fxnOrdersDB || FPTSalesDB).getAllAsMap();
     if (!foxenSalesData || Object.keys(foxenSalesData).length === 0) {
-        // База пуста. Если прямо сейчас идёт сбор — показываем красивую загрузку
-        // вместо пугающего «Нет данных».
+        foxenSalesData = {};
+    }
+
+    // Собираем заказы прямо со страницы FunPay, чтобы юзер мгновенно видел статистику
+    const domOrders = parseOrdersFromDocument();
+    if (domOrders.length > 0) {
+        let hasNew = false;
+        for (const o of domOrders) {
+            if (!foxenSalesData[o.orderId]) {
+                foxenSalesData[o.orderId] = o;
+                hasNew = true;
+            }
+        }
+        if (hasNew) {
+            try { (window.fxnOrdersDB || FPTSalesDB).putOrders(domOrders); } catch (_) {}
+        }
+    }
+
+    if (!foxenSalesData || Object.keys(foxenSalesData).length === 0) {
+        // База пуста и на странице нет заказов. Если прямо сейчас идёт сбор — показываем красивую загрузку
         let collecting = false;
         let lastError = null;
         try {
@@ -666,6 +923,7 @@ async function displaySalesStats() {
         case "7d": startDate = nowMs - 7 * oneDay; break;
         case "30d": startDate = nowMs - 30 * oneDay; break;
         case "365d": startDate = nowMs - 365 * oneDay; break;
+        case "all": default: startDate = null; endDate = null; break;
     }
 
     window._fxnOrdersMap = foxenSalesData;
@@ -985,10 +1243,14 @@ function initializeSalesStatistics() {
     ordersTable.before(statsContainer);
 
     const periodSelect = document.getElementById("fpTools-stats-period");
-    periodSelect.value = localStorage.getItem("foxenStatsPeriod") || "7d";
+    const savedPeriod = localStorage.getItem("foxenStatsPeriod") || localStorage.getItem("fpToolsStatsPeriod") || "30d";
+    periodSelect.value = savedPeriod;
     periodSelect.addEventListener('change', () => {
         localStorage.setItem("foxenStatsPeriod", periodSelect.value);
         displaySalesStats();
+        if (typeof window.fxnRefreshStatsModes === 'function') {
+            window.fxnRefreshStatsModes();
+        }
     });
 
     // Интерактивный комбобокс лотов

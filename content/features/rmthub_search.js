@@ -22,35 +22,84 @@
         .fp-rmthub-form {
             display: inline-flex !important;
             align-items: center !important;
-            gap: 6px !important;
-            margin-top: 11px !important;
-            margin-bottom: 11px !important;
-            padding-left: 5px !important;
-            padding-right: 5px !important;
+            gap: 4px !important;
+            margin-top: 13px !important;
+            margin-bottom: 13px !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
             vertical-align: middle !important;
+            box-sizing: border-box !important;
+        }
+        @media (max-width: 991px) {
+            .fp-rmthub-form {
+                margin-top: 8px !important;
+                margin-bottom: 8px !important;
+            }
+        }
+        @media (max-width: 767px) {
+            .fp-rmthub-form {
+                margin-top: 8px !important;
+                margin-bottom: 8px !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                padding: 0 !important;
+                gap: 3px !important;
+            }
         }
         .fp-rmthub-wrap {
             position: relative;
             display: inline-flex;
             align-items: center;
-            margin-bottom: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
         }
         #fp-rmthub-input {
-            width: 118px !important;
+            width: 112px !important;
             height: 34px !important;
-            padding: 6px 26px 6px 14px !important;
-            border-radius: 10px !important;
+            padding: 6px 12px !important;
+            border-radius: 9px !important;
             background: rgba(255, 255, 255, 0.05) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             color: #f3f4f6 !important;
             box-sizing: border-box !important;
             transition: all 0.2s ease !important;
             outline: none !important;
+            font-size: 12px !important;
+            line-height: normal !important;
+            text-overflow: ellipsis !important;
+            box-shadow: none !important;
+        }
+        @media (max-width: 991px) {
+            #fp-rmthub-input {
+                width: 100px !important;
+                height: 32px !important;
+                padding: 5px 10px !important;
+            }
+        }
+        @media (max-width: 767px) {
+            #fp-rmthub-input {
+                width: clamp(68px, 18vw, 92px) !important;
+                height: 32px !important;
+                padding: 5px 8px !important;
+                font-size: 11.5px !important;
+            }
+        }
+        @media (max-width: 380px) {
+            #fp-rmthub-input {
+                width: clamp(58px, 16vw, 75px) !important;
+                height: 30px !important;
+                padding: 4px 6px !important;
+                font-size: 11px !important;
+            }
         }
         #fp-rmthub-input:focus {
             background: rgba(255, 255, 255, 0.08) !important;
             border-color: var(--fxn-accent, var(--fxn-accent-color, #20ff00)) !important;
-            box-shadow: 0 0 12px var(--fxn-accent-soft, rgba(32, 255, 0, 0.25)) !important;
+            box-shadow: 0 0 10px var(--fxn-accent-soft, rgba(32, 255, 0, 0.25)) !important;
         }
 
         /* Search button placed outside input */
@@ -62,7 +111,8 @@
             width: 34px !important;
             min-width: 34px !important;
             padding: 0 !important;
-            border-radius: 10px !important;
+            margin: 0 !important;
+            border-radius: 9px !important;
             cursor: pointer !important;
             background: rgba(255, 255, 255, 0.05) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -71,6 +121,29 @@
             flex-shrink: 0 !important;
             outline: none !important;
             box-sizing: border-box !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+        }
+        @media (max-width: 991px) {
+            .fp-rmthub-btn {
+                height: 32px !important;
+                width: 32px !important;
+                min-width: 32px !important;
+            }
+        }
+        @media (max-width: 767px) {
+            .fp-rmthub-btn {
+                height: 32px !important;
+                width: 30px !important;
+                min-width: 30px !important;
+            }
+        }
+        @media (max-width: 380px) {
+            .fp-rmthub-btn {
+                height: 30px !important;
+                width: 28px !important;
+                min-width: 28px !important;
+            }
         }
         .fp-rmthub-btn:hover {
             border-color: var(--fxn-accent, var(--fxn-accent-color, #20ff00)) !important;
@@ -105,8 +178,9 @@
         .fp-rmthub-drop {
             position: absolute !important;
             z-index: 999999 !important;
-            min-width: 320px !important;
-            max-width: 360px !important;
+            min-width: min(300px, calc(100vw - 16px)) !important;
+            max-width: min(360px, calc(100vw - 16px)) !important;
+            box-sizing: border-box !important;
             padding: 0 !important;
             overflow: hidden !important;
             margin: 0 !important;
@@ -397,9 +471,14 @@
             header.classList.contains('navbar-fixed-top')
         );
 
+        const dropW = drop.offsetWidth || 300;
         if (isHeaderFixed) {
             drop.style.position = 'fixed';
-            drop.style.left = `${Math.round(rect.left)}px`;
+            let leftPos = Math.round(rect.left);
+            const maxLeft = Math.max(8, window.innerWidth - dropW - 8);
+            if (leftPos > maxLeft) leftPos = maxLeft;
+            if (leftPos < 8) leftPos = 8;
+            drop.style.left = `${leftPos}px`;
             if (rect.top > window.innerHeight / 2) {
                 drop.style.top = 'auto';
                 drop.style.bottom = `${Math.round(window.innerHeight - rect.top + 6)}px`;
@@ -411,7 +490,11 @@
             drop.style.position = 'absolute';
             const scrollX = window.pageXOffset || document.documentElement.scrollLeft || 0;
             const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-            drop.style.left = `${Math.round(rect.left + scrollX)}px`;
+            let leftPos = Math.round(rect.left + scrollX);
+            const maxLeft = Math.max(8, (window.innerWidth + scrollX) - dropW - 8);
+            if (leftPos > maxLeft) leftPos = maxLeft;
+            if (leftPos < 8) leftPos = 8;
+            drop.style.left = `${leftPos}px`;
             drop.style.bottom = 'auto';
             drop.style.top = `${Math.round(rect.bottom + scrollY + 6)}px`;
         }

@@ -12,7 +12,7 @@ async function renderTemplateSettings() {
         const item = createElement('div', { class: 'template-item' });
         if (!config.enabled) item.classList.add('disabled-in-settings');
         
-        const colorPickerHtml = `<input type="color" class="template-color-picker" value="${config.color || '#C026D3'}" data-key="${key}" data-custom="${isCustom}">`;
+        const colorPickerHtml = `<button type="button" class="template-color-picker fxn-color-swatch-box" style="background-color: ${config.color || '#C026D3'};" data-key="${key}" data-custom="${isCustom}" data-color="${config.color || '#C026D3'}" title="Выбрать цвет"></button>`;
         const deleteBtnHtml = isCustom ? `<button class="delete-custom-template-btn" data-id="${config.id}" title="Удалить"><span class="material-symbols-rounded">delete</span></button>` : '';
 
         // === ИЗМЕНЕНИЕ ЗДЕСЬ ===
@@ -30,6 +30,37 @@ async function renderTemplateSettings() {
         `;
         // === КОНЕЦ ИЗМЕНЕНИЯ ===
         container.appendChild(item);
+
+        const swatchBtn = item.querySelector('.template-color-picker');
+        if (swatchBtn) {
+            swatchBtn.value = config.color || '#C026D3';
+            swatchBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const curColor = swatchBtn.dataset.color || swatchBtn.value || config.color || '#C026D3';
+                if (typeof foxenOpenColorPicker === 'function') {
+                    foxenOpenColorPicker(swatchBtn, curColor, async (newHex, isFinal) => {
+                        swatchBtn.dataset.color = newHex;
+                        swatchBtn.style.backgroundColor = newHex;
+                        swatchBtn.value = newHex;
+                        if (isCustom) {
+                            const t = templateSettings.custom.find(x => String(x.id) === String(key));
+                            if (t) t.color = newHex;
+                        } else {
+                            if (templateSettings.standard && templateSettings.standard[key]) {
+                                templateSettings.standard[key].color = newHex;
+                            }
+                        }
+                        if (isFinal) {
+                            await saveTemplateSettings();
+                            await addChatTemplateButtons();
+                        } else {
+                            scheduleSave();
+                        }
+                    });
+                }
+            });
+        }
 
         const lbl = item.querySelector('.template-label');
         if (lbl) lbl.textContent = config.label || '';
@@ -139,7 +170,7 @@ async function setupTemplateSettingsHandlers() {
                 if (t) {
                     t.text = ta.value;
                     if (label && label.textContent) t.label = label.textContent.trim();
-                    if (colorPicker) t.color = colorPicker.value;
+                    if (colorPicker) t.color = colorPicker.dataset.color || colorPicker.value;
                     if (toggle) t.enabled = toggle.checked;
                     t.images = images;
                     t.sendOrder = sendOrder;
@@ -149,7 +180,7 @@ async function setupTemplateSettingsHandlers() {
                     const t = templateSettings.standard[key];
                     t.text = ta.value;
                     if (label && label.textContent) t.label = label.textContent.trim();
-                    if (colorPicker) t.color = colorPicker.value;
+                    if (colorPicker) t.color = colorPicker.dataset.color || colorPicker.value;
                     if (toggle) t.enabled = toggle.checked;
                     t.images = images;
                     t.sendOrder = sendOrder;
@@ -167,7 +198,7 @@ async function setupTemplateSettingsHandlers() {
             const template = templateSettings.custom.find(t => String(t.id) === String(key));
             if (!template) return;
             if (target.classList.contains('template-toggle')) template.enabled = target.checked;
-            if (target.classList.contains('template-color-picker')) template.color = target.value;
+            if (target.classList.contains('template-color-picker')) template.color = target.dataset.color || target.value;
             if (target.classList.contains('template-label')) template.label = target.textContent;
             if (target.classList.contains('template-text')) {
                 template.text = target.value;
@@ -181,7 +212,7 @@ async function setupTemplateSettingsHandlers() {
             const template = templateSettings.standard[key];
             if (!template) return;
             if (target.classList.contains('template-toggle')) template.enabled = target.checked;
-            if (target.classList.contains('template-color-picker')) template.color = target.value;
+            if (target.classList.contains('template-color-picker')) template.color = target.dataset.color || target.value;
             if (target.classList.contains('template-label')) template.label = target.textContent;
             if (target.classList.contains('template-text')) {
                 template.text = target.value;
@@ -522,7 +553,8 @@ async function loadSavedSettings() {
     
     const toolsPopup = document.querySelector('.foxen-popup');
     const windowEl = toolsPopup?.querySelector('.window') || toolsPopup;
-    if (windowEl) {
+    const isMobileDevice = (typeof window.fxnIsMobileDevice === 'function' ? window.fxnIsMobileDevice() : (window.innerWidth <= 992));
+    if (windowEl && !isMobileDevice) {
         if (settings.foxenPopupDragged && settings.foxenPopupPosition) {
             let left = parseFloat(settings.foxenPopupPosition.left);
             let top = parseFloat(settings.foxenPopupPosition.top);
@@ -555,6 +587,18 @@ async function loadSavedSettings() {
                 windowEl.style.removeProperty('height');
             }
         }
+    } else if (windowEl && isMobileDevice) {
+        windowEl.classList.add('mobile-fullscreen', 'fullscreen');
+        windowEl.classList.remove('fxn-dragged');
+        windowEl.style.removeProperty('top');
+        windowEl.style.removeProperty('left');
+        windowEl.style.removeProperty('right');
+        windowEl.style.removeProperty('bottom');
+        windowEl.style.removeProperty('width');
+        windowEl.style.removeProperty('height');
+        windowEl.style.removeProperty('margin');
+        windowEl.style.removeProperty('position');
+        windowEl.style.removeProperty('transform');
     }
 
     const discordSettings = settings.foxenDiscord || { enabled: false, webhookUrl: '', pingEveryone: false, pingHere: false };
@@ -797,6 +841,7 @@ async function loadSavedSettings() {
     fxnSetCheck('showFinanceStatsCheckbox', settings.showFinanceStats !== false);
     fxnSetCheck('hideBalanceCheckbox', settings.hideBalance === true);
     fxnSetCheck('fxnIdentifierEnabled', settings.foxenIdentifierEnabled !== false);
+    fxnSetCheck('headerPositionBottom', settings.headerPositionBottom === true || settings.foxenTheme?.headerPosition === 'bottom');
 
     // Telemetry & Error Tracker settings restore & event handlers
     const telemetryEnabledEl = document.getElementById('fxnTelemetryEnabled');

@@ -14,6 +14,13 @@ function applyDropupClassForBottomBar() {
 }
 
 function enableBottomBar() {
+    document.documentElement.classList.add('fxn-header-bottom');
+    if (document.body) document.body.classList.add('fxn-header-bottom');
+    try {
+        sessionStorage.setItem('foxen_header_bottom', '1');
+        localStorage.setItem('foxen_header_bottom', '1');
+    } catch (_) {}
+
     if (document.getElementById(BOTTOM_BAR_STYLE_ID)) return;
 
     const styleEl = document.createElement('style');
@@ -53,6 +60,13 @@ function enableBottomBar() {
 }
 
 function disableBottomBar() {
+    document.documentElement.classList.remove('fxn-header-bottom');
+    if (document.body) document.body.classList.remove('fxn-header-bottom');
+    try {
+        sessionStorage.setItem('foxen_header_bottom', '0');
+        localStorage.setItem('foxen_header_bottom', '0');
+    } catch (_) {}
+
     const styleEl = document.getElementById(BOTTOM_BAR_STYLE_ID);
     if (styleEl) styleEl.remove();
 
@@ -68,10 +82,11 @@ function disableBottomBar() {
 }
 
 async function applyHeaderPosition() {
-    const { foxenTheme = {} } = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get(['foxenTheme']);
-    const position = foxenTheme.headerPosition || 'top';
+    const ext = typeof browser !== 'undefined' ? browser : chrome;
+    const { foxenTheme = {}, headerPositionBottom } = await ext.storage.local.get(['foxenTheme', 'headerPositionBottom']);
+    const isBottom = headerPositionBottom === true || foxenTheme.headerPosition === 'bottom';
 
-    if (position === 'bottom') {
+    if (isBottom) {
         enableBottomBar();
     } else {
         disableBottomBar();
@@ -187,7 +202,8 @@ function getCustomThemeCss(settings) {
         html { background-color: #0b0b0b !important; color-scheme: dark !important; }
         body, body.bg-light-style, .wrapper, .bg-light-style .wrapper, .content-orders, .bg-light-style .content-orders, .bg-light-color #header, .bg-light-color #footer, .wrapper-footer, .bg-light-style .wrapper-footer, #footer, .bg-light-style #footer { background: transparent !important; }
         .wrapper-content, .bg-light-style .wrapper-content, .wrapper-footer, .bg-light-style .wrapper-footer { background: transparent !important; background-color: rgba(0,0,0,0.4) !important; }
-        #header, .navbar-default, header, #header.navbar-default, .bg-light-style #header, .bg-light-style .navbar-default, .bg-light-color #header { background: rgba(0,0,0,0.08) !important; background-color: rgba(0,0,0,0.08) !important; border-color: rgba(228, 228, 228, 0.4) !important; }
+        #header, header, #header.navbar-default, .bg-light-style #header, .bg-light-color #header { background: rgba(0,0,0,0.08) !important; background-color: rgba(0,0,0,0.08) !important; border-color: rgba(228, 228, 228, 0.4) !important; }
+        #header .navbar, #header .navbar-default, #header .container, #header .navbar-header, #header .navbar-collapse { background: transparent !important; background-color: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-color: transparent !important; }
         body { font-family: '${settings.font}', Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.428571429; color: #TEXT_COLOR# !important; }
         .profile-cover-img { background-clip: border-box; background: url(https://funpay.com/img/layout/profile-header.jpg) no-repeat center bottom; background-size: 100% auto; }
         .profile-cover { overflow: unset; }
@@ -250,7 +266,8 @@ function getCustomThemeCss(settings) {
         .nav-abc ul .active a, .nav-abc ul .active a:hover, .nav-abc ul .active a:focus { text-decoration: none; cursor: default; color: #ACCENT_COLOR# !important; }
         a:focus { text-decoration: none; cursor: default; color: #fff !important; }
         .list-inline>li:after { content: " ·"; color: #919191; }
-        .media-user.style-circle .avatar-photo:after, .media-user.style-circle .avatar-photo::after { background: #20ff00 !important; border: 3px solid rgba(0, 0, 0, 0.34) !important; }
+        .media-user.style-circle.online .avatar-photo:after, .media-user.style-circle.online .avatar-photo::after { background: #20ff00 !important; border: 3px solid rgba(0, 0, 0, 0.34) !important; }
+        .media-user.style-circle:not(.online) .avatar-photo:after, .media-user.style-circle:not(.online) .avatar-photo::after, .media-user.style-circle.offline .avatar-photo:after, .media-user.style-circle.offline .avatar-photo::after { background: #71717a !important; border: 3px solid rgba(0, 0, 0, 0.34) !important; }
         .counter-list-wide { padding-bottom: 20px; padding-top: 20px; }
         .dropdown-menu>li+li, .dropdown-menu .dropdown-menu>li { border-top: #6a6a6a70 1px solid !important; border: 0px; }
         .dropdown-menu>li:first-child>a { border-radius: 8px 8px 0 0; }
@@ -307,10 +324,16 @@ function getCustomThemeCss(settings) {
         table.table-clickable tbody tr a:hover { color: #fff !important; text-decoration: underline; }
         .caret { color: #888 !important; }
         .sort::after { color: #555 !important; }
-        .bootstrap-select > .btn.dropdown-toggle, .bootstrap-select > .dropdown-toggle, .bootstrap-select .btn.btn-default.dropdown-toggle, .form-narrow .bootstrap-select .btn.dropdown-toggle, .form-narrow .bootstrap-select > .btn { background: #65a91a !important; background-color: #65a91a !important; border: 0px !important; border-radius: 8px !important; color: #fff !important; box-shadow: none !important; }
-        .bootstrap-select > .btn.dropdown-toggle:hover, .bootstrap-select > .btn.dropdown-toggle:focus, .bootstrap-select > .btn.dropdown-toggle:active, .open > .bootstrap-select > .btn.dropdown-toggle, .open > .bootstrap-select > .btn { background: #589516 !important; background-color: #589516 !important; border: 0px !important; color: #fff !important; }
-        .bootstrap-select .dropdown-toggle .filter-option { background: transparent !important; background-color: transparent !important; border: 0px !important; color: #fff !important; }
-        .bootstrap-select .dropdown-toggle .caret, .bootstrap-select .dropdown-toggle .bs-caret, .bootstrap-select .dropdown-toggle span { color: #fff !important; border-top-color: #fff !important; }
+        .bootstrap-select.form-control, .bootstrap-select.btn-group { background: transparent !important; background-color: transparent !important; border: none !important; padding: 0 !important; box-shadow: none !important; height: auto !important; }
+        .bootstrap-select > .btn.dropdown-toggle, .bootstrap-select > .dropdown-toggle, .bootstrap-select .btn.btn-default.dropdown-toggle, .form-narrow .bootstrap-select .btn.dropdown-toggle, .form-narrow .bootstrap-select > .btn { background: #141414 !important; background-color: #141414 !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 10px !important; color: #TEXT_COLOR# !important; box-shadow: none !important; padding: 9px 14px !important; min-height: 42px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; transition: border-color 0.15s, background-color 0.15s !important; }
+        .bootstrap-select > .btn.dropdown-toggle:hover, .bootstrap-select > .btn.dropdown-toggle:focus, .bootstrap-select > .btn.dropdown-toggle:active, .open > .bootstrap-select > .btn.dropdown-toggle, .open > .bootstrap-select > .btn { background: #1c1c1c !important; background-color: #1c1c1c !important; border-color: rgba(255, 255, 255, 0.3) !important; color: #fff !important; }
+        .open > .bootstrap-select > .btn.dropdown-toggle, .bootstrap-select.open > .btn.dropdown-toggle { border-color: #PRIMARY_COLOR# !important; }
+        .bootstrap-select .dropdown-toggle .filter-option { background: transparent !important; background-color: transparent !important; border: 0px !important; color: #TEXT_COLOR# !important; text-align: left !important; display: block !important; width: 100% !important; min-width: 0 !important; overflow: hidden !important; }
+        .bootstrap-select .dropdown-toggle .filter-option-inner, .bootstrap-select .dropdown-toggle .filter-option-inner-inner { width: 100% !important; min-width: 0 !important; display: block !important; }
+        .bootstrap-select .dropdown-toggle .payment, .payment { width: 100% !important; display: flex !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important; padding-right: 18px !important; box-sizing: border-box !important; }
+        .payment .payment-title { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; color: #fff !important; font-weight: 500 !important; text-align: left !important; }
+        .payment .payment-value { flex: 0 0 auto !important; width: auto !important; white-space: nowrap !important; text-align: right !important; margin-left: auto !important; font-weight: 700 !important; color: #ffffff !important; }
+        .bootstrap-select .dropdown-toggle .caret, .bootstrap-select .dropdown-toggle .bs-caret, .bootstrap-select .dropdown-toggle span.caret { color: #ffffffaa !important; border-top-color: #ffffffaa !important; margin-left: auto !important; flex-shrink: 0 !important; }
         .has-feedback .form-control { border-radius: 8px; }
         .withdraw-box .slave { background-color: #303030 !important; border-radius: 8px; }
         .withdraw-box .slave:hover { background-color: #3e3e3e !important; border-radius: 8px; }
@@ -318,9 +341,10 @@ function getCustomThemeCss(settings) {
         .btn-default.dropdown-toggle { color: #fff !important; border: 0px !important; background-color: #PRIMARY_COLOR# !important; }
         .btn-default.dropdown-toggle:hover, .btn-default.dropdown-toggle:focus, .btn-default.dropdown-toggle:active, .btn-default.dropdown-toggle:active:hover, .open>.btn-default.dropdown-toggle, .open>.btn-default.dropdown-toggle:hover, .open>.btn-default.dropdown-toggle:focus, .open>.btn-default.dropdown-toggle:active { color: #fff !important; border: 0px !important; background-color: #1a3d6e !important; }
         .form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control { background-color: #484343 !important; }
-        .payment-title { color: #fff !important; font-weight: bold; }
-        .bootstrap-select .dropdown-menu>li>a { color: #b0b0b0 !important; }
-        .bootstrap-select .dropdown-menu>.active>a, .bootstrap-select .dropdown-menu>.active>a:hover, .bootstrap-select .dropdown-menu>.active>a:focus { background-color: #1b1b1b !important; color: #82dd1e !important; }
+        .bootstrap-select .dropdown-menu { background-color: #0f0f0f !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 10px !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important; padding: 6px 0 !important; overflow: hidden !important; }
+        .bootstrap-select .dropdown-menu>li>a { color: #d0d0d0 !important; padding: 9px 16px !important; transition: background 0.15s, color 0.15s !important; }
+        .bootstrap-select .dropdown-menu>li>a:hover, .bootstrap-select .dropdown-menu>li>a:focus { background-color: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; }
+        .bootstrap-select .dropdown-menu>.active>a, .bootstrap-select .dropdown-menu>.active>a:hover, .bootstrap-select .dropdown-menu>.active>a:focus { background-color: #PRIMARY_COLOR#40 !important; color: #ffffff !important; }
         .chat-header { border: #bd59be00 0px solid !important; }
         .form-inline .form-control { background-color: #0f0f0f !important; border-radius: 8px; }
         .chat-contacts, .chat-detail { background: var(--fxn-theme-container-bg, ${containerBgRgba}) !important; border: #fff 0px solid !important; }
@@ -398,12 +422,25 @@ function getCustomThemeCss(settings) {
         const glassBg = hexToRgba(settings.containerBgColor || '#0b0b0b', opVal);
         const safeBlur = Math.min(30, Math.max(2, parseInt(settings.glassmorphismBlur, 10) || 12));
         themedCss += `
-            #header, .navbar-default, header, #header.navbar-default, .bg-light-style #header, .bg-light-style .navbar-default {
+            #header, header, #header.navbar-default, .bg-light-style #header {
                 background: ${glassBg} !important;
                 background-color: ${glassBg} !important;
                 backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
                 -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            }
+            #header .navbar,
+            #header .navbar-default,
+            #header .container,
+            #header .navbar-header,
+            #header .navbar-collapse {
+                background: transparent !important;
+                background-color: transparent !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                border: none !important;
+                border-color: transparent !important;
+                box-shadow: none !important;
             }
             .offer, 
             .tc:not(.offer .tc), 
@@ -424,7 +461,12 @@ function getCustomThemeCss(settings) {
             .details, 
             .form-narrow, 
             .user-card,
-            .fxn-peek-panel {
+            .bootstrap-select > .btn.dropdown-toggle,
+            .fxn-peek-panel,
+            .foxen-stats-container,
+            .fp-stat-card,
+            .fp-stats-card,
+            .col-lg-9 {
                 background: ${glassBg} !important;
                 background-color: ${glassBg} !important;
                 backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
@@ -536,14 +578,15 @@ migrateBgImageStorage();
 
 async function applyCustomTheme() {
     const ext = typeof browser !== 'undefined' ? browser : chrome;
-    const { enableCustomTheme = true, foxenTheme = {}, foxenThemeBgImage, foxenThemeBgIsAnimated } = await ext.storage.local.get(['enableCustomTheme', 'foxenTheme', 'foxenThemeBgImage', 'foxenThemeBgIsAnimated']);
+    const { enableCustomTheme = true, foxenTheme = {}, foxenThemeBgImage, foxenThemeBgIsAnimated, headerPositionBottom } = await ext.storage.local.get(['enableCustomTheme', 'foxenTheme', 'foxenThemeBgImage', 'foxenThemeBgIsAnimated', 'headerPositionBottom']);
+    const isBottom = headerPositionBottom === true || foxenTheme.headerPosition === 'bottom';
     const bgImage = foxenThemeBgImage || foxenTheme.bgImage || null;
     let styleEl = document.getElementById('foxen-custom-theme');
     let overrideStyleEl = document.getElementById(THEME_OVERRIDE_STYLE_ID);
     const flashFixStyle = document.getElementById('foxen-flash-fix');
 
     // Контур тексту работает независимо от кастомной темы.
-    applyFptTextOutline({ ...DEFAULT_THEME, ...foxenTheme });
+    applyFptTextOutline({ ...DEFAULT_THEME, ...foxenTheme, headerPosition: isBottom ? 'bottom' : 'top' });
 
     if (!enableCustomTheme) {
         try {
@@ -592,7 +635,7 @@ async function applyCustomTheme() {
     document.documentElement.classList.add('fxn-custom-theme-on');
     document.documentElement.classList.remove('fxn-custom-theme-off');
 
-    const settings = { ...DEFAULT_THEME, ...foxenTheme, bgImage };
+    const settings = { ...DEFAULT_THEME, ...foxenTheme, headerPosition: isBottom ? 'bottom' : 'top', bgImage };
     window._foxenThemeSettings = settings;
 
     const isAnim = isAnimatedBackground(settings.bgImage, !!foxenThemeBgIsAnimated);
@@ -661,6 +704,7 @@ async function applyCustomTheme() {
     if (styleEl.textContent !== themeCss) {
         styleEl.textContent = themeCss;
     }
+    try { applyHeaderPosition().catch(() => {}); } catch (_) {}
     // фон становится тёмным не мгновенно - пересчитываем палитру на след. кадрах
     if (typeof fxnApplyThemeVars === 'function') {
         requestAnimationFrame(() => { try { fxnApplyThemeVars(); } catch (_) {} });
@@ -688,10 +732,11 @@ function updateCirclePreview() {
 
 async function updateThemePreview() {
     const ext = typeof browser !== 'undefined' ? browser : chrome;
-    const { foxenTheme = {}, foxenThemeBgImage, foxenAccentColor, enableCustomTheme = true, enableRedesignedHomepage = true } = await ext.storage.local.get(['foxenTheme', 'foxenThemeBgImage', 'foxenAccentColor', 'enableCustomTheme', 'enableRedesignedHomepage']);
+    const { foxenTheme = {}, foxenThemeBgImage, foxenAccentColor, enableCustomTheme = true, enableRedesignedHomepage = true, headerPositionBottom } = await ext.storage.local.get(['foxenTheme', 'foxenThemeBgImage', 'foxenAccentColor', 'enableCustomTheme', 'enableRedesignedHomepage', 'headerPositionBottom']);
+    const isBottom = headerPositionBottom === true || foxenTheme.headerPosition === 'bottom';
     const bgImage = foxenThemeBgImage || foxenTheme.bgImage || null;
     const activeAccent = foxenAccentColor || window.__foxenAccentColor || (function() { try { return localStorage.getItem('foxen_accent_color'); } catch(_) { return null; } })() || foxenTheme.bgColor2 || DEFAULT_THEME.bgColor2;
-    const settings = { ...DEFAULT_THEME, ...foxenTheme, bgColor2: activeAccent, bgImage };
+    const settings = { ...DEFAULT_THEME, ...foxenTheme, headerPosition: isBottom ? 'bottom' : 'top', bgColor2: activeAccent, bgImage };
 
     const setToggle = (id, val) => {
         const el = document.getElementById(id);
@@ -707,7 +752,7 @@ async function updateThemePreview() {
 
     setToggle('enableCustomThemeCheckbox', enableCustomTheme);
     setToggle('enableGlassmorphism', settings.enableGlassmorphism);
-    setToggle('headerPositionBottom', settings.headerPosition === 'bottom');
+    setToggle('headerPositionBottom', isBottom);
     setToggle('enableCustomScrollbar', settings.enableCustomScrollbar);
     setToggle('enableImprovedSeparators', settings.enableImprovedSeparators);
     setToggle('enableRedesignedHomepage', enableRedesignedHomepage);
@@ -899,12 +944,18 @@ async function exportTheme() {
     let foxenId = 'FX-000000';
     const uName = (foxenUserProfile?.username || fpCurrentUserInfo?.username || '').toLowerCase();
     const fId = String(foxenUserProfile?.foxen_id || '').toUpperCase();
-    const isAdminOrOfficial = !uName || uName === 'sanosenpay' || uName === 'sano' || uName === 'foxenteam' || uName === 'vireonshop' ||
-        fId === 'FX-000000' || fId === 'FX-774724' || fId === 'FX-000001' ||
-        Number(fpCurrentUserInfo?.userId) === 15508026 || Number(foxenUserProfile?.userId) === 15508026 ||
-        foxenUserProfile?.is_admin || foxenUserProfile?.is_official;
+    const uId = String(fpCurrentUserInfo?.userId || foxenUserProfile?.userId || '');
+    const isVireon = uName === 'vireonshop' || uId === '15508026' || fId === 'FX-000001';
+    const isSano = uName === 'sanosenpai' || uName === 'sanosenpay' || uId === '13781813' || fId === 'FX-000000';
+    const isAdminOrOfficial = isVireon || isSano || uName === 'foxenteam' || !uName || foxenUserProfile?.is_admin || foxenUserProfile?.is_official;
 
-    if (isAdminOrOfficial) {
+    if (isVireon) {
+        author = 'VireonShop';
+        foxenId = 'FX-000001';
+    } else if (isSano) {
+        author = 'SanoSenpai';
+        foxenId = 'FX-000000';
+    } else if (isAdminOrOfficial) {
         author = 'FoxenTeam';
         foxenId = 'FX-000000';
     } else if (foxenUserProfile) {
@@ -1486,9 +1537,12 @@ function setupThemeCustomizationHandlers() {
                 } else if (id === 'themeFont' || id === 'themeFontSelect') {
                      newSettings.font = event.target.value;
                 } else if (id === 'headerPositionBottom') {
-                     newSettings.headerPosition = isChecked ? 'bottom' : 'top';
+                     const isBottom = Boolean(isChecked);
+                     newSettings.headerPosition = isBottom ? 'bottom' : 'top';
+                     await ext.storage.local.set({ headerPositionBottom: isBottom });
                 } else if (id === 'headerPositionSelect') {
                      newSettings.headerPosition = event.target.value;
+                     await ext.storage.local.set({ headerPositionBottom: event.target.value === 'bottom' });
                 } else if (id === 'enableGlassmorphism') {
                      const g = document.getElementById('glassmorphismControls');
                      if (g) g.style.display = isChecked ? 'flex' : 'none';
@@ -2123,16 +2177,25 @@ async function setupFptTextOutline() {
     });
 }
 
-// Ensure custom theme and animated-bg safeguards are applied on load
+// Ensure custom theme, header position and animated-bg safeguards are applied on load
 window.applyCustomTheme = applyCustomTheme;
+window.applyHeaderPosition = applyHeaderPosition;
 applyCustomTheme().catch(() => {});
+applyHeaderPosition().catch(() => {});
 
 // Real-time synchronization across all tabs on theme changes
 if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, area) => {
-        if (area === 'local' && (changes.foxenTheme || changes.foxenThemeBgImage || changes.foxenAccentColor)) {
-            if (typeof applyCustomTheme === 'function') {
-                applyCustomTheme().catch(() => {});
+        if (area === 'local') {
+            if (changes.foxenTheme || changes.foxenThemeBgImage || changes.foxenAccentColor) {
+                if (typeof applyCustomTheme === 'function') {
+                    applyCustomTheme().catch(() => {});
+                }
+            }
+            if (changes.headerPositionBottom || changes.foxenTheme) {
+                if (typeof applyHeaderPosition === 'function') {
+                    applyHeaderPosition().catch(() => {});
+                }
             }
         }
     });

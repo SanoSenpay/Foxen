@@ -10,14 +10,11 @@
 (() => {
     'use strict';
 
-    const GH_USER   = 'SanoSenpay';
-    const GH_REPO   = 'FoxenThemes';
-    const GH_BRANCH = 'main';
-    const RAW_BASE  = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/${GH_BRANCH}/`;
-    const INDEX_URL = RAW_BASE + 'index.json';
+    const R2_THEMES_BASE = 'https://cdn.foxen.site/download/Catalog/Themes/';
+    const INDEX_URL = R2_THEMES_BASE + 'index.json';
 
     let _bookmarkIndex = 0;
-    let _githubCatalogCache = null;
+    let _themesCatalogCache = null;
 
     function matchThemeId(id1, id2) {
         if (!id1 || !id2) return false;
@@ -90,36 +87,48 @@
         document.head.appendChild(tag);
     }
 
-    // Fetches index.json directly from GitHub to get absolute URLs for files & previews
-    async function fetchGithubIndex() {
-        if (_githubCatalogCache) return _githubCatalogCache;
+    // Fetches index.json directly from Cloudflare R2 to get absolute URLs for files & previews
+    async function fetchThemesCatalog() {
+        if (_themesCatalogCache) return _themesCatalogCache;
         try {
             const resp = await fetch(INDEX_URL, { cache: 'no-store' });
             if (resp.ok) {
                 const data = await resp.json();
                 const list = Array.isArray(data) ? data : (Array.isArray(data.themes) ? data.themes : []);
-                _githubCatalogCache = list.map(t => ({
-                    id: t.id || t.name,
-                    name: t.name || 'Без названия',
-                    desc: t.desc || t.description || '',
-                    author: t.author || 'SanoSenpay',
-                    fileUrl: /^https?:\/\//i.test(t.file) ? t.file : RAW_BASE + String(t.file || '').replace(/^\/+/, ''),
-                    previewUrl: /^https?:\/\//i.test(t.preview) ? t.preview : RAW_BASE + String(t.preview || '').replace(/^\/+/, '')
-                }));
-                return _githubCatalogCache;
+                _themesCatalogCache = list.map(t => {
+                    let fileUrl = t.file || '';
+                    if (!/^https?:\/\//i.test(fileUrl)) {
+                        const cleanFile = String(fileUrl).replace(/^\/+/, '').replace(/^themes\//i, '');
+                        fileUrl = R2_THEMES_BASE + cleanFile;
+                    }
+                    let previewUrl = t.preview || '';
+                    if (!/^https?:\/\//i.test(previewUrl)) {
+                        const cleanPrev = String(previewUrl).replace(/^\/+/, '');
+                        previewUrl = cleanPrev.startsWith('previews/') ? R2_THEMES_BASE + cleanPrev : R2_THEMES_BASE + 'previews/' + cleanPrev;
+                    }
+                    return {
+                        id: t.id || t.name,
+                        name: t.name || 'Без названия',
+                        desc: t.desc || t.description || '',
+                        author: t.author || 'Foxen',
+                        fileUrl,
+                        previewUrl
+                    };
+                });
+                return _themesCatalogCache;
             }
         } catch (e) {
-            console.warn('Foxen theme gallery: failed to fetch GitHub index.json', e);
+            console.warn('Foxen theme gallery: failed to fetch R2 index.json', e);
         }
 
-        // Fallback map matching GitHub repo structure
+        // Fallback map matching Cloudflare R2 storage structure
         return [
-            { id: 'endless_void', name: 'Endless Void', desc: 'Темная космическая тема с матовым фоном.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Endless_Void.fptheme', previewUrl: RAW_BASE + 'previews/Endless_void_preview.png' },
-            { id: 'smile_of_the_abyss', name: 'Smile of the Abyss', desc: 'Багрово-темная тема с бордовыми акцентами.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Smile_of_the_Abyss.fptheme', previewUrl: RAW_BASE + 'previews/Smile_of_the_Abyss_preview.png' },
-            { id: 'gravitys_embrace', name: 'Gravity’s Embrace', desc: 'Элегантный тёмный стиль с золотыми ссылками.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Gravitys_Embrace.fptheme', previewUrl: RAW_BASE + 'previews/gravitys_embrace_preview.png' },
-            { id: 'midnight_bloom', name: 'Midnight Bloom', desc: 'Яркая фиолетовая неоновая тема в стиле Cyberpunk.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Midnight_Bloom.fptheme', previewUrl: RAW_BASE + 'previews/midnight_bloom_preview.png' },
-            { id: 'silent_peak', name: 'Silent Peak', desc: 'Нежный закатный градиент с пастельно-розовыми деталями.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/Silent_Peak.fptheme', previewUrl: RAW_BASE + 'previews/silentpeakpreview.png' },
-            { id: 'lone_lanterns_haven', name: 'The Lone Lantern’s Haven', desc: 'Глубокая ночная синева со стеклянным размытием.', author: 'SanoSenpay', fileUrl: RAW_BASE + 'themes/The_Lone_Lanterns_Haven.fptheme', previewUrl: RAW_BASE + 'previews/the_lone_lanterns_haven_preview.png' }
+            { id: 'endless_void', name: 'Endless Void', desc: 'Темная космическая тема с матовым фоном.', author: 'Foxen', fileUrl: R2_THEMES_BASE + 'Endless_Void.fptheme', previewUrl: R2_THEMES_BASE + 'previews/Endless_void_preview.png' },
+            { id: 'smile_of_the_abyss', name: 'Smile of the Abyss', desc: 'Багрово-темная тема с бордовыми акцентами.', author: 'Foxen', fileUrl: R2_THEMES_BASE + 'Smile_of_the_Abyss.fptheme', previewUrl: R2_THEMES_BASE + 'previews/Smile_of_the_Abyss_preview.png' },
+            { id: 'gravitys_embrace', name: 'Gravity’s Embrace', desc: 'Элегантный тёмный стиль с золотыми ссылками.', author: 'Foxen', fileUrl: R2_THEMES_BASE + 'Gravitys_Embrace.fptheme', previewUrl: R2_THEMES_BASE + 'previews/gravitys_embrace_preview.png' },
+            { id: 'midnight_bloom', name: 'Midnight Bloom', desc: 'Яркая фиолетовая неоновая тема в стиле Cyberpunk.', author: 'Foxen', fileUrl: R2_THEMES_BASE + 'Midnight_Bloom.fptheme', previewUrl: R2_THEMES_BASE + 'previews/midnight_bloom_preview.png' },
+            { id: 'silent_peak', name: 'Silent Peak', desc: 'Нежный закатный градиент с пастельно-розовыми деталями.', author: 'Foxen', fileUrl: R2_THEMES_BASE + 'Silent_Peak.fptheme', previewUrl: R2_THEMES_BASE + 'previews/silentpeakpreview.png' },
+            { id: 'lone_lanterns_haven', name: 'The Lone Lantern’s Haven', desc: 'Глубокая ночная синева со стеклянным размытием.', author: 'Foxen', fileUrl: R2_THEMES_BASE + 'The_Lone_Lanterns_Haven.fptheme', previewUrl: R2_THEMES_BASE + 'previews/the_lone_lanterns_haven_preview.png' }
         ];
     }
 
@@ -176,7 +185,7 @@
         const api = typeof browser !== 'undefined' ? browser : chrome;
         const { foxenBookmarkedThemeIds = [] } = await api.storage.local.get('foxenBookmarkedThemeIds');
 
-        const catalog = await fetchGithubIndex();
+        const catalog = await fetchThemesCatalog();
         const savedThemes = catalog.filter(item => 
             foxenBookmarkedThemeIds.some(bId => matchThemeId(item.id, bId))
         );
@@ -206,7 +215,7 @@
         bodyEl.innerHTML = `
             <div class="fptg-card">
                 <div class="fptg-preview-container">
-                    <img class="fptg-preview" src="${t.previewUrl}" alt="${escapeHtml(t.name)}" onerror="this.src='https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/previews/Endless_void_preview.png'">
+                    <img class="fptg-preview" src="${t.previewUrl}" alt="${escapeHtml(t.name)}" onerror="this.src='https://cdn.foxen.site/download/Catalog/Themes/previews/Endless_void_preview.png'">
                     ${hasMultiple ? `
                         <button class="fptg-arrow fptg-prev-btn" id="fptg-prev">‹</button>
                         <button class="fptg-arrow fptg-next-btn" id="fptg-next">›</button>

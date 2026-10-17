@@ -909,26 +909,65 @@ function getMainPopupHTML() {
                 </div>
 
                 <div class="foxen-page-content" data-page="support" style="padding:0;">
-                    <div style="padding:20px;background:linear-gradient(180deg, rgba(30,34,53,0.8) 0%, rgba(20,22,35,0.4) 100%);border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <h3 style="margin:0 0 12px;font-size:18px;display:flex;align-items:center;gap:8px;">
-                            О расширении Foxen <span class="material-symbols-rounded" style="color:#f4c84a;">star</span>
+                    <div style="padding:22px;background:var(--fxn-card-color, rgba(255,255,255,0.03));border-bottom:1px solid var(--fxn-card-border, rgba(255,255,255,0.08));">
+                        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">
+                            <span class="material-symbols-rounded" style="font-size:15px;color:#9ca3af;">military_tech</span>
+                            <span>Foxen Premium</span>
+                        </div>
+                        <h3 style="margin:0 0 10px;font-size:17px;font-weight:700;color:#fff;">
+                            Поддержите разработку Foxen подпиской Premium
                         </h3>
-                        <p style="font-size:13px;line-height:1.5;margin:0 0 16px;color:#b4b8cc;">Это <strong>самый важный</strong> вклад, который вы можете сделать. Хорошие оценки и звёзды на GitHub — лучшее топливо для новых обновлений и мотивация для разработчика. Пожалуйста, уделите всего минуту!</p>
-                        <div style="display:flex;flex-direction:column;gap:10px;">
-                            <a href="https://addons.mozilla.org/ru/firefox/addon/foxen/" target="_blank" class="btn" style="background:#ff7139;color:#fff;border:none;justify-content:center;padding:10px;font-weight:600;"><span class="material-icons" style="font-size:20px;margin-right:8px;">rate_review</span>Оставить отзыв в Mozilla Add-ons</a>
-                            <a href="https://github.com/SanoSenpay/Foxen" target="_blank" class="btn btn-default" style="justify-content:center;padding:10px;font-weight:600;"><span class="material-icons" style="font-size:20px;margin-right:8px;color:#f4c84a;">star_rate</span>Поставить звезду на GitHub</a>
+                        <p style="font-size:12.5px;line-height:1.55;margin:0 0 14px;color:#cbd5e1;">
+                            Расширение Foxen создаётся и развивается <strong>одним человеком</strong> (<a href="https://github.com/SanoSenpay" target="_blank" style="color:#ffffff;text-decoration:underline;">SanoSenpai</a>) — без сторонних инвесторов и без навязчивой рекламы. Приобретая <strong>Foxen Premium</strong>, вы напрямую помогаете мне оплачивать серверы Cloudflare Workers, базу данных Supabase и токены ИИ, получая доступ к расширенным функциям.
+                        </p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;">
+                            <a href="https://web.foxen.site/" target="_blank" class="btn" style="background:#ffffff;color:#0a0a0a;border:1px solid #ffffff;justify-content:center;padding:9px 16px;font-weight:600;text-align:center;width:100%;box-sizing:border-box;">
+                                <span class="material-symbols-rounded" style="font-size:18px;margin-right:6px;color:#0a0a0a;">crown</span>Купить Foxen Premium
+                            </a>
+                            <a href="https://t.me/FoxenFF" target="_blank" class="btn btn-default" style="background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);justify-content:center;padding:9px 16px;font-weight:500;text-align:center;width:100%;box-sizing:border-box;">
+                                <span class="material-symbols-rounded" style="font-size:18px;margin-right:6px;color:#ffffff;">send</span>Telegram-канал Foxen
+                            </a>
                         </div>
                     </div>
                     
-                    <div style="padding:20px;">
-                        <h4 style="margin:0 0 10px;font-size:14px;color:#8a8e9f;display:flex;align-items:center;gap:6px;">
-                            <span class="material-icons" style="font-size:16px;">handshake</span> Благодарность оригиналу
+                    <div style="padding:22px;border-bottom:1px solid var(--fxn-card-border, rgba(255,255,255,0.08));background:var(--fxn-card-color, rgba(255,255,255,0.02));">
+                        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">
+                            <span class="material-symbols-rounded" style="font-size:15px;color:#9ca3af;">handshake</span>
+                            <span>Благодарность оригиналу & XaviersDev</span>
+                        </div>
+                        <h4 style="margin:0 0 10px;font-size:15px;color:#fff;font-weight:700;">
+                            Фундамент проекта: FunPay Tools от XaviersDev
                         </h4>
-                        <p style="font-size:12px;line-height:1.5;margin:0 0 14px;color:#7a7e8f;">Foxen является форком невероятного расширения <strong>FunPay Tools</strong> (создано <strong>XaviersDev</strong>, лицензия MIT). В знак благодарности, пожалуйста, оставьте хороший отзыв оригинальному расширению в Chrome Web Store!</p>
-                        <div style="display:flex;flex-direction:column;gap:8px;">
-                            <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb/reviews" target="_blank" class="btn btn-default" style="font-size:12px;padding:8px 12px;justify-content:flex-start;"><span class="material-icons" style="font-size:16px;margin-right:8px;color:#4caf50;">thumb_up</span>Отзыв для FunPay Tools в Chrome Store</a>
-                            <a href="https://github.com/XaviersDev/FunPay-Tools" target="_blank" class="btn btn-default" style="font-size:12px;padding:8px 12px;justify-content:flex-start;"><span class="material-icons" style="font-size:16px;margin-right:8px;">code</span>Оригинальный репозиторий GitHub</a>
-                            <a href="https://funpay.tools" target="_blank" class="btn btn-default" style="font-size:12px;padding:8px 12px;justify-content:flex-start;"><span class="material-icons" style="font-size:16px;margin-right:8px;">language</span>Официальный сайт funpay.tools</a>
+                        <p style="font-size:12.5px;line-height:1.55;margin:0 0 12px;color:#cbd5e1;">
+                            Расширение <strong>Foxen</strong> существует благодаря колоссальному первопроходческому труду разработчика <strong>XaviersDev</strong> — создателя оригинального проекта <strong>FunPay Tools</strong> (лицензия MIT). Именно его идеи и архитектура заложили фундамент для современных инструментов работы на FunPay.
+                        </p>
+                        <p style="font-size:12px;line-height:1.5;margin:0 0 14px;color:#cbd5e1;background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);border-left:3px solid rgba(255,255,255,0.4);">
+                            💡 <strong>Как поддержать автора оригинального проекта?</strong><br>
+                            Вы можете поддержать <strong>XaviersDev</strong>, приобретя <strong>FunPay Tools PRO</strong> на официальном сайте оригинала или оставив положительную оценку в Chrome Web Store!
+                        </p>
+                        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;width:100%;">
+                            <a href="https://funpay.tools" target="_blank" class="btn" style="font-size:11.5px;padding:9px 6px;justify-content:center;background:#ffffff;color:#0a0a0a;border:1px solid #ffffff;font-weight:600;white-space:nowrap;text-align:center;width:100%;box-sizing:border-box;">
+                                <span class="material-symbols-rounded" style="font-size:16px;margin-right:4px;color:#0a0a0a;">verified</span>FunPay Tools PRO
+                            </a>
+                            <a href="https://github.com/XaviersDev/FunPay-Tools" target="_blank" class="btn btn-default" style="font-size:11.5px;padding:9px 6px;justify-content:center;background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;text-align:center;width:100%;box-sizing:border-box;">
+                                <span class="material-symbols-rounded" style="font-size:16px;margin-right:4px;color:#ffffff;">code</span>GitHub XaviersDev
+                            </a>
+                            <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb/reviews" target="_blank" class="btn btn-default" style="font-size:11.5px;padding:9px 6px;justify-content:center;background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;text-align:center;width:100%;box-sizing:border-box;">
+                                <span class="material-symbols-rounded" style="font-size:16px;margin-right:4px;color:#ffffff;">thumb_up</span>Отзыв в Chrome
+                            </a>
+                        </div>
+                    </div>
+
+                    <div style="padding:22px;background:var(--fxn-card-color, rgba(255,255,255,0.03));">
+                        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">
+                            <span class="material-symbols-rounded" style="font-size:15px;color:#9ca3af;">star</span>
+                            <span>Бесплатная поддержка</span>
+                        </div>
+                        <h4 style="margin:0 0 8px;font-size:14px;color:#fff;">Оценка и звёзды на GitHub</h4>
+                        <p style="font-size:12px;line-height:1.5;margin:0 0 14px;color:#94a3b8;">Даже без покупки подписки вы можете здорово поддержать меня. Положительный отзыв в каталоге Mozilla Add-ons или звезда на GitHub помогают привлекать новых пользователей и развивать проект дальше.</p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;">
+                            <a href="https://addons.mozilla.org/ru/firefox/addon/foxen/" target="_blank" class="btn btn-default" style="background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);padding:9px 14px;font-size:12.5px;font-weight:500;justify-content:center;text-align:center;width:100%;box-sizing:border-box;"><span class="material-symbols-rounded" style="font-size:17px;margin-right:6px;color:#ffffff;">rate_review</span>Отзыв в Mozilla Add-ons</a>
+                            <a href="https://github.com/SanoSenpay/Foxen" target="_blank" class="btn btn-default" style="background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);padding:9px 14px;font-size:12.5px;font-weight:500;justify-content:center;text-align:center;width:100%;box-sizing:border-box;"><span class="material-symbols-rounded" style="font-size:17px;margin-right:6px;color:#ffffff;">star</span>Звезда на GitHub</a>
                         </div>
                     </div>
                 </div>

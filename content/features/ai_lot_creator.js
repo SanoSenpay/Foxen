@@ -333,13 +333,42 @@ async function handleAIGeneration() {
 
     } catch (error) {
         console.error("AI Lot Generation Error:", error);
-        setModalStatus('error', 'Ошибка генерации', `
-            <div class="error-msg">${error.message}</div>
-            <button type="button" class="foxen-btn-retry" onclick="document.getElementById('ai-gen-submit-btn').click()">
-                <span class="material-symbols-rounded">refresh</span>
-                Повторить попытку
-            </button>
+        const errMsg = error.message || 'Ошибка генерации лота';
+        const isRateLimit = errMsg.includes('429') || errMsg.includes('Лимит') || errMsg.includes('квот') || errMsg.includes('Rate Limit');
+
+        setModalStatus('error', isRateLimit ? 'Лимит общего сервера ИИ' : 'Ошибка генерации', `
+            <div class="error-msg" style="text-align: left; font-size: 13px; line-height: 1.5; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; margin-bottom: 12px; color: #f87171;">
+                ${errMsg}
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="foxen-btn-retry" onclick="document.getElementById('ai-gen-submit-btn').click()">
+                    <span class="material-symbols-rounded">refresh</span>
+                    Повторить попытку
+                </button>
+                <button type="button" id="ai-gen-open-key-settings" style="display: inline-flex; align-items: center; gap: 6px; background: var(--fxn-accent, #c026d3); color: #ffffff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    <span class="material-symbols-rounded" style="font-size: 18px;">key</span>
+                    Указать свой ключ ИИ
+                </button>
+            </div>
         `);
+
+        document.getElementById('ai-gen-open-key-settings')?.addEventListener('click', () => {
+            const popup = document.querySelector('.foxen-popup') || document.getElementById('foxen-tools-popup');
+            if (popup) {
+                popup.classList.add('active');
+                if (typeof window.switchFoxenPanel === 'function') {
+                    window.switchFoxenPanel('ai_settings');
+                }
+            } else {
+                const btn = document.querySelector('#foxen-menu-btn, .foxen-sidebar-btn, #fp-tools-menu-btn');
+                btn?.click();
+                setTimeout(() => {
+                    if (typeof window.switchFoxenPanel === 'function') {
+                        window.switchFoxenPanel('ai_settings');
+                    }
+                }, 150);
+            }
+        });
     } finally {
         submitBtn.classList.remove('loading');
         submitBtn.disabled = false;

@@ -11,8 +11,47 @@
 
     if (typeof window === 'undefined' || !window.location.hostname.includes('funpay.com')) return;
 
-    // --- State & Memory Cache ---
+    // --- State & Memory Cache (with Session Storage persistence across page navigation) ---
     const userEffectsCache = new Map(); // username.toLowerCase() -> effectPayload
+    
+    // Load existing session cache across FunPay tabs/pages (TTL: 15 min)
+    try {
+        const rawSessionCache = sessionStorage.getItem('fxn_user_effects_cache');
+        if (rawSessionCache) {
+            const parsed = JSON.parse(rawSessionCache);
+            const now = Date.now();
+            if (parsed && parsed.ts && (now - parsed.ts < 900000) && parsed.data) {
+                Object.entries(parsed.data).forEach(([k, v]) => {
+                    userEffectsCache.set(k, v);
+                });
+            }
+        }
+    } catch (_) {}
+
+    let persistSessionTimer = null;
+    function persistEffectsCacheToSession() {
+        if (persistSessionTimer) return;
+        persistSessionTimer = setTimeout(() => {
+            persistSessionTimer = null;
+            try {
+                const obj = {};
+                let count = 0;
+                for (const [k, v] of userEffectsCache.entries()) {
+                    obj[k] = v;
+                    if (++count > 400) break;
+                }
+                sessionStorage.setItem('fxn_user_effects_cache', JSON.stringify({ ts: Date.now(), data: obj }));
+            } catch (_) {}
+        }, 1000);
+    }
+
+    const origCacheSet = userEffectsCache.set.bind(userEffectsCache);
+    userEffectsCache.set = function(k, v) {
+        const res = origCacheSet(k, v);
+        persistEffectsCacheToSession();
+        return res;
+    };
+
     const activeCanvases = new Set();
     let isMasterLoopRunning = false;
     let lastFrameTime = 0;
@@ -22,24 +61,112 @@
     let myFoxenEmoji = null;
     let myUsername = null;
 
-    // Helper: Attach custom emoji badge (emoji.gg / GIF / PNG) next to nickname
-    function attachCustomEmojiBadge(targetEl, emojiUrl) {
-        if (!targetEl || !emojiUrl) return;
+    // Memory cache for background-converted data URLs
+    const emojiDataUrlCache = new Map();
+
+    // Helper: Attach custom emoji badge (emoji.gg / GIF / PNG or Unicode) next to nickname
+    function attachCustomEmojiBadge(targetEl, emojiVal) {
+        if (!targetEl || !emojiVal) return;
+        let val = String(emojiVal).trim();
+        if (!val) return;
+
+        const extApi = typeof browser !== 'undefined' ? browser : chrome;
+        const localLogoUrl = extApi?.runtime?.getURL?.('icons/icon128.png');
+
+        // Resolve foxen logo / broken cdn.foxen.site URLs directly to local asset
+        if (val.includes('foxenlogo') || val.includes('cdn.foxen.site')) {
+            if (localLogoUrl) val = localLogoUrl;
+        }
+
         const parent = targetEl.parentNode || targetEl;
-        let existing = parent.querySelector('.fxn-custom-emoji-img') || targetEl.querySelector('.fxn-custom-emoji-img');
-        if (existing) {
-            if (existing.src !== emojiUrl) existing.src = emojiUrl;
+        const isUrl = /^https?:\/\//i.test(val) || val.startsWith('data:') || val.startsWith('blob:') || val.startsWith('chrome-extension:') || val.startsWith('moz-extension:');
+
+        // Ensure we only check this specific target's immediate sibling or inner child, NOT adjacent rows/messages
+        let existing = null;
+        if (targetEl.nextElementSibling && (targetEl.nextElementSibling.classList.contains('fxn-custom-emoji-img') || targetEl.nextElementSibling.classList.contains('fxn-custom-emoji-badge'))) {
+            existing = targetEl.nextElementSibling;
+        } else if (targetEl.querySelector) {
+            existing = targetEl.querySelector('.fxn-custom-emoji-img, .fxn-custom-emoji-badge');
+        }
+
+        if (!isUrl) {
+            // Unicode emoji badge
+            if (existing) {
+                if (existing.classList.contains('fxn-custom-emoji-badge')) {
+                    if (existing.textContent !== val) existing.textContent = val;
+                    return;
+                }
+                existing.remove();
+            }
+            const span = document.createElement('span');
+            span.className = 'fxn-custom-emoji-badge';
+            span.textContent = val;
+            span.title = 'Foxen Premium Status';
+            span.style.cssText = 'display: inline-block !important; font-size: 1.75em !important; line-height: 1 !important; vertical-align: middle !important; position: relative !important; top: -2px !important; margin-left: 3px !important; margin-right: 2px !important; cursor: pointer; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; z-index: 10 !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35)) !important;';
+            span.onmouseenter = () => { span.style.transform = 'scale(1.2) rotate(4deg)'; };
+            span.onmouseleave = () => { span.style.transform = 'scale(1) rotate(0deg)'; };
+
+            if (targetEl.nextSibling) {
+                parent.insertBefore(span, targetEl.nextSibling);
+            } else {
+                parent.appendChild(span);
+            }
             return;
+        }
+
+        // Image URL badge
+        const cachedDataUrl = emojiDataUrlCache.get(val);
+        const resolvedSrc = cachedDataUrl || val;
+
+        if (existing) {
+            if (existing.classList.contains('fxn-custom-emoji-img')) {
+                if (existing.src !== resolvedSrc) existing.src = resolvedSrc;
+                return;
+            }
+            existing.remove();
         }
 
         const img = document.createElement('img');
         img.className = 'fxn-custom-emoji-img';
-        img.src = emojiUrl;
-        img.alt = 'emoji';
+        img.alt = '';
         img.title = 'Foxen Premium Status';
-        img.style.cssText = 'display: inline-block !important; width: 1.25em !important; height: 1.25em !important; vertical-align: -0.2em !important; margin-left: 6px !important; margin-right: 2px !important; object-fit: contain !important; border-radius: 4px !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35)) !important; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; cursor: pointer; position: relative !important; z-index: 10 !important;';
-        img.onmouseenter = () => { img.style.transform = 'scale(1.35) rotate(4deg)'; };
+        img.style.cssText = 'display: inline-block !important; width: 1.75em !important; height: 1.75em !important; min-width: 1.75em !important; min-height: 1.75em !important; vertical-align: middle !important; position: relative !important; top: -2px !important; margin-left: 3px !important; margin-right: 2px !important; object-fit: contain !important; border-radius: 4px !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35)) !important; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; cursor: pointer; z-index: 10 !important;';
+        img.onmouseenter = () => { img.style.transform = 'scale(1.2) rotate(4deg)'; };
         img.onmouseleave = () => { img.style.transform = 'scale(1) rotate(0deg)'; };
+
+        img.onerror = () => {
+            if (localLogoUrl && img.src !== localLogoUrl && (val.includes('foxen') || !img.dataset.proxyTried)) {
+                img.src = localLogoUrl;
+                return;
+            }
+            if (!img.dataset.proxyTried && extApi?.runtime?.sendMessage) {
+                img.dataset.proxyTried = 'true';
+                try {
+                    extApi.runtime.sendMessage({
+                        action: 'fxnFetchImageDataUrl',
+                        url: val
+                    }, (res) => {
+                        if (res && res.ok && res.dataUrl) {
+                            emojiDataUrlCache.set(val, res.dataUrl);
+                            img.src = res.dataUrl;
+                        } else if (localLogoUrl) {
+                            img.src = localLogoUrl;
+                        } else {
+                            img.remove();
+                        }
+                    });
+                } catch (_) {
+                    if (localLogoUrl) img.src = localLogoUrl;
+                    else img.remove();
+                }
+            } else if (localLogoUrl && img.src !== localLogoUrl) {
+                img.src = localLogoUrl;
+            } else {
+                img.remove();
+            }
+        };
+
+        img.src = resolvedSrc;
 
         if (targetEl.nextSibling) {
             parent.insertBefore(img, targetEl.nextSibling);
@@ -729,8 +856,8 @@
         return (text || '').trim();
     }
 
-    const SUPABASE_REST_URL = 'https://api.foxen.site';
-    const SUPABASE_FALLBACK_URL = 'https://yoacfrbedwksnfksjjmv.supabase.co';
+    const SUPABASE_REST_URL = 'https://yoacfrbedwksnfksjjmv.supabase.co';
+    const SUPABASE_FALLBACK_URL = 'https://api.foxen.site';
     const SUPABASE_REST_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
 
     async function proxiedSupabaseFetch(url, options = {}) {
@@ -765,9 +892,9 @@
         });
 
         let res = await doFetch(url);
-        // Если api.foxen.site временно недоступен или вернул ошибку, пробуем прямой URL Supabase
-        if ((!res || !res.ok) && url.includes('api.foxen.site')) {
-            const fallbackUrl = url.replace('https://api.foxen.site', SUPABASE_FALLBACK_URL);
+        // Если прямой Supabase временно недоступен или вернул ошибку, пробуем резервный через api.foxen.site
+        if ((!res || !res.ok) && url.includes('supabase.co')) {
+            const fallbackUrl = url.replace('https://yoacfrbedwksnfksjjmv.supabase.co', SUPABASE_FALLBACK_URL);
             const fbRes = await doFetch(fallbackUrl);
             if (fbRes && fbRes.ok) return fbRes;
         }
@@ -850,14 +977,7 @@
                                 if (r) {
                                     // Проверка активной подписки пользователя
                                     let isUserPrem = Boolean(r.is_premium ?? r.has_premium);
-                                    const adminIds = ['FX-000000', 'FX-000001', 'FX-774724', 'FX-15508026'];
-                                    const adminUsers = ['vireonshop', 'sano'];
-                                    const effUser = r.fp_user || r.nickname_effect?.username || null;
-                                    const effUserId = r.fp_user_id || r.nickname_effect?.fp_user_id || null;
-
-                                    if (adminIds.includes(String(r.foxen_id || '').toUpperCase()) || (effUser && adminUsers.includes(effUser.toLowerCase()))) {
-                                        isUserPrem = true;
-                                    } else if (Array.isArray(r.subscriptions) && r.subscriptions.length > 0) {
+                                    if (Array.isArray(r.subscriptions) && r.subscriptions.length > 0) {
                                         const now = new Date();
                                         const activeSub = r.subscriptions.find(s => s.status === 'active' && (s.is_lifetime || !s.expires_at || new Date(s.expires_at) > now));
                                         isUserPrem = Boolean(activeSub);
@@ -921,7 +1041,7 @@
     function reapplyAllEffects() {
         activeCanvases.forEach(item => item.destroy());
         activeCanvases.clear();
-        document.querySelectorAll('.fxn-custom-emoji-img').forEach(el => el.remove());
+        document.querySelectorAll('.fxn-custom-emoji-img, .fxn-custom-emoji-badge').forEach(el => el.remove());
         document.querySelectorAll('.fxn-nick-decorated').forEach(el => {
             el.classList.remove('fxn-nick-decorated');
             el.style.color = '';
@@ -930,6 +1050,7 @@
             span.style.color = '';
             span.querySelectorAll('canvas').forEach(c => c.remove());
         });
+        document.querySelectorAll('[data-fxn-checked]').forEach(el => delete el.dataset.fxnChecked);
         scanAndApplyNicknameEffects();
     }
 
@@ -971,9 +1092,9 @@
         rawElements.forEach(rawEl => {
             if (!rawEl) return;
 
-            // Skip elements that are explicitly hidden
-            const computed = window.getComputedStyle(rawEl);
-            if (computed.display === 'none' || computed.visibility === 'hidden') return;
+            // Skip elements that are explicitly hidden or already scanned
+            if (rawEl.hidden || rawEl.style?.display === 'none' || rawEl.style?.visibility === 'hidden') return;
+            if (rawEl.dataset.fxnChecked) return;
 
             // Никогда не применять эффекты ника или кастом эмодзи внутри меню профиля, кроме самого ника (#fxnSpmUsername)
             if (rawEl.closest('#fxnSidebarProfileModal, #fxnSpmStatsCard, .fxn-spm-grid-stats, .fxn-spm-card, #foxenMainPopup, .fxn-popup') && rawEl.id !== 'fxnSpmUsername') {
@@ -984,6 +1105,7 @@
             if (rawEl.classList.contains('fxn-nick-decorated') || 
                 rawEl.closest('.fxn-nick-decorated') || 
                 rawEl.querySelector('.fxn-nick-overlay-canvas')) {
+                rawEl.dataset.fxnChecked = '1';
                 return;
             }
 
@@ -992,6 +1114,13 @@
 
             const lower = text.toLowerCase();
             const clean = cleanUser(text);
+
+            // Fast exit if user is cached as having NO effects/emojis
+            if (userEffectsCache.has(lower) && userEffectsCache.get(lower) === null &&
+                userEffectsCache.has(clean) && userEffectsCache.get(clean) === null) {
+                rawEl.dataset.fxnChecked = '1';
+                return;
+            }
 
             // 1. Check local user effects / emoji cache
             const profileIdMatch = window.location.pathname.match(/\/users\/(\d+)/);
@@ -1023,6 +1152,7 @@
             }
 
             if (data) {
+                rawEl.dataset.fxnChecked = '1';
                 const eff = data.effect || (data.id ? data : null);
                 const emoji = data.emoji || null;
 
@@ -1046,6 +1176,7 @@
                          rawEl.id === 'fxnSpmUsername' || rawEl.classList.contains('fxn-spm-username');
 
             if (isMe && (effObj?.id || myFoxenEmoji)) {
+                rawEl.dataset.fxnChecked = '1';
                 let targetEl = rawEl;
                 if (effObj?.id && !rawEl.classList.contains('fxn-nick-decorated')) {
                     targetEl = wrapTextNodeForNicknameFX(rawEl, text);
@@ -1060,7 +1191,10 @@
                 return;
             }
 
-            if (rawEl.classList.contains('fxn-nick-decorated')) return;
+            if (rawEl.classList.contains('fxn-nick-decorated')) {
+                rawEl.dataset.fxnChecked = '1';
+                return;
+            }
 
             // 3. Otherwise queue for server lookup
             usernamesToLookup.push(text);
@@ -1076,8 +1210,9 @@
     }
 
     // --- Live Verification of Current User Premium Status ---
-    const ADMIN_IDS = ['FX-000000', 'FX-000001', 'FX-774724', 'FX-15508026'];
-    const ADMIN_USERS = ['vireonshop', 'sano'];
+    const ADMIN_IDS = ['FX-000000', 'FX-000001'];
+    const ADMIN_USERS = ['vireonshop', 'sanosenpai'];
+    const ADMIN_USER_IDS = ['15508026', '13781813'];
 
     async function verifyLiveUserSubscriptionAndSync() {
         try {
@@ -1086,22 +1221,21 @@
             myUsername = uName;
             const uClean = cleanUser(uName);
 
-            let isPremium = ADMIN_USERS.includes(uName.toLowerCase());
+            let isPremium = false;
 
-            // 1. Check if profile in chrome.storage already has confirmed premium or admin ID
+            // 1. Check if profile in chrome.storage already has confirmed premium
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
                 const localData = await new Promise(r => chrome.storage.local.get([
-                    'foxen_user_profile', 'foxenUserProfile', 
+                    'foxen_user_profile', 'foxenUserProfile', 'foxenUserProfileCache',
                     'fxn_my_custom_emoji', 'fxn_my_nickname_effect',
                     `fxn_custom_emoji_${uClean}`, `fxn_effect_${uClean}`
                 ], r));
-                const prof = localData?.foxen_user_profile || localData?.foxenUserProfile;
+                const prof = localData?.foxen_user_profile || localData?.foxenUserProfile || localData?.foxenUserProfileCache?.data;
                 const profUser = (prof?.fp_user || prof?.username || '').toLowerCase();
                 const isCurrentProfile = Boolean(profUser && cleanUser(profUser) === uClean);
 
                 if (isCurrentProfile && prof) {
-                    const foxenId = String(prof.foxen_id || '').toUpperCase();
-                    if (ADMIN_IDS.includes(foxenId) || prof.has_premium || prof.is_premium || prof.subscription_status === 'active') {
+                    if (prof.has_premium || prof.is_premium || prof.subscription?.is_active || (prof.SUBSCRIPTION && prof.SUBSCRIPTION !== 'free')) {
                         isPremium = true;
                     }
                 }
@@ -1126,7 +1260,7 @@
                     const profs = await profRes.json();
                     if (Array.isArray(profs) && profs.length > 0) {
                         const p = profs[0];
-                        if (ADMIN_USERS.includes(uName.toLowerCase()) || p?.is_premium || p?.has_premium || ADMIN_IDS.includes(String(p?.foxen_id || '').toUpperCase())) {
+                        if (p?.is_premium || p?.has_premium) {
                             isPremium = true;
                         } else {
                             isPremium = false;
@@ -1287,7 +1421,7 @@
             domMutationTimer = setTimeout(() => {
                 domMutationTimer = null;
                 scanAndApplyNicknameEffects();
-            }, 100);
+            }, 400);
         });
 
         domObserver.observe(document.body, {

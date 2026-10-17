@@ -248,9 +248,14 @@
         let isAi = false;
         if (typeof window.fxnTranslateText === 'function') {
             try {
-                const st = await (typeof browser !== 'undefined' ? browser : chrome).storage?.local?.get(['foxenUserProfileCache', 'foxen_user_profile', 'foxen_is_premium', 'cached_profile']);
-                const prof = st?.foxenUserProfileCache?.data || st?.foxen_user_profile || st?.cached_profile;
-                const isPrem = (prof && prof.SUBSCRIPTION && prof.SUBSCRIPTION !== 'free') || Boolean(st?.foxen_is_premium);
+                let isPrem = false;
+                if (typeof window.isFoxenPremiumUser === 'function') {
+                    isPrem = await window.isFoxenPremiumUser();
+                } else {
+                    const st = await (typeof browser !== 'undefined' ? browser : chrome).storage?.local?.get(['foxenUserProfileCache', 'foxen_user_profile', 'foxen_is_premium', 'cached_profile']);
+                    const prof = st?.foxenUserProfileCache?.data || st?.foxen_user_profile || st?.cached_profile;
+                    isPrem = Boolean(prof?.is_premium || (prof?.SUBSCRIPTION && prof?.SUBSCRIPTION !== 'free') || st?.foxen_is_premium);
+                }
 
                 const res = await window.fxnTranslateText(orig, 'ru', { useAi: isPrem });
                 if (res && res.text) {

@@ -15,7 +15,16 @@ function renderSalesChart(containerId) {
 
         const period = foxenSalesChartPeriod || 30;
         const cutoff = Date.now() - period * 24 * 60 * 60 * 1000;
-        const orders = foxenSalesData.filter(o => o.orderDate >= cutoff && o.orderStatus === 'closed');
+        const getTs = (o) => (typeof window.fxnNormalizeOrderTimestamp === 'function')
+            ? window.fxnNormalizeOrderTimestamp(o)
+            : (typeof o.orderDate === 'number' && o.orderDate > 0 ? o.orderDate : Number(o.orderDate) || 0);
+
+        const orders = foxenSalesData.filter(o => {
+            const ts = getTs(o);
+            const rawSt = String(o.orderStatus || '').toLowerCase().trim();
+            const isClosed = rawSt === 'closed' || (!rawSt.includes('paid') && !rawSt.includes('refund') && !rawSt.includes('возврат') && !rawSt.includes('отмен'));
+            return ts >= cutoff && isClosed;
+        });
 
         if (!orders.length) {
             container.innerHTML = '<p style="color:var(--fxn-text-muted);font-size:12px;text-align:center;padding:20px;">Нет продаж за выбранный период</p>';
@@ -25,7 +34,7 @@ function renderSalesChart(containerId) {
         // Group by day
         const byDay = {};
         orders.forEach(o => {
-            const d = new Date(o.orderDate);
+            const d = new Date(getTs(o));
             const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
             if (!byDay[key]) byDay[key] = { count: 0, revenue: 0 };
             byDay[key].count++;

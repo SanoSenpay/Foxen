@@ -461,7 +461,7 @@ async function runSalesUpdateCycle() {
                 lastOrderId = orders[orders.length - 1].orderId;
                 await commitMeta(firstOrderId, lastOrderId);
                 console.log(`Foxen: Инициализация статистики с ${orders.length} заказами.`);
-                continueToken = nextOrderId;
+                continueToken = nextOrderId || (orders.length >= 10 ? lastOrderId : null);
             } else {
                 continueToken = null;
             }
@@ -1207,21 +1207,61 @@ async function tgRunBump() {
 // Сводка продаж для команды /sales.
 async function tgSalesSummary() {
     try {
+        // Подгружаем свежие заказы с 1-й страницы FunPay, если прошло > 60 сек
+        try {
+            const auth = await getAuthDetailsForBackground();
+            if (auth && auth.golden_key) {
+                const lastUpd = await FPTSalesDB.getMeta('lastUpdate');
+                if (!lastUpd || Date.now() - lastUpd > 60000) {
+                    const url = 'https://funpay.com/orders/trade';
+                    const options = {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 
+                            'X-Requested-With': 'XMLHttpRequest', 
+                            'X-Csrf-Token': auth.csrf_token, 
+                            'Cookie': auth.phpsessid ? `golden_key=${auth.golden_key}; PHPSESSID=${auth.phpsessid}` : `golden_key=${auth.golden_key}` 
+                        }
+                    };
+                    const resp = await fetch(url, options).catch(() => null);
+                    if (resp && resp.ok) {
+                        const html = await resp.text();
+                        const parsed = await parseHtmlViaOffscreen(html, 'parseSalesPage').catch(() => null);
+                        if (parsed && Array.isArray(parsed.orders) && parsed.orders.length > 0) {
+                            await FPTSalesDB.putOrders(parsed.orders);
+                            await FPTSalesDB.setMeta('lastUpdate', Date.now());
+                        }
+                    }
+                }
+            }
+        } catch (_) {}
+
         const all = await FPTSalesDB.getAllAsArray();
         if (!all.length) return null;
         const now = Date.now(), day = 864e5;
-        const t0 = new Date(); const todayStart = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate()).getTime();
+        const MSK_OFFSET = 3 * 3600 * 1000;
+        const mskNow = new Date(now + MSK_OFFSET);
+        const todayStart = Date.UTC(mskNow.getUTCFullYear(), mskNow.getUTCMonth(), mskNow.getUTCDate()) - MSK_OFFSET;
         const sym = { RUB: '₽', USD: '$', EUR: '€' };
         const bucket = (since) => {
             let count = 0; const rev = {};
             for (const o of all) {
                 if (since && o.orderDate < since) continue;
                 count++;
-                if (o.orderStatus === 'closed' || o.orderStatus === 'paid') {
-                    rev[o.currency] = (rev[o.currency] || 0) + (o.price || 0);
+                const st = String(o.orderStatus || '').toLowerCase();
+                const isPaid = st === 'closed' || st === 'paid' || st === 'complete' || st === 'completed' || st === 'done' || st === 'закрыт' || st === 'оплачен';
+                if (isPaid) {
+                    let cur = String(o.currency || 'RUB').toUpperCase();
+                    if (cur === 'РУБ' || cur === '₽' || cur === 'RUB') cur = 'RUB';
+                    const priceNum = typeof o.price === 'number' ? o.price : (parseFloat(o.price) || 0);
+                    rev[cur] = (rev[cur] || 0) + priceNum;
                 }
             }
-            const revStr = Object.entries(rev).map(([c, v]) => `${Math.round(v).toLocaleString('ru-RU')} ${sym[c] || c}`).join(' · ') || '0 ₽';
+            const revStr = Object.entries(rev).map(([c, v]) => {
+                const formatted = v % 1 === 0 ? v.toLocaleString('ru-RU') : (Math.round(v * 100) / 100).toLocaleString('ru-RU');
+                return `${formatted} ${sym[c] || c}`;
+            }).join(' · ') || '0 ₽';
             return { count, revenue: revStr };
         };
         return {
@@ -2456,11 +2496,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             if (bannerId.startsWith('http://') || bannerId.startsWith('https://')) {
                                 extensionBannerUrl = bannerId;
                             } else if (/\.(gif|png|jpg|jpeg|webp)$/i.test(bannerId)) {
-                                extensionBannerUrl = `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/${bannerId}`;
+                                extensionBannerUrl = `https://cdn.foxen.site/download/Catalog/Banners/${bannerId}`;
                             } else if (['banner1', 'banner2', 'banner3', 'foxen_blackhole', 'foxen_blackhole2'].includes(bannerId) || bannerId.includes('anim') || bannerId.includes('gif')) {
-                                extensionBannerUrl = `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/${bannerId}.gif`;
+                                extensionBannerUrl = `https://cdn.foxen.site/download/Catalog/Banners/${bannerId}.gif`;
                             } else {
-                                extensionBannerUrl = `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/${bannerId}.jpg`;
+                                extensionBannerUrl = `https://cdn.foxen.site/download/Catalog/Banners/${bannerId}.jpg`;
                             }
                         }
 
@@ -2538,6 +2578,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const headers = {};
                 res.headers.forEach((val, key) => { headers[key] = val; });
                 sendResponse({ ok: res.ok, status: res.status, statusText: res.statusText, text, headers });
+            } catch (e) {
+                sendResponse({ ok: false, error: e.message });
+            }
+        })();
+        return true;
+    }
+
+    // Binary Image Fetch Proxy to bypass FunPay CSP and convert to data: URL
+    if (request.action === 'fxnFetchImageDataUrl') {
+        (async () => {
+            try {
+                const res = await fetch(request.url, { credentials: 'omit' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const arrayBuffer = await res.arrayBuffer();
+                const bytes = new Uint8Array(arrayBuffer);
+                let binary = '';
+                const len = bytes.byteLength;
+                // Process in chunks to prevent max call stack size on large images
+                const chunkSize = 8192;
+                for (let i = 0; i < len; i += chunkSize) {
+                    const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+                    binary += String.fromCharCode.apply(null, chunk);
+                }
+                const base64 = btoa(binary);
+                const contentType = res.headers.get('content-type') || 'image/png';
+                const dataUrl = `data:${contentType};base64,${base64}`;
+                sendResponse({ ok: true, dataUrl });
             } catch (e) {
                 sendResponse({ ok: false, error: e.message });
             }
@@ -3414,7 +3481,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // TELEGRAM HANDLERS
     if (request.action === 'telegramValidate') {
         (async () => {
-            const res = await telegramValidateAndResolve(request.token);
+            const res = await telegramValidateAndResolve(request.token, request.chatId);
             sendResponse(res);
         })();
         return true;
@@ -3463,6 +3530,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 sendResponse({ success: true, count: c });
             } catch (e) {
                 sendResponse({ success: false, error: e.message, count: 0 });
+            }
+        })();
+        return true;
+    }
+    if (request.action === 'putSalesOrders') {
+        (async () => {
+            try {
+                if (Array.isArray(request.orders) && request.orders.length > 0) {
+                    await FPTSalesDB.putOrders(request.orders);
+                }
+                sendResponse({ success: true });
+            } catch (e) {
+                sendResponse({ success: false, error: e.message });
             }
         })();
         return true;

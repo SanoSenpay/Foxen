@@ -198,6 +198,7 @@ function attachChatMenuItems(chatHeader) {
     const userLink = chatHeader.querySelector(".media-user-name a[href*=\"/users/\"]");
     const buyerName = userLink ? userLink.textContent.trim() : "Покупатель";
 
+
     const tryInject = () => {
         // Ищем родное выпадающее меню FunPay (находится в .chat-header-controls .dropdown-menu)
         const menu = chatHeader.querySelector('.dropdown-menu');
@@ -317,6 +318,7 @@ function attachChatMenuItems(chatHeader) {
         menu.appendChild(blLi);
     };
 
+    chatHeader.querySelectorAll('.fxn-header-quick-group').forEach(el => el.remove());
     tryInject();
 }
 
@@ -327,7 +329,7 @@ function initBuyerHistoryObserver() {
     if (_bhObsActive) return;
     _bhObsActive = true;
 
-    document.querySelectorAll('#fp-buyer-hist-btn').forEach(el => el.remove());
+    document.querySelectorAll('#fp-buyer-hist-btn, .fxn-header-quick-group').forEach(el => el.remove());
     document.querySelectorAll('.chat-header, .chat-full-header').forEach(attachChatMenuItems);
 
     const root = document.getElementById('content') || document.body;

@@ -42,9 +42,10 @@
         return (resp && resp.success && typeof resp.count === 'number') ? resp.count : 0;
     }
 
-    // Эти методы со стороны content не используются для записи, но оставлены
-    // для совместимости сигнатур — они проксируются в background.
-    async function putOrders() { /* запись только в background */ }
+    async function putOrders(orders) {
+        if (!orders || !orders.length) return;
+        await ask('putSalesOrders', { orders });
+    }
     async function setMeta() {}
     async function getMeta() { return null; }
     async function clearAll() { await ask('resetSalesStorage'); }

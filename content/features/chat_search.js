@@ -135,8 +135,36 @@
 
     // ───────────────────────── init ─────────────────────────
 
+    function normalizeNoticeButton() {
+        const notices = document.querySelectorAll('.chat-header-controls .notice-button-container');
+        notices.forEach(notice => {
+            const brs = notice.querySelectorAll('br');
+            if (brs.length) {
+                brs.forEach(br => br.replaceWith(document.createTextNode(' ')));
+            }
+            const text = (notice.textContent || '').replace(/\s+/g, ' ').trim();
+            if (text) {
+                notice.setAttribute('data-fp-tooltip', text);
+                notice.title = text;
+                notice.classList.add('fp-tooltip-host');
+                const btn = notice.querySelector('button, .btn');
+                if (btn) {
+                    btn.title = text;
+                    btn.setAttribute('data-fp-tooltip', text);
+                }
+            }
+            if (!notice._fxnBound) {
+                notice._fxnBound = true;
+                notice.addEventListener('click', () => {
+                    setTimeout(normalizeNoticeButton, 200);
+                });
+            }
+        });
+    }
+
     function tick() {
         installHeaderButton();
+        normalizeNoticeButton();
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tick);

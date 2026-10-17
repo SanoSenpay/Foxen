@@ -157,7 +157,11 @@ function createMainPopup() {
 
         <div class="window">
             <div class="titlebar">
-                <div class="titlebar-title"></div>
+                <button type="button" class="fxn-mobile-menu-btn" id="fxnMobileMenuBtn" aria-label="Меню разделов" title="Разделы меню">
+                    <span class="material-symbols-rounded">menu</span>
+                    <span class="fxn-mobile-menu-text">Разделы</span>
+                </button>
+                <div class="titlebar-title" id="fxnTitlebarTitle">FOXEN</div>
                 <div class="titlebar-actions" style="display:flex;align-items:center;gap:8px;margin-left:auto;">
                     <div class="traffic">
                         <span class="traffic-min" title="Превратить в стильный Dockbar (вместо кнопки в меню)"></span>
@@ -168,21 +172,28 @@ function createMainPopup() {
             </div>
 
             <div class="body">
+                <!-- Mobile Backdrop for Sidebar Drawer -->
+                <div class="fxn-mobile-sidebar-backdrop" id="fxnMobileSidebarBackdrop"></div>
+
                 <!-- ================= SIDEBAR ================= -->
-                <nav class="sidebar">
+                <nav class="sidebar" id="fxnSidebar">
                     <div class="brand">
                         <img class="brand-logo" src="${logoUrl}" alt="Foxen Logo" onerror="this.src='https://funpay.com/img/layout/avatar.png'">
                         <div class="brand-name">
                             <div class="t1">FOXEN</div>
                             <div class="t2">Extension</div>
                         </div>
+                        <button type="button" class="fxn-mobile-sidebar-close" id="fxnMobileSidebarClose" title="Закрыть меню">
+                            <span class="material-symbols-rounded">close</span>
+                        </button>
                     </div>
 
                     <div class="sidebar-divider"></div>
 
                     <div class="search">
                         <span class="material-symbols-rounded">search</span>
-                        <input type="text" placeholder="Поиск настроек..." id="searchInput" autocomplete="off">
+                        <input type="text" placeholder="Поиск настроек..." id="searchInput" autocomplete="off" style="flex:1;">
+                        <button type="button" id="searchClearBtn" style="display:none;background:none;border:none;color:var(--fxn-text-subtle,#94a3b8);cursor:pointer;padding:0 2px;font-size:13px;line-height:1;" title="Очистить поиск">✕</button>
                     </div>
 
                     <!-- SIDEBAR NAVIGATION ACCORDION -->
@@ -269,6 +280,7 @@ function createMainPopup() {
                             </div>
                             <div class="nav-sub">
                                 <div class="nav-subitem" data-target="theme"><span class="dot"></span>Внешний вид</div>
+                                <div class="nav-subitem" data-target="chat_sidebar"><span class="dot"></span>Sidebar в чате</div>
                                 <div class="nav-subitem" data-target="theme_gallery"><span class="dot"></span>Каталог тем <span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:#ffffff;border:1px solid rgba(255,255,255,0.18);margin-left:auto;letter-spacing:0.04em;">DEV</span></div>
                                 <div class="nav-subitem" data-target="effects"><span class="dot"></span>Эффекты & Курсор</div>
                             </div>
@@ -826,6 +838,7 @@ function createMainPopup() {
                     </section>
 
                     <!-- PANEL 5: ПОДДЕРЖКА (SUPPORT) -->
+                    <!-- PANEL 5: ПОДДЕРЖКА (SUPPORT) -->
                     <section class="panel foxen-page-content" id="support" data-page="support">
                         <div class="panel-body">
                             <div class="panel-header">
@@ -833,29 +846,80 @@ function createMainPopup() {
                                 <div>
                                     <div class="crumb">Справка & О проекте</div>
                                     <h1>Поддержка проекта</h1>
-                                    <p>Поставьте оценку или звезду на GitHub — это помогает развивать расширение!</p>
+                                    <p>Развитие расширения Foxen, подписка Premium, благодарность автору оригинального FunPay Tools и открытый исходный код</p>
                                 </div>
                             </div>
 
-                            <div class="preview-card">
-                                <div class="preview-label">ОТЗЫВ И ЗВЕЗДА</div>
-                                <div style="font-size:14px;color:var(--fxn-text-main);font-weight:600;margin-bottom:6px;">Понравился Foxen?</div>
-                                <p style="font-size:12.5px;color:var(--fxn-text-desc);margin-bottom:16px;">Ваш положительный отзыв в каталоге или звезда на GitHub — лучшая благодарность разработчику.</p>
-                                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                                    <a href="https://addons.mozilla.org/ru/firefox/addon/foxen/" target="_blank" class="btn btn-solid" style="background:#ff7139;color:#fff;"><span class="material-symbols-rounded">rate_review</span>Отзыв в Mozilla Add-ons</a>
-                                    <a href="https://github.com/SanoSenpay/Foxen" target="_blank" class="btn btn-ghost"><span class="material-symbols-rounded">star</span>Звезда на GitHub</a>
+                            <!-- БЛОК 1: ПОДДЕРЖКА FOXEN ЧЕРЕЗ PREMIUM (ОДИН РАЗРАБОТЧИК) -->
+                            <div style="border-radius:14px;padding:20px 22px;background:var(--fxn-card-color, rgba(255,255,255,0.03));border:1px solid var(--fxn-card-border, rgba(255,255,255,0.08));box-shadow:0 4px 20px rgba(0,0,0,0.25);margin-bottom:14px;">
+                                <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">
+                                    <span class="material-symbols-rounded" style="font-size:15px;color:#9ca3af;">military_tech</span>
+                                    <span>Foxen Premium</span>
+                                </div>
+                                <div style="font-size:16px;color:#ffffff;font-weight:700;margin-bottom:8px;line-height:1.35;">
+                                    Поддержите разработку Foxen подпиской Premium
+                                </div>
+                                <p style="font-size:12.5px;color:#9ca3af;margin-bottom:16px;line-height:1.6;">
+                                    Расширение Foxen создаётся и развивается <b>одним человеком</b> (<a href="https://github.com/SanoSenpay" target="_blank" style="color:#ffffff;text-decoration:underline;text-underline-offset:2px;">SanoSenpai</a>) — в свободное время, без сторонних инвесторов и без навязчивой рекламы. Приобретая <b>Foxen Premium</b>, вы напрямую помогаете мне оплачивать серверную инфраструктуру Cloudflare Workers, базу данных Supabase и токены нейросетей, а взамен получаете доступ ко всем эксклюзивным PRO-возможностям.
+                                </p>
+
+                                <div class="fxn-support-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;">
+                                    <a href="https://web.foxen.site/" target="_blank" class="btn btn-solid" style="background:#ffffff;color:#0a0a0a;border:1px solid #ffffff;font-weight:600;padding:10px 14px;justify-content:center;text-align:center;width:100%;box-sizing:border-box;">
+                                        <span class="material-symbols-rounded" style="font-size:18px;margin-right:6px;color:#0a0a0a;">crown</span>Купить Foxen Premium
+                                    </a>
+                                    <a href="https://t.me/FoxenFF" target="_blank" class="btn btn-ghost" style="background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);font-weight:500;padding:10px 14px;justify-content:center;text-align:center;width:100%;box-sizing:border-box;">
+                                        <span class="material-symbols-rounded" style="font-size:18px;margin-right:6px;color:#ffffff;">send</span>Telegram-канал Foxen
+                                    </a>
                                 </div>
                             </div>
 
-                            <div class="section-label">Благодарность оригиналу</div>
-                            <div class="group">
-                                <div class="row">
-                                    <div class="row-icon"><span class="material-symbols-rounded">handshake</span></div>
-                                    <div class="row-text">
-                                        <div class="row-title">FunPay Tools by XaviersDev</div>
-                                        <div class="row-sub">Foxen основан на форке отличного проекта FunPay Tools (лицензия MIT).</div>
-                                    </div>
-                                    <a href="https://funpay.tools" target="_blank" class="btn btn-ghost">Сайт оригинала</a>
+                            <!-- БЛОК 2: БЛАГОДАРНОСТЬ XAVIERSDEV И FUNPAY TOOLS PRO -->
+                            <div style="border-radius:14px;padding:20px 22px;background:var(--fxn-card-color, rgba(255,255,255,0.03));border:1px solid var(--fxn-card-border, rgba(255,255,255,0.08));box-shadow:0 4px 20px rgba(0,0,0,0.25);margin-bottom:14px;">
+                                <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">
+                                    <span class="material-symbols-rounded" style="font-size:15px;color:#9ca3af;">handshake</span>
+                                    <span>Благодарность оригиналу & XaviersDev</span>
+                                </div>
+                                <div style="font-size:16px;color:#ffffff;font-weight:700;margin-bottom:8px;line-height:1.35;">
+                                    Фундамент расширения: FunPay Tools от XaviersDev
+                                </div>
+                                <p style="font-size:12.5px;color:#9ca3af;margin-bottom:12px;line-height:1.6;">
+                                    Расширение <b>Foxen</b> существует благодаря огромному труду разработчика <b>XaviersDev</b> — создателя оригинального проекта <b>FunPay Tools</b> (лицензия MIT). Именно его идеи, смелость и открытая кодовая база заложили основу для современных инструментов работы на FunPay.
+                                </p>
+                                <div style="font-size:12px;color:#d1d5db;margin-bottom:16px;line-height:1.55;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-left:3px solid rgba(255,255,255,0.4);padding:10px 14px;border-radius:8px;">
+                                    💡 <b>Как поддержать автора оригинального проекта?</b><br>
+                                    Вы можете выразить благодарность <b>XaviersDev</b>, купив подписку <b>FunPay Tools PRO</b> на официальном сайте оригинала или оставив отзыв в Chrome Web Store.
+                                </div>
+                                
+                                <div class="fxn-support-grid-3" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;width:100%;">
+                                    <a href="https://funpay.tools" target="_blank" class="btn btn-solid" style="background:#ffffff;color:#0a0a0a;border:1px solid #ffffff;font-weight:600;padding:9px 6px;font-size:11.5px;justify-content:center;text-align:center;width:100%;box-sizing:border-box;white-space:nowrap;">
+                                        <span class="material-symbols-rounded" style="font-size:16px;margin-right:4px;color:#0a0a0a;">verified</span>FunPay Tools PRO
+                                    </a>
+                                    <a href="https://github.com/XaviersDev/FunPay-Tools" target="_blank" class="btn btn-ghost" style="background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);font-weight:500;padding:9px 6px;font-size:11.5px;justify-content:center;text-align:center;width:100%;box-sizing:border-box;white-space:nowrap;">
+                                        <span class="material-symbols-rounded" style="font-size:16px;margin-right:4px;color:#ffffff;">code</span>GitHub XaviersDev
+                                    </a>
+                                    <a href="https://chromewebstore.google.com/detail/funpay-tools/pibmnjjfpojnakckilflcboodkndkibb/reviews" target="_blank" class="btn btn-ghost" style="background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);font-weight:500;padding:9px 6px;font-size:11.5px;justify-content:center;text-align:center;width:100%;box-sizing:border-box;white-space:nowrap;">
+                                        <span class="material-symbols-rounded" style="font-size:16px;margin-right:4px;color:#ffffff;">thumb_up</span>Отзыв в Chrome
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- БЛОК 3: БЕСПЛАТНЫЙ ВКЛАД (ЗВЁЗДЫ И ОТЗЫВЫ) -->
+                            <div style="border-radius:14px;padding:18px 22px;background:var(--fxn-card-color, rgba(255,255,255,0.03));border:1px solid var(--fxn-card-border, rgba(255,255,255,0.08));box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+                                <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">
+                                    <span class="material-symbols-rounded" style="font-size:15px;color:#9ca3af;">star</span>
+                                    <span>Бесплатная поддержка</span>
+                                </div>
+                                <div style="font-size:14.5px;color:#ffffff;font-weight:600;margin-bottom:6px;">Понравился Foxen? Уделите минуту!</div>
+                                <p style="font-size:12.5px;color:#9ca3af;margin-bottom:14px;line-height:1.55;">
+                                    Даже без покупки подписки вы можете здорово поддержать меня. Поставьте звёздочку на GitHub или оставьте отзыв в каталоге Mozilla Add-ons — это вдохновляет продолжать разработку и помогает новым продавцам узнать о проекте.
+                                </p>
+                                <div class="fxn-support-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;">
+                                    <a href="https://addons.mozilla.org/ru/firefox/addon/foxen/" target="_blank" class="btn btn-ghost" style="background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);font-weight:500;padding:9px 14px;font-size:12.5px;justify-content:center;text-align:center;width:100%;box-sizing:border-box;">
+                                        <span class="material-symbols-rounded" style="font-size:17px;margin-right:6px;color:#ffffff;">rate_review</span>Отзыв в Mozilla Add-ons
+                                    </a>
+                                    <a href="https://github.com/SanoSenpay/Foxen" target="_blank" class="btn btn-ghost" style="background:rgba(255,255,255,0.04);color:#ffffff;border:1px solid rgba(255,255,255,0.12);font-weight:500;padding:9px 14px;font-size:12.5px;justify-content:center;text-align:center;width:100%;box-sizing:border-box;">
+                                        <span class="material-symbols-rounded" style="font-size:17px;margin-right:6px;color:#ffffff;">star</span>Звезда на GitHub
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -1246,7 +1310,7 @@ function createMainPopup() {
                                     <h1>Telegram Бот & Уведомления</h1>
                                     <p>Мгновенные уведомления о новых заказах, сообщениях и удалённое управление через личного бота</p>
                                 </div>
-                                <div class="status-pill" id="fxnTgStatusPill"><span class="material-icons" style="font-size:14px;">circle</span><span id="fxnTgStatusText">ОТКЛЮЧЕН</span></div>
+                                <div class="status-pill" id="fxnTgStatusPill"><span class="material-symbols-rounded" style="font-size:14px;">circle</span><span id="fxnTgStatusText">ОТКЛЮЧЕН</span></div>
                             </div>
 
                             <div class="section-label">Статус интеграции</div>
@@ -2160,6 +2224,19 @@ function createMainPopup() {
                                 </div>
                             </div>
 
+                            <!-- ═══ 8b. SIDEBAR В ЧАТЕ ═══ -->
+                            <div class="section-label">Sidebar в чате</div>
+                            <div class="group">
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">dock_to_right</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Настройки Sidebar в чате</div>
+                                        <div class="row-sub">Управление карточкой заказа, заметками, шаблонами ответов и прозрачностью</div>
+                                    </div>
+                                    <button class="btn btn-secondary fxn-open-chat-sb-settings" type="button" style="font-size:12px;padding:6px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.16);cursor:pointer;font-weight:600;">Настроить</button>
+                                </div>
+                            </div>
+
                             <!-- ═══ 9. ДЕЙСТВИЯ С ТЕМОЙ ═══ -->
                             <div class="section-label">
                                 <span>Действия с темой</span>
@@ -2192,6 +2269,57 @@ function createMainPopup() {
                                         <span class="material-symbols-rounded">restart_alt</span>
                                         <span>Сбросить оформление к стандартному</span>
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- PANEL: SIDEBAR В ЧАТЕ (CHAT_SIDEBAR) -->
+                    <section class="panel foxen-page-content" id="chat_sidebar" data-page="chat_sidebar">
+                        <div class="panel-body">
+                            <div class="panel-header">
+                                <div class="panel-icon"><span class="material-symbols-rounded">dock_to_right</span></div>
+                                <div>
+                                    <div class="crumb">Кастомизация &amp; Стиль</div>
+                                    <h1>Sidebar в чате</h1>
+                                    <p>Управление блоками правой панели в чате FunPay и их визуальным стилем</p>
+                                </div>
+                            </div>
+
+                            <!-- ═══ 1. ЭЛЕМЕНТЫ САЙДБАРА ═══ -->
+                            <div class="section-label">Отображение элементов сайдбара</div>
+                            <div class="group">
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">receipt_long</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Карточка заказа FunPay</div>
+                                        <div class="row-sub">Детальная информация о заказе, лоте, сумме и кнопка копирования никнейма</div>
+                                    </div>
+                                    <button class="switch on" id="fxnSbShowOrderBadge" data-toggle></button>
+                                </div>
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">edit_note</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Заметки о клиенте</div>
+                                        <div class="row-sub">Блок для сохранения персональных заметок о покупателе</div>
+                                    </div>
+                                    <button class="switch on" id="fxnSbShowBuyerNotes" data-toggle></button>
+                                </div>
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">chat</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Шаблоны ответов</div>
+                                        <div class="row-sub">Быстрые кнопки шаблонов сообщений прямо в правом сайдбаре чата</div>
+                                    </div>
+                                    <button class="switch on" id="fxnSbShowTemplates" data-toggle></button>
+                                </div>
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">badge</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Служебная информация FunPay</div>
+                                        <div class="row-sub">Стандартные блоки сайта: дата регистрации и просматриваемый лот покупателя</div>
+                                    </div>
+                                    <button class="switch on" id="fxnSbShowNativeInfo" data-toggle></button>
                                 </div>
                             </div>
                         </div>
@@ -2452,11 +2580,16 @@ function createMainPopup() {
     popup.querySelectorAll('.fxn-popup-close, .traffic-close').forEach(btn => {
         btn.addEventListener('click', () => {
             popup.classList.remove('active');
+            popup.classList.remove('mobile-sidebar-open');
+            document.body.classList.remove('fxn-popup-open');
             if (typeof window.closeFoxenMenuSettings === 'function') {
                 window.closeFoxenMenuSettings();
             }
             if (typeof window.fxnSyncDockbarActive === 'function') {
                 window.fxnSyncDockbarActive();
+            }
+            if (typeof window.fxnCloseAllDropdowns === 'function') {
+                window.fxnCloseAllDropdowns();
             }
         });
     });
@@ -2464,11 +2597,16 @@ function createMainPopup() {
     popup.addEventListener('click', (e) => {
         if (e.target === popup || e.target.classList.contains('scrim')) {
             popup.classList.remove('active');
+            popup.classList.remove('mobile-sidebar-open');
+            document.body.classList.remove('fxn-popup-open');
             if (typeof window.closeFoxenMenuSettings === 'function') {
                 window.closeFoxenMenuSettings();
             }
             if (typeof window.fxnSyncDockbarActive === 'function') {
                 window.fxnSyncDockbarActive();
+            }
+            if (typeof window.fxnCloseAllDropdowns === 'function') {
+                window.fxnCloseAllDropdowns();
             }
         }
     });
@@ -2629,39 +2767,56 @@ function initMainPopupEvents(popup) {
 
     // Restore saved Geometry (Position & Size)
     try {
-        const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
-        if (storage && storage.local) {
-            storage.local.get(['foxenPopupPosition', 'foxenPopupSize', 'foxenPopupDragged'], (res) => {
-                if (res?.foxenPopupDragged && res?.foxenPopupPosition && windowEl) {
-                    let left = parseFloat(res.foxenPopupPosition.left);
-                    let top = parseFloat(res.foxenPopupPosition.top);
-                    if (!isNaN(left) && !isNaN(top)) {
-                        left = Math.max(0, Math.min(left, window.innerWidth - 680));
-                        top = Math.max(0, Math.min(top, window.innerHeight - 480));
-                        windowEl.classList.add('no-transform');
-                        windowEl.classList.add('fxn-dragged');
-                        windowEl.style.setProperty('position', 'fixed', 'important');
-                        windowEl.style.setProperty('margin', '0', 'important');
-                        windowEl.style.setProperty('left', `${Math.round(left)}px`, 'important');
-                        windowEl.style.setProperty('top', `${Math.round(top)}px`, 'important');
+        const isMobile = (typeof window.fxnIsMobileDevice === 'function' ? window.fxnIsMobileDevice() : (window.innerWidth <= 992));
+        if (isMobile && windowEl) {
+            windowEl.classList.add('mobile-fullscreen', 'fullscreen');
+            windowEl.classList.remove('fxn-dragged');
+            windowEl.style.removeProperty('top');
+            windowEl.style.removeProperty('left');
+            windowEl.style.removeProperty('right');
+            windowEl.style.removeProperty('bottom');
+            windowEl.style.removeProperty('width');
+            windowEl.style.removeProperty('height');
+            windowEl.style.removeProperty('margin');
+            windowEl.style.removeProperty('position');
+            windowEl.style.removeProperty('transform');
+        } else {
+            const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+            if (storage && storage.local) {
+                storage.local.get(['foxenPopupPosition', 'foxenPopupSize', 'foxenPopupDragged'], (res) => {
+                    const currentMobile = (typeof window.fxnIsMobileDevice === 'function' ? window.fxnIsMobileDevice() : (window.innerWidth <= 992));
+                    if (currentMobile) return;
+                    if (res?.foxenPopupDragged && res?.foxenPopupPosition && windowEl) {
+                        let left = parseFloat(res.foxenPopupPosition.left);
+                        let top = parseFloat(res.foxenPopupPosition.top);
+                        if (!isNaN(left) && !isNaN(top)) {
+                            left = Math.max(0, Math.min(left, window.innerWidth - 680));
+                            top = Math.max(0, Math.min(top, window.innerHeight - 480));
+                            windowEl.classList.add('no-transform');
+                            windowEl.classList.add('fxn-dragged');
+                            windowEl.style.setProperty('position', 'fixed', 'important');
+                            windowEl.style.setProperty('margin', '0', 'important');
+                            windowEl.style.setProperty('left', `${Math.round(left)}px`, 'important');
+                            windowEl.style.setProperty('top', `${Math.round(top)}px`, 'important');
+                        }
                     }
-                }
-                if (res?.foxenPopupSize && windowEl) {
-                    const wVal = parseInt(res.foxenPopupSize.width, 10);
-                    const hVal = parseInt(res.foxenPopupSize.height, 10);
-                    if (!isNaN(wVal) && wVal >= 680) {
-                        windowEl.style.setProperty('width', `${wVal}px`, 'important');
-                    } else {
-                        try { storage.local.remove('foxenPopupSize'); } catch (_) {}
-                        windowEl.style.removeProperty('width');
+                    if (res?.foxenPopupSize && windowEl) {
+                        const wVal = parseInt(res.foxenPopupSize.width, 10);
+                        const hVal = parseInt(res.foxenPopupSize.height, 10);
+                        if (!isNaN(wVal) && wVal >= 680) {
+                            windowEl.style.setProperty('width', `${wVal}px`, 'important');
+                        } else {
+                            try { storage.local.remove('foxenPopupSize'); } catch (_) {}
+                            windowEl.style.removeProperty('width');
+                        }
+                        if (!isNaN(hVal) && hVal >= 480) {
+                            windowEl.style.setProperty('height', `${hVal}px`, 'important');
+                        } else {
+                            windowEl.style.removeProperty('height');
+                        }
                     }
-                    if (!isNaN(hVal) && hVal >= 480) {
-                        windowEl.style.setProperty('height', `${hVal}px`, 'important');
-                    } else {
-                        windowEl.style.removeProperty('height');
-                    }
-                }
-            });
+                });
+            }
         }
     } catch (_) {}
 
@@ -2671,13 +2826,21 @@ function initMainPopupEvents(popup) {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             popup.classList.remove('active');
+            popup.classList.remove('mobile-sidebar-open');
+            document.body.classList.remove('fxn-popup-open');
             if (typeof window.closeFoxenMenuSettings === 'function') {
                 window.closeFoxenMenuSettings();
             }
             if (typeof window.fxnSyncDockbarActive === 'function') {
                 window.fxnSyncDockbarActive();
             }
-            if (windowEl) windowEl.classList.remove('fullscreen');
+            if (typeof window.fxnCloseAllDropdowns === 'function') {
+                window.fxnCloseAllDropdowns();
+            }
+            const isMobile = (typeof window.fxnIsMobileDevice === 'function' ? window.fxnIsMobileDevice() : (window.innerWidth <= 992));
+            if (windowEl && !isMobile) {
+                windowEl.classList.remove('fullscreen');
+            }
         });
     });
 
@@ -2710,6 +2873,32 @@ function initMainPopupEvents(popup) {
         });
     });
 
+    // Mobile navigation drawer toggle & backdrop handlers
+    const mobileMenuBtn = popup.querySelector('#fxnMobileMenuBtn');
+    const mobileSidebarClose = popup.querySelector('#fxnMobileSidebarClose');
+    const mobileSidebarBackdrop = popup.querySelector('#fxnMobileSidebarBackdrop');
+
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            popup.classList.toggle('mobile-sidebar-open');
+        });
+    }
+
+    if (mobileSidebarClose) {
+        mobileSidebarClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            popup.classList.remove('mobile-sidebar-open');
+        });
+    }
+
+    if (mobileSidebarBackdrop) {
+        mobileSidebarBackdrop.addEventListener('click', (e) => {
+            e.stopPropagation();
+            popup.classList.remove('mobile-sidebar-open');
+        });
+    }
+
     // Global Click-to-Copy handler for template variable tags
     popup.addEventListener('click', (e) => {
         const item = e.target.closest('.fxn-var-item, .variable-code');
@@ -2729,6 +2918,14 @@ function initMainPopupEvents(popup) {
     if (scrim) {
         scrim.addEventListener('click', () => {
             popup.classList.remove('active');
+            popup.classList.remove('mobile-sidebar-open');
+            document.body.classList.remove('fxn-popup-open');
+            if (typeof window.closeFoxenMenuSettings === 'function') {
+                window.closeFoxenMenuSettings();
+            }
+            if (typeof window.fxnCloseAllDropdowns === 'function') {
+                window.fxnCloseAllDropdowns();
+            }
         });
     }
 
@@ -2740,6 +2937,8 @@ function initMainPopupEvents(popup) {
         const titlebar = popup.querySelector('.titlebar');
         const win = popup.querySelector('.window');
         if (!titlebar || !win || titlebar.dataset.dragInit === 'true') return;
+        const isMobile = (typeof window.fxnIsMobileDevice === 'function' ? window.fxnIsMobileDevice() : (window.innerWidth <= 992));
+        if (isMobile) return;
         titlebar.dataset.dragInit = 'true';
 
         let isDragging = false;
@@ -2817,6 +3016,8 @@ function initMainPopupEvents(popup) {
     const initWindowResizing = () => {
         const win = popup.querySelector('.window');
         if (!win || win.dataset.resizeInit === 'true') return;
+        const isMobile = (typeof window.fxnIsMobileDevice === 'function' ? window.fxnIsMobileDevice() : (window.innerWidth <= 992));
+        if (isMobile) return;
         win.dataset.resizeInit = 'true';
 
         // 1. Dedicated corner drag handle
@@ -2889,6 +3090,30 @@ function initMainPopupEvents(popup) {
                 set(val) { this.classList.toggle('on', !!val); },
                 configurable: true
             });
+            if (sw.id === 'headerPositionBottom') {
+                const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                storage?.local?.get(['headerPositionBottom', 'foxenTheme'], (res) => {
+                    const isB = res?.headerPositionBottom === true || res?.foxenTheme?.headerPosition === 'bottom';
+                    sw.classList.toggle('on', Boolean(isB));
+                });
+            }
+            if (sw.id && sw.id.startsWith('fxnSb')) {
+                const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                storage?.local?.get(['foxenChatSidebarSettings'], (res) => {
+                    const s = res?.foxenChatSidebarSettings || {};
+                    const sbPropMap = {
+                        'fxnSbShowOrderBadge': 'showOrderBadge',
+                        'fxnSbShowBuyerNotes': 'showBuyerNotes',
+                        'fxnSbShowTemplates': 'showTemplates',
+                        'fxnSbShowNativeInfo': 'showNativeInfo'
+                    };
+                    const prop = sbPropMap[sw.id];
+                    if (prop) {
+                        const val = s[prop] !== undefined ? s[prop] : true;
+                        sw.classList.toggle('on', Boolean(val));
+                    }
+                });
+            }
         } catch (_) {}
 
         sw.addEventListener('click', (e) => {
@@ -2901,6 +3126,63 @@ function initMainPopupEvents(popup) {
 
             // Direct sync with chrome.storage only for standard non-modal settings
             if (sw.id && !sw.id.startsWith('fxnModal') && !sw.closest('.fxn-menu-inspector')) {
+                if (sw.id.startsWith('fxnSb')) {
+                    const sbPropMap = {
+                        'fxnSbShowOrderBadge': 'showOrderBadge',
+                        'fxnSbShowBuyerNotes': 'showBuyerNotes',
+                        'fxnSbShowTemplates': 'showTemplates',
+                        'fxnSbShowNativeInfo': 'showNativeInfo'
+                    };
+                    const prop = sbPropMap[sw.id];
+                    if (prop) {
+                        try {
+                            const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                            const getSidebarSettings = () => new Promise(resolve => {
+                                try {
+                                    storage?.local?.get(['foxenChatSidebarSettings'], res => {
+                                        resolve(res?.foxenChatSidebarSettings || {});
+                                    });
+                                } catch (_) {
+                                    try {
+                                        storage?.local?.get('foxenChatSidebarSettings').then(res => {
+                                            resolve(res?.foxenChatSidebarSettings || {});
+                                        }).catch(() => resolve({}));
+                                    } catch (__) {
+                                        resolve({});
+                                    }
+                                }
+                            });
+
+                            getSidebarSettings().then(currentSettings => {
+                                const nextSettings = { ...currentSettings, [prop]: isOn };
+                                try {
+                                    storage?.local?.set({ foxenChatSidebarSettings: nextSettings });
+                                } catch (_) {}
+
+                                // Immediate real-time application in chat sidebar
+                                if (typeof window.applyChatSidebarSettings === 'function') {
+                                    window.applyChatSidebarSettings(nextSettings);
+                                }
+                                window.dispatchEvent(new CustomEvent('foxenChatSidebarSettingsChanged', { detail: nextSettings }));
+                            });
+                        } catch (err) {
+                            console.warn('Foxen: error saving sidebar settings:', err);
+                        }
+                    }
+                    return;
+                }
+                if (sw.id === 'headerPositionBottom') {
+                    (async () => {
+                        try {
+                            const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                            const { foxenTheme = {} } = await storage.local.get('foxenTheme');
+                            foxenTheme.headerPosition = isOn ? 'bottom' : 'top';
+                            await storage.local.set({ headerPositionBottom: isOn, foxenTheme });
+                            if (typeof applyHeaderPosition === 'function') applyHeaderPosition();
+                            if (typeof applyCustomTheme === 'function') applyCustomTheme();
+                        } catch (_) {}
+                    })();
+                }
                 const map = {
                     'showSalesStatsCheckbox': 'showSalesStats',
                     'showFinanceStatsCheckbox': 'showFinanceStats',
@@ -2936,6 +3218,16 @@ function initMainPopupEvents(popup) {
 
     // Live Theme Controls & Real-Time Sync (Zero Reload Needed)
     const initLiveThemeControls = () => {
+        popup.querySelectorAll('.fxn-open-chat-sb-settings').forEach(btn => {
+            if (btn.dataset.wired === 'true') return;
+            btn.dataset.wired = 'true';
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (typeof window.switchFoxenPanel === 'function') {
+                    window.switchFoxenPanel('chat_sidebar');
+                }
+            });
+        });
         if (typeof setupThemeCustomizationHandlers === 'function') {
             try { setupThemeCustomizationHandlers(); } catch (_) {}
         }
@@ -3143,6 +3435,17 @@ function initMainPopupEvents(popup) {
                 const activePopup = document.querySelector('.foxen-popup.active');
                 if (activePopup) {
                     activePopup.classList.remove('active');
+                    activePopup.classList.remove('mobile-sidebar-open');
+                    document.body.classList.remove('fxn-popup-open');
+                    if (typeof window.closeFoxenMenuSettings === 'function') {
+                        try { window.closeFoxenMenuSettings(); } catch (_) {}
+                    }
+                    if (typeof window.fxnSyncDockbarActive === 'function') {
+                        window.fxnSyncDockbarActive();
+                    }
+                    if (typeof window.fxnCloseAllDropdowns === 'function') {
+                        window.fxnCloseAllDropdowns();
+                    }
                 }
             }
         });
@@ -3303,6 +3606,8 @@ function initMainPopupEvents(popup) {
         const root = document.querySelector('.foxen-popup') || popup;
         if (!root) return;
 
+        root.classList.remove('mobile-sidebar-open');
+
         let effectiveId = targetId;
         let targetPanel = effectiveId ? (root.querySelector('#' + effectiveId) || root.querySelector(`[data-page="${effectiveId}"]`)) : null;
 
@@ -3322,9 +3627,17 @@ function initMainPopupEvents(popup) {
         const targetSub = root.querySelector(`.nav-subitem[data-target="${effectiveId}"]`);
         if (targetSub) {
             targetSub.classList.add('active');
+            const rawText = targetSub.textContent.trim().replace(/^●\s*/, '').replace(/DEV$/, '').trim();
+            const tbTitle = root.querySelector('#fxnTitlebarTitle') || root.querySelector('.titlebar-title');
+            if (tbTitle && rawText) {
+                tbTitle.textContent = `FOXEN • ${rawText}`;
+            }
             const parentGroup = targetSub.closest('.nav-group');
             if (parentGroup) {
-                groups.forEach(g => g.classList.remove('open'));
+                const isSearching = !!(root.querySelector('#searchInput')?.value.trim());
+                if (!isSearching) {
+                    groups.forEach(g => g.classList.remove('open'));
+                }
                 parentGroup.classList.add('open');
             }
         }
@@ -3333,6 +3646,11 @@ function initMainPopupEvents(popup) {
             targetPanel.classList.add('active');
             if (typeof updateAllSliders === 'function') {
                 updateAllSliders(targetPanel);
+            }
+            // If active search query exists, re-filter this target panel immediately
+            const curSearchVal = (root.querySelector('#searchInput')?.value || '').trim();
+            if (curSearchVal && typeof filterFoxenPanelContent === 'function') {
+                filterFoxenPanelContent(targetPanel, curSearchVal);
             }
         }
 
@@ -3437,32 +3755,165 @@ function initMainPopupEvents(popup) {
     // Universal Switch toggles (bidirectional sync with underlying controls & storage)
     popup.querySelectorAll('.switch[data-toggle]').forEach(wireUniversalSwitch);
 
-    // Search filter across navigation items and panels
-    const searchInput = popup.querySelector('#searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            if (!query) {
-                subitems.forEach(si => si.style.display = '');
-                groups.forEach(g => {
-                    g.style.display = '';
-                });
-                return;
-            }
+    // Deep Search & Filtering across sidebar, all panels and setting descriptions
+    function filterFoxenPanelContent(panel, query) {
+        if (!panel) return false;
+        if (!query) {
+            panel.querySelectorAll('.row, .group, .section-label, .fxn-color-bar-item, .panel-body > div').forEach(el => {
+                el.style.display = '';
+            });
+            return true;
+        }
 
-            groups.forEach(g => {
-                let anyVisible = false;
-                g.querySelectorAll('.nav-subitem').forEach(si => {
-                    const text = si.textContent.toLowerCase();
-                    const match = text.includes(query);
-                    si.style.display = match ? '' : 'none';
-                    if (match) anyVisible = true;
-                });
-                g.style.display = anyVisible ? '' : 'none';
-                if (anyVisible) {
-                    g.classList.add('open');
+        const cleanQ = query.toLowerCase().trim();
+        const headerEl = panel.querySelector('.panel-header');
+        const headerText = (headerEl ? headerEl.textContent : '').toLowerCase();
+        const headerMatches = headerText.includes(cleanQ);
+
+        const rows = panel.querySelectorAll('.row');
+        let anyRowMatched = false;
+
+        if (rows.length > 0) {
+            rows.forEach(row => {
+                const rowText = (row.textContent || '').toLowerCase();
+                const isMatch = headerMatches || rowText.includes(cleanQ);
+                row.style.display = isMatch ? '' : 'none';
+                if (isMatch) anyRowMatched = true;
+            });
+
+            // Filter parent setting groups (.group)
+            panel.querySelectorAll('.group').forEach(grp => {
+                const hasVisible = Array.from(grp.querySelectorAll('.row')).some(r => r.style.display !== 'none');
+                grp.style.display = hasVisible ? '' : 'none';
+            });
+
+            // Filter section labels (.section-label)
+            panel.querySelectorAll('.section-label').forEach(lbl => {
+                let next = lbl.nextElementSibling;
+                while (next && !next.classList.contains('group')) {
+                    next = next.nextElementSibling;
+                }
+                if (next && next.classList.contains('group')) {
+                    lbl.style.display = next.style.display === 'none' ? 'none' : '';
                 }
             });
+        }
+
+        // Check standalone cards/blocks inside panel (e.g. support, accounts, etc.)
+        const directCards = panel.querySelectorAll('.panel-body > div:not(.panel-header)');
+        let anyCardMatched = false;
+        if (directCards.length > 0) {
+            directCards.forEach(card => {
+                if (card.classList.contains('group') || card.classList.contains('section-label')) return;
+                const cardText = (card.textContent || '').toLowerCase();
+                const cardMatches = headerMatches || cardText.includes(cleanQ);
+                if (rows.length === 0) {
+                    card.style.display = cardMatches ? '' : 'none';
+                }
+                if (cardMatches) anyCardMatched = true;
+            });
+        }
+
+        const panelFullText = (panel.textContent || '').toLowerCase();
+        const panelMatches = headerMatches || anyRowMatched || anyCardMatched || panelFullText.includes(cleanQ);
+        return panelMatches;
+    }
+
+    function performFoxenSearch(query) {
+        const cleanQ = (query || '').toLowerCase().trim();
+        const searchClearBtn = popup.querySelector('#searchClearBtn');
+        if (searchClearBtn) {
+            searchClearBtn.style.display = cleanQ ? 'inline-block' : 'none';
+        }
+
+        if (!cleanQ) {
+            subitems.forEach(si => si.style.display = '');
+            groups.forEach(g => g.style.display = '');
+            popup.querySelectorAll('.panel').forEach(p => filterFoxenPanelContent(p, ''));
+
+            // Re-open only currently active group
+            const activeSub = popup.querySelector('.nav-subitem.active');
+            if (activeSub) {
+                const parentGroup = activeSub.closest('.nav-group');
+                groups.forEach(g => {
+                    if (g === parentGroup) g.classList.add('open');
+                    else g.classList.remove('open');
+                });
+            }
+            return;
+        }
+
+        let firstMatchedTarget = null;
+        let activePanelHasMatch = false;
+        const currentActivePanel = popup.querySelector('.panel.active');
+
+        groups.forEach(group => {
+            let anyGroupItemVisible = false;
+
+            group.querySelectorAll('.nav-subitem').forEach(si => {
+                const targetId = si.dataset.target;
+                const panel = targetId ? (popup.querySelector('#' + targetId) || popup.querySelector(`[data-page="${targetId}"]`)) : null;
+
+                const subitemMatches = si.textContent.toLowerCase().includes(cleanQ);
+                let panelMatches = false;
+
+                if (panel) {
+                    panelMatches = filterFoxenPanelContent(panel, cleanQ);
+                }
+
+                const isOverallMatch = subitemMatches || panelMatches;
+                si.style.display = isOverallMatch ? '' : 'none';
+
+                if (isOverallMatch) {
+                    anyGroupItemVisible = true;
+                    if (!firstMatchedTarget) {
+                        firstMatchedTarget = targetId;
+                    }
+                    if (currentActivePanel && panel === currentActivePanel) {
+                        activePanelHasMatch = true;
+                    }
+                }
+            });
+
+            group.style.display = anyGroupItemVisible ? '' : 'none';
+            if (anyGroupItemVisible) {
+                group.classList.add('open');
+            } else {
+                group.classList.remove('open');
+            }
+        });
+
+        // If currently active panel does not match query, auto switch to the first matched panel
+        if (!activePanelHasMatch && firstMatchedTarget && typeof window.switchFoxenPanel === 'function') {
+            window.switchFoxenPanel(firstMatchedTarget);
+        }
+    }
+
+    // Search filter across navigation items and panels
+    const searchInput = popup.querySelector('#searchInput');
+    const searchClearBtn = popup.querySelector('#searchClearBtn');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            performFoxenSearch(e.target.value);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                performFoxenSearch('');
+                searchInput.blur();
+            }
+        });
+    }
+
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                performFoxenSearch('');
+                searchInput.focus();
+            }
         });
     }
 
@@ -3581,12 +4032,30 @@ async function fxnUpdateSidebarAccountWidget(popupEl) {
     fxnInitSidebarProfileModal(popupEl);
 
     try {
-        // 1. Быстрый сбор данных из DOM текущей страницы FunPay
-        const usernameEl = document.querySelector('.user-link .user-link-name') || document.querySelector('.navbar-right .user-link');
-        const domUsername = usernameEl ? usernameEl.textContent.trim() : null;
+        // 1. Быстрый сбор данных из DOM текущей страницы FunPay (строго из шапки активного пользователя)
+        const headerUserLink = document.querySelector(
+            '#header .user-link-dropdown a.user-link, ' +
+            '#header .navbar-right .user-link-dropdown a, ' +
+            '#header a.user-link-dropdown, ' +
+            '#header .user-link[href*="/users/"], ' +
+            '.navbar-right .user-link-dropdown a.user-link, ' +
+            '.navbar-right a.user-link[href*="/users/"]'
+        );
+        let domUsername = null;
+        if (headerUserLink) {
+            const nameEl = headerUserLink.querySelector('.user-link-name') || headerUserLink;
+            const txt = nameEl.textContent.trim();
+            if (txt && !txt.startsWith('+') && !txt.startsWith('₽') && !txt.startsWith('$') && !txt.startsWith('€')) {
+                domUsername = txt;
+            }
+        }
+        if (!domUsername) {
+            const standaloneName = document.querySelector('#header .user-link-name, .navbar-right .user-link-name');
+            if (standaloneName) domUsername = standaloneName.textContent.trim();
+        }
         
         let domAvatar = null;
-        const avEl = document.querySelector('.user-link-dropdown .avatar-photo, .navbar-right .avatar-photo, .avatar-photo, .user-link img');
+        const avEl = document.querySelector('#header .user-link-dropdown .avatar-photo, #header .navbar-right .avatar-photo, .navbar-right .avatar-photo, #header .avatar-photo, #header .user-link img');
         if (avEl) {
             const bg = avEl.style?.backgroundImage || window.getComputedStyle(avEl).backgroundImage;
             if (bg && bg !== 'none') {
@@ -3597,10 +4066,28 @@ async function fxnUpdateSidebarAccountWidget(popupEl) {
         }
 
         let domUserId = null;
-        const userLinkEl = document.querySelector('.user-link[href*="/users/"], .navbar-right a[href*="/users/"]');
-        if (userLinkEl) {
-            const m = userLinkEl.getAttribute('href')?.match(/\/users\/(\d+)/);
+        if (headerUserLink) {
+            const m = headerUserLink.getAttribute('href')?.match(/\/users\/(\d+)/);
             if (m) domUserId = m[1];
+        }
+        if (!domUserId) {
+            const headerUserIdEl = document.querySelector('#header a[href*="/users/"], .navbar-right a[href*="/users/"]');
+            if (headerUserIdEl) {
+                const m = headerUserIdEl.getAttribute('href')?.match(/\/users\/(\d+)/);
+                if (m) domUserId = m[1];
+            }
+        }
+
+        if (!domUserId || !domUsername) {
+            try {
+                const appDataStr = document.body?.dataset?.appData;
+                if (appDataStr) {
+                    const parsed = JSON.parse(appDataStr);
+                    const appData = Array.isArray(parsed) ? parsed[0] : parsed;
+                    if (!domUserId && appData?.userId) domUserId = String(appData.userId);
+                    if (!domUsername && (appData?.userName || appData?.username)) domUsername = appData.userName || appData.username;
+                }
+            } catch (_) {}
         }
 
         // 2. Чтение локального кэша для мгновенного отображения (0ms задержка)
@@ -3619,6 +4106,9 @@ async function fxnUpdateSidebarAccountWidget(popupEl) {
             cached = storeData?.foxenUserProfileCache?.data || storeData?.foxenUserProfile || storeData?.foxen_user_profile || null;
             if (!domUserId && storeData?.fpCurrentUserInfo?.userId) {
                 domUserId = String(storeData.fpCurrentUserInfo.userId);
+            }
+            if (!domUsername && storeData?.fpCurrentUserInfo?.username) {
+                domUsername = String(storeData.fpCurrentUserInfo.username);
             }
         }
 
@@ -3643,12 +4133,22 @@ async function fxnUpdateSidebarAccountWidget(popupEl) {
         const cachedStats = storeData?.foxen_user_fp_stats || null;
 
         // Рендерим предварительные данные
+        const isPrem = Boolean(cached?.is_premium || cached?.subscription?.is_active);
+        const hasExpiry = Boolean(cached?.subscription?.expires_at);
+        const isLife = isPrem && !hasExpiry && Boolean(cached?.subscription?.is_lifetime || cached?.subscription?.plan_id === 'lifetime');
+
         const initialData = {
-            username: domUsername || cached?.fp_user || cached?.username || 'FunPay Seller',
+            username: domUsername || cached?.fp_user || cached?.username || storeData?.fpCurrentUserInfo?.username || 'Пользователь FunPay',
             avatar: domAvatar || cached?.avatar_url || cached?.avatarUrl || null,
-            userId: domUserId || cached?.fp_user_id || cached?.userId || null,
-            foxenId: cached?.foxen_id || cached?.FOXEN_ID || (domUserId ? `FX-${domUserId}` : 'FX-000000'),
-            subscription: cached?.subscription || (cached?.SUBSCRIPTION === 'free' ? { is_active: false } : { is_active: true, plan_id: cached?.SUBSCRIPTION || 'premium' }),
+            userId: domUserId || cached?.fp_user_id || cached?.userId || storeData?.fpCurrentUserInfo?.userId || null,
+            foxenId: cached?.foxen_id || cached?.FOXEN_ID || '—',
+            subscription: {
+                is_active: isPrem,
+                is_lifetime: isLife,
+                plan_id: isPrem ? (cached?.subscription?.plan_id || 'premium') : 'free',
+                status: isPrem ? 'active' : 'inactive',
+                expires_at: cached?.subscription?.expires_at || null
+            },
             tgUsername: cached?.tg_username || cached?.TG_USER || null,
             isVerified: Boolean(cached?.is_fp_verified),
             nicknameEffect: myEff,
@@ -3849,20 +4349,23 @@ function fxnInitSidebarProfileModal(popupEl) {
 function fxnRenderSidebarProfileUI(popupEl, data) {
     if (!popupEl || !data) return;
 
-    const username = data.username || 'FunPay Seller';
+    const username = data.username || 'Пользователь FunPay';
     const avatar = data.avatar || (typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL('icons/icon48.png') : 'https://funpay.com/img/layout/avatar.png');
-    const foxenId = data.foxenId || 'FX-000000';
+    const foxenId = data.foxenId || '—';
     const userId = data.userId || null;
     if (userId) {
         popupEl._fxnSpmCurrentUserId = userId;
     }
     const sub = data.subscription || {};
 
-    const isLifetime = Boolean(sub.is_lifetime || sub.plan_id === 'lifetime' || (!sub.expires_at && (sub.is_active || data.is_premium)));
-    const isActive = Boolean(sub.is_active || isLifetime || data.is_premium || data.isPremium || (data.subscription && (data.subscription === 'premium' || data.subscription.is_active)));
+    const isActive = Boolean(sub.is_active || data.is_premium || data.isPremium);
+    const hasExpiry = Boolean(sub.expires_at);
+    const isExpired = hasExpiry && (new Date(sub.expires_at).getTime() <= Date.now());
+    const validActive = isActive && !isExpired;
+    const isLifetime = validActive && !hasExpiry && Boolean(sub.is_lifetime || sub.plan_id === 'lifetime');
     
-    const tagText = isActive ? 'PREMIUM' : 'FREE';
-    const planName = isActive ? 'PREMIUM' : 'FREE';
+    const tagText = validActive ? (isLifetime ? 'LIFETIME' : 'PREMIUM') : 'FREE';
+    const planName = validActive ? (isLifetime ? 'LIFETIME' : 'PREMIUM') : 'FREE';
 
     // 1. Обновляем плашку в сайдбаре
     const sbName = popupEl.querySelector('#fxnSidebarUsername');
@@ -3874,7 +4377,7 @@ function fxnRenderSidebarProfileUI(popupEl, data) {
     const sbTag = popupEl.querySelector('#fxnSidebarTag');
     if (sbTag) {
         sbTag.textContent = tagText;
-        if (isActive) {
+        if (validActive) {
             sbTag.style.background = 'var(--fxn-text-main)';
             sbTag.style.color = 'var(--fxn-sidebar-color)';
             sbTag.style.borderColor = 'var(--fxn-text-main)';
@@ -3887,7 +4390,7 @@ function fxnRenderSidebarProfileUI(popupEl, data) {
 
     const sbSub = popupEl.querySelector('#fxnSidebarSub');
     if (sbSub) {
-        sbSub.textContent = foxenId !== 'FX-000000' ? foxenId : 'Foxen active';
+        sbSub.textContent = (foxenId && foxenId !== '—' && foxenId !== 'FX-000000') ? foxenId : 'Foxen active';
     }
 
     // 2. Обновляем модальное окно
@@ -3921,33 +4424,53 @@ function fxnRenderSidebarProfileUI(popupEl, data) {
     const spmSubPlan = popupEl.querySelector('#fxnSpmSubPlan');
     if (spmSubPlan) {
         spmSubPlan.textContent = planName;
-        spmSubPlan.classList.toggle('fxn-premium-shimmer', isActive);
+        spmSubPlan.classList.toggle('fxn-premium-shimmer', validActive);
     }
 
     const spmSubStatus = popupEl.querySelector('#fxnSpmSubStatus');
     const spmStatusDot = popupEl.querySelector('#fxnSpmStatusDot');
     if (spmSubStatus) {
-        spmSubStatus.textContent = isActive ? 'Активна' : 'Не активна';
+        spmSubStatus.textContent = validActive ? 'Активна' : 'Бесплатный';
     }
     if (spmStatusDot) {
-        spmStatusDot.className = `fxn-spm-status-dot ${isActive ? 'active' : ''}`;
+        spmStatusDot.className = `fxn-spm-status-dot ${validActive ? 'active' : ''}`;
     }
 
     // Срок действия
     const spmSubExpiry = popupEl.querySelector('#fxnSpmSubExpiry');
     if (spmSubExpiry) {
-        if (!isActive) {
+        if (!validActive) {
             spmSubExpiry.textContent = '—';
-        } else if (isLifetime || !sub.expires_at) {
-            spmSubExpiry.textContent = 'Бессрочно';
         } else if (sub.expires_at) {
             try {
-                spmSubExpiry.textContent = new Date(sub.expires_at).toLocaleDateString('ru-RU');
+                const expDate = new Date(sub.expires_at);
+                const now = new Date();
+                const diffMs = expDate.getTime() - now.getTime();
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                const dateStr = expDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                if (diffDays <= 0) {
+                    spmSubExpiry.textContent = `До ${dateStr} (истекает сегодня)`;
+                } else {
+                    const mod10 = diffDays % 10;
+                    const mod100 = diffDays % 100;
+                    let daysWord = 'дней';
+                    let ostalosWord = 'осталось';
+                    if (mod10 === 1 && mod100 !== 11) {
+                        daysWord = 'день';
+                        ostalosWord = 'остался';
+                    } else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+                        daysWord = 'дня';
+                    }
+                    spmSubExpiry.textContent = `До ${dateStr} (${ostalosWord} ${diffDays} ${daysWord})`;
+                }
             } catch (_) {
                 spmSubExpiry.textContent = String(sub.expires_at);
             }
-        } else {
+        } else if (isLifetime) {
             spmSubExpiry.textContent = 'Бессрочно';
+        } else {
+            spmSubExpiry.textContent = 'Активна';
         }
     }
 
@@ -4011,12 +4534,30 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
     }
 
     try {
-        // Определяем идентификатор пользователя (fp_user_id, username или Foxen ID)
-        const usernameEl = document.querySelector('.user-link .user-link-name') || document.querySelector('.navbar-right .user-link');
-        const username = usernameEl ? usernameEl.textContent.trim() : null;
+        // Определяем идентификатор пользователя (строго из шапки активного аккаунта FunPay)
+        const headerUserLink = document.querySelector(
+            '#header .user-link-dropdown a.user-link, ' +
+            '#header .navbar-right .user-link-dropdown a, ' +
+            '#header a.user-link-dropdown, ' +
+            '#header .user-link[href*="/users/"], ' +
+            '.navbar-right .user-link-dropdown a.user-link, ' +
+            '.navbar-right a.user-link[href*="/users/"]'
+        );
+        let username = null;
+        if (headerUserLink) {
+            const nameEl = headerUserLink.querySelector('.user-link-name') || headerUserLink;
+            const txt = nameEl.textContent.trim();
+            if (txt && !txt.startsWith('+') && !txt.startsWith('₽') && !txt.startsWith('$') && !txt.startsWith('€')) {
+                username = txt;
+            }
+        }
+        if (!username) {
+            const standaloneName = document.querySelector('#header .user-link-name, .navbar-right .user-link-name');
+            if (standaloneName) username = standaloneName.textContent.trim();
+        }
 
         let domAvatar = null;
-        const avEl = document.querySelector('.user-link-dropdown .avatar-photo, .navbar-right .avatar-photo, .avatar-photo, .user-link img');
+        const avEl = document.querySelector('#header .user-link-dropdown .avatar-photo, #header .navbar-right .avatar-photo, .navbar-right .avatar-photo, #header .avatar-photo, #header .user-link img');
         if (avEl) {
             const bg = avEl.style?.backgroundImage || window.getComputedStyle(avEl).backgroundImage;
             if (bg && bg !== 'none') {
@@ -4026,10 +4567,29 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
             if (!domAvatar && avEl.getAttribute('src')) domAvatar = avEl.getAttribute('src');
         }
 
-        const userLinkEl = document.querySelector('.user-link[href*="/users/"], .navbar-right a[href*="/users/"]');
-        if (userLinkEl) {
-            const m = userLinkEl.getAttribute('href')?.match(/\/users\/(\d+)/);
+        let userId = null;
+        if (headerUserLink) {
+            const m = headerUserLink.getAttribute('href')?.match(/\/users\/(\d+)/);
             if (m) userId = m[1];
+        }
+        if (!userId) {
+            const headerUserIdEl = document.querySelector('#header a[href*="/users/"], .navbar-right a[href*="/users/"]');
+            if (headerUserIdEl) {
+                const m = headerUserIdEl.getAttribute('href')?.match(/\/users\/(\d+)/);
+                if (m) userId = m[1];
+            }
+        }
+
+        if (!userId || !username) {
+            try {
+                const appDataStr = document.body?.dataset?.appData;
+                if (appDataStr) {
+                    const parsed = JSON.parse(appDataStr);
+                    const appData = Array.isArray(parsed) ? parsed[0] : parsed;
+                    if (!userId && appData?.userId) userId = String(appData.userId);
+                    if (!username && (appData?.userName || appData?.username)) username = appData.userName || appData.username;
+                }
+            } catch (_) {}
         }
 
         const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
@@ -4048,6 +4608,9 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
             if (!userId && storeData?.fpCurrentUserInfo?.userId) {
                 userId = String(storeData.fpCurrentUserInfo.userId);
             }
+            if (!username && storeData?.fpCurrentUserInfo?.username) {
+                username = String(storeData.fpCurrentUserInfo.username);
+            }
         }
 
         const identifier = userId || username || cached?.fp_user || cached?.username || cached?.foxen_id;
@@ -4061,15 +4624,48 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
         const statsPromise = userId ? fxnFetchFpUserStats(userId) : Promise.resolve(null);
 
         let freshProfile = null;
+        const supabaseUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
+        const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
 
-        // 1. Пробуем функцию из supabase_client.js
-        if (typeof fxnFetchProfileByFpUser === 'function') {
+        // 1. Быстрый атомарный запрос через RPC get_public_profile (1 запрос для профиля и подписки)
+        try {
+            const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/get_public_profile`, {
+                method: 'POST',
+                headers: {
+                    'apikey': apiKey,
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ p_query: identifier })
+            });
+            if (rpcRes.ok) {
+                const pub = await rpcRes.json();
+                if (pub && pub.id) {
+                    freshProfile = {
+                        id: pub.id,
+                        FP_USER: pub.fp_user || username,
+                        FP_USER_ID: pub.fp_user_id || userId,
+                        FOXEN_ID: pub.foxen_id,
+                        TG_USER: pub.tg_username,
+                        avatar_url: pub.avatar_url,
+                        is_fp_verified: pub.is_fp_verified,
+                        nickname_effect: pub.nickname_effect,
+                        CREATED_AT: pub.created_at,
+                        is_premium: Boolean(pub.is_premium),
+                        subscription: pub.subscription || {}
+                    };
+                }
+            }
+        } catch (_) {}
+
+        // 2. Фоллбэк: supabase_client.js
+        if (!freshProfile && typeof fxnFetchProfileByFpUser === 'function') {
             try {
                 freshProfile = await fxnFetchProfileByFpUser(identifier);
             } catch (_) {}
         }
 
-        // 2. Фоллбэк к Worker API
+        // 3. Фоллбэк к Worker API
         if (!freshProfile) {
             try {
                 const apiRes = await fetch(`https://api.foxen.site/api/users/${encodeURIComponent(identifier)}`, {
@@ -4090,20 +4686,24 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
                             is_fp_verified: p.is_fp_verified,
                             nickname_effect: p.nickname_effect,
                             CREATED_AT: p.created_at,
-                            is_premium: Boolean(p.is_premium || p.subscription?.is_active)
+                            is_premium: Boolean(p.is_premium || p.subscription?.is_active),
+                            subscription: p.subscription || {}
                         };
                     }
                 }
             } catch (_) {}
         }
 
-        // 3. Прямой запрос к Supabase profiles
-        const supabaseUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
-        const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
+        // 4. Прямой запрос к Supabase profiles (если ещё не найден)
         if (!freshProfile || (!freshProfile.subscription?.is_active && !freshProfile.is_premium)) {
             try {
-                const target = encodeURIComponent(identifier);
-                const q = `or=(foxen_id.eq.${target},fp_user.ilike.${target},fp_user_id.eq.${target})`;
+                let orParts = [];
+                if (userId) orParts.push(`fp_user_id.eq.${encodeURIComponent(userId)}`);
+                if (username) orParts.push(`fp_user.ilike.${encodeURIComponent(username)}`);
+                if (identifier && identifier !== userId && identifier !== username) {
+                    orParts.push(`foxen_id.eq.${encodeURIComponent(identifier)}`);
+                }
+                const q = `or=(${orParts.join(',')})`;
                 const sbRes = await fetch(`${supabaseUrl}/rest/v1/profiles?${q}&select=*&limit=1`, {
                     headers: {
                         'apikey': apiKey,
@@ -4117,6 +4717,7 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
                         const sbProf = sbList[0];
                         if (!freshProfile) {
                             freshProfile = {
+                                id: sbProf.id,
                                 FP_USER: sbProf.fp_user || username,
                                 FP_USER_ID: sbProf.fp_user_id || userId,
                                 FOXEN_ID: sbProf.foxen_id,
@@ -4125,20 +4726,14 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
                                 is_fp_verified: sbProf.is_fp_verified,
                                 nickname_effect: sbProf.nickname_effect,
                                 CREATED_AT: sbProf.created_at,
-                                is_premium: sbProf.is_premium
+                                is_premium: sbProf.is_premium,
+                                subscription: {}
                             };
+                        } else {
+                            if (sbProf.id) freshProfile.id = sbProf.id;
                         }
                         if (sbProf.is_premium) {
                             freshProfile.is_premium = true;
-                            if (!freshProfile.subscription || !freshProfile.subscription.is_active) {
-                                freshProfile.subscription = {
-                                    is_active: true,
-                                    is_lifetime: true,
-                                    plan_id: 'premium',
-                                    status: 'active',
-                                    expires_at: null
-                                };
-                            }
                         }
                         if (sbProf.foxen_id) freshProfile.FOXEN_ID = sbProf.foxen_id;
                         if (sbProf.nickname_effect) freshProfile.nickname_effect = sbProf.nickname_effect;
@@ -4147,32 +4742,51 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
             } catch (_) {}
         }
 
-        // 4. Запрос к таблице subscriptions для получения срока действия
-        const activeFid = freshProfile?.FOXEN_ID || freshProfile?.foxen_id;
-        if (activeFid) {
+        // 5. Запрос к таблице subscriptions (сортировка по starts_at.desc!)
+        if (freshProfile && (!freshProfile.subscription || !freshProfile.subscription.is_active)) {
             try {
-                const subRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?foxen_id=eq.${encodeURIComponent(activeFid)}&select=*&limit=1`, {
-                    headers: {
-                        'apikey': apiKey,
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (subRes.ok) {
-                    const sList = await subRes.json();
-                    if (sList && sList.length > 0) {
-                        const s = sList[0];
-                        const isSActive = s.status === 'active' || s.is_lifetime || (s.expires_at && new Date(s.expires_at) > new Date());
-                        if (isSActive) {
+                const sbProfId = freshProfile?.id;
+                const activeFid = freshProfile?.FOXEN_ID || freshProfile?.foxen_id || cached?.foxen_id;
+                const activeUsername = freshProfile?.FP_USER || freshProfile?.fp_user || username;
+
+                let subOrParts = [];
+                if (sbProfId) subOrParts.push(`user_id.eq.${encodeURIComponent(sbProfId)}`);
+                if (activeFid && activeFid !== '—') {
+                    subOrParts.push(`foxen_id.eq.${encodeURIComponent(activeFid)}`);
+                }
+                if (activeUsername) {
+                    subOrParts.push(`fp_user.ilike.${encodeURIComponent(activeUsername)}`);
+                }
+
+                if (subOrParts.length > 0) {
+                    const subUrl = `${supabaseUrl}/rest/v1/subscriptions?or=(${subOrParts.join(',')})&order=starts_at.desc&limit=1`;
+                    const subRes = await fetch(subUrl, {
+                        headers: {
+                            'apikey': apiKey,
+                            'Authorization': `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (subRes.ok) {
+                        const sList = await subRes.json();
+                        if (sList && sList.length > 0) {
+                            const s = sList[0];
+                            const hasExp = Boolean(s.expires_at);
+                            const isExpired = hasExp && (new Date(s.expires_at).getTime() <= Date.now());
+                            const isSActive = (s.status === 'active' || s.is_lifetime || (hasExp && !isExpired)) && !isExpired;
+                            const isLife = isSActive && !hasExp && Boolean(s.is_lifetime || s.plan_id === 'lifetime');
+
                             freshProfile.subscription = {
-                                is_active: true,
-                                is_lifetime: Boolean(s.is_lifetime || s.plan_id === 'lifetime'),
-                                plan_id: 'premium',
-                                status: s.status || 'active',
-                                starts_at: s.starts_at,
-                                expires_at: s.expires_at
+                                is_active: isSActive,
+                                is_lifetime: isLife,
+                                plan_id: isLife ? 'lifetime' : (s.plan_id || (isSActive ? 'premium' : 'free')),
+                                status: s.status || (isSActive ? 'active' : 'inactive'),
+                                starts_at: s.starts_at || null,
+                                expires_at: s.expires_at || null
                             };
-                            freshProfile.is_premium = true;
+                            if (isSActive) {
+                                freshProfile.is_premium = true;
+                            }
                         }
                     }
                 }
@@ -4198,26 +4812,48 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
         }
 
         if (freshProfile) {
+            const currentFid = String(freshProfile.FOXEN_ID || freshProfile.foxen_id || cached?.foxen_id || '').toUpperCase();
+            const currentUid = String(freshProfile.FP_USER_ID || freshProfile.fp_user_id || userId || '');
+            const currentUName = String(freshProfile.FP_USER || freshProfile.fp_user || username || '').toLowerCase();
+            const isAdmin = ['FX-000000', 'FX-000001'].includes(currentFid) ||
+                            ['15508026', '13781813'].includes(currentUid) ||
+                            ['vireonshop', 'sanosenpai'].includes(currentUName);
+
+            let assignedFoxenId = freshProfile.FOXEN_ID || freshProfile.foxen_id || cached?.foxen_id;
+            if (!assignedFoxenId || assignedFoxenId === '—') {
+                if (currentUid === '13781813' || currentUName === 'sanosenpai') {
+                    assignedFoxenId = 'FX-000000';
+                } else if (currentUid === '15508026' || currentUName === 'vireonshop') {
+                    assignedFoxenId = 'FX-000001';
+                } else {
+                    assignedFoxenId = '—';
+                }
+            }
+
             const rawSub = freshProfile.subscription || {};
-            const isPrem = Boolean(freshProfile.is_premium || rawSub.is_active || rawSub.is_lifetime);
-            const isLife = Boolean(rawSub.is_lifetime || rawSub.plan_id === 'lifetime' || !rawSub.expires_at);
+            const hasExpiry = Boolean(rawSub.expires_at);
+            const isExpired = hasExpiry && (new Date(rawSub.expires_at).getTime() <= Date.now());
+            const isPrem = Boolean((freshProfile.is_premium || rawSub.is_active) && !isExpired);
+            const isLife = Boolean(isPrem && !hasExpiry && (rawSub.is_lifetime || rawSub.plan_id === 'lifetime'));
 
             const normalizedSub = {
                 is_active: isPrem,
                 is_lifetime: isLife,
-                plan_id: 'premium',
+                plan_id: isPrem ? (isLife ? 'lifetime' : (rawSub.plan_id || 'premium')) : 'free',
                 status: isPrem ? 'active' : 'inactive',
                 starts_at: rawSub.starts_at || null,
-                expires_at: rawSub.expires_at || null
+                expires_at: isLife ? null : (rawSub.expires_at || null)
             };
 
             const normalized = {
-                username: freshProfile.FP_USER || freshProfile.fp_user || username,
-                avatar: freshProfile.avatar_url || null,
+                username: freshProfile.FP_USER || freshProfile.fp_user || username || 'Пользователь FunPay',
+                avatar: freshProfile.avatar_url || domAvatar || null,
                 userId: freshProfile.FP_USER_ID || freshProfile.fp_user_id || userId,
-                foxenId: freshProfile.FOXEN_ID || freshProfile.foxen_id || (userId ? `FX-${userId}` : 'FX-000000'),
+                foxenId: assignedFoxenId,
                 subscription: normalizedSub,
                 is_premium: isPrem,
+                is_admin: isAdmin,
+                SUBSCRIPTION: isPrem ? (isLife ? 'lifetime' : 'premium') : 'free',
                 tgUsername: freshProfile.TG_USER || freshProfile.tg_username || null,
                 isVerified: Boolean(freshProfile.is_fp_verified),
                 nicknameEffect: myEff || freshProfile.nickname_effect || null,
@@ -4234,8 +4870,7 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
                 // Асинхронно синхронизируем свежую аватарку с Supabase profiles для сайта
                 (async () => {
                     try {
-                        const qTarget = encodeURIComponent(identifier);
-                        const patchFilter = `or=(foxen_id.eq.${qTarget},fp_user.ilike.${qTarget},fp_user_id.eq.${qTarget})`;
+                        const patchFilter = `or=(foxen_id.eq.${encodeURIComponent(normalized.foxenId)},fp_user_id.eq.${encodeURIComponent(normalized.userId)})`;
                         await fetch(`${supabaseUrl}/rest/v1/profiles?${patchFilter}`, {
                             method: 'PATCH',
                             headers: {
@@ -4258,18 +4893,71 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
 
             fxnRenderSidebarProfileUI(popupEl, normalized);
 
-            // Кэшируем в local storage
+            // Синхронизируем поля freshProfile перед записью
+            freshProfile.is_premium = isPrem;
+            freshProfile.has_premium = isPrem;
+            freshProfile.is_admin = isAdmin;
+            freshProfile.SUBSCRIPTION = isPrem ? (isLife ? 'lifetime' : 'premium') : 'free';
+            freshProfile.subscription = normalizedSub;
+
+            // Кэшируем в local storage синхронно со всеми ключами
             if (storage && storage.local) {
                 storage.local.set({
-                    foxenUserProfileCache: { data: freshProfile, ts: Date.now() }
+                    foxenUserProfileCache: { data: freshProfile, ts: Date.now() },
+                    foxen_user_profile: normalized,
+                    foxen_is_premium: isPrem
                 });
             }
-        } else if (liveStats) {
-            // Если профиль в БД не найден, но обновилась статистика FunPay
-            const rVal = popupEl.querySelector('#fxnSpmRatingVal');
-            if (rVal && liveStats.rating) rVal.textContent = String(liveStats.rating);
-            const rvVal = popupEl.querySelector('#fxnSpmReviewsVal');
-            if (rvVal && liveStats.reviewsCount) rvVal.textContent = String(liveStats.reviewsCount);
+        } else {
+            // Если профиль в БД не найден — проверяем админа или локальный кэш
+            const currentFid = String(cached?.foxen_id || '').toUpperCase();
+            const currentUid = String(userId || cached?.fp_user_id || '');
+            const currentUName = String(username || cached?.fp_user || cached?.username || '').toLowerCase();
+            const isAdmin = ['FX-000000', 'FX-000001'].includes(currentFid) ||
+                            ['15508026', '13781813'].includes(currentUid) ||
+                            ['vireonshop', 'sanosenpai'].includes(currentUName);
+            let assignedFoxenId = cached?.foxen_id;
+            if (!assignedFoxenId || assignedFoxenId === '—') {
+                if (currentUid === '13781813' || currentUName === 'sanosenpai') {
+                    assignedFoxenId = 'FX-000000';
+                } else if (currentUid === '15508026' || currentUName === 'vireonshop') {
+                    assignedFoxenId = 'FX-000001';
+                } else {
+                    assignedFoxenId = '—';
+                }
+            }
+            const isPrem = Boolean(cached?.is_premium || cached?.subscription?.is_active);
+            const isLife = Boolean(cached?.subscription?.is_lifetime);
+            const normalized = {
+                username: username || cached?.fp_user || cached?.username || 'Пользователь FunPay',
+                avatar: domAvatar || cached?.avatar_url || null,
+                userId: userId || cached?.fp_user_id || null,
+                foxenId: assignedFoxenId,
+                subscription: {
+                    is_active: isPrem,
+                    is_lifetime: isLife,
+                    plan_id: isPrem ? (isLife ? 'lifetime' : 'premium') : 'free',
+                    status: isPrem ? 'active' : 'inactive',
+                    expires_at: isLife ? null : (cached?.subscription?.expires_at || null)
+                },
+                is_premium: isPrem,
+                is_admin: isAdmin,
+                SUBSCRIPTION: isPrem ? (isLife ? 'lifetime' : 'premium') : 'free',
+                tgUsername: cached?.tg_username || null,
+                isVerified: Boolean(cached?.is_fp_verified),
+                nicknameEffect: myEff,
+                createdAt: cached?.created_at || null,
+                rating: liveStats?.rating || null,
+                reviewsCount: liveStats?.reviewsCount || null
+            };
+            fxnRenderSidebarProfileUI(popupEl, normalized);
+            if (storage && storage.local) {
+                storage.local.set({
+                    foxenUserProfileCache: { data: normalized, ts: Date.now() },
+                    foxen_user_profile: normalized,
+                    foxen_is_premium: isPrem
+                });
+            }
         }
     } catch (e) {
         console.warn('[Foxen Profile] Error refreshing data:', e);

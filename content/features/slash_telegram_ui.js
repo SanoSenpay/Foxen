@@ -153,8 +153,21 @@ async function fxnTgSave() {
 function fxnTgSetStatus(text, kind) {
     const el = document.getElementById('fxnTgStatus') || document.getElementById('fxnTgStatus');
     if (!el) return;
-    el.textContent = text || '';
+    el.innerHTML = text || '';
     el.style.color = kind === 'ok' ? '#4caf82' : kind === 'err' ? '#ff6b6b' : '#9099b8';
+}
+
+function updateTgHeaderStatusPill() {
+    const pill = document.getElementById('fxnTgStatusPill');
+    if (!pill) return;
+    const isBotActive = Boolean(_fxnTgCfg && _fxnTgCfg.enabled && _fxnTgCfg.token && _fxnTgCfg.chatId);
+    if (isBotActive) {
+        pill.classList.add('on');
+        pill.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;color:#4ade80;">check_circle</span><span id="fxnTgStatusText" style="color:#ffffff;">АКТИВНО</span>';
+    } else {
+        pill.classList.remove('on');
+        pill.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;color:#94a3b8;">circle</span><span id="fxnTgStatusText" style="color:#94a3b8;">ОТКЛЮЧЕН</span>';
+    }
 }
 
 let _fxnTgUiBound = false;
@@ -171,13 +184,25 @@ async function initializeTelegramUI() {
     const notifyMsgEl = document.getElementById('fxnTgNotifyMessages') || document.getElementById('fxnTgNotifyMessages');
     const allowControlEl = document.getElementById('fxnTgAllowControl') || document.getElementById('fxnTgAllowControl');
 
-    if (enabledEl) enabledEl.checked = !!_fxnTgCfg.enabled;
+    if (enabledEl) {
+        enabledEl.checked = !!_fxnTgCfg.enabled;
+        enabledEl.classList.toggle('on', !!_fxnTgCfg.enabled);
+    }
     if (configEl) configEl.style.display = _fxnTgCfg.enabled ? '' : 'none';
     if (tokenEl) tokenEl.value = _fxnTgCfg.token || '';
     if (chatIdEl) chatIdEl.value = _fxnTgCfg.chatId || '';
-    if (notifyOrdersEl) notifyOrdersEl.checked = _fxnTgCfg.notifyOrders !== false;
-    if (notifyMsgEl) notifyMsgEl.checked = _fxnTgCfg.notifyMessages !== false;
-    if (allowControlEl) allowControlEl.checked = _fxnTgCfg.allowControl !== false;
+    if (notifyOrdersEl) {
+        notifyOrdersEl.checked = _fxnTgCfg.notifyOrders !== false;
+        notifyOrdersEl.classList.toggle('on', _fxnTgCfg.notifyOrders !== false);
+    }
+    if (notifyMsgEl) {
+        notifyMsgEl.checked = _fxnTgCfg.notifyMessages !== false;
+        notifyMsgEl.classList.toggle('on', _fxnTgCfg.notifyMessages !== false);
+    }
+    if (allowControlEl) {
+        allowControlEl.checked = _fxnTgCfg.allowControl !== false;
+        allowControlEl.classList.toggle('on', _fxnTgCfg.allowControl !== false);
+    }
 
     if (_fxnTgCfg.token && _fxnTgCfg.chatId) {
         fxnTgSetStatus('Подключено. Chat ID: ' + _fxnTgCfg.chatId, 'ok');
@@ -185,44 +210,69 @@ async function initializeTelegramUI() {
         fxnTgSetStatus('');
     }
 
+    updateTgHeaderStatusPill();
+
     if (_fxnTgUiBound) return;
     _fxnTgUiBound = true;
 
-    enabledEl && enabledEl.addEventListener('change', async () => {
-        _fxnTgCfg.enabled = enabledEl.checked;
-        if (configEl) configEl.style.display = enabledEl.checked ? '' : 'none';
-        if (enabledEl.checked && (!_fxnTgCfg.token || !_fxnTgCfg.chatId)) {
+    const handleEnabledToggle = async () => {
+        const isEnabled = enabledEl.checked !== undefined ? Boolean(enabledEl.checked) : enabledEl.classList.contains('on');
+        _fxnTgCfg.enabled = isEnabled;
+        if (configEl) configEl.style.display = isEnabled ? '' : 'none';
+        if (isEnabled && (!_fxnTgCfg.token || !_fxnTgCfg.chatId)) {
             fxnTgSetStatus('Введите токен и нажмите «Подключить», иначе уведомления не будут приходить.', 'err');
         }
         await fxnTgSave();
-    });
+        updateTgHeaderStatusPill();
+    };
+    enabledEl && enabledEl.addEventListener('change', handleEnabledToggle);
+    enabledEl && enabledEl.addEventListener('click', () => setTimeout(handleEnabledToggle, 10));
 
-    [['fxnTgNotifyOrders', 'notifyOrders'], ['fxnTgNotifyMessages', 'notifyMessages'], ['fxnTgAllowControl', 'allowControl'], ['fxnTgNotifyOrders', 'notifyOrders'], ['fxnTgNotifyMessages', 'notifyMessages'], ['fxnTgAllowControl', 'allowControl']]
+    [['fxnTgNotifyOrders', 'notifyOrders'], ['fxnTgNotifyMessages', 'notifyMessages'], ['fxnTgAllowControl', 'allowControl']]
         .forEach(([id, key]) => {
             const el = document.getElementById(id);
             el && el.addEventListener('change', async () => { _fxnTgCfg[key] = el.checked; await fxnTgSave(); });
         });
 
+    tokenEl && tokenEl.addEventListener('input', async () => {
+        _fxnTgCfg.token = tokenEl.value.trim();
+        await fxnTgSave();
+        updateTgHeaderStatusPill();
+    });
+
+    chatIdEl && chatIdEl.addEventListener('input', async () => {
+        _fxnTgCfg.chatId = chatIdEl.value.trim();
+        await fxnTgSave();
+        updateTgHeaderStatusPill();
+    });
+
     chatIdEl && chatIdEl.addEventListener('change', async () => {
         _fxnTgCfg.chatId = chatIdEl.value.trim();
         await fxnTgSave();
+        updateTgHeaderStatusPill();
     });
 
     const connectBtn = document.getElementById('fxnTgConnectBtn') || document.getElementById('fxnTgConnectBtn');
     connectBtn && connectBtn.addEventListener('click', async () => {
         const token = (tokenEl.value || '').trim();
         if (!token) { fxnTgSetStatus('Введите токен бота.', 'err'); return; }
+        const manualChatId = (chatIdEl ? chatIdEl.value.trim() : '');
         connectBtn.disabled = true;
         fxnTgSetStatus('Проверяю токен…');
         try {
-            const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({ action: 'telegramValidate', token });
+            const res = await (typeof browser !== 'undefined' ? browser : chrome).runtime.sendMessage({
+                action: 'telegramValidate',
+                token,
+                chatId: manualChatId
+            });
             if (!res || !res.ok) {
                 fxnTgSetStatus('Ошибка: ' + (res && res.error ? res.error : 'неверный токен'), 'err');
                 connectBtn.disabled = false;
+                updateTgHeaderStatusPill();
                 return;
             }
             _fxnTgCfg.token = token;
-            const finalChatId = res.chatId || _fxnTgCfg.chatId || (chatIdEl ? chatIdEl.value.trim() : '');
+            const finalChatId = res.chatId || _fxnTgCfg.chatId || manualChatId;
             if (finalChatId) {
                 _fxnTgCfg.chatId = finalChatId;
                 if (chatIdEl) chatIdEl.value = finalChatId;
@@ -232,16 +282,20 @@ async function initializeTelegramUI() {
             if (enabledEl) enabledEl.checked = true;
             if (configEl) configEl.style.display = '';
             await fxnTgSave();
+            updateTgHeaderStatusPill();
 
             if (finalChatId) {
-                fxnTgSetStatus(`Готово! Бот ${res.botName} подключен. Chat ID: ${finalChatId}.`, 'ok');
+                fxnTgSetStatus(`Готово! Бот <b>${res.botName}</b> подключен. Chat ID: <code>${finalChatId}</code>. Проверьте сообщение в Telegram!`, 'ok');
             } else {
-                fxnTgSetStatus(`Бот ${res.botName} найден, но не удалось определить чат. Напишите боту любое сообщение в Telegram и нажмите «Подключить» ещё раз.`, 'err');
+                const botUsername = (res.username || res.botName || '').replace(/^@/, '');
+                const botLink = botUsername ? ` <a href="https://t.me/${botUsername}" target="_blank" style="color:#60a5fa;text-decoration:underline;font-weight:600;">@${botUsername}</a>` : ` <b>${res.botName}</b>`;
+                fxnTgSetStatus(`Бот найден, но чат ещё не определен. Перейдите в бота${botLink}, напишите <b>/start</b> или любое сообщение и нажмите «Подключить» ещё раз. (Либо введите ваш Chat ID вручную).`, 'err');
             }
         } catch (e) {
             fxnTgSetStatus('Ошибка: ' + e.message, 'err');
         } finally {
             connectBtn.disabled = false;
+            updateTgHeaderStatusPill();
         }
     });
 
@@ -269,4 +323,5 @@ async function initializeTelegramUI() {
 if (typeof window !== 'undefined') {
     window.initializeSlashCommandsUI = initializeSlashCommandsUI;
     window.initializeTelegramUI = initializeTelegramUI;
+    window.updateTgHeaderStatusPill = updateTgHeaderStatusPill;
 }

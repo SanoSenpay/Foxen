@@ -1593,8 +1593,8 @@ html {
     scroll-behavior: smooth;
 }
 
-body:not(.funpay-redesigned) > #content,
-body:not(.funpay-redesigned) .page-content > #content {
+body:not(.funpay-redesigned):not([data-controller="app"]) > #content:not(.mb-5),
+body:not(.funpay-redesigned):not([data-controller="app"]) .page-content > #content {
     visibility: hidden;
 }
 
@@ -1604,10 +1604,12 @@ body.funpay-redesigned {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-body.funpay-redesigned #header,
-body.funpay-redesigned .navbar-default,
-.fxn-custom-theme-on #header,
-.fxn-custom-theme-on .navbar-default {
+body.funpay-redesigned:not(.fxn-header-bottom) #header,
+body.funpay-redesigned:not(.fxn-header-bottom) .navbar-default,
+html:not(.fxn-header-bottom) .fxn-custom-theme-on #header,
+html:not(.fxn-header-bottom) .fxn-custom-theme-on .navbar-default,
+.fxn-custom-theme-on:not(.fxn-header-bottom) #header,
+.fxn-custom-theme-on:not(.fxn-header-bottom) .navbar-default {
     background: rgba(18, 18, 24, 0) !important;
     backdrop-filter: blur(16px) saturate(160%) !important;
     -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
@@ -1617,6 +1619,79 @@ body.funpay-redesigned .navbar-default,
     z-index: 1000;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0) !important;
     transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Header Position: Bottom ("Шапка внизу экрана") */
+html.fxn-header-bottom body,
+body.fxn-header-bottom {
+    padding-bottom: 65px !important;
+    padding-top: 0 !important;
+}
+
+html.fxn-header-bottom #header,
+body.fxn-header-bottom #header,
+.fxn-custom-theme-on.fxn-header-bottom #header,
+html.fxn-header-bottom.fxn-custom-theme-on #header,
+body.funpay-redesigned.fxn-header-bottom #header,
+html.fxn-header-bottom .navbar-default,
+body.fxn-header-bottom .navbar-default {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1040 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-bottom: none !important;
+}
+
+html.fxn-header-bottom #header .navbar-default,
+body.fxn-header-bottom #header .navbar-default {
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-bottom: none !important;
+}
+
+html.fxn-header-bottom #header .dropup .dropdown-menu,
+html.fxn-header-bottom #header .dropdown-menu,
+body.fxn-header-bottom #header .dropup .dropdown-menu,
+body.fxn-header-bottom #header .dropdown-menu {
+    top: auto !important;
+    bottom: calc(100% - 1px) !important;
+    margin-top: 0 !important;
+    margin-bottom: 7px !important;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, .35) !important;
+    border-radius: 8px !important;
+}
+
+html.fxn-header-bottom .navbar-form .dropdown-autocomplete,
+body.fxn-header-bottom .navbar-form .dropdown-autocomplete {
+    top: auto !important;
+    bottom: 100% !important;
+    border-bottom: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, .35) !important;
+    border-radius: 4px 4px 0 0 !important;
+}
+
+@media (max-width: 991px) {
+    html.fxn-header-bottom #navbar.in, 
+    html.fxn-header-bottom #navbar.collapsing,
+    body.fxn-header-bottom #navbar.in,
+    body.fxn-header-bottom #navbar.collapsing {
+        top: auto !important;
+        bottom: 100% !important;
+        position: absolute !important;
+        right: 1px !important;
+        left: auto !important;
+        width: 240px !important;
+        margin-bottom: 12px !important;
+        border-radius: 4px !important;
+    }
+    html.fxn-header-bottom .navbar-collapse,
+    body.fxn-header-bottom .navbar-collapse {
+        max-height: calc(100vh - 80px) !important;
+    }
 }
 
 body.funpay-redesigned .navbar-default .navbar-nav>li>a,
@@ -1654,27 +1729,105 @@ body.funpay-redesigned .user-link:hover .user-link-photo,
     box-shadow: 0 0 10px var(--fxn-accent-soft, rgba(192, 38, 211, 0.4)) !important;
 }
 
-/* Modern Pill Search Bar in Navbar */
+/* ==========================================================================
+   Harmonized Navbar Search Forms (Game Filter & Foxen RMTHub Seller Search)
+   ========================================================================== */
+
+/* Both search forms: align inline, remove Bootstrap negative margins */
+.navbar-header .navbar-form.promo-games-filter,
+.navbar-header .navbar-form.fp-rmthub-form,
+#header .navbar-form.promo-games-filter,
+#header .navbar-form.fp-rmthub-form,
+body.funpay-redesigned .navbar-header .navbar-form.promo-games-filter,
+body.funpay-redesigned .navbar-header .navbar-form.fp-rmthub-form,
+.fxn-custom-theme-on .navbar-header .navbar-form.promo-games-filter,
+.fxn-custom-theme-on .navbar-header .navbar-form.fp-rmthub-form {
+    display: inline-flex !important;
+    align-items: center !important;
+    float: left !important;
+    gap: 4px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+/* Margin-right on game search to ensure clean separation from seller search */
+.navbar-header .navbar-form.promo-games-filter,
+#header .navbar-form.promo-games-filter,
+body.funpay-redesigned .navbar-header .navbar-form.promo-games-filter,
+.fxn-custom-theme-on .navbar-header .navbar-form.promo-games-filter {
+    margin-right: 6px !important;
+}
+
+/* Inner form groups for both forms */
+.navbar-header .promo-games-filter .form-group,
+.navbar-header .fp-rmthub-form .form-group,
+#header .promo-games-filter .form-group,
+#header .fp-rmthub-form .form-group,
+.fp-rmthub-wrap {
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+/* Identical styling for BOTH inputs */
 .navbar-form .form-control,
+.navbar-header .promo-games-filter .form-control,
+.navbar-header #fp-rmthub-input,
+#header .promo-games-filter .form-control,
+#header #fp-rmthub-input,
 body.funpay-redesigned .navbar-form .form-control,
-.fxn-custom-theme-on .navbar-form .form-control {
-    width: 110px !important;
-    border-radius: 10px !important;
+body.funpay-redesigned .promo-games-filter .form-control,
+body.funpay-redesigned #fp-rmthub-input,
+.fxn-custom-theme-on .navbar-form .form-control,
+.fxn-custom-theme-on .promo-games-filter .form-control,
+.fxn-custom-theme-on #fp-rmthub-input {
+    border-radius: 9px !important;
     background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     color: #f3f4f6 !important;
-    padding: 6px 14px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    line-height: normal !important;
+    letter-spacing: normal !important;
     transition: all 0.2s ease !important;
     box-shadow: none !important;
     outline: none !important;
+    box-sizing: border-box !important;
+    text-overflow: ellipsis !important;
+}
+
+.navbar-form .form-control::placeholder,
+.navbar-header .promo-games-filter .form-control::placeholder,
+.navbar-header #fp-rmthub-input::placeholder,
+#header .promo-games-filter .form-control::placeholder,
+#header #fp-rmthub-input::placeholder {
+    color: rgba(243, 244, 246, 0.5) !important;
+    opacity: 1 !important;
 }
 
 .navbar-form .form-control:focus,
+.navbar-header .promo-games-filter .form-control:focus,
+.navbar-header #fp-rmthub-input:focus,
+#header .promo-games-filter .form-control:focus,
+#header #fp-rmthub-input:focus,
 body.funpay-redesigned .navbar-form .form-control:focus,
 .fxn-custom-theme-on .navbar-form .form-control:focus {
     background: rgba(255, 255, 255, 0.08) !important;
     border-color: var(--fxn-active, var(--fxn-accent, #c026d3)) !important;
-    box-shadow: 0 0 12px var(--fxn-accent-soft, rgba(192, 38, 211, 0.25)) !important;
+    box-shadow: 0 0 10px var(--fxn-accent-soft, rgba(192, 38, 211, 0.25)) !important;
     outline: none !important;
 }
 
@@ -1686,6 +1839,202 @@ body.funpay-redesigned .navbar-form .form-control:focus,
     -webkit-box-shadow: 0 0 0 1000px #141417 inset !important;
     box-shadow: 0 0 0 1000px #141417 inset !important;
     transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Identical styling for BOTH submit buttons */
+.navbar-header .promo-games-filter > button,
+.navbar-header .fp-rmthub-btn,
+#header .promo-games-filter > button,
+#header .fp-rmthub-btn,
+body.funpay-redesigned .promo-games-filter > button,
+body.funpay-redesigned .fp-rmthub-btn,
+.fxn-custom-theme-on .promo-games-filter > button,
+.fxn-custom-theme-on .fp-rmthub-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+    cursor: pointer !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--fxn-theme-text-color, #d1d5db) !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+}
+
+.navbar-header .promo-games-filter > button:hover,
+.navbar-header .fp-rmthub-btn:hover,
+#header .promo-games-filter > button:hover,
+#header .fp-rmthub-btn:hover,
+body.funpay-redesigned .promo-games-filter > button:hover,
+body.funpay-redesigned .fp-rmthub-btn:hover,
+.fxn-custom-theme-on .promo-games-filter > button:hover,
+.fxn-custom-theme-on .fp-rmthub-btn:hover {
+    border-color: var(--fxn-active, var(--fxn-accent, #c026d3)) !important;
+    color: var(--fxn-active, var(--fxn-accent, #c026d3)) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 0 10px var(--fxn-accent-soft, rgba(192, 38, 211, 0.25)) !important;
+    text-decoration: none !important;
+}
+
+.navbar-header .promo-games-filter > button:active,
+.navbar-header .fp-rmthub-btn:active,
+#header .promo-games-filter > button:active,
+#header .fp-rmthub-btn:active {
+    transform: scale(0.95) !important;
+}
+
+.navbar-header .promo-games-filter > button i,
+.navbar-header .fp-rmthub-btn i,
+#header .promo-games-filter > button i,
+#header .fp-rmthub-btn i {
+    font-size: 13px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    top: 0 !important;
+    position: static !important;
+    color: inherit !important;
+}
+
+/* Desktop sizing (>= 992px) */
+@media (min-width: 992px) {
+    .navbar-header .navbar-form.promo-games-filter,
+    .navbar-header .navbar-form.fp-rmthub-form,
+    #header .navbar-form.promo-games-filter,
+    #header .navbar-form.fp-rmthub-form {
+        margin-top: 13px !important;
+        margin-bottom: 13px !important;
+    }
+
+    .navbar-header .promo-games-filter .form-control,
+    .navbar-header #fp-rmthub-input,
+    #header .promo-games-filter .form-control,
+    #header #fp-rmthub-input,
+    .navbar-form .form-control {
+        width: 112px !important;
+        height: 34px !important;
+    }
+
+    .navbar-header .promo-games-filter > button,
+    .navbar-header .fp-rmthub-btn,
+    #header .promo-games-filter > button,
+    #header .fp-rmthub-btn {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+    }
+}
+
+/* Tablet & Landscape Mobile (768px - 991px) */
+@media (max-width: 991px) {
+    .navbar-header .navbar-form.promo-games-filter,
+    .navbar-header .navbar-form.fp-rmthub-form,
+    #header .navbar-form.promo-games-filter,
+    #header .navbar-form.fp-rmthub-form {
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .navbar-header .promo-games-filter .form-control,
+    .navbar-header #fp-rmthub-input,
+    #header .promo-games-filter .form-control,
+    #header #fp-rmthub-input,
+    .navbar-form .form-control {
+        width: 100px !important;
+        height: 32px !important;
+        padding: 5px 10px !important;
+    }
+
+    .navbar-header .promo-games-filter > button,
+    .navbar-header .fp-rmthub-btn,
+    #header .promo-games-filter > button,
+    #header .fp-rmthub-btn {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+    }
+}
+
+/* Phone Portrait (<= 767px) */
+@media (max-width: 767px) {
+    .navbar-header .navbar-form.promo-games-filter,
+    .navbar-header .navbar-form.fp-rmthub-form,
+    #header .navbar-form.promo-games-filter,
+    #header .navbar-form.fp-rmthub-form {
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        gap: 3px !important;
+    }
+
+    .navbar-header .navbar-form.promo-games-filter,
+    #header .navbar-form.promo-games-filter {
+        margin-right: 5px !important;
+    }
+
+    .navbar-header .promo-games-filter .form-control,
+    .navbar-header #fp-rmthub-input,
+    #header .promo-games-filter .form-control,
+    #header #fp-rmthub-input,
+    .navbar-form .form-control {
+        width: clamp(68px, 18vw, 92px) !important;
+        height: 32px !important;
+        padding: 5px 8px !important;
+        font-size: 11.5px !important;
+    }
+
+    .navbar-header .promo-games-filter > button,
+    .navbar-header .fp-rmthub-btn,
+    #header .promo-games-filter > button,
+    #header .fp-rmthub-btn {
+        width: 30px !important;
+        height: 32px !important;
+        min-width: 30px !important;
+    }
+
+    /* Keep navbar-brand and right icons compact so they never squeeze or wrap */
+    .navbar-header .navbar-brand {
+        padding-left: 8px !important;
+        padding-right: 6px !important;
+    }
+    .navbar-header a.navbar-xs-icon {
+        margin-right: 8px !important;
+    }
+    .navbar-header .navbar-toggle {
+        margin-right: 8px !important;
+    }
+}
+
+/* Extra small phones (<= 380px) */
+@media (max-width: 380px) {
+    .navbar-header .promo-games-filter .form-control,
+    .navbar-header #fp-rmthub-input,
+    #header .promo-games-filter .form-control,
+    #header #fp-rmthub-input,
+    .navbar-form .form-control {
+        width: clamp(58px, 16vw, 75px) !important;
+        height: 30px !important;
+        padding: 4px 6px !important;
+        font-size: 11px !important;
+    }
+
+    .navbar-header .promo-games-filter > button,
+    .navbar-header .fp-rmthub-btn,
+    #header .promo-games-filter > button,
+    #header .fp-rmthub-btn {
+        width: 28px !important;
+        height: 30px !important;
+        min-width: 28px !important;
+    }
 }
 
 /* User Balance Pill */
@@ -1798,11 +2147,86 @@ body.funpay-redesigned .chat {
     border-radius: var(--fp-radius) !important;
 }
 
+.chat-header,
 body.funpay-redesigned .chat-header {
+    container-type: inline-size;
+    container-name: chat-header;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
     background-color: transparent !important;
     border-bottom: 1px solid var(--fp-border-color) !important;
     border-top-left-radius: var(--fp-radius);
     border-top-right-radius: var(--fp-radius);
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.chat-header .media,
+.chat-header .media-user {
+    display: flex !important;
+    align-items: center !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    float: none !important;
+    width: auto !important;
+    overflow: hidden !important;
+}
+
+.chat-header .media-left {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    margin-right: 8px !important;
+    float: none !important;
+}
+
+.chat-header .media-left img,
+.chat-header .media-left a img {
+    width: 40px !important;
+    height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+}
+
+.chat-header .media-body {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    overflow: hidden !important;
+    float: none !important;
+}
+
+.chat-header .media-user-name,
+.chat-header .media-user-name a {
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+    display: block !important;
+    line-height: 1.2 !important;
+}
+
+.chat-header .media-user-status {
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
 }
 
 body.funpay-redesigned .chat-header .media-user-name a,
@@ -1814,10 +2238,330 @@ body.funpay-redesigned .chat-msg-author-link:hover {
     color: var(--fp-accent-hover) !important;
 }
 
-body.funpay-redesigned .chat-header .chat-header-controls .chat-control {
-    color: var(--fp-text-secondary) !important;
-    background: #2a2a2a !important;
-    border: 1px solid var(--fp-border-color) !important;
+/* Chat Header Controls & Кнопки */
+/* =============================================================================
+   CHAT HEADER CONTROLS (Floating & Embedded Chats - Unified Modern Glass Style)
+   ============================================================================= */
+.chat-header-controls {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    float: none !important;
+}
+
+/* Обертка для кнопки оповещений (span) - строго прозрачный контейнер БЕЗ стилей кнопки */
+.chat-header-controls .notice-button-container,
+.chat-header-controls span.notice-button-container,
+.chat-header-controls span.notice-button-container.chat-control,
+.chat-header-controls .notice-button-container:hover,
+.chat-header-controls span.notice-button-container:hover,
+.chat-header-controls span.notice-button-container.chat-control:hover,
+.chat-header-controls .notice-button-container:active,
+.chat-header-controls .notice-button-container:focus {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+}
+
+/* Убираем псевдоэлементные тултипы, которые обрезаются шапкой чата */
+.chat-header-controls .notice-button-container::after,
+.chat-header-controls .notice-button-container::before,
+.chat-header-controls .notice-button-container button::after,
+.chat-header-controls .notice-button-container button::before {
+    display: none !important;
+    content: none !important;
+}
+
+/* Текст «Включены оповещения» внутри кнопки полностью скрываем */
+.chat-header-controls .notice-button-container .inside,
+.chat-header-controls .notice-button-container br {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Все интерактивные кнопки в шапке чата (Поиск, Оповещения, 3 точки, Закрыть/Свернуть, Клон) */
+.chat-header-controls > a,
+.chat-header-controls > button,
+.chat-header-controls .fxn-search-toggle,
+.chat-header-controls .dropdown > button,
+.chat-header-controls .notice-button-container > button,
+.chat-header-controls .notice-button-container > .btn,
+body.funpay-redesigned .chat-header .chat-header-controls > a,
+body.funpay-redesigned .chat-header .chat-header-controls > button {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    border-radius: 9px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    flex-shrink: 0 !important;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    outline: none !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+}
+
+.chat-header-controls > a:hover,
+.chat-header-controls > button:hover,
+.chat-header-controls .fxn-search-toggle:hover,
+.chat-header-controls .dropdown > button:hover,
+.chat-header-controls .notice-button-container > button:hover,
+.chat-header-controls .notice-button-container > .btn:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+.chat-header-controls > a:active,
+.chat-header-controls > button:active,
+.chat-header-controls .fxn-search-toggle:active,
+.chat-header-controls .dropdown > button:active,
+.chat-header-controls .notice-button-container > button:active,
+.chat-header-controls .notice-button-container > .btn:active {
+    transform: translateY(0) !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+}
+
+/* Иконки строго по центру без смещений */
+.chat-header-controls i,
+.chat-header-controls svg,
+.chat-header-controls .icon,
+.chat-header-controls span[class*="fa"],
+.chat-header-controls span[class*="material-symbols"],
+.chat-header-controls .material-symbols-rounded,
+.chat-header-controls button i,
+.chat-header-controls a i {
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+    line-height: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: inherit !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: static !important;
+    float: none !important;
+    vertical-align: middle !important;
+    transform: none !important;
+}
+
+.chat-header-controls .material-symbols-rounded {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+}
+
+/* Glassmorphism for Chat Dropdown & 3-dots Menu */
+.chat-header .dropdown-menu,
+.chat-header-controls .dropdown-menu,
+.chat-header .dropdown.open .dropdown-menu,
+.chat .dropdown-menu,
+.dropdown-menu.dropdown-menu-right {
+    background: rgba(22, 24, 34, 0.75) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+    padding: 6px !important;
+    min-width: 210px !important;
+    z-index: 1050 !important;
+    list-style: none !important;
+}
+
+.chat-header .dropdown-menu > li,
+.chat-header-controls .dropdown-menu > li,
+.chat .dropdown-menu > li {
+    margin: 1px 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.chat-header .dropdown-menu > li > a,
+.chat-header-controls .dropdown-menu > li > a,
+.chat .dropdown-menu > li > a {
+    color: #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
+
+.chat-header .dropdown-menu > li > a:hover,
+.chat-header-controls .dropdown-menu > li > a:hover,
+.chat .dropdown-menu > li > a:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.chat-header .dropdown-menu .divider,
+.chat-header-controls .dropdown-menu .divider,
+.chat .dropdown-menu .divider {
+    height: 1px !important;
+    margin: 6px 4px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: none !important;
+}
+
+/* Fix FunPay Native Modals (Notice modal layout & left-clipping fix) */
+.modal-dialog {
+    max-width: 650px !important;
+    margin: 30px auto !important;
+}
+
+.modal-dialog.modal-lg,
+.modal-notices .modal-dialog {
+    max-width: 840px !important;
+    width: 92% !important;
+}
+
+.modal-content {
+    background: rgba(18, 20, 26, 0.96) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75) !important;
+    overflow: hidden !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 18px 24px !important;
+}
+
+.modal-body {
+    padding: 20px 24px !important;
+    overflow: visible !important;
+}
+
+/* Fix Notice Channels in modal (Telegram, Push, Email) */
+.modal-body .setting-item,
+.modal-notices .setting-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: 22px !important;
+    gap: 20px !important;
+}
+
+.modal-body .setting-photo,
+.modal-notices .setting-photo {
+    float: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: 0 !important;
+    width: 120px !important;
+    min-width: 120px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #e5e7eb !important;
+    gap: 8px !important;
+}
+
+.modal-body .setting-photo .avatar-photo,
+.modal-notices .setting-photo .avatar-photo {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+    background-size: 26px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    position: relative !important;
+}
+
+.modal-body .setting-item > div:not(.setting-photo):not(.btn):not(.btn-group),
+.modal-notices .setting-item > div:not(.setting-photo):not(.btn):not(.btn-group) {
+    flex: 1 1 auto !important;
+}
+
+.modal-body .setting-item .btn,
+.modal-notices .setting-item .btn {
+    width: 150px !important;
+    min-width: 130px !important;
+    flex-shrink: 0 !important;
+    height: 38px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+}
+
+.modal-body .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.modal-body table,
+.modal-body .table {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+}
+
+.modal-body .table td,
+.modal-body .table th {
+    padding: 12px 14px !important;
+    vertical-align: middle !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 body.funpay-redesigned .chat-message-container {
@@ -2282,15 +3026,15 @@ body.funpay-redesigned .promo-games {
 }
 
 .foxen-stats-container {
-    background: rgba(13, 13, 17, 0.90);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: #fff;
-    border-radius: 16px;
+    background: var(--fxn-theme-container-bg, rgba(13, 13, 17, 0.75)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--fxn-theme-text-color, #fff);
+    border-radius: var(--fxn-theme-border-radius, 16px);
     padding: 25px;
     margin-bottom: 30px;
-    backdrop-filter: blur(36px) saturate(190%);
-    -webkit-backdrop-filter: blur(36px) saturate(190%);
-    box-shadow: 0 20px 56px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(var(--fxn-theme-glass-blur, 16px)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, 16px)) saturate(160%);
+    box-shadow: 0 20px 56px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 /* Кастомная тема выключена → фиксированный светлый фон под страницу FunPay.
    НЕ используем var(--fxn-surface): палитра пересчитывается от фона body и может
@@ -2332,9 +3076,9 @@ body.funpay-redesigned .promo-games {
 
 .fp-stats-controls .form-control {
     width: auto;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
 }
 
@@ -2345,19 +3089,22 @@ body.funpay-redesigned .promo-games {
 }
 
 .fp-stat-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--fxn-theme-border-radius, 12px);
     padding: 20px;
     display: flex;
     align-items: center;
     gap: 20px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    backdrop-filter: blur(var(--fxn-theme-glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, 12px));
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 
 .fp-stat-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.07);
 }
 
 .stat-card-icon {
@@ -3544,20 +4291,25 @@ body.funpay-redesigned .promo-games {
     flex-shrink: 0;
 }
 .template-settings-list .template-color-picker {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 30px;
-    height: 30px;
-    background-color: transparent;
-    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.25);
     cursor: pointer;
     padding: 0;
-    border-radius: 6px;
-    overflow: hidden;
+    margin: 0;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    flex-shrink: 0;
+    outline: none;
+    display: inline-block;
 }
-.template-settings-list .template-color-picker::-webkit-color-swatch-wrapper { padding: 0; }
-.template-settings-list .template-color-picker::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; }
+.template-settings-list .template-color-picker:hover {
+    transform: scale(1.1);
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+}
 
 .template-settings-list .template-label {
     flex-grow: 1;
@@ -3616,20 +4368,25 @@ body.funpay-redesigned .promo-games {
     flex-shrink: 0;
 }
 .template-settings-list .template-color-picker {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 30px;
-    height: 30px;
-    background-color: transparent;
-    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.25);
     cursor: pointer;
     padding: 0;
-    border-radius: 6px;
-    overflow: hidden;
+    margin: 0;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    flex-shrink: 0;
+    outline: none;
+    display: inline-block;
 }
-.template-settings-list .template-color-picker::-webkit-color-swatch-wrapper { padding: 0; }
-.template-settings-list .template-color-picker::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; }
+.template-settings-list .template-color-picker:hover {
+    transform: scale(1.1);
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+}
 
 .template-settings-list .template-label {
     flex-grow: 1;
@@ -3743,20 +4500,25 @@ body.funpay-redesigned .promo-games {
     flex-shrink: 0;
 }
 .template-settings-list .template-color-picker {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 30px;
-    height: 30px;
-    background-color: transparent;
-    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.25);
     cursor: pointer;
     padding: 0;
-    border-radius: 6px;
-    overflow: hidden;
+    margin: 0;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    flex-shrink: 0;
+    outline: none;
+    display: inline-block;
 }
-.template-settings-list .template-color-picker::-webkit-color-swatch-wrapper { padding: 0; }
-.template-settings-list .template-color-picker::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; }
+.template-settings-list .template-color-picker:hover {
+    transform: scale(1.1);
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+}
 
 .template-settings-list .template-label {
     flex-grow: 1;
@@ -3815,20 +4577,25 @@ body.funpay-redesigned .promo-games {
     flex-shrink: 0;
 }
 .template-settings-list .template-color-picker {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 30px;
-    height: 30px;
-    background-color: transparent;
-    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.25);
     cursor: pointer;
     padding: 0;
-    border-radius: 6px;
-    overflow: hidden;
+    margin: 0;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    flex-shrink: 0;
+    outline: none;
+    display: inline-block;
 }
-.template-settings-list .template-color-picker::-webkit-color-swatch-wrapper { padding: 0; }
-.template-settings-list .template-color-picker::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; }
+.template-settings-list .template-color-picker:hover {
+    transform: scale(1.1);
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+}
 
 .template-settings-list .template-label {
     flex-grow: 1;
@@ -8300,6 +9067,8 @@ a.contact-item:hover {
     transition:opacity .12s ease;
 }
 .foxen-template-preview.fxn-preview-fixed.show{ opacity:1; }
+.foxen-template-preview.fxn-preview-fixed, .foxen-template-preview.fxn-preview-fixed * { pointer-events: none !important; }
+
 .foxen-template-preview.fxn-preview-fixed::before,
 .foxen-template-preview.fxn-preview-fixed::after{ display:none !important;content:none !important; }
 
@@ -8885,12 +9654,12 @@ a.contact-item:hover .foxen-chat-dots{
 /* --- Поповер действий чата: повторяет поверхность .dropdown-menu --- */
 .foxen-chat-popover{
     position:fixed;z-index:100000;min-width:200px;
-    background: var(--bg-color, #1a1c23);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border:1px solid color-mix(in srgb, currentColor 14%, transparent);
-    border-radius:10px;padding:5px;
-    box-shadow:0 10px 30px rgba(0,0,0,.45);
+    background: rgba(22, 24, 34, 0.78) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius:12px;padding:6px;
+    box-shadow:0 16px 40px rgba(0, 0, 0, 0.5) !important;
     animation:foxenPopIn .12s ease-out;
 }
 @keyframes foxenPopIn{
@@ -12211,4 +12980,343 @@ body.theme-light .fxn-chat-lang-check {
     transform: scale(1.08) !important;
 }
 
+/* ==========================================================================
+   FOXEN CUSTOM EMOJI STYLES (Proportional to font-size: 1em, crisp inline alignment)
+   ========================================================================== */
+.fxn-custom-emoji-img,
+img.fxn-custom-emoji-img,
+.fxn-custom-emoji-badge,
+span.fxn-custom-emoji-badge,
+.fxn-custom-emoji {
+    display: inline-block !important;
+    width: 1.75em !important;
+    height: 1.75em !important;
+    min-width: 1.75em !important;
+    min-height: 1.75em !important;
+    max-width: none !important;
+    max-height: none !important;
+    font-size: inherit !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    top: -2px !important;
+    margin-left: 3px !important;
+    margin-right: 2px !important;
+    object-fit: contain !important;
+    flex-shrink: 0 !important;
+    box-sizing: content-box !important;
+}
+
+span.fxn-custom-emoji-badge {
+    width: auto !important;
+    min-width: 1.75em !important;
+    font-size: 1.75em !important;
+}
+
+/* ==========================================================================
+   FOXEN CHAT SIDEBAR DISPLAY OVERRIDES
+   ========================================================================== */
+.chat-detail-list.fxn-hide-order-badge #fxn-order-badge-panel,
+.chat-detail-list.fxn-hide-order-badge .fxn-order-badge-panel,
+#fxn-order-badge-panel.fxn-hidden,
+.fxn-order-badge-panel.fxn-hidden {
+    display: none !important;
+}
+
+.chat-detail-list.fxn-hide-buyer-notes .fxn-sb-notes-card,
+.fxn-sb-notes-card.fxn-hidden {
+    display: none !important;
+}
+
+.chat-detail-list.fxn-hide-templates .fxn-sb-templates-card,
+.fxn-sb-templates-card.fxn-hidden {
+    display: none !important;
+}
+
+.chat-detail-list.fxn-hide-native-info .param-item:not(.fxn-order-badge-panel):not(.chat-panel),
+.chat-detail-list.fxn-hide-native-info .param-item.chat-panel[data-type="c-p-u"],
+.chat-detail-list .param-item.fxn-hidden {
+    display: none !important;
+}
+
+/* --- Заметки о клиенте: естественное изменение размера по правому нижнему краю --- */
+.fxn-sb-notes-input {
+    resize: vertical !important;
+    min-height: 62px !important;
+    max-height: none !important;
+}
+.fxn-sb-notes-input::-webkit-resizer {
+    background: transparent !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.35) !important;
+    border-right: 2px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+/* --- Разделитель и тумблер мгновенной отправки в шаблонах сайдбара --- */
+.fxn-sb-templates-footer {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    width: 100% !important;
+    margin-top: 4px !important;
+}
+.fxn-sb-divider {
+    width: 100% !important;
+    height: 1px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    margin: 4px 0 2px !important;
+    border: none !important;
+}
+.fxn-sb-instant-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 3px 2px !important;
+    box-sizing: border-box !important;
+}
+.fxn-sb-instant-label {
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    color: #cbd5e1 !important;
+    letter-spacing: 0.1px !important;
+    user-select: none !important;
+}
+.fxn-sb-instant-switch.switch {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    transition: background .22s ease, border-color .22s ease, box-shadow .22s ease !important;
+    outline: none !important;
+}
+.fxn-sb-instant-switch.switch:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border-color: rgba(255, 255, 255, 0.26) !important;
+}
+.fxn-sb-instant-switch.switch::before {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    top: 2px !important;
+    left: 2px !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    background: #e2e2e7 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45) !important;
+    transition: transform .22s cubic-bezier(.25, 1.25, .5, 1), background .22s ease !important;
+}
+.fxn-sb-instant-switch.switch.on {
+    background: var(--fxn-active, #c026d3) !important;
+    border-color: var(--fxn-active, #c026d3) !important;
+    box-shadow: 0 0 10px rgba(192, 38, 211, 0.25) !important;
+}
+.fxn-sb-instant-switch.switch.on::before {
+    transform: translateX(16px) !important;
+    background: #0a0a0a !important;
+}
+
+/* =============================================================================
+   FOXEN MOBILE & MULTI-DEVICE RESPONSIVENESS OVERRIDES FOR FUNPAY PAGES
+   ============================================================================= */
+@media (max-width: 768px) {
+    /* Tour Overlay on Mobile */
+    .tour-content-wrapper {
+        padding: 24px 16px !important;
+        max-width: 95vw !important;
+    }
+    .tour-title {
+        font-size: clamp(20px, 5.5vw, 28px) !important;
+    }
+    .tour-description {
+        font-size: 14px !important;
+        max-width: 100% !important;
+        margin-bottom: 18px !important;
+    }
+    .tour-visualization {
+        min-height: 200px !important;
+        padding: 12px !important;
+    }
+
+    /* Floating Game Bar & Header Elements */
+    .fp-cw-modal {
+        width: 95% !important;
+        max-width: 95vw !important;
+        padding: 16px !important;
+    }
+
+    /* Chat detail sidebar widgets on FunPay Mobile */
+    .chat-detail-list .fxn-sb-notes-card,
+    .chat-detail-list .fxn-sb-templates-card,
+    .chat-detail-list .fxn-order-badge-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Mobile Performance: bypass heavy GPU backdrop filters on touch screens */
+    .foxen-chat-popover,
+    .fxn-popover,
+    .fp-cw-modal,
+    .tour-content-wrapper,
+    .fxn-img-preview-overlay,
+    .fxn-img-zoom-overlay,
+    .fp-chat-preview,
+    .foxen-template-preview {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   CHECKOUT PAGE & FLOATING CHAT DESIGN POLISH
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Checkout Page: Payment Method Dropdown Layout & Text Wrap */
+.bootstrap-select .dropdown-toggle .filter-option {
+    display: block !important;
+    width: 100% !important;
+}
+.bootstrap-select .dropdown-toggle .filter-option-inner,
+.bootstrap-select .dropdown-toggle .filter-option-inner-inner {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+.payment {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+    width: 100% !important;
+}
+.payment-title {
+    font-weight: 500 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+.payment-value {
+    padding-right: 18px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    margin-left: 8px !important;
+}
+
+/* Checkout Page: "Копировать лот" & "Купить" Button Harmonization */
+#foxen-public-clone-btn {
+    height: 44px !important;
+    min-height: 44px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: #f1f5f9 !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+}
+#foxen-public-clone-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+#foxen-public-clone-btn:active {
+    transform: translateY(0) !important;
+}
+form[action$="/orders/new"] button[type="submit"] {
+    height: 44px !important;
+    min-height: 44px !important;
+    border-radius: 8px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+
+/* Floating Chat Shell Polish */
+.chat.chat-float {
+    border-radius: 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45) !important;
+    overflow: hidden !important;
+}
+.chat.chat-float .chat-header {
+    border-top-left-radius: 14px !important;
+    border-top-right-radius: 14px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Chat Input Bar Send Button Polish */
+.chat-form-btn .btn-round,
+.chat-form-btn button[type="submit"] {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35) !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+}
+.chat-form-btn .btn-round:hover,
+.chat-form-btn button[type="submit"]:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5) !important;
+}
+.chat-form-btn .btn-round:active,
+.chat-form-btn button[type="submit"]:active {
+    transform: translateY(0) !important;
+}
+.chat-form-btn .btn-round i,
+.chat-form-btn button[type="submit"] i {
+    font-size: 14px !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+}
+
+/* AI Mode Toggle Button Glowing Polish */
+.chat-form #aiModeToggleBtn.active {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(168, 85, 247, 0.35)) !important;
+    border-color: rgba(236, 72, 153, 0.6) !important;
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.35) !important;
+}
+
+/* Ensure FunPay header dropdown menus never show when Foxen popup is open */
+body.fxn-popup-open .dropdown.open,
+body.fxn-popup-open .dropdown.open .dropdown-menu,
+body.fxn-popup-open .dropdown-menu,
+body:has(.foxen-popup.active) .dropdown.open,
+body:has(.foxen-popup.active) .dropdown.open .dropdown-menu,
+body:has(.foxen-popup.active) .dropdown-menu,
+body:has(.fxn-popup.active) .dropdown.open,
+body:has(.fxn-popup.active) .dropdown.open .dropdown-menu,
+body:has(.fxn-popup.active) .dropdown-menu {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
 

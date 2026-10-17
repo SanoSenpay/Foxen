@@ -653,19 +653,27 @@ async function makeAIRequest(finalPrompt, customSystemPrompt = null) {
             const errorData = await response.json().catch(() => ({}));
             const rawDetails = errorData.details || errorData.error || '';
             const details = errorData.error || errorData.details || `HTTP ${response.status} ${response.statusText}`;
-            console.error(`AI Server Error:`, errorData);
+            console.error(`AI Server Error:`, response.status, errorData);
 
-            if (String(rawDetails).includes('daily free allocation') || response.status === 503) {
+            if (
+                response.status === 429 ||
+                response.status === 503 ||
+                String(rawDetails).includes('daily free allocation') ||
+                String(rawDetails).includes('rate limit') ||
+                String(rawDetails).includes('plan limits') ||
+                String(rawDetails).includes('Rate limit')
+            ) {
                 return {
                     success: false,
-                    error: `Дневной лимит общего сервера ИИ временно исчерпан. Подключите свой бесплатный ключ Gemini или OpenRouter в Настройках Foxen (раздел «ИИ / API ключи»), чтобы ИИ работал всегда и без ограничений.`
+                    isRateLimit: true,
+                    error: `Лимит общего сервера ИИ временно исчерпан (HTTP 429 Rate Limit). Чтобы ИИ работал всегда, мгновенно и без ограничений, подключите свой бесплатный API-ключ Gemini или OpenRouter в Настройках Foxen (раздел «Нейросеть (ИИ)» → «API ключи»).`
                 };
             }
             
             if (response.status >= 500) {
                  return { 
                     success: false, 
-                    error: `Сервер ИИ временно перегружен (${details}). Вы можете указать свой ключ в Настройках Foxen → ИИ.` 
+                    error: `Сервер ИИ временно перегружен (${details}). Вы можете указать свой ключ в Настройках Foxen → Нейросеть (ИИ).` 
                 };
             }
             return { success: false, error: `Ошибка ИИ: ${details}` };
