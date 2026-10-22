@@ -7,16 +7,6 @@ let _ticketPendingPayload = null;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function _msg(action, extra = {}) {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action, ...extra }, r => {
-            if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
-            if (r?.success === false) return reject(new Error(r.error || 'Ошибка'));
-            resolve(r);
-        });
-    });
-}
-
 function _getUsername() {
     // Primary: DOM element always present when logged in
     const nameEl = document.querySelector('.user-link-name');
@@ -24,8 +14,24 @@ function _getUsername() {
     // Fallback: appData
     try {
         const d = JSON.parse(document.body.dataset.appData || '{}');
-        return (Array.isArray(d) ? d[0] : d)?.userName || '';
-    } catch (_) { return ''; }
+        const u = (Array.isArray(d) ? d[0] : d)?.userName;
+        if (u) return u;
+    } catch (_) {}
+    // Fallback: header user link
+    const userDropdown = document.querySelector('.user-link');
+    if (userDropdown?.textContent.trim()) return userDropdown.textContent.trim();
+    return '';
+}
+
+function _msg(action, extra = {}) {
+    return new Promise((resolve, reject) => {
+        const username = _getUsername();
+        chrome.runtime.sendMessage({ action, currentUsername: username, ...extra }, r => {
+            if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+            if (r?.success === false) return reject(new Error(r.error || 'Ошибка'));
+            resolve(r);
+        });
+    });
 }
 
 // ── tickets list ──────────────────────────────────────────────────────────────
@@ -120,25 +126,24 @@ function _applyTicketFilters() {
         const ss = styleFor(t.status);
         const card = document.createElement('div');
         card.className = 'fp-tkt-card';
-        card.style.position = 'relative';
 
         const topRow = document.createElement('div');
         topRow.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:8px;';
 
         const titleSpan = document.createElement('span');
-        titleSpan.style.cssText = 'font-size:12px;font-weight:500;flex:1;line-height:1.4;color:#c8cadc;';
+        titleSpan.style.cssText = 'font-size:13px;font-weight:600;flex:1;line-height:1.4;color:var(--fxn-text-main, #ffffff);';
         titleSpan.textContent = t.title || 'Заявка #' + t.id;
 
         const statusSpan = document.createElement('span');
         statusSpan.className = 'fp-tkt-status';
-        statusSpan.style.cssText = `background:${ss.bg};color:${ss.color};`;
+        statusSpan.style.cssText = `background:${ss.bg};color:${ss.color};border:1px solid ${ss.color}33;`;
         statusSpan.textContent = t.status;
 
         topRow.appendChild(titleSpan);
         topRow.appendChild(statusSpan);
 
         const meta = document.createElement('div');
-        meta.style.cssText = 'font-size:11px;color:#3a3d52;margin-top:5px;display:flex;align-items:center;justify-content:space-between;';
+        meta.style.cssText = 'font-size:11.5px;color:var(--fxn-text-desc, #96969a);margin-top:6px;display:flex;align-items:center;justify-content:space-between;';
 
         const metaText = document.createElement('span');
         metaText.textContent = `#${t.id}${t.lastUpdate ? ' · ' + t.lastUpdate : ''}`;
@@ -146,15 +151,19 @@ function _applyTicketFilters() {
 
         if (isCloseable(t.status)) {
             const closeBtn = document.createElement('button');
+            closeBtn.className = 'btn btn-ghost';
             closeBtn.textContent = 'Закрыть';
-            closeBtn.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid rgba(224,82,82,.5);background:rgba(224,82,82,.1);color:#e05252;cursor:pointer;flex-shrink:0;';
+            closeBtn.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid rgba(224,82,82,.4);background:rgba(224,82,82,.08);color:#e05252;cursor:pointer;flex-shrink:0;';
             closeBtn.addEventListener('click', async e => {
                 e.stopPropagation();
                 closeBtn.disabled = true;
                 closeBtn.textContent = '...';
                 try {
                     const r = await _msg('supportCloseTicket', { ticketId: t.id });
-                    if (r?.success) { _loadTickets(); }
+                    if (r?.success) { 
+                        if (typeof showNotification === 'function') showNotification('Заявка #' + t.id + ' закрыта');
+                        _loadTickets(); 
+                    }
                     else { closeBtn.textContent = 'Ошибка'; closeBtn.disabled = false; }
                 } catch(_) { closeBtn.textContent = 'Ошибка'; closeBtn.disabled = false; }
             });
@@ -435,15 +444,28 @@ function _showConfirm(previewText, payload) {
     const overlay = document.getElementById('fp-ticket-confirm-overlay');
     const textEl  = document.getElementById('fp-ticket-confirm-text');
     if (!overlay || !textEl) return;
-    textEl.textContent = previewText;
+    if (textEl.tagName === 'TEXTAREA' || textEl.tagName === 'INPUT') {
+        textEl.value = previewText;
+    } else {
+        textEl.textContent = previewText;
+    }
     overlay.style.display = 'flex';
 }
 
 async function _sendPendingTicket() {
     const btn = document.getElementById('fp-ticket-confirm-yes');
+    const textEl = document.getElementById('fp-ticket-confirm-text');
     if (!_ticketPendingPayload || !btn) return;
     btn.disabled = true; btn.textContent = 'Отправка...';
-    const { categoryId, fieldValues, message } = _ticketPendingPayload;
+    const { categoryId, fieldValues } = _ticketPendingPayload;
+    
+    // Подхватываем отредактированный пользователем текст из textarea
+    let message = _ticketPendingPayload.message;
+    if (textEl && (textEl.tagName === 'TEXTAREA' || textEl.tagName === 'INPUT')) {
+        const edited = textEl.value.trim();
+        if (edited) message = edited;
+    }
+
     try {
         const res = await _msg('supportCreateTicket', { categoryId, fieldValues, message });
         document.getElementById('fp-ticket-confirm-overlay').style.display = 'none';
@@ -451,7 +473,7 @@ async function _sendPendingTicket() {
         if (typeof showNotification === 'function') showNotification('Заявка отправлена' + (res.ticketId ? ' #' + res.ticketId : '') + ' ✓');
         _loadTickets();
     } catch (e) {
-        btn.disabled = false; btn.textContent = 'Отправить';
+        btn.disabled = false; btn.textContent = 'Отправить в ТП';
         if (typeof showNotification === 'function') showNotification('❌ ' + e.message, true);
     }
 }
@@ -485,36 +507,109 @@ function _buildPreviewFromForm() {
 
 // ── auto ticket ───────────────────────────────────────────────────────────────
 
+const DEFAULT_AUTO_TICKET_TEMPLATE = `Здравствуйте, служба поддержки FunPay!
+
+Прошу вас подтвердить следующие выполненные заказы, так как покупатели не нажимают подтверждение более {hours} ч. и не выходят на связь:
+{orders_bullet}
+
+Все обязательства по заказам с моей стороны выполнены полностью и вовремя, претензий или жалоб от покупателей в диалогах не поступало.
+
+Заранее спасибо за помощь!
+С уважением, {username}.`;
+
+function _renderTicketTemplate(templateText, selectedIds, ageHours, username) {
+    const rawTpl = (templateText && templateText.trim()) ? templateText : DEFAULT_AUTO_TICKET_TEMPLATE;
+    const ordersStr = selectedIds.map(id => `#${id}`).join(', ');
+    const bulletList = selectedIds.map(id => `• Заказ #${id}: товар передан, претензий от покупателя нет.`).join('\n');
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('ru-RU');
+    const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    return rawTpl
+        .replace(/\{orders_bullet\}/gi, bulletList)
+        .replace(/\{orders\}/gi, ordersStr)
+        .replace(/\{hours\}/gi, String(ageHours))
+        .replace(/\{username\}/gi, username)
+        .replace(/\{count\}/gi, String(selectedIds.length))
+        .replace(/\{date\}/gi, dateStr)
+        .replace(/\{time\}/gi, timeStr);
+}
+
+let _lastFoundOrders = [];
+
+function _prepareAutoTicketPreview() {
+    const checkedBoxes = document.querySelectorAll('#fp-auto-ticket-orders-list input[type="checkbox"]:checked');
+    let selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
+    if (!selectedIds.length) {
+        selectedIds = _lastFoundOrders.slice(0, 5);
+    }
+    if (!selectedIds.length) return;
+
+    const ageHours  = parseInt(document.getElementById('fp-ticket-age-hours')?.value  || '24', 10);
+    const customTpl = document.getElementById('fp-ticket-custom-template')?.value || '';
+    const username  = _getUsername();
+    const idsStr    = selectedIds.join(', ');
+
+    const message = _renderTicketTemplate(customTpl, selectedIds, ageHours, username);
+
+    const fv = {
+        'ticket[fields][1]': username,
+        'ticket[fields][2]': idsStr,
+        'ticket[fields][3]': '2',
+        'ticket[fields][5]': '201'
+    };
+
+    _showConfirm(message, { categoryId: '1', fieldValues: fv, message });
+}
+
 async function _buildAndConfirmAutoTicket() {
     const statusEl = document.getElementById('fp-auto-ticket-status');
     const btn      = document.getElementById('fp-send-auto-ticket-btn');
-    const ageHours  = parseInt(document.getElementById('fp-ticket-age-hours')?.value  || '24');
-    const maxOrders = parseInt(document.getElementById('fp-ticket-max-orders')?.value || '5');
+    const ageHours  = parseInt(document.getElementById('fp-ticket-age-hours')?.value  || '24', 10);
+    const maxOrders = parseInt(document.getElementById('fp-ticket-max-orders')?.value || '5', 10);
 
-    btn.disabled = true; btn.textContent = 'Сбор заказов...';
-    statusEl.textContent = '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-rounded" style="animation:fxnSpin 1s linear infinite;">sync</span><span>Сбор заказов...</span>';
+    if (statusEl) statusEl.textContent = 'Сканирование оплаченных сделок...';
+
+    const ordersLabel = document.getElementById('fp-auto-orders-label');
 
     try {
         const { orderIds } = await _msg('getUnconfirmedOrders', { ageHours, maxOrders });
-        if (!orderIds.length) {
-            statusEl.textContent = 'Нет неподтверждённых заказов';
+        if (!orderIds || !orderIds.length) {
+            if (statusEl) statusEl.textContent = 'Нет неподтверждённых заказов за выбранный период';
+            const ordersBox = document.getElementById('fp-auto-ticket-orders-box');
+            if (ordersBox) ordersBox.style.display = 'none';
+            if (ordersLabel) ordersLabel.style.display = 'none';
             return;
         }
-        const username = _getUsername();
-        const idsStr   = orderIds.join(', ');
-        const message  = `Здравствуйте! Прошу подтвердить заказы: ${idsStr}. С уважением, ${username}!`;
-        const fv = {
-            'ticket[fields][1]': username,
-            'ticket[fields][2]': idsStr,
-            'ticket[fields][3]': '2',
-            'ticket[fields][5]': '201'
-        };
-        const preview = `Категория: Подтверждение заказа\n  Ник: ${username}\n  Заказы: ${idsStr}\n\nСообщение:\n${message}`;
-        _showConfirm(preview, { categoryId: '1', fieldValues: fv, message });
+
+        _lastFoundOrders = orderIds;
+        const ordersBox = document.getElementById('fp-auto-ticket-orders-box');
+        const ordersListEl = document.getElementById('fp-auto-ticket-orders-list');
+        if (ordersBox && ordersListEl) {
+            ordersListEl.innerHTML = '';
+            orderIds.forEach(id => {
+                const item = document.createElement('label');
+                item.className = 'fxn-auto-order-item';
+                item.innerHTML = `
+                    <input type="checkbox" value="${id}" checked style="accent-color:var(--fxn-accent); width:16px; height:16px; cursor:pointer;">
+                    <span style="font-weight:600; color:var(--fxn-text-main); font-size:13px; font-family:var(--fxn-font-mono);">#${id}</span>
+                    <span style="font-size:11.5px; color:var(--fxn-text-desc); margin-left:auto;">Ожидает подтверждения</span>
+                `;
+                ordersListEl.appendChild(item);
+            });
+            ordersBox.style.display = 'flex';
+            if (ordersLabel) ordersLabel.style.display = 'flex';
+        }
+
+        _prepareAutoTicketPreview();
     } catch (e) {
-        statusEl.textContent = '❌ ' + e.message;
+        if (statusEl) statusEl.textContent = '❌ ' + e.message;
+        if (ordersLabel) ordersLabel.style.display = 'none';
     } finally {
-        btn.disabled = false; btn.textContent = 'Отправить заявку в ТП';
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-rounded">search_check</span><span>Собрать и подготовить</span>';
     }
 }
 
@@ -554,7 +649,7 @@ function _renderBubble(c, myUsername) {
     // Avatar (for support agents / others)
     if (!isMe) {
         const av = document.createElement('div');
-        av.style.cssText = `width:32px;height:32px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);font-size:12px;font-weight:700;color:#ffffff;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,0.3);`;
+        av.style.cssText = `width:32px;height:32px;border-radius:50%;flex-shrink:0;background:var(--fxn-accent-soft, rgba(192, 38, 211, 0.16));border:1px solid var(--fxn-accent-border, rgba(192, 38, 211, 0.3));font-size:12px;font-weight:700;color:var(--fxn-accent, #c026d3);display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,0.2);`;
         if (c.avatarUrl) {
             av.style.backgroundImage = `url('${c.avatarUrl}')`;
             av.style.backgroundSize = 'cover';
@@ -571,7 +666,7 @@ function _renderBubble(c, myUsername) {
 
     // Name + time
     const meta = document.createElement('div');
-    meta.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);padding:0 4px;font-weight:500;`;
+    meta.style.cssText = `font-size:11px;color:var(--fxn-text-desc, #96969a);padding:0 4px;font-weight:500;`;
     meta.textContent = (!isMe ? c.author + '  ·  ' : '') + (c.timestamp || '');
     col.appendChild(meta);
 
@@ -579,8 +674,8 @@ function _renderBubble(c, myUsername) {
     const bubble = document.createElement('div');
     bubble.className = `fp-tkt-bubble ${isMe ? 'is-me' : 'is-other'}`;
     bubble.style.cssText = isMe 
-        ? `background:#222736 !important;color:#ffffff !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px 14px 2px 14px;padding:12px 16px;font-size:13.5px;line-height:1.6;word-break:break-word;box-shadow:0 4px 16px rgba(0,0,0,0.35);box-sizing:border-box;`
-        : `background:#15161c !important;color:#e2e8f0 !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:14px 14px 14px 2px;padding:12px 16px;font-size:13.5px;line-height:1.6;word-break:break-word;box-shadow:0 4px 16px rgba(0,0,0,0.35);box-sizing:border-box;`;
+        ? 'border-radius:14px 14px 2px 14px;padding:12px 16px;font-size:13.5px;line-height:1.55;word-break:break-word;box-sizing:border-box;'
+        : 'border-radius:14px 14px 14px 2px;padding:12px 16px;font-size:13.5px;line-height:1.55;word-break:break-word;box-sizing:border-box;';
 
     // Clean HTML content
     const tmp = document.createElement('div');
@@ -610,7 +705,7 @@ function _renderBubble(c, myUsername) {
     // Make links open in new tab
     tmp.querySelectorAll('a').forEach(a => {
         a.target = '_blank';
-        a.style.color = '#7c9eff';
+        a.style.color = 'var(--fxn-accent, #c026d3)';
         a.style.textDecoration = 'underline';
     });
 
@@ -631,7 +726,7 @@ async function _openTicket(ticketId) {
     document.getElementById('fp-ticket-detail-status').textContent = '';
     document.getElementById('fp-tria').style.display = 'none';
     const msgs = document.getElementById('fp-tdm');
-    msgs.innerHTML = '<div style="text-align:center;color:#3a3d52;font-size:13px;padding:40px 0;">Загрузка...</div>';
+    msgs.innerHTML = '<div style="text-align:center;color:var(--fxn-text-desc);font-size:13px;padding:40px 0;">Загрузка диалога...</div>';
 
     try {
         const res = await _msg('supportGetTicketDetails', { ticketId });
@@ -642,14 +737,14 @@ async function _openTicket(ticketId) {
         document.getElementById('fp-ticket-detail-title').textContent = titleStr;
         const statusEl = document.getElementById('fp-ticket-detail-status');
         const statusColor = { 'Открыт': '#4caf82', 'В ожидании': '#f0a040', 'Решена': '#4caf82', 'Закрыт': '#5a5f7a' };
-        statusEl.style.color = statusColor[res.status] || '#5a5f7a';
+        statusEl.style.color = statusColor[res.status] || 'var(--fxn-text-desc)';
         statusEl.textContent = res.status || '';
         const avEl = document.getElementById('fp-tkt-av');
         if (avEl) avEl.textContent = titleStr[0]?.toUpperCase() || 'Т';
 
         msgs.innerHTML = '';
         if (!(res.comments || []).length) {
-            msgs.innerHTML = '<div style="text-align:center;color:#3a3d52;font-size:12px;padding:30px 0;">Нет сообщений</div>';
+            msgs.innerHTML = '<div style="text-align:center;color:var(--fxn-text-desc);font-size:12px;padding:30px 0;">Нет сообщений</div>';
         } else {
             (res.comments || []).forEach(c => msgs.appendChild(_renderBubble(c, myUsername)));
             msgs.scrollTop = msgs.scrollHeight;
@@ -658,7 +753,7 @@ async function _openTicket(ticketId) {
         if (res.canReply && _currentReplyToken) {
             document.getElementById('fp-tria').style.display = 'flex';
             const inp = document.getElementById('fp-tri');
-            if (inp) { inp.value = ''; inp.style.height = '20px'; }
+            if (inp) { inp.value = ''; inp.style.height = 'auto'; }
         }
     } catch (e) {
         msgs.innerHTML = `<div style="color:#e05252;font-size:13px;padding:16px;">${e.message}</div>`;
@@ -670,7 +765,7 @@ async function _sendTicketReply() {
     const input = document.getElementById('fp-tri');
     const text  = input?.value.trim();
     if (!text || !_currentTicketId) return;
-    btn.disabled = true; btn.textContent = '...';
+    btn.disabled = true;
     try {
         await _msg('supportAddComment', { ticketId: _currentTicketId, message: text, token: _currentReplyToken });
         // Append message visually - no reload
@@ -681,11 +776,28 @@ async function _sendTicketReply() {
         msgs.appendChild(_renderBubble(syntheticComment, username));
         msgs.scrollTop = msgs.scrollHeight;
         input.value = '';
-        btn.disabled = false; btn.textContent = 'Отправить';
+        input.style.height = 'auto';
+        btn.disabled = false;
+        
+        // Hide attach preview if attached
+        const preview = document.getElementById('fp-tapr');
+        const thumb = document.getElementById('fp-tath');
+        if (preview && thumb) { preview.style.display = 'none'; thumb.src = ''; }
     } catch (e) {
         if (typeof showNotification === 'function') showNotification('❌ ' + e.message, true);
-        btn.disabled = false; btn.textContent = 'Отправить';
+        btn.disabled = false;
     }
+}
+
+function _attachImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const preview = document.getElementById('fp-tapr');
+        const thumb = document.getElementById('fp-tath');
+        if (preview && thumb) { thumb.src = e.target.result; preview.style.display = 'block'; }
+    };
+    reader.readAsDataURL(file);
 }
 
 // ── init ──────────────────────────────────────────────────────────────────────
@@ -707,9 +819,82 @@ if (!window._fxnTktGlobalSubtabDelegate) {
 }
 
 function initTicketsTab() {
+    if (!document.getElementById('fp-tickets-list')) return;
     if (_ticketsInited) { _loadTickets(); return; }
     _ticketsInited = true;
 
+    // Load saved settings for auto ticket
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.get(['fpTicketAgeHours', 'fpTicketMaxOrders', 'fpTicketCustomTpl'], res => {
+            if (res?.fpTicketAgeHours) {
+                const ageInput = document.getElementById('fp-ticket-age-hours');
+                if (ageInput) ageInput.value = res.fpTicketAgeHours;
+            }
+            if (res?.fpTicketMaxOrders) {
+                const maxInput = document.getElementById('fp-ticket-max-orders');
+                if (maxInput) maxInput.value = res.fpTicketMaxOrders;
+            }
+            const custArea = document.getElementById('fp-ticket-custom-template');
+            if (custArea) {
+                custArea.value = (typeof res?.fpTicketCustomTpl === 'string' && res.fpTicketCustomTpl.trim())
+                    ? res.fpTicketCustomTpl
+                    : DEFAULT_AUTO_TICKET_TEMPLATE;
+            }
+        });
+    }
+
+    const ageInput = document.getElementById('fp-ticket-age-hours');
+    ageInput?.addEventListener('input', () => {
+        try { chrome.storage?.local?.set({ fpTicketAgeHours: ageInput.value }); } catch(_) {}
+    });
+
+    const maxInput = document.getElementById('fp-ticket-max-orders');
+    maxInput?.addEventListener('input', () => {
+        try { chrome.storage?.local?.set({ fpTicketMaxOrders: maxInput.value }); } catch(_) {}
+    });
+
+    const custArea = document.getElementById('fp-ticket-custom-template');
+    custArea?.addEventListener('input', () => {
+        try { chrome.storage?.local?.set({ fpTicketCustomTpl: custArea.value }); } catch(_) {}
+    });
+
+    // Reset template button
+    document.getElementById('fp-ticket-reset-template-btn')?.addEventListener('click', () => {
+        if (custArea) {
+            custArea.value = DEFAULT_AUTO_TICKET_TEMPLATE;
+            try { chrome.storage?.local?.set({ fpTicketCustomTpl: DEFAULT_AUTO_TICKET_TEMPLATE }); } catch(_) {}
+            if (typeof showNotification === 'function') {
+                showNotification('Шаблон обращения сброшен по умолчанию');
+            }
+        }
+    });
+
+    // Variable chips insertion into template
+    document.querySelectorAll('.fp-tkt-var').forEach(varItem => {
+        varItem.addEventListener('click', (e) => {
+            const code = varItem.dataset.code;
+            if (!code || !custArea) return;
+            const start = custArea.selectionStart ?? custArea.value.length;
+            const end = custArea.selectionEnd ?? custArea.value.length;
+            const val = custArea.value;
+            custArea.value = val.substring(0, start) + code + val.substring(end);
+            custArea.selectionStart = custArea.selectionEnd = start + code.length;
+            custArea.focus();
+            try { chrome.storage?.local?.set({ fpTicketCustomTpl: custArea.value }); } catch(_) {}
+            if (typeof showNotification === 'function') {
+                showNotification(`Вставлена переменная: ${code}`);
+            }
+        });
+    });
+
+    // Select all orders toggle
+    document.getElementById('fp-auto-orders-select-all')?.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('#fp-auto-ticket-orders-list input[type="checkbox"]');
+        const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+        checkboxes.forEach(cb => { cb.checked = anyUnchecked; });
+    });
+
+    // Button actions
     document.getElementById('fp-ticket-refresh-btn')   ?.addEventListener('click', _loadTickets);
     document.getElementById('fp-send-auto-ticket-btn') ?.addEventListener('click', _buildAndConfirmAutoTicket);
     document.getElementById('fp-create-ticket-btn')    ?.addEventListener('click', _openNewTicketPanel);
@@ -736,6 +921,34 @@ function initTicketsTab() {
         _currentTicketId = null;
     });
 
+    // Close ticket from detail topbar
+    document.getElementById('fp-ticket-detail-close-btn')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!_currentTicketId) return;
+        const btn = document.getElementById('fp-ticket-detail-close-btn');
+        if (btn) { btn.disabled = true; btn.textContent = '...'; }
+        try {
+            const r = await _msg('supportCloseTicket', { ticketId: _currentTicketId });
+            if (r?.success) {
+                if (typeof showNotification === 'function') showNotification('Заявка #' + _currentTicketId + ' закрыта');
+                const panel = document.getElementById('fp-ticket-detail-panel');
+                if (panel) panel.style.display = 'none';
+                _currentTicketId = null;
+                _loadTickets();
+            } else {
+                if (typeof showNotification === 'function') showNotification('Ошибка закрытия', true);
+            }
+        } catch (_) {
+            if (typeof showNotification === 'function') showNotification('Ошибка закрытия', true);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:15px;">check_circle</span><span>Закрыть заявку</span>';
+            }
+        }
+    });
+
     // Изоляция кликов внутри панели чата, чтобы клик не закрывал модалку
     document.getElementById('fp-ticket-detail-panel')?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -743,33 +956,35 @@ function initTicketsTab() {
     document.getElementById('fp-ticket-reply-btn')?.addEventListener('click', _sendTicketReply);
     const replyInput = document.getElementById('fp-tri');
 
-    // Hover effects via JS - inline onmouseover breaks HTML in template literals
-    const replyBtn = document.getElementById('fp-ticket-reply-btn');
-    replyBtn?.addEventListener('mouseenter', () => replyBtn.style.opacity = '0.85');
-    replyBtn?.addEventListener('mouseleave', () => replyBtn.style.opacity = '1');
-    const attachLbl = document.getElementById('fp-attach-lbl');
-    attachLbl?.addEventListener('mouseenter', () => attachLbl.style.color = '#9099b8');
-    attachLbl?.addEventListener('mouseleave', () => attachLbl.style.color = '#4a4f6a');
     replyInput?.addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _sendTicketReply(); }
     });
     replyInput?.addEventListener('input', function() {
         this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 90) + 'px';
-        this.style.overflowY = this.scrollHeight > 90 ? 'auto' : 'hidden';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        this.style.overflowY = this.scrollHeight > 100 ? 'auto' : 'hidden';
     });
 
-    // Image attach
+    // Вставка скриншота из буфера обмена (Ctrl + V)
+    replyInput?.addEventListener('paste', e => {
+        const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.indexOf('image') !== -1) {
+                const file = item.getAsFile();
+                if (file) {
+                    _attachImageFile(file);
+                    e.preventDefault();
+                    break;
+                }
+            }
+        }
+    });
+
+    // Image attach via input
     document.getElementById('fp-ticket-attach-input')?.addEventListener('change', function() {
         const file = this.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            const preview = document.getElementById('fp-tapr');
-            const thumb = document.getElementById('fp-tath');
-            if (preview && thumb) { thumb.src = e.target.result; preview.style.display = 'block'; }
-        };
-        reader.readAsDataURL(file);
+        if (file) _attachImageFile(file);
     });
     document.getElementById('fp-tarm')?.addEventListener('click', () => {
         document.getElementById('fp-tapr').style.display = 'none';

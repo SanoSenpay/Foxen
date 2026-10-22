@@ -1589,11 +1589,11 @@ function createMainPopup() {
                     <section class="panel foxen-page-content" id="tickets" data-page="tickets" style="position:relative;">
                         <div class="panel-body">
                             <div class="panel-header">
-                                <div class="panel-icon"><span class="material-icons">support_agent</span></div>
+                                <div class="panel-icon"><span class="material-symbols-rounded">support_agent</span></div>
                                 <div>
-                                    <div class="crumb">Интеграции & ИИ</div>
+                                    <div class="crumb">Поддержка & Автоматизация</div>
                                     <h1>Тикеты FunPay</h1>
-                                    <p>Управление обращениями в службу поддержки без перехода на внешний сайт</p>
+                                    <p>Управление обращениями в техподдержку FunPay и авто-подтверждение сделок</p>
                                 </div>
                                 <div class="status-pill" style="color: #ffffff; border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06);">
                                     <span class="material-symbols-rounded" style="font-size: 14px; color: #ffffff;">construction</span>
@@ -1601,21 +1601,287 @@ function createMainPopup() {
                                 </div>
                             </div>
 
-                            <div class="group" style="padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.16); border-radius: 16px;">
-                                <div style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); display: flex; align-items: center; justify-content: center; color: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.05);">
-                                    <span class="material-symbols-rounded" style="font-size: 32px; color: #ffffff;">construction</span>
+                                                        <div class="group fxn-empty-dev-card" style="padding: 48px 24px; text-align: center; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 16px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.16); border-radius: 16px; width: 100%; box-sizing: border-box;">
+                                <div style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); display: flex !important; align-items: center !important; justify-content: center !important; color: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.05); margin: 0 auto !important; align-self: center !important;">
+                                    <span class="material-symbols-rounded" style="font-size: 32px; color: #ffffff; display: flex; align-items: center; justify-content: center;">construction</span>
                                 </div>
-                                <div style="display: flex; flex-direction: column; gap: 6px; max-width: 480px;">
-                                    <div style="font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em;">Временно недоступно: находится в разработке</div>
-                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); line-height: 1.55;">
-                                        Мы полностью обновляем модуль тикетов для прямой интеграции со службой поддержки FunPay, добавления быстрых шаблонов ответов и автоматических уведомлений.
+                                <div style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 6px; max-width: 480px; width: 100%; margin: 0 auto !important; text-align: center !important;">
+                                    <div style="font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em; text-align: center !important;">Временно недоступно: находится в разработке</div>
+                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); line-height: 1.55; text-align: center !important;">
+                                        Мы полностью обновляем модуль тикетов FunPay, систему авто-подтверждения сделок и интеграцию со службой поддержки.
                                     </div>
                                 </div>
-                                <div style="display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;">
+                                <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 7px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; margin: 0 auto !important; align-self: center !important;">
                                     <span class="material-symbols-rounded" style="font-size: 16px; color: rgba(255, 255, 255, 0.8);">schedule</span>
                                     <span>Скоро появится в следующем обновлении</span>
                                 </div>
                             </div>
+
+                            <!-- [DEV: В РАЗРАБОТКЕ - СОДЕРЖИМОЕ ЗАКОММЕНТИРОВАНО]
+<div class="fxn-tkt-container">
+                                <!- - macOS Segmented Switcher - ->
+                                <div class="fxn-tkt-segment">
+                                    <button type="button" class="fxn-tkt-segment-btn active" data-tkt-tab="my-tickets">
+                                        <span class="material-symbols-rounded">forum</span>
+                                        <span>Мои обращения</span>
+                                    </button>
+                                    <button type="button" class="fxn-tkt-segment-btn" data-tkt-tab="auto-confirm">
+                                        <span class="material-symbols-rounded">verified</span>
+                                        <span>Авто-подтверждение</span>
+                                    </button>
+                                </div>
+
+                                <!- - TAB 1: Мои обращения - ->
+                                <div class="fxn-tkt-pane active" data-tkt-pane="my-tickets">
+                                    <!- - Секция: Сводка - ->
+                                    <div class="section-label">Сводка обращений</div>
+                                    <div class="fxn-tkt-metrics-group group">
+                                        <div class="fxn-tkt-metric-cell">
+                                            <span class="fxn-tkt-metric-label">Всего заявок</span>
+                                            <span id="fp-tkt-metric-total" class="fxn-tkt-metric-val">0</span>
+                                        </div>
+                                        <div class="fxn-tkt-metric-cell is-accent">
+                                            <span class="fxn-tkt-metric-label">В обработке</span>
+                                            <span id="fp-tkt-metric-active" class="fxn-tkt-metric-val">0</span>
+                                        </div>
+                                        <div class="fxn-tkt-metric-cell is-solved">
+                                            <span class="fxn-tkt-metric-label">Решённые</span>
+                                            <span id="fp-tkt-metric-solved" class="fxn-tkt-metric-val">0</span>
+                                        </div>
+                                    </div>
+
+                                    <!- - Секция: Поиск и фильтры - ->
+                                    <div class="section-label">Фильтры и поиск</div>
+                                    <div class="group" style="padding:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                                        <div class="fxn-tkt-search-wrap" style="flex:1; min-width:180px;">
+                                            <span class="material-symbols-rounded">search</span>
+                                            <input id="fp-tickets-search" type="text" class="fxn-tkt-input" placeholder="Поиск по теме или номеру...">
+                                        </div>
+                                        <select id="fp-tickets-status-filter" class="fxn-tkt-select">
+                                            <option value="all">Все статусы</option>
+                                            <option value="active">Актуальные</option>
+                                            <option value="solved">Решённые / Закрытые</option>
+                                        </select>
+                                        <select id="fp-tickets-sort" class="fxn-tkt-select">
+                                            <option value="newest_first">Сначала новые</option>
+                                            <option value="oldest_first">Сначала старые</option>
+                                            <option value="last_answered">По последнему ответу</option>
+                                        </select>
+                                        <button id="fp-create-ticket-btn" class="btn btn-solid fxn-accent-glow-btn" type="button" style="white-space:nowrap; gap:6px;">
+                                            <span class="material-symbols-rounded">add_circle</span>
+                                            <span>Создать заявку</span>
+                                        </button>
+                                    </div>
+
+                                    <!- - Секция: Список обращений - ->
+                                    <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
+                                        <span>Список обращений</span>
+                                        <span id="fp-tickets-count" style="font-size:11.5px; font-weight:500; text-transform:none; color:var(--fxn-text-desc);"></span>
+                                    </div>
+                                    <div id="fp-tickets-list"></div>
+                                    <div id="fp-tickets-empty" style="display:none; text-align:center; color:var(--fxn-text-desc); font-size:13px; padding:36px 16px; background:var(--fxn-card-color); border:1px solid var(--fxn-divider-color); border-radius:12px;">
+                                        <span class="material-symbols-rounded" style="font-size:36px; opacity:0.4; display:block; margin:0 auto 8px;">inbox</span>
+                                        Обращений не найдено
+                                    </div>
+                                    <div id="fp-tickets-loading" style="text-align:center; color:var(--fxn-text-desc); font-size:13px; padding:36px 0;">
+                                        <span class="material-symbols-rounded" style="font-size:28px; display:inline-block; animation:fxnSpin 1s linear infinite; margin-bottom:6px;">sync</span>
+                                        <div>Загрузка обращений FunPay...</div>
+                                    </div>
+                                </div>
+
+                                <!- - TAB 2: Авто-подтверждение - ->
+                                <div class="fxn-tkt-pane" data-tkt-pane="auto-confirm">
+                                    <!- - Категория 1: О функции - ->
+                                    <div class="section-label">О функции</div>
+                                    <div class="group">
+                                        <div class="row">
+                                            <div class="row-icon" style="background:var(--fxn-accent-soft); color:var(--fxn-accent); border:1px solid var(--fxn-accent-border);">
+                                                <span class="material-symbols-rounded">verified_user</span>
+                                            </div>
+                                            <div class="row-text">
+                                                <div class="row-title">Авто-подтверждение сделок в техподдержке</div>
+                                                <div class="row-sub">Автоматический поиск оплаченных заказов, где покупатель не подтвердил завершение более 24 часов, и составление регламентного обращения агентам FunPay.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!- - Категория 2: Критерии поиска - ->
+                                    <div class="section-label">Критерии поиска заказов</div>
+                                    <div class="group">
+                                        <div class="row">
+                                            <div class="row-icon"><span class="material-symbols-rounded">schedule</span></div>
+                                            <div class="row-text">
+                                                <div class="row-title">Возраст заказа с момента оплаты (часов)</div>
+                                                <div class="row-sub">Минимальный период ожидания подтверждения покупателем (FunPay принимает от 24ч)</div>
+                                            </div>
+                                            <input id="fp-ticket-age-hours" type="number" min="1" max="720" value="24" class="fxn-tkt-input" style="width:100px; padding:6px 10px !important; text-align:center;">
+                                        </div>
+                                        <div class="row">
+                                            <div class="row-icon"><span class="material-symbols-rounded">tag</span></div>
+                                            <div class="row-text">
+                                                <div class="row-title">Максимум заказов в одной заявке</div>
+                                                <div class="row-sub">Рекомендуется указывать до 5 заказов, чтобы арбитраж закрыл их без задержек</div>
+                                            </div>
+                                            <input id="fp-ticket-max-orders" type="number" min="1" max="15" value="5" class="fxn-tkt-input" style="width:100px; padding:6px 10px !important; text-align:center;">
+                                        </div>
+                                    </div>
+
+                                    <!- - Категория 3: Шаблон сообщения - ->
+                                    <div class="section-label">Шаблон текста обращения</div>
+                                    <div class="group" style="padding:14px; display:flex; flex-direction:column; gap:12px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                            <div style="font-size:12.5px; font-weight:600; color:var(--fxn-text-main);">Текст заявки в службу поддержки:</div>
+                                            <button id="fp-ticket-reset-template-btn" type="button" class="btn btn-ghost" style="padding:3px 8px; font-size:11px; gap:4px; color:var(--fxn-text-desc);" title="Восстановить текст по умолчанию">
+                                                <span class="material-symbols-rounded" style="font-size:14px;">restart_alt</span>
+                                                <span>По умолчанию</span>
+                                            </button>
+                                        </div>
+                                        <textarea id="fp-ticket-custom-template" class="fxn-tkt-input" style="min-height:130px; padding:12px !important; font-size:12.5px; line-height:1.55; resize:vertical; font-family:inherit;" placeholder="Введите текст обращения в техподдержку..."></textarea>
+
+                                        <!- - Переменные для подстановки - ->
+                                        <div class="template-variables-guide" style="background:rgba(255,255,255,0.03); border:1px solid var(--fxn-divider-color); border-radius:10px; padding:12px 14px; margin:0;">
+                                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                                                <div style="font-size:12px; font-weight:700; color:var(--fxn-text-main);">Переменные для подстановки:</div>
+                                                <span style="font-size:11px; color:var(--fxn-text-desc);">Нажмите на тег для вставки в текст</span>
+                                            </div>
+                                            <div class="fxn-var-chips-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:6px;">
+                                                <div class="fxn-var-item fp-tkt-var" data-code="{orders_bullet}" title="Нажмите, чтобы вставить">
+                                                    <span class="variable-code">{orders_bullet}</span>
+                                                    <span class="var-desc">Список заказов пунктами (• Заказ #ID)</span>
+                                                </div>
+                                                <div class="fxn-var-item fp-tkt-var" data-code="{orders}" title="Нажмите, чтобы вставить">
+                                                    <span class="variable-code">{orders}</span>
+                                                    <span class="var-desc">Номера заказов через запятую</span>
+                                                </div>
+                                                <div class="fxn-var-item fp-tkt-var" data-code="{hours}" title="Нажмите, чтобы вставить">
+                                                    <span class="variable-code">{hours}</span>
+                                                    <span class="var-desc">Количество часов ожидания</span>
+                                                </div>
+                                                <div class="fxn-var-item fp-tkt-var" data-code="{username}" title="Нажмите, чтобы вставить">
+                                                    <span class="variable-code">{username}</span>
+                                                    <span class="var-desc">Ваш никнейм на FunPay</span>
+                                                </div>
+                                                <div class="fxn-var-item fp-tkt-var" data-code="{count}" title="Нажмите, чтобы вставить">
+                                                    <span class="variable-code">{count}</span>
+                                                    <span class="var-desc">Количество выбранных заказов</span>
+                                                </div>
+                                                <div class="fxn-var-item fp-tkt-var" data-code="{date}" title="Нажмите, чтобы вставить">
+                                                    <span class="variable-code">{date}</span>
+                                                    <span class="var-desc">Текущая дата</span>
+                                                </div>
+                                                <div class="fxn-var-item fp-tkt-var" data-code="{time}" title="Нажмите, чтобы вставить">
+                                                    <span class="variable-code">{time}</span>
+                                                    <span class="var-desc">Текущее время</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!- - Категория 4: Найденные заказы - ->
+                                    <div class="section-label" id="fp-auto-orders-label" style="display:none; justify-content:space-between; align-items:center;">
+                                        <span>Найденные неподтверждённые заказы</span>
+                                        <button id="fp-auto-orders-select-all" type="button" class="btn btn-ghost" style="padding:2px 8px; font-size:11px;">Выбрать все</button>
+                                    </div>
+                                    <div id="fp-auto-ticket-orders-box" class="group" style="display:none; padding:12px; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;">
+                                        <div id="fp-auto-ticket-orders-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                                    </div>
+
+                                    <!- - Категория 5: Запуск - ->
+                                    <div class="section-label">Действие</div>
+                                    <div class="group">
+                                        <div class="row">
+                                            <div class="row-icon" style="background:var(--fxn-accent-soft); color:var(--fxn-accent); border:1px solid var(--fxn-accent-border);">
+                                                <span class="material-symbols-rounded">send</span>
+                                            </div>
+                                            <div class="row-text">
+                                                <div class="row-title">Подготовить обращение в поддержку</div>
+                                                <div class="row-sub" id="fp-auto-ticket-status">Нажмите для сканирования заказов и генерации заявки</div>
+                                            </div>
+                                            <button id="fp-send-auto-ticket-btn" class="btn btn-solid fxn-accent-glow-btn" type="button" style="white-space:nowrap; gap:6px; font-weight:600;">
+                                                <span class="material-symbols-rounded">search_check</span>
+                                                <span>Собрать и подготовить</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!- - Оверлей просмотра и диалога по тикету - ->
+                            <div id="fp-ticket-detail-panel" class="fxn-tkt-overlay" style="padding:0;">
+                                <!- - Шапка диалога - ->
+                                <div style="display:flex; align-items:center; gap:12px; padding:12px 18px; background:var(--fxn-header-color); border-bottom:1px solid var(--fxn-divider-color); flex-shrink:0;">
+                                    <button id="fp-ticket-detail-back" type="button" class="btn btn-ghost fxn-icon-btn" title="Назад к списку">
+                                        <span class="material-symbols-rounded">arrow_back</span>
+                                    </button>
+                                    <div id="fp-tkt-av" style="width:36px; height:36px; border-radius:50%; background:var(--fxn-accent-soft); border:1px solid var(--fxn-accent-border); color:var(--fxn-accent); font-weight:700; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;"></div>
+                                    <div style="flex:1; min-width:0;">
+                                        <div id="fp-ticket-detail-title" style="font-size:14px; font-weight:700; color:var(--fxn-text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+                                        <div id="fp-ticket-detail-status" style="font-size:11px; margin-top:2px;"></div>
+                                    </div>
+                                    <button id="fp-ticket-detail-close-btn" type="button" class="btn btn-ghost" style="color:#e05252; border:1px solid rgba(224,82,82,0.3); background:rgba(224,82,82,0.08); font-size:11.5px; padding:5px 10px; gap:4px;" title="Закрыть обращение на FunPay">
+                                        <span class="material-symbols-rounded" style="font-size:15px;">check_circle</span>
+                                        <span>Закрыть заявку</span>
+                                    </button>
+                                </div>
+
+                                <!- - Область переписки - ->
+                                <div id="fp-tdm" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:8px;"></div>
+
+                                <!- - Превью вложения - ->
+                                <div id="fp-tapr" style="display:none; padding:8px 18px 0; background:var(--fxn-card-color); border-top:1px solid var(--fxn-divider-color); flex-shrink:0;">
+                                    <div style="position:relative; display:inline-block;">
+                                        <img id="fp-tath" src="" alt="attachment" style="height:60px; border-radius:8px; border:1px solid var(--fxn-divider-color); display:block;">
+                                        <button id="fp-tarm" type="button" style="all:unset; position:absolute; top:-6px; right:-6px; background:#232530; color:#fff; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+                                    </div>
+                                </div>
+
+                                <!- - Панель ввода ответа - ->
+                                <div id="fp-tria" style="display:none; align-items:flex-end; gap:10px; padding:12px 18px; background:var(--fxn-header-color); border-top:1px solid var(--fxn-divider-color); flex-shrink:0;">
+                                    <label id="fp-attach-lbl" class="btn btn-ghost fxn-icon-btn" style="cursor:pointer;" title="Прикрепить изображение (или Ctrl+V в поле)">
+                                        <span class="material-symbols-rounded">attach_file</span>
+                                        <input type="file" id="fp-ticket-attach-input" accept="image/*" style="display:none;">
+                                    </label>
+                                    <div style="flex:1; background:var(--fxn-card-color); border:1px solid var(--fxn-divider-color); border-radius:18px; padding:8px 14px; display:flex; align-items:center; min-height:38px; box-sizing:border-box;">
+                                        <textarea id="fp-tri" rows="1" class="fxn-tkt-input" style="border:none !important; background:transparent !important; box-shadow:none !important; padding:0 !important; width:100%; resize:none; font-size:13px; line-height:1.45; max-height:100px;" placeholder="Напишите ответ... (можно вставить скриншот Ctrl+V)"></textarea>
+                                    </div>
+                                    <button id="fp-ticket-reply-btn" class="btn btn-primary" type="button" style="width:38px; height:38px; border-radius:50%; padding:0; justify-content:center;">
+                                        <span class="material-symbols-rounded" style="font-size:19px;">send</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!- - Оверлей подтверждения перед отправкой - ->
+                            <div id="fp-ticket-confirm-overlay" class="fxn-tkt-overlay" style="padding:22px; gap:12px; z-index:30;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span class="material-symbols-rounded" style="color:var(--fxn-accent); font-size:22px;">rate_review</span>
+                                    <span style="font-weight:700; font-size:16px; color:var(--fxn-text-main);">Проверьте заявку перед отправкой</span>
+                                </div>
+                                <div style="font-size:12px; color:var(--fxn-text-desc);">
+                                    Текст будет отправлен напрямую в службу поддержки FunPay. Вы можете отредактировать его прямо здесь:
+                                </div>
+                                <textarea id="fp-ticket-confirm-text" class="fxn-tkt-input" style="flex:1; min-height:160px; padding:12px !important; font-size:13px; line-height:1.55; resize:none; font-family:inherit;"></textarea>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px;">
+                                    <button id="fp-ticket-confirm-yes" class="btn btn-primary" type="button" style="padding:10px; font-weight:700;">Отправить в ТП</button>
+                                    <button id="fp-ticket-confirm-no" class="btn btn-ghost" type="button" style="padding:10px; font-weight:600; border:1px solid var(--fxn-divider-color);">Отмена</button>
+                                </div>
+                            </div>
+
+                            <!- - Оверлей создания нового обращения - ->
+                            <div id="fp-new-ticket-panel" class="fxn-tkt-overlay" style="z-index:28;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--fxn-divider-color); flex-shrink:0;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span class="material-symbols-rounded" style="color:var(--fxn-accent); font-size:20px;">add_circle</span>
+                                        <span style="font-weight:700; font-size:15px; color:var(--fxn-text-main);">Новое обращение в ТП FunPay</span>
+                                    </div>
+                                    <button id="fp-new-ticket-close" type="button" class="btn btn-ghost fxn-icon-btn" style="width:28px; height:28px;">✕</button>
+                                </div>
+                                <div id="fp-new-ticket-fields" style="display:flex; flex-direction:column; gap:12px; flex:1; overflow-y:auto; padding:18px;"></div>
+                                <div style="flex-shrink:0; padding:12px 18px; border-top:1px solid var(--fxn-divider-color);">
+                                    <button id="fp-new-ticket-submit" class="btn btn-primary" type="button" style="width:100%; padding:10px; font-weight:700;">Далее →</button>
+                                </div>
+                            </div>
+
+                            -->
                         </div>
                     </section>
 
@@ -1774,6 +2040,14 @@ function createMainPopup() {
                             <div class="section-label">Лоты & Торговые предложения</div>
                             <div class="group">
                                 <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">call_split</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Разделять неактивные предложения</div>
+                                        <div class="row-sub">Выносить неактивные лоты в отдельный визуальный блок с разделителем на страницах торговли</div>
+                                    </div>
+                                    <button class="switch on" id="fxnSeparateInactiveLots" data-toggle></button>
+                                </div>
+                                <div class="row" style="border-top:1px solid var(--fxn-divider-color);margin-top:2px;">
                                     <div class="row-icon"><span class="material-symbols-rounded">inventory_2</span></div>
                                     <div class="row-text">
                                         <div class="row-title">Экспорт и импорт лотов</div>
@@ -2341,17 +2615,17 @@ function createMainPopup() {
                                 </div>
                             </div>
 
-                            <div class="group" style="padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.16); border-radius: 16px;">
-                                <div style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); display: flex; align-items: center; justify-content: center; color: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.05);">
-                                    <span class="material-symbols-rounded" style="font-size: 32px; color: #ffffff;">construction</span>
+                            <div class="group fxn-empty-dev-card" style="padding: 48px 24px; text-align: center; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 16px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.16); border-radius: 16px; width: 100%; box-sizing: border-box;">
+                                <div style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); display: flex !important; align-items: center !important; justify-content: center !important; color: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.05); margin: 0 auto !important; align-self: center !important;">
+                                    <span class="material-symbols-rounded" style="font-size: 32px; color: #ffffff; display: flex; align-items: center; justify-content: center;">construction</span>
                                 </div>
-                                <div style="display: flex; flex-direction: column; gap: 6px; max-width: 480px;">
-                                    <div style="font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em;">Временно недоступно: находится в разработке</div>
-                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); line-height: 1.55;">
+                                <div style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 6px; max-width: 480px; width: 100%; margin: 0 auto !important; text-align: center !important;">
+                                    <div style="font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em; text-align: center !important;">Временно недоступно: находится в разработке</div>
+                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); line-height: 1.55; text-align: center !important;">
                                         Мы полностью обновляем каталог тем Foxen Hub, онлайн-галерею пресетов и облачную синхронизацию тем сообщества.
                                     </div>
                                 </div>
-                                <div style="display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;">
+                                <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 7px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; margin: 0 auto !important; align-self: center !important;">
                                     <span class="material-symbols-rounded" style="font-size: 16px; color: rgba(255, 255, 255, 0.8);">schedule</span>
                                     <span>Скоро появится в следующем обновлении</span>
                                 </div>
@@ -2490,9 +2764,14 @@ function createMainPopup() {
                                     <!-- Unified Color & RGB Control Bar -->
                                     <div class="fxn-trail-color-bar" style="padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--fxn-divider-color);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
                                         <div style="display:flex;align-items:center;gap:10px;">
-                                            <label class="field-label" style="margin:0;font-size:12px;">Цвет эффекта</label>
+                                            <span class="fxn-trail-label" style="margin:0 !important;margin-bottom:0 !important;padding:0 !important;font-size:12.5px;font-weight:600;color:var(--fxn-text-main);line-height:1;display:inline-flex;align-items:center;">Цвет эффекта</span>
                                             <div style="display:flex;align-items:center;gap:8px;">
-                                                <input type="color" id="cursorFxColor1" value="#c026d3" class="fxn-color-picker-dot" title="Выбрать цвет">
+                                                <button type="button" id="cursorFxColor1" class="fxn-custom-color-btn" style="width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.45);background:#c026d3;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.4);display:inline-flex;align-items:center;justify-content:center;padding:0;outline:none;transition:transform 0.15s ease, border-color 0.15s ease;overflow:hidden;" title="Выбрать свой цвет">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="pointer-events:none;color:#ffffff;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.7));">
+                                                        <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.21-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8s1.5.67 1.5 1.5S7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                                                    </svg>
+                                                </button>
+                                                <div style="width:1px;height:14px;background:rgba(255,255,255,0.12);margin:0 2px;flex-shrink:0;"></div>
                                                 <div class="fxn-quick-swatches" id="cursorFxQuickSwatches">
                                                     <span class="fxn-mini-swatch active" data-color="#c026d3" style="background:#c026d3;" title="Неон"></span>
                                                     <span class="fxn-mini-swatch" data-color="#38bdf8" style="background:#38bdf8;" title="Голубой"></span>
@@ -2507,6 +2786,159 @@ function createMainPopup() {
                                             <span style="font-size:12px;color:var(--fxn-text-main);font-weight:500;">Радуга (RGB)</span>
                                             <button class="switch" id="cursorFxRgb" data-toggle></button>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ═══ 2.1 ЭФФЕКТЫ ПРИ КЛИКЕ (CLICK FX) ═══ -->
+                            <div class="section-label">Эффекты при клике</div>
+                            <div class="group">
+                                <div class="row">
+                                    <div class="row-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="9"></circle>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="row-text">
+                                        <div class="row-title">Анимация нажатий мыши</div>
+                                        <div class="row-sub">Геометрические минималистичные всплески и фигуры в точке клика</div>
+                                    </div>
+                                    <button class="switch" id="clickFxEnabled" data-toggle></button>
+                                </div>
+                                <div id="clickFxControls" class="fxn-nested-block" style="display:none;flex-direction:column;gap:14px;padding:16px;">
+                                    <!-- Visual Style Selector Chips (16 presets) -->
+                                    <div>
+                                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                                            <label class="field-label" style="margin:0;">Стиль анимации</label>
+                                            <span id="clickFxActiveTypeLabel" style="font-size:11px;color:var(--fxn-accent,#c026d3);font-weight:600;">Кольцо</span>
+                                        </div>
+
+                                        <div class="fxn-trail-grid" id="fxnClickPresets">
+                                            <button type="button" class="fxn-trail-chip active" data-type="ring" title="Кольцо — расширяющаяся окружность">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle></svg></span>
+                                                <span class="fxn-trail-title">Кольцо</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="collapse" title="Коллапс — сходящаяся окружность">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"></circle><circle cx="12" cy="12" r="3" fill="currentColor"></circle></svg></span>
+                                                <span class="fxn-trail-title">Коллапс</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="morph" title="Морф — вращающийся квадрат в окружность">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="4"></rect></svg></span>
+                                                <span class="fxn-trail-title">Морф</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="arc" title="Дуги — встречные вращающиеся сегменты">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0 1 16 0"></path><path d="M20 12a8 8 0 0 1-16 0" stroke-dasharray="2 3"></path></svg></span>
+                                                <span class="fxn-trail-title">Дуги</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="split" title="Сплит — деление круга пополам">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="12" r="4"></circle><circle cx="17" cy="12" r="4"></circle></svg></span>
+                                                <span class="fxn-trail-title">Сплит</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="triangle" title="Треугольник — расширяющийся тригон">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 4 20 19 4 19"></polygon></svg></span>
+                                                <span class="fxn-trail-title">Треугольник</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="orbit" title="Орбита — спутники вокруг ядра">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"></ellipse><circle cx="12" cy="12" r="2.5" fill="currentColor"></circle></svg></span>
+                                                <span class="fxn-trail-title">Орбита</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="intersect" title="Пересечение — два пересекающихся кольца">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="6"></circle><circle cx="15" cy="12" r="6"></circle></svg></span>
+                                                <span class="fxn-trail-title">Пересечение</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="focus" title="Фокус — угловой видоискатель цели">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2.5" fill="currentColor"></circle><path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"></path></svg></span>
+                                                <span class="fxn-trail-title">Фокус</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="double_morph" title="Двойной морф — ромб и концентрический круг">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 3 21 12 12 21 3 12"></polygon><circle cx="12" cy="12" r="4"></circle></svg></span>
+                                                <span class="fxn-trail-title">2x Морф</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="spiral" title="Спираль — закручивающийся вихрь">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12a2 2 0 0 1 2 2c0 2-2 3-4 3s-5-2-5-5 3-7 7-7 9 3 9 9"></path></svg></span>
+                                                <span class="fxn-trail-title">Спираль</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="clock" title="Циферблат — секундная стрелка с кольцом">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle><polyline points="12 7 12 12 15 12"></polyline></svg></span>
+                                                <span class="fxn-trail-title">Циферблат</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="wire" title="Каркас — изометрический 3D-куб">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 3v18M12 12l8-4.5M12 12L4 7.5"></path></svg></span>
+                                                <span class="fxn-trail-title">Каркас</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="plus" title="Крест — расходящееся 4-лучевое перекрестие">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="4" x2="12" y2="20"></line><line x1="4" y1="12" x2="20" y2="12"></line></svg></span>
+                                                <span class="fxn-trail-title">Крест</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="dash" title="Лучи — радиальный импульс штрихов">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"></path></svg></span>
+                                                <span class="fxn-trail-title">Лучи</span>
+                                            </button>
+                                            <button type="button" class="fxn-trail-chip" data-type="random" title="Случайный эффект при каждом клике">
+                                                <span class="fxn-trail-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg></span>
+                                                <span class="fxn-trail-title">Случайный</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Unified Color & RGB Control Bar -->
+                                    <div class="fxn-trail-color-bar" style="padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--fxn-divider-color);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                                        <div style="display:flex;align-items:center;gap:10px;">
+                                            <span class="fxn-trail-label" style="margin:0 !important;margin-bottom:0 !important;padding:0 !important;font-size:12.5px;font-weight:600;color:var(--fxn-text-main);line-height:1;display:inline-flex;align-items:center;">Цвет эффекта</span>
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <button type="button" id="clickFxColor1" class="fxn-custom-color-btn" style="width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.45);background:#c026d3;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.4);display:inline-flex;align-items:center;justify-content:center;padding:0;outline:none;transition:transform 0.15s ease, border-color 0.15s ease;overflow:hidden;" title="Выбрать свой цвет">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="pointer-events:none;color:#ffffff;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.7));">
+                                                        <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.21-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8s1.5.67 1.5 1.5S7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                                                    </svg>
+                                                </button>
+                                                <div style="width:1px;height:14px;background:rgba(255,255,255,0.12);margin:0 2px;flex-shrink:0;"></div>
+                                                <div class="fxn-quick-swatches" id="clickFxQuickSwatches">
+                                                    <span class="fxn-mini-swatch active" data-color="#c026d3" style="background:#c026d3;" title="Неон"></span>
+                                                    <span class="fxn-mini-swatch" data-color="#38bdf8" style="background:#38bdf8;" title="Голубой"></span>
+                                                    <span class="fxn-mini-swatch" data-color="#22c55e" style="background:#22c55e;" title="Изумруд"></span>
+                                                    <span class="fxn-mini-swatch" data-color="#f97316" style="background:#f97316;" title="Огонь"></span>
+                                                    <span class="fxn-mini-swatch" data-color="#ffffff" style="background:#ffffff;" title="Белый"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <span style="font-size:12px;color:var(--fxn-text-main);font-weight:500;">Радуга (RGB)</span>
+                                            <button class="switch" id="clickFxRgb" data-toggle></button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sliders (Scale, Speed, Stroke Width) -->
+                                    <div class="settings-grid" style="margin-bottom:0;border:none;padding:0;background:transparent;">
+                                        <div>
+                                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                                <label class="field-label" style="margin:0;">Размер анимации</label>
+                                                <span class="slider-value" id="clickFxScaleValue">1.0x</span>
+                                            </div>
+                                            <input type="range" id="clickFxScale" min="0.5" max="2.5" step="0.1" value="1.0">
+                                        </div>
+                                        <div>
+                                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                                <label class="field-label" style="margin:0;">Скорость воспроизведения</label>
+                                                <span class="slider-value" id="clickFxSpeedValue">1.0x</span>
+                                            </div>
+                                            <input type="range" id="clickFxSpeed" min="0.4" max="2.5" step="0.1" value="1.0">
+                                        </div>
+                                        <div style="grid-column: 1 / -1;">
+                                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                                <label class="field-label" style="margin:0;">Толщина линий</label>
+                                                <span class="slider-value" id="clickFxStrokeValue">1.5px</span>
+                                            </div>
+                                            <input type="range" id="clickFxStroke" min="1.0" max="4.0" step="0.25" value="1.5">
+                                        </div>
+                                    </div>
+
+                                    <!-- Interactive Click Test Zone -->
+                                    <div id="clickFxTestZone" style="padding:14px;border:1px dashed rgba(255,255,255,0.18);border-radius:12px;background:rgba(255,255,255,0.02);cursor:pointer;text-align:center;user-select:none;transition:background 0.15s ease, border-color 0.15s ease;">
+                                        <div style="font-size:12.5px;font-weight:600;color:var(--fxn-text-main);margin-bottom:2px;pointer-events:none;">Зона тестирования эффекта</div>
+                                        <div style="font-size:11px;color:var(--fxn-text-desc);pointer-events:none;">Кликайте внутри этой зоны для проверки выбранной анимации</div>
                                     </div>
                                 </div>
                             </div>
@@ -3202,8 +3634,10 @@ function initMainPopupEvents(popup) {
                     'sendTemplatesImmediately': 'sendTemplatesImmediately',
                     'enableCustomThemeCheckbox': 'enableCustomTheme',
                     'cursorFxEnabled': 'cursorFxEnabled',
+                    'clickFxEnabled': 'clickFxEnabled',
                     'customCursorEnabled': 'customCursorEnabled',
-                    'slashCommandsEnabled': 'slashCommandsEnabled'
+                    'slashCommandsEnabled': 'slashCommandsEnabled',
+                    'fxnSeparateInactiveLots': 'separateInactiveLots'
                 };
                 const key = map[sw.id] || sw.id;
                 try {
@@ -3692,8 +4126,9 @@ function initMainPopupEvents(popup) {
             if (typeof initializeLotIO === 'function') initializeLotIO();
         } else if (effectiveId === 'theme' && typeof updateThemePreview === 'function') {
             updateThemePreview();
-        } else if (effectiveId === 'effects' && typeof setupCursorFxHandlers === 'function') {
-            setupCursorFxHandlers();
+        } else if (effectiveId === 'effects') {
+            if (typeof setupCursorFxHandlers === 'function') setupCursorFxHandlers();
+            if (typeof setupClickFxHandlers === 'function') setupClickFxHandlers();
         }
 
         try {
@@ -3761,6 +4196,8 @@ function initMainPopupEvents(popup) {
         if (!query) {
             panel.querySelectorAll('.row, .group, .section-label, .fxn-color-bar-item, .panel-body > div').forEach(el => {
                 el.style.display = '';
+                el.classList.remove('fxn-search-matched');
+                el.style.animationDelay = '';
             });
             return true;
         }
@@ -3772,13 +4209,25 @@ function initMainPopupEvents(popup) {
 
         const rows = panel.querySelectorAll('.row');
         let anyRowMatched = false;
+        let matchIndex = 0;
 
         if (rows.length > 0) {
             rows.forEach(row => {
                 const rowText = (row.textContent || '').toLowerCase();
                 const isMatch = headerMatches || rowText.includes(cleanQ);
-                row.style.display = isMatch ? '' : 'none';
-                if (isMatch) anyRowMatched = true;
+                if (isMatch) {
+                    row.style.display = '';
+                    row.classList.remove('fxn-search-matched');
+                    void row.offsetWidth;
+                    row.classList.add('fxn-search-matched');
+                    row.style.animationDelay = `${Math.min(matchIndex * 25, 250)}ms`;
+                    matchIndex++;
+                    anyRowMatched = true;
+                } else {
+                    row.style.display = 'none';
+                    row.classList.remove('fxn-search-matched');
+                    row.style.animationDelay = '';
+                }
             });
 
             // Filter parent setting groups (.group)
@@ -3808,7 +4257,18 @@ function initMainPopupEvents(popup) {
                 const cardText = (card.textContent || '').toLowerCase();
                 const cardMatches = headerMatches || cardText.includes(cleanQ);
                 if (rows.length === 0) {
-                    card.style.display = cardMatches ? '' : 'none';
+                    if (cardMatches) {
+                        card.style.display = '';
+                        card.classList.remove('fxn-search-matched');
+                        void card.offsetWidth;
+                        card.classList.add('fxn-search-matched');
+                        card.style.animationDelay = `${Math.min(matchIndex * 30, 250)}ms`;
+                        matchIndex++;
+                    } else {
+                        card.style.display = 'none';
+                        card.classList.remove('fxn-search-matched');
+                        card.style.animationDelay = '';
+                    }
                 }
                 if (cardMatches) anyCardMatched = true;
             });
@@ -3827,8 +4287,15 @@ function initMainPopupEvents(popup) {
         }
 
         if (!cleanQ) {
-            subitems.forEach(si => si.style.display = '');
-            groups.forEach(g => g.style.display = '');
+            subitems.forEach(si => {
+                si.style.display = '';
+                si.classList.remove('fxn-search-matched');
+                si.style.animationDelay = '';
+            });
+            groups.forEach(g => {
+                g.style.display = '';
+                g.classList.remove('fxn-search-matched');
+            });
             popup.querySelectorAll('.panel').forEach(p => filterFoxenPanelContent(p, ''));
 
             // Re-open only currently active group
@@ -3849,6 +4316,7 @@ function initMainPopupEvents(popup) {
 
         groups.forEach(group => {
             let anyGroupItemVisible = false;
+            let groupMatchIndex = 0;
 
             group.querySelectorAll('.nav-subitem').forEach(si => {
                 const targetId = si.dataset.target;
@@ -3862,9 +4330,14 @@ function initMainPopupEvents(popup) {
                 }
 
                 const isOverallMatch = subitemMatches || panelMatches;
-                si.style.display = isOverallMatch ? '' : 'none';
 
                 if (isOverallMatch) {
+                    si.style.display = '';
+                    si.classList.remove('fxn-search-matched');
+                    void si.offsetWidth;
+                    si.classList.add('fxn-search-matched');
+                    si.style.animationDelay = `${Math.min(groupMatchIndex * 20, 200)}ms`;
+                    groupMatchIndex++;
                     anyGroupItemVisible = true;
                     if (!firstMatchedTarget) {
                         firstMatchedTarget = targetId;
@@ -3872,6 +4345,10 @@ function initMainPopupEvents(popup) {
                     if (currentActivePanel && panel === currentActivePanel) {
                         activePanelHasMatch = true;
                     }
+                } else {
+                    si.style.display = 'none';
+                    si.classList.remove('fxn-search-matched');
+                    si.style.animationDelay = '';
                 }
             });
 
@@ -4624,7 +5101,8 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
         const statsPromise = userId ? fxnFetchFpUserStats(userId) : Promise.resolve(null);
 
         let freshProfile = null;
-        const supabaseUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
+        const supabaseUrl = 'https://api.foxen.site';
+        const supabaseFallbackUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
         const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
 
         // 1. Быстрый атомарный запрос через RPC get_public_profile (1 запрос для профиля и подписки)

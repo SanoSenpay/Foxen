@@ -1,5 +1,5 @@
-
 import { getAuthDetailsForBackground, fetchWithTabFallback, clearAuthCache } from './auth_helper.js';
+import { telegramNotifyNewOrders } from './telegram.js';
 
 function randomTag() {
     return Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, '0');
@@ -972,6 +972,24 @@ async function _runAutoResponderCycleInner() {
                         ts[msg.chatId] = Date.now();
                         s.greetedTimestamps = ts;
                     });
+
+                    // Моментальное уведомление в Telegram о новом заказе в режиме реального времени
+                    if (_oid) {
+                        try {
+                            const rawText = msg.messageText || '';
+                            const cleanTitle = rawText.replace(/^.*?(?:оплатил|купил|paid|purchased)\s+/i, '').replace(/#\w+/, '').replace(/\(.*?\)/, '').trim() || 'Заказ FunPay';
+                            const orderItem = {
+                                id: _oid,
+                                title: cleanTitle,
+                                buyer: msg.buyerName || 'Покупатель',
+                                price: 'Оплачен',
+                                status: 'Оплачен',
+                                link: `https://funpay.com/orders/${_oid}/`
+                            };
+                            telegramNotifyNewOrders([orderItem]).catch(e => console.warn('TG instant order notify error:', e));
+                        } catch (_) {}
+                    }
+
                     await handleOrderPurchased(msg, auth, fresh);
                     await handleAutoDelivery(msg, auth, fresh);
                 } else if (msgType === 'ORDER_CONFIRMED') {

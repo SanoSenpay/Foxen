@@ -313,9 +313,37 @@ function parseSalesPage(html) {
 
                 const isDeal = row.classList.contains("deal") || !!row.querySelector(".deal-icon, .tc-deal");
                 const paymentType = isDeal ? "deal" : "regular";
-                const buyerEl = row.querySelector(".media-user-name span, .media-user-name a, .tc-user a, .tc-user span, .tc-user .pseudo-a");
-                const buyerUsername = buyerEl?.textContent.trim() || "";
-                const rawBuyerHref = buyerEl?.getAttribute("data-href") || buyerEl?.getAttribute("href") || "";
+                
+                // Извлечение данных покупателя/продавца: строго приоритизируем .media-user-name,
+                // чтобы не захватывать статус-индикатор (.media-user-status) и аватарку из .tc-user span
+                const nameContainer = row.querySelector(".media-user-name");
+                let buyerEl = null;
+                if (nameContainer) {
+                    buyerEl = nameContainer.querySelector("span[data-href], a, .pseudo-a, span") || nameContainer;
+                }
+                if (!buyerEl) {
+                    const userCol = row.querySelector(".tc-user");
+                    if (userCol) {
+                        buyerEl = userCol.querySelector("a[href*='/users/'], [data-href*='/users/'], .pseudo-a, a");
+                    }
+                }
+                if (!buyerEl) {
+                    buyerEl = row.querySelector("a[href*='/users/'], [data-href*='/users/']");
+                }
+
+                let buyerUsername = buyerEl ? buyerEl.textContent.trim() : "";
+                if (!buyerUsername && nameContainer) {
+                    buyerUsername = nameContainer.textContent.trim();
+                }
+                buyerUsername = buyerUsername.replace(/\s+/g, " ").trim();
+
+                const rawBuyerHref = buyerEl?.getAttribute("data-href") || 
+                                     buyerEl?.getAttribute("href") || 
+                                     nameContainer?.querySelector("[data-href]")?.getAttribute("data-href") ||
+                                     nameContainer?.querySelector("[href]")?.getAttribute("href") ||
+                                     row.querySelector(".tc-user [data-href]")?.getAttribute("data-href") ||
+                                     row.querySelector(".tc-user [href]")?.getAttribute("href") || "";
+
                 const buyerIdMatch = rawBuyerHref.match(/\/users\/(\d+)/);
                 const buyerId = buyerIdMatch ? buyerIdMatch[1] : (rawBuyerHref.split("/").filter(Boolean).pop() || "");
                 const dtEl = row.querySelector(".tc-date-time");

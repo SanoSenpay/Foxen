@@ -337,6 +337,24 @@ const FPT_FEATURE_REGISTRY = [
         selector: '#foxen-add-status-btn',
         preview: { kind: 'html', html: '<div class="fxn-pv-menu"><a>+ Добавить новую метку</a></div>' }
     }
+    ,
+
+    // ───────────── Инструменты и скриншоты ─────────────
+    {
+        id: 'custom_screenshot',
+        label: 'Кастомные скриншоты (Alt + Shift + S)',
+        desc: 'Студия оформления скриншотов FunPay: стилизованные рамки (macOS, iPhone, Windows 11, Terminal), тени, скругления, палитры градиента и экспорт.',
+        group: 'Инструменты и скриншоты',
+        selector: '.fxn-dock-item[data-section="custom_screenshot"], .fxn-ss-scrim, #fxn-screenshot-modal',
+        preview: { kind: 'html', html: '<div class="fxn-pv-fpbtn">📸 Alt + Shift + S</div>' }
+    },
+    {
+        id: 'custom_screenshot_paste',
+        label: 'Подхват скриншота из буфера (Ctrl + V)',
+        desc: 'Отдельный тумблер: автоматически открывает студию оформления при вставке картинки из буфера обмена (Win + Shift + S). При отключении вызов по Alt + Shift + S и кнопка в Dockbar продолжают работать.',
+        group: 'Инструменты и скриншоты',
+        preview: { kind: 'html', html: '<div class="fxn-pv-fpbtn">📋 Ctrl + V</div>' }
+    }
 ];
 
 // expose globally for non-module content scripts

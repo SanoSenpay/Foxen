@@ -12,45 +12,166 @@
     if (typeof window === 'undefined' || !window.location.hostname.includes('funpay.com')) return;
 
     // --- State & Memory Cache (with Session Storage persistence across page navigation) ---
-    const userEffectsCache = new Map(); // username.toLowerCase() -> effectPayload
-    
-    // Load existing session cache across FunPay tabs/pages (TTL: 15 min)
-    try {
-        const rawSessionCache = sessionStorage.getItem('fxn_user_effects_cache');
-        if (rawSessionCache) {
-            const parsed = JSON.parse(rawSessionCache);
-            const now = Date.now();
-            if (parsed && parsed.ts && (now - parsed.ts < 900000) && parsed.data) {
-                Object.entries(parsed.data).forEach(([k, v]) => {
-                    userEffectsCache.set(k, v);
-                });
-            }
-        }
-    } catch (_) {}
+    // --- Global Nickname Effects Registry (Client Whitelist Architecture) ---
+    // Instead of querying every FunPay seller (N+1 query storm), Foxen downloads
+    // a single ultra-compact registry JSON (~1.5 KB) once every 15-30 minutes.
+    // FunPay seller scanning is 100% in-memory with ZERO network requests!
+    const globalEffectsRegistry = new Map(); // cleanUsername / fpUserId -> { effect, emoji, is_premium }
+    let lastRegistryFetchTime = 0;
+    const REGISTRY_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-    let persistSessionTimer = null;
-    function persistEffectsCacheToSession() {
-        if (persistSessionTimer) return;
-        persistSessionTimer = setTimeout(() => {
-            persistSessionTimer = null;
-            try {
-                const obj = {};
-                let count = 0;
-                for (const [k, v] of userEffectsCache.entries()) {
-                    obj[k] = v;
-                    if (++count > 400) break;
+    const userEffectsCache = new Map(); // username.toLowerCase() -> effectPayload
+    const userEffectsExpiry = new Map(); // username.toLowerCase() -> expireTimestamp
+    const NEGATIVE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours for users without effects
+    const POSITIVE_TTL_MS = 30 * 60 * 1000;      // 30 minutes for active effects
+
+        let persistCacheTimer = null;
+    function persistEffectsCache() {
+        if (persistCacheTimer) return;
+        persistCacheTimer = setTimeout(() => {
+            persistCacheTimer = null;
+            const now = Date.now();
+            const sessionObj = {};
+            const storageObj = {};
+            let count = 0;
+            for (const [k, v] of userEffectsCache.entries()) {
+                const exp = userEffectsExpiry.get(k) || (now + (v ? POSITIVE_TTL_MS : NEGATIVE_TTL_MS));
+                if (exp > now) {
+                    sessionObj[k] = v;
+                    storageObj[k] = { data: v, exp };
+                    if (++count > 600) break;
                 }
-                sessionStorage.setItem('fxn_user_effects_cache', JSON.stringify({ ts: Date.now(), data: obj }));
+            }
+            try {
+                sessionStorage.setItem('fxn_user_effects_cache', JSON.stringify({ ts: now, data: sessionObj }));
             } catch (_) {}
-        }, 1000);
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                try {
+                    chrome.storage.local.set({ fxn_persistent_effects_cache: storageObj });
+                } catch (_) {}
+            }
+        }, 1200);
     }
 
     const origCacheSet = userEffectsCache.set.bind(userEffectsCache);
-    userEffectsCache.set = function(k, v) {
+    userEffectsCache.set = function(k, v, customTtl) {
+        const ttl = customTtl || (v ? POSITIVE_TTL_MS : NEGATIVE_TTL_MS);
+        userEffectsExpiry.set(k, Date.now() + ttl);
         const res = origCacheSet(k, v);
-        persistEffectsCacheToSession();
+        persistEffectsCache();
         return res;
     };
+
+    async function syncGlobalEffectsRegistry(force = false) {
+        const now = Date.now();
+        if (!force && lastRegistryFetchTime && (now - lastRegistryFetchTime < REGISTRY_TTL_MS)) {
+            return;
+        }
+        lastRegistryFetchTime = now;
+
+        try {
+            const res = await proxiedSupabaseFetch('https://api.foxen.site/api/effects/registry');
+            if (res && res.ok) {
+                const data = await res.json();
+                if (data && data.ok && data.registry) {
+                    let hasChanges = false;
+                    Object.entries(data.registry).forEach(([k, item]) => {
+                        const low = k.toLowerCase();
+                        const cln = cleanUser(k);
+                        const payload = (item && (item.effect || item.emoji)) ? { effect: item.effect, emoji: item.emoji, is_premium: item.is_premium } : null;
+
+                        if (JSON.stringify(globalEffectsRegistry.get(low)) !== JSON.stringify(payload)) {
+                            hasChanges = true;
+                        }
+                        globalEffectsRegistry.set(low, payload);
+                        globalEffectsRegistry.set(cln, payload);
+                        origCacheSet(low, payload);
+                        origCacheSet(cln, payload);
+                    });
+
+                    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                        chrome.storage.local.set({
+                            fxn_global_effects_registry: {
+                                ts: now,
+                                registry: data.registry
+                            }
+                        });
+                    }
+
+                    if (hasChanges) {
+                        reapplyAllEffects();
+                    }
+                }
+            }
+        } catch (e) {
+            console.debug('[Foxen Nickname FX] Error syncing global registry:', e);
+        }
+    }
+
+    function loadInitialEffectsCache() {
+        return new Promise((resolve) => {
+            // 1. First load from sessionStorage synchronously
+            try {
+                const rawSessionCache = sessionStorage.getItem('fxn_user_effects_cache');
+                if (rawSessionCache) {
+                    const parsed = JSON.parse(rawSessionCache);
+                    const now = Date.now();
+                    if (parsed && parsed.ts && (now - parsed.ts < 900000) && parsed.data) {
+                        Object.entries(parsed.data).forEach(([k, v]) => {
+                            if (!userEffectsCache.has(k)) {
+                                origCacheSet(k, v);
+                            }
+                        });
+                    }
+                }
+            } catch (_) {}
+
+            // 2. Load persistent global registry and effects cache from chrome.storage.local
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                try {
+                    chrome.storage.local.get(['fxn_global_effects_registry', 'fxn_persistent_effects_cache'], (res) => {
+                        const regData = res?.fxn_global_effects_registry;
+                        if (regData && regData.registry && typeof regData.registry === 'object') {
+                            lastRegistryFetchTime = regData.ts || 0;
+                            Object.entries(regData.registry).forEach(([k, item]) => {
+                                const low = k.toLowerCase();
+                                const cln = cleanUser(k);
+                                const payload = (item && (item.effect || item.emoji)) ? { effect: item.effect, emoji: item.emoji, is_premium: item.is_premium } : null;
+                                globalEffectsRegistry.set(low, payload);
+                                globalEffectsRegistry.set(cln, payload);
+                                origCacheSet(low, payload);
+                                origCacheSet(cln, payload);
+                            });
+                        }
+
+                        const stored = res?.fxn_persistent_effects_cache;
+                        if (stored && typeof stored === 'object') {
+                            const now = Date.now();
+                            Object.entries(stored).forEach(([k, item]) => {
+                                if (item && item.exp && item.exp > now) {
+                                    origCacheSet(k, item.data);
+                                    userEffectsExpiry.set(k, item.exp);
+                                }
+                            });
+                        }
+
+                        // Background check: sync if stale or empty
+                        const now = Date.now();
+                        if (!lastRegistryFetchTime || (now - lastRegistryFetchTime > REGISTRY_TTL_MS) || globalEffectsRegistry.size === 0) {
+                            syncGlobalEffectsRegistry();
+                        }
+
+                        resolve();
+                    });
+                } catch (_) {
+                    resolve();
+                }
+            } else {
+                syncGlobalEffectsRegistry();
+                resolve();
+            }
+        });
+    }
 
     const activeCanvases = new Set();
     let isMasterLoopRunning = false;
@@ -856,8 +977,8 @@
         return (text || '').trim();
     }
 
-    const SUPABASE_REST_URL = 'https://yoacfrbedwksnfksjjmv.supabase.co';
-    const SUPABASE_FALLBACK_URL = 'https://api.foxen.site';
+    const SUPABASE_REST_URL = 'https://api.foxen.site';
+    const SUPABASE_FALLBACK_URL = 'https://yoacfrbedwksnfksjjmv.supabase.co';
     const SUPABASE_REST_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
 
     async function proxiedSupabaseFetch(url, options = {}) {
@@ -892,9 +1013,9 @@
         });
 
         let res = await doFetch(url);
-        // Если прямой Supabase временно недоступен или вернул ошибку, пробуем резервный через api.foxen.site
-        if ((!res || !res.ok) && url.includes('supabase.co')) {
-            const fallbackUrl = url.replace('https://yoacfrbedwksnfksjjmv.supabase.co', SUPABASE_FALLBACK_URL);
+        // Если api.foxen.site временно недоступен или вернул ошибку, пробуем напрямую через supabase.co
+        if ((!res || !res.ok) && url.includes('api.foxen.site')) {
+            const fallbackUrl = url.replace('https://api.foxen.site', SUPABASE_FALLBACK_URL);
             const fbRes = await doFetch(fallbackUrl);
             if (fbRes && fbRes.ok) return fbRes;
         }
@@ -908,29 +1029,40 @@
     let inFlightProfileId = null;
 
     async function fetchNicknameEffectsForUsers(usernames) {
-        usernames.forEach(u => {
-            if (u) {
-                const lower = u.trim().toLowerCase();
-                if (!userEffectsCache.has(lower) && !inFlightUsernames.has(lower)) {
-                    pendingUsernames.add(u.trim());
+        if (Array.isArray(usernames)) {
+            usernames.forEach(u => {
+                if (u && typeof u === 'string') {
+                    const lower = u.trim().toLowerCase();
+                    const cln = cleanUser(u);
+                    if (!userEffectsCache.has(lower) && !userEffectsCache.has(cln) && !inFlightUsernames.has(lower)) {
+                        pendingUsernames.add(u.trim());
+                    }
                 }
-            }
-        });
+            });
+        }
 
         // Also check if on a user profile page, lookup by fp_user_id
         const profileIdMatch = window.location.pathname.match(/\/users\/(\d+)/);
         const profileId = profileIdMatch ? profileIdMatch[1] : null;
         const needsProfileLookup = profileId && !userEffectsCache.has(profileId) && inFlightProfileId !== profileId;
 
-        if (pendingLookupTimer || (pendingUsernames.size === 0 && !needsProfileLookup)) return;
+        if (pendingUsernames.size === 0 && !needsProfileLookup) return;
+
+        // REAL DEBOUNCE: Clear previous timer when new elements keep arriving
+        if (pendingLookupTimer) {
+            clearTimeout(pendingLookupTimer);
+        }
 
         pendingLookupTimer = setTimeout(async () => {
             pendingLookupTimer = null;
+            if (pendingUsernames.size === 0 && !needsProfileLookup) return;
 
-            const batch = Array.from(pendingUsernames).slice(0, 30);
+            // Take all pending usernames (up to 100 in 1 batch!)
+            const batch = Array.from(pendingUsernames).slice(0, 100);
             batch.forEach(u => {
                 pendingUsernames.delete(u);
                 inFlightUsernames.add(u.toLowerCase());
+                inFlightUsernames.add(cleanUser(u));
             });
 
             const currentProfileLookup = needsProfileLookup ? profileId : null;
@@ -940,80 +1072,122 @@
 
             let newlyDiscovered = false;
 
-            // 1. Direct Supabase REST Batch Query (Fast, reliable, real-time via Background Proxy)
-            // 1. Direct Supabase REST Batch Query (Fast, reliable, real-time via Background Proxy)
             try {
-                let queryParts = [];
-                if (batch.length > 0) {
-                    const uniqueNames = new Set();
-                    batch.forEach(n => {
-                        if (n) {
-                            uniqueNames.add(n.trim());
-                            uniqueNames.add(cleanUser(n));
-                        }
-                    });
-                    const names = Array.from(uniqueNames).map(n => `"${n.replace(/"/g, '')}"`).join(',');
-                    queryParts.push(`fp_user.in.(${names})`);
-                    queryParts.push(`nickname_effect->>username.in.(${names})`);
-                }
-                if (currentProfileLookup) {
-                    queryParts.push(`fp_user_id.eq.${encodeURIComponent(currentProfileLookup)}`);
-                    queryParts.push(`nickname_effect->>fp_user_id.eq.${encodeURIComponent(currentProfileLookup)}`);
-                }
-
-                if (queryParts.length > 0) {
-                    const sbUrl = `${SUPABASE_REST_URL}/rest/v1/profiles?select=id,fp_user,fp_user_id,foxen_id,nickname_effect,custom_emoji,is_premium&or=(${queryParts.join(',')})`;
-                    const sbRes = await proxiedSupabaseFetch(sbUrl, {
+                // 1. Primary: Edge Worker Batch Endpoint (1 request for ALL usernames!)
+                let handled = false;
+                try {
+                    const batchRes = await proxiedSupabaseFetch('https://api.foxen.site/api/users/effects/batch', {
+                        method: 'POST',
                         headers: {
-                            'apikey': SUPABASE_REST_KEY,
-                            'Authorization': `Bearer ${SUPABASE_REST_KEY}`
-                        }
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            usernames: batch,
+                            user_ids: currentProfileLookup ? [currentProfileLookup] : []
+                        })
                     });
 
-                    if (sbRes.ok) {
-                        const rows = await sbRes.json();
-                        if (Array.isArray(rows)) {
-                            rows.forEach(r => {
-                                if (r) {
-                                    // Проверка активной подписки пользователя
-                                    let isUserPrem = Boolean(r.is_premium ?? r.has_premium);
-                                    if (Array.isArray(r.subscriptions) && r.subscriptions.length > 0) {
-                                        const now = new Date();
-                                        const activeSub = r.subscriptions.find(s => s.status === 'active' && (s.is_lifetime || !s.expires_at || new Date(s.expires_at) > now));
-                                        isUserPrem = Boolean(activeSub);
-                                    }
+                    if (batchRes && batchRes.ok) {
+                        const json = await batchRes.json();
+                        if (json && json.ok && json.effects) {
+                            handled = true;
+                            batch.forEach(u => {
+                                const low = u.toLowerCase();
+                                const cln = cleanUser(u);
+                                const item = json.effects[low] || json.effects[cln] || null;
+                                const userPayload = (item && (item.effect || item.emoji)) ? { effect: item.effect, emoji: item.emoji } : null;
+                                userEffectsCache.set(low, userPayload);
+                                userEffectsCache.set(cln, userPayload);
+                                if (myUsername && cleanUser(myUsername) === cln) {
+                                    if (item?.emoji) myFoxenEmoji = item.emoji;
+                                    if (item?.effect) myFoxenEffect = item.effect;
+                                }
+                                if (userPayload) newlyDiscovered = true;
+                            });
 
-                                    const eff = (isUserPrem && r.nickname_effect && r.nickname_effect.id) ? r.nickname_effect : null;
-                                    const emoji = (isUserPrem && r.custom_emoji) ? r.custom_emoji : null;
-                                    const userPayload = (eff || emoji) ? { effect: eff, emoji: emoji } : null;
+                            if (currentProfileLookup) {
+                                const pItem = json.effects[currentProfileLookup] || null;
+                                const pPayload = (pItem && (pItem.effect || pItem.emoji)) ? { effect: pItem.effect, emoji: pItem.emoji } : null;
+                                userEffectsCache.set(String(currentProfileLookup), pPayload);
+                                if (pPayload) newlyDiscovered = true;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.debug('[Foxen Nickname FX] Worker batch fallback:', e);
+                }
 
-                                    if (effUser) {
-                                        const low = effUser.toLowerCase();
-                                        const cln = cleanUser(effUser);
-                                        userEffectsCache.set(low, userPayload);
-                                        userEffectsCache.set(cln, userPayload);
-                                        if (myUsername && cleanUser(myUsername) === cln) {
-                                            if (emoji) myFoxenEmoji = emoji;
-                                            if (eff) myFoxenEffect = eff;
+                // 2. Fallback: Supabase REST Batch Query if Worker batch endpoint is unreachable
+                if (!handled) {
+                    let queryParts = [];
+                    if (batch.length > 0) {
+                        const uniqueNames = new Set();
+                        batch.forEach(n => {
+                            if (n) {
+                                uniqueNames.add(n.trim());
+                                uniqueNames.add(cleanUser(n));
+                            }
+                        });
+                        const names = Array.from(uniqueNames).map(n => `"${n.replace(/"/g, '')}"`).join(',');
+                        queryParts.push(`fp_user.in.(${names})`);
+                        queryParts.push(`nickname_effect->>username.in.(${names})`);
+                    }
+                    if (currentProfileLookup) {
+                        queryParts.push(`fp_user_id.eq.${encodeURIComponent(currentProfileLookup)}`);
+                        queryParts.push(`nickname_effect->>fp_user_id.eq.${encodeURIComponent(currentProfileLookup)}`);
+                    }
+
+                    if (queryParts.length > 0) {
+                        const sbUrl = `${SUPABASE_REST_URL}/rest/v1/profiles?select=id,fp_user,fp_user_id,foxen_id,nickname_effect,custom_emoji,is_premium&or=(${queryParts.join(',')})`;
+                        const sbRes = await proxiedSupabaseFetch(sbUrl, {
+                            headers: {
+                                'apikey': SUPABASE_REST_KEY,
+                                'Authorization': `Bearer ${SUPABASE_REST_KEY}`
+                            }
+                        });
+
+                        if (sbRes && sbRes.ok) {
+                            const rows = await sbRes.json();
+                            if (Array.isArray(rows)) {
+                                rows.forEach(r => {
+                                    if (r) {
+                                        const effUser = r.fp_user || r.nickname_effect?.username || null;
+                                        const effUserId = r.fp_user_id || r.nickname_effect?.fp_user_id || null;
+                                        let isUserPrem = Boolean(r.is_premium ?? r.has_premium);
+                                        const eff = (isUserPrem && r.nickname_effect && r.nickname_effect.id) ? r.nickname_effect : null;
+                                        const emoji = (isUserPrem && r.custom_emoji) ? r.custom_emoji : null;
+                                        const userPayload = (eff || emoji) ? { effect: eff, emoji: emoji } : null;
+
+                                        if (effUser) {
+                                            const low = effUser.toLowerCase();
+                                            const cln = cleanUser(effUser);
+                                            userEffectsCache.set(low, userPayload);
+                                            userEffectsCache.set(cln, userPayload);
+                                            if (myUsername && cleanUser(myUsername) === cln) {
+                                                if (emoji) myFoxenEmoji = emoji;
+                                                if (eff) myFoxenEffect = eff;
+                                            }
+                                            if (userPayload) newlyDiscovered = true;
+                                        }
+                                        if (effUserId) {
+                                            userEffectsCache.set(String(effUserId), userPayload);
+                                            if (userPayload) newlyDiscovered = true;
                                         }
                                     }
-                                    if (effUserId) {
-                                        userEffectsCache.set(String(effUserId), userPayload);
-                                    }
-                                    if (userPayload) newlyDiscovered = true;
-                                }
-                            });
+                                });
+                            }
                         }
                     }
                 }
             } catch (sbErr) {
-                console.warn('[Foxen Nickname FX] Supabase lookup error:', sbErr);
+                console.warn('[Foxen Nickname FX] Batch lookup error:', sbErr);
             } finally {
-                // Release in-flight lock and mark missing as null so we don't spam
+                // Mark all unresolved users in batch as null so we NEVER query them again!
                 batch.forEach(u => {
                     const lower = u.toLowerCase();
                     const cln = cleanUser(u);
                     inFlightUsernames.delete(lower);
+                    inFlightUsernames.delete(cln);
                     if (!userEffectsCache.has(lower) && !userEffectsCache.has(cln)) {
                         userEffectsCache.set(lower, null);
                         userEffectsCache.set(cln, null);
@@ -1031,10 +1205,11 @@
                 reapplyAllEffects();
             }
 
+            // Only process remaining if new usernames were added while in flight
             if (pendingUsernames.size > 0) {
                 fetchNicknameEffectsForUsers([]);
             }
-        }, 120);
+        }, 350); // 350ms debounce
     }
 
     // --- Re-apply All Canvases and Emoji on Update ---
@@ -1050,7 +1225,7 @@
             span.style.color = '';
             span.querySelectorAll('canvas').forEach(c => c.remove());
         });
-        document.querySelectorAll('[data-fxn-checked]').forEach(el => delete el.dataset.fxnChecked);
+        document.querySelectorAll('.fxn-nick-decorated, .fxn-nick-target').forEach(el => delete el.dataset.fxnChecked);
         scanAndApplyNicknameEffects();
     }
 
@@ -1138,17 +1313,17 @@
                 !rawEl.closest('.review-item, .review, .rating, .reviews, .order-desc, .tc-item')
             );
 
-            // 1a. Cache lookup by username
-            let data = userEffectsCache.get(lower) || userEffectsCache.get(clean);
+            // 1a. Whitelist lookup from Global Registry (Memory Map, 0ms latency)
+            let data = globalEffectsRegistry.get(clean) || globalEffectsRegistry.get(lower) || userEffectsCache.get(clean) || userEffectsCache.get(lower);
 
-            // 1b. Cache lookup by specific element user ID if linking to a user
+            // 1b. Whitelist lookup by numeric FunPay user ID
             if (!data && elUserId) {
-                data = userEffectsCache.get(elUserId);
+                data = globalEffectsRegistry.get(String(elUserId)) || userEffectsCache.get(String(elUserId));
             }
 
             // 1c. ONLY apply current profile ID effect if the element IS the profile header or explicitly links to this profile owner
             if (!data && currentUrlProfileId && (isProfileHeader || elUserId === currentUrlProfileId)) {
-                data = userEffectsCache.get(currentUrlProfileId);
+                data = globalEffectsRegistry.get(String(currentUrlProfileId)) || userEffectsCache.get(String(currentUrlProfileId));
             }
 
             if (data) {
@@ -1175,18 +1350,20 @@
             const isMe = (myUsername && (lower === myUsername.toLowerCase() || clean === cleanUser(myUsername))) || 
                          rawEl.id === 'fxnSpmUsername' || rawEl.classList.contains('fxn-spm-username');
 
-            if (isMe && (effObj?.id || myFoxenEmoji)) {
+            if (isMe) {
                 rawEl.dataset.fxnChecked = '1';
-                let targetEl = rawEl;
-                if (effObj?.id && !rawEl.classList.contains('fxn-nick-decorated')) {
-                    targetEl = wrapTextNodeForNicknameFX(rawEl, text);
-                    if (targetEl && !targetEl.classList.contains('fxn-nick-decorated')) {
-                        const overlay = new NicknameOverlayCanvas(targetEl, text, effObj);
-                        activeCanvases.add(overlay);
+                if (effObj?.id || myFoxenEmoji) {
+                    let targetEl = rawEl;
+                    if (effObj?.id && !rawEl.classList.contains('fxn-nick-decorated')) {
+                        targetEl = wrapTextNodeForNicknameFX(rawEl, text);
+                        if (targetEl && !targetEl.classList.contains('fxn-nick-decorated')) {
+                            const overlay = new NicknameOverlayCanvas(targetEl, text, effObj);
+                            activeCanvases.add(overlay);
+                        }
                     }
-                }
-                if (myFoxenEmoji) {
-                    attachCustomEmojiBadge(targetEl || rawEl, myFoxenEmoji);
+                    if (myFoxenEmoji) {
+                        attachCustomEmojiBadge(targetEl || rawEl, myFoxenEmoji);
+                    }
                 }
                 return;
             }
@@ -1196,14 +1373,18 @@
                 return;
             }
 
-            // 3. Otherwise queue for server lookup
-            usernamesToLookup.push(text);
+            // 3. Seller is not yet in local cache -> queue for real-time batch lookup
+            if (!userEffectsCache.has(lower) && !userEffectsCache.has(clean)) {
+                usernamesToLookup.push(text);
+            }
+            rawEl.dataset.fxnChecked = '1';
         });
 
         if (activeCanvases.size > 0) {
             startLoop();
         }
 
+        // Consolidated debounced single batch request for any newly parsed sellers on the page
         if (usernamesToLookup.length > 0) {
             fetchNicknameEffectsForUsers(usernamesToLookup);
         }
@@ -1213,22 +1394,30 @@
     const ADMIN_IDS = ['FX-000000', 'FX-000001'];
     const ADMIN_USERS = ['vireonshop', 'sanosenpai'];
     const ADMIN_USER_IDS = ['15508026', '13781813'];
+    let lastLiveSubCheckTimestamp = 0;
+    const LIVE_SUB_CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 
-    async function verifyLiveUserSubscriptionAndSync() {
+    async function verifyLiveUserSubscriptionAndSync(force = false) {
         try {
             const uName = getMyFunPayUsername() || myUsername;
             if (!uName) return;
             myUsername = uName;
             const uClean = cleanUser(uName);
 
+            const now = Date.now();
+            if (!force && (now - lastLiveSubCheckTimestamp < 60000)) {
+                return; // In-memory debounce 60s
+            }
+
             let isPremium = false;
 
-            // 1. Check if profile in chrome.storage already has confirmed premium
+            // 1. Check if profile in chrome.storage already has confirmed premium & fresh live cache
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
                 const localData = await new Promise(r => chrome.storage.local.get([
                     'foxen_user_profile', 'foxenUserProfile', 'foxenUserProfileCache',
                     'fxn_my_custom_emoji', 'fxn_my_nickname_effect',
-                    `fxn_custom_emoji_${uClean}`, `fxn_effect_${uClean}`
+                    `fxn_custom_emoji_${uClean}`, `fxn_effect_${uClean}`,
+                    `fxn_live_sub_cache_${uClean}`
                 ], r));
                 const prof = localData?.foxen_user_profile || localData?.foxenUserProfile || localData?.foxenUserProfileCache?.data;
                 const profUser = (prof?.fp_user || prof?.username || '').toLowerCase();
@@ -1244,9 +1433,18 @@
 
                 myFoxenEmoji = cachedUserEmoji || null;
                 myFoxenEffect = cachedUserEffect || null;
+
+                const liveSubCache = localData?.[`fxn_live_sub_cache_${uClean}`];
+                if (!force && liveSubCache && (now - liveSubCache.ts < LIVE_SUB_CHECK_INTERVAL_MS)) {
+                    // Fresh cache, skip network request entirely!
+                    lastLiveSubCheckTimestamp = now;
+                    return;
+                }
             }
 
-            // 2. Always sync latest effect & custom emoji from profiles table for this account
+            lastLiveSubCheckTimestamp = now;
+
+            // 2. Sync latest effect & custom emoji from profiles table for this account
             let changed = false;
             try {
                 const profUrl = `${SUPABASE_REST_URL}/rest/v1/profiles?fp_user=ilike.${encodeURIComponent(uName)}&select=foxen_id,is_premium,custom_emoji,nickname_effect&limit=1`;
@@ -1276,12 +1474,33 @@
                             myFoxenEffect = serverEffect;
                             changed = true;
                         }
+
+                        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                            chrome.storage.local.set({
+                                [`fxn_live_sub_cache_${uClean}`]: {
+                                    ts: now,
+                                    isPremium,
+                                    emoji: serverEmoji,
+                                    effect: serverEffect
+                                }
+                            });
+                        }
                     } else {
                         // User not found in profiles or has no profile
                         if (!ADMIN_USERS.includes(uName.toLowerCase())) {
                             isPremium = false;
                             if (myFoxenEmoji !== null) { myFoxenEmoji = null; changed = true; }
                             if (myFoxenEffect !== null) { myFoxenEffect = null; changed = true; }
+                        }
+                        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                            chrome.storage.local.set({
+                                [`fxn_live_sub_cache_${uClean}`]: {
+                                    ts: now,
+                                    isPremium: false,
+                                    emoji: null,
+                                    effect: null
+                                }
+                            });
                         }
                     }
                 }
@@ -1305,6 +1524,7 @@
 
     // --- Initialize ---
     async function initNicknameFX() {
+        await loadInitialEffectsCache();
         setupObserver();
 
         const currentMe = getMyFunPayUsername();
@@ -1417,7 +1637,7 @@
         // 4. MutationObserver for dynamic chats, lot listings, orders (Debounced)
         let domMutationTimer = null;
         const domObserver = new MutationObserver(() => {
-            if (domMutationTimer) return;
+            if (domMutationTimer) clearTimeout(domMutationTimer);
             domMutationTimer = setTimeout(() => {
                 domMutationTimer = null;
                 scanAndApplyNicknameEffects();

@@ -114,15 +114,20 @@ function initializeLotManagement() {
             displayPinnedLotsOnLoad();
         }
 
-        const selectBtn = $('<button type="button" class="fp-header-action-btn" id="foxen-select-lots-btn">Выбрать</button>');
-        const reactivateBtn = $('<button type="button" class="fp-header-action-btn" id="foxen-reactivate-lots-btn">Включить лоты</button>');
+        const selectBtn = $('<button type="button" class="fp-header-action-btn" id="foxen-select-lots-btn"><span class="material-symbols-rounded" style="font-size:18px;">checklist</span><span>Выбрать</span></button>');
+        const reactivateBtn = $('<button type="button" class="fp-header-action-btn" id="foxen-reactivate-lots-btn"><span class="material-symbols-rounded" style="font-size:18px;">history</span><span>Включить лоты</span></button>');
 
         const controlsContainer = $(`
             <div id="foxen-selection-controls">
-                <button type="button" class="fp-header-action-btn" id="foxen-select-all-btn">Выбрать все</button>
-                <button type="button" class="fp-header-action-btn" id="foxen-cancel-selection">Отмена</button>
+                <button type="button" class="fp-header-action-btn" id="foxen-select-all-btn"><span class="material-symbols-rounded" style="font-size:18px;">select_all</span><span>Выбрать все</span></button>
+                <button type="button" class="fp-header-action-btn fp-btn-danger" id="foxen-delete-inactive-btn" title="Удалить неактивные лоты"><span class="material-symbols-rounded" style="font-size:18px;">delete_sweep</span><span>Удалить неактивные</span></button>
+                <button type="button" class="fp-header-action-btn" id="foxen-cancel-selection"><span class="material-symbols-rounded" style="font-size:18px;">close</span><span>Отмена</span></button>
             </div>
         `);
+
+        if (isForeignClone) {
+            controlsContainer.find('#foxen-delete-inactive-btn').hide();
+        }
 
         if (isProfileSalesPage) {
             const offersHeader = $(Array.from(document.querySelectorAll('h5.mb10.text-bold')).find(h => h.textContent.trim() === 'Предложения' || h.textContent.trim() === 'Отзывы'));
@@ -184,6 +189,36 @@ function initializeLotManagement() {
             const checked = $('.tc-item .lot-box input:checked').length;
             const shouldCheck = checked < total;
             $('.lot-box input').prop('checked', shouldCheck).trigger('change');
+        });
+
+        controlsContainer.find('#foxen-delete-inactive-btn').on('click', function() {
+            // Собираем все неактивные предложения
+            const $allInactive = $('.tc-item.warning, .fxn-inactive-lots-table .tc-item');
+            const inactiveLots = [];
+            const seenIds = new Set();
+
+            $allInactive.each(function() {
+                const $item = $(this);
+                const href = $item.attr('href') || '';
+                const m = href.match(/(?:offer=|id=)(\d+)/) || ($item.data('offer') ? [null, $item.data('offer')] : null);
+                const offerId = m ? String(m[1]) : null;
+                const name = ($item.find('.tc-desc-text').text() || $item.find('.tc-item-title').text() || 'Лот #' + offerId).trim();
+                if (offerId && !seenIds.has(offerId)) {
+                    seenIds.add(offerId);
+                    inactiveLots.push({ $el: $item, offerId, name });
+                }
+            });
+
+            if (inactiveLots.length === 0) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Не найдено неактивных предложений для удаления', false);
+                } else {
+                    alert('Не найдено неактивных предложений для удаления.');
+                }
+                return;
+            }
+
+            showDeleteInactiveWarningModal(inactiveLots);
         });
 
         $(document).on('click', '#foxen-edit-pinned-lots-btn', function() {
@@ -325,6 +360,14 @@ async function fxnCloneOneForeign(offerId) {
     return res.newId;
 }
 
+function syncActionsTheme() {
+    const isLight = document.documentElement.classList.contains('fxn-popup-theme-light')
+        || document.documentElement.getAttribute('data-fxn-popup-theme') === 'light'
+        || (document.querySelector('.fxn-popup.light-theme, .window.light-theme') !== null)
+        || (!document.documentElement.classList.contains('fxn-popup-theme-dark') && document.documentElement.classList.contains('fxn-theme-light'));
+    $('.actions').toggleClass('theme-light', !!isLight);
+}
+
 function setupActionProcessing() {
     if ($('.actions').length === 0) {
         $(`
@@ -346,14 +389,6 @@ function setupActionProcessing() {
                 </div>
             </div>
         `).appendTo('body').hide();
-
-        function syncActionsTheme() {
-            const isLight = document.documentElement.classList.contains('fxn-popup-theme-light')
-                || document.documentElement.getAttribute('data-fxn-popup-theme') === 'light'
-                || (document.querySelector('.fxn-popup.light-theme, .window.light-theme') !== null)
-                || (!document.documentElement.classList.contains('fxn-popup-theme-dark') && document.documentElement.classList.contains('fxn-theme-light'));
-            $('.actions').toggleClass('theme-light', !!isLight);
-        }
 
         syncActionsTheme();
 
@@ -1159,3 +1194,284 @@ async function showReactivationPopup() {
     // уезжало в левый верхний угол).
     $('#fp-reactivate-popup-overlay').css('display', 'flex').hide().fadeIn(200);
 }
+
+// =========================================================================
+// Foxen: Предупреждение и массовое удаление неактивных лотов
+// =========================================================================
+function getFunPayCsrfToken() {
+    try {
+        const appDataString = document.body.getAttribute('data-app-data');
+        if (appDataString) {
+            const appData = JSON.parse(appDataString);
+            if (appData && appData['csrf-token']) return appData['csrf-token'];
+        }
+    } catch (_) {}
+    try {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta && meta.content) return meta.content;
+    } catch (_) {}
+    return null;
+}
+
+function showDeleteInactiveWarningModal(inactiveLots) {
+    $('#foxen-delete-warning-modal-overlay').remove();
+
+    const count = inactiveLots.length;
+    const modalHtml = `
+        <div class="fp-reactivate-popup-overlay" id="foxen-delete-warning-modal-overlay" style="display:flex; z-index:2147483640;">
+            <div class="foxen-delete-warning-box">
+                <div class="foxen-delete-warning-icon">
+                    <span class="material-symbols-rounded">delete_sweep</span>
+                </div>
+                <div class="foxen-delete-warning-content">
+                    <h3 class="foxen-delete-warning-title">Удаление неактивных лотов</h3>
+                    <p class="foxen-delete-warning-desc">
+                        Вы действительно хотите безвозвратно удалить все неактивные предложения (<b class="foxen-delete-count">${count}</b> шт.)?
+                        <br>
+                        <span class="foxen-delete-sub-warning">Это действие необратимо и лоты будут полностью удалены.</span>
+                    </p>
+                </div>
+                <div class="foxen-delete-warning-actions">
+                    <button type="button" class="fp-header-action-btn" id="foxen-cancel-delete-warning-btn">
+                        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+                        <span>Отмена</span>
+                    </button>
+                    <button type="button" class="fp-header-action-btn fp-btn-danger" id="foxen-confirm-delete-warning-btn">
+                        <span class="material-symbols-rounded" style="font-size:18px;">delete_forever</span>
+                        <span>Удалить (${count})</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    $('body').append(modalHtml);
+
+    const $overlay = $('#foxen-delete-warning-modal-overlay');
+    const $confirmBtn = $overlay.find('#foxen-confirm-delete-warning-btn');
+    const $cancelBtn = $overlay.find('#foxen-cancel-delete-warning-btn');
+
+    $cancelBtn.on('click', () => $overlay.fadeOut(150, () => $overlay.remove()));
+    $overlay.on('click', (e) => {
+        if ($(e.target).is('#foxen-delete-warning-modal-overlay')) {
+            $overlay.fadeOut(150, () => $overlay.remove());
+        }
+    });
+
+    $confirmBtn.on('click', async function() {
+        $confirmBtn.prop('disabled', true).addClass('loading').html('<span class="material-symbols-rounded" style="font-size:18px;">progress_activity</span><span>Удаление...</span>');
+        $cancelBtn.prop('disabled', true).hide();
+
+        const csrfToken = getFunPayCsrfToken();
+        if (!csrfToken) {
+            $overlay.remove();
+            if (typeof showNotification === 'function') {
+                showNotification('Ошибка: не удалось получить CSRF-токен', true);
+            }
+            return;
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (let i = 0; i < inactiveLots.length; i++) {
+            const item = inactiveLots[i];
+            $confirmBtn.html(`<span class="material-symbols-rounded" style="font-size:18px;">progress_activity</span><span>Удаление ${i + 1}/${count}...</span>`);
+            try {
+                const formData = new URLSearchParams({
+                    'csrf_token': csrfToken,
+                    'offer_id': item.offerId,
+                    'location': 'offer',
+                    'deleted': '1'
+                });
+
+                const response = await fetch("https://funpay.com/lots/offerSave", {
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
+                if (result && (result.error === 0 || result.error === false || typeof result.error === 'undefined') && result.done !== false) {
+                    successCount++;
+                    item.$el.fadeOut(250, function() {
+                        $(this).remove();
+                        const remaining = $('.fxn-inactive-lots-table .tc-item').length;
+                        if (remaining === 0) {
+                            $('.fxn-inactive-lots-separator').remove();
+                            $('.fxn-inactive-lots-table').remove();
+                        }
+                    });
+                } else {
+                    errorCount++;
+                }
+            } catch (err) {
+                console.warn('[Foxen] Ошибка удаления лота #' + item.offerId, err);
+                errorCount++;
+            }
+            await new Promise(r => setTimeout(r, 60));
+        }
+
+        try {
+            const extApi = typeof browser !== 'undefined' ? browser : chrome;
+            const { foxenDeactivatedLots = [] } = await extApi.storage.local.get('foxenDeactivatedLots');
+            const deletedSet = new Set(inactiveLots.map(l => String(l.offerId)));
+            const updatedDeactivated = foxenDeactivatedLots.filter(l => !deletedSet.has(String(l.offerId)));
+            await extApi.storage.local.set({ foxenDeactivatedLots: updatedDeactivated });
+        } catch (_) {}
+
+        $overlay.fadeOut(150, () => $overlay.remove());
+
+        if (typeof showNotification === 'function') {
+            if (errorCount === 0) {
+                showNotification(`Успешно удалено неактивных лотов: ${successCount}`);
+            } else {
+                showNotification(`Удалено лотов: ${successCount}, ошибок: ${errorCount}`, true);
+            }
+        }
+    });
+}
+
+// =========================================================================
+// Foxen: Разделение неактивных предложений на отдельный блок с разделителем
+// =========================================================================
+let _fxnSeparatingLots = false;
+
+async function separateInactiveLots() {
+    if (_fxnSeparatingLots) return;
+    _fxnSeparatingLots = true;
+    try {
+        const extApi = typeof browser !== 'undefined' ? browser : chrome;
+        const res = await extApi.storage.local.get('separateInactiveLots');
+        const isEnabled = res.separateInactiveLots !== false;
+
+        const tables = document.querySelectorAll('.tc.showcase-table:not(.fxn-inactive-lots-table), .tc.table-hover:not(.fxn-inactive-lots-table)');
+        if (!tables.length) return;
+
+        tables.forEach(table => {
+            const allItems = Array.from(table.children).filter(el => el.classList && el.classList.contains('tc-item'));
+            const inactiveItems = allItems.filter(el => el.classList.contains('warning'));
+            const activeItems = allItems.filter(el => !el.classList.contains('warning'));
+
+            let separator = table.nextElementSibling;
+            let inactiveTable = null;
+            if (separator && separator.classList.contains('fxn-inactive-lots-separator')) {
+                inactiveTable = separator.nextElementSibling;
+            } else {
+                separator = null;
+            }
+
+            if (!isEnabled) {
+                if (inactiveTable && inactiveTable.classList.contains('fxn-inactive-lots-table')) {
+                    const itemsToRestore = Array.from(inactiveTable.querySelectorAll('.tc-item'));
+                    itemsToRestore.forEach(item => table.appendChild(item));
+                    separator?.remove();
+                    inactiveTable.remove();
+                }
+                return;
+            }
+
+            if (inactiveItems.length === 0) {
+                if (inactiveTable && inactiveTable.classList.contains('fxn-inactive-lots-table')) {
+                    const restoredItems = Array.from(inactiveTable.children).filter(el => el.classList && el.classList.contains('tc-item') && !el.classList.contains('warning'));
+                    restoredItems.forEach(item => table.appendChild(item));
+
+                    const remainingInactive = inactiveTable.querySelectorAll('.tc-item.warning').length;
+                    if (remainingInactive === 0) {
+                        separator?.remove();
+                        inactiveTable.remove();
+                    }
+                }
+                return;
+            }
+
+            if (activeItems.length > 0) {
+                if (!inactiveTable || !inactiveTable.classList.contains('fxn-inactive-lots-table')) {
+                    separator = document.createElement('div');
+                    separator.className = 'fxn-inactive-lots-separator';
+                    separator.innerHTML = `
+                        <div class="fxn-inactive-line-left" style="flex:1;height:1.5px;background:linear-gradient(to left, rgba(255,255,255,0.45), rgba(255,255,255,0) 100%);box-shadow:0 1px 2px rgba(0,0,0,0.35);"></div>
+                        <span class="fxn-inactive-title" style="color:rgba(255,255,255,0.72);font-size:12.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;padding:0 16px;text-shadow:0 1px 4px rgba(0,0,0,0.7);">Неактивные предложения</span>
+                        <div class="fxn-inactive-line-right" style="flex:1;height:1.5px;background:linear-gradient(to right, rgba(255,255,255,0.45), rgba(255,255,255,0) 100%);box-shadow:0 1px 2px rgba(0,0,0,0.35);"></div>
+                    `;
+
+                    inactiveTable = document.createElement('div');
+                    inactiveTable.className = table.className + ' fxn-inactive-lots-table';
+                    if (table.hasAttribute('data-section-type')) {
+                        inactiveTable.setAttribute('data-section-type', table.getAttribute('data-section-type'));
+                    }
+
+                    const header = table.querySelector('.tc-header');
+                    if (header) {
+                        const clonedHeader = header.cloneNode(true);
+                        clonedHeader.querySelectorAll('.sort').forEach(s => s.classList.remove('desc', 'asc'));
+                        inactiveTable.appendChild(clonedHeader);
+                    }
+
+                    table.after(separator);
+                    separator.after(inactiveTable);
+                }
+
+                // Перемещаем неактивные лоты во второй блок
+                inactiveItems.forEach(item => {
+                    inactiveTable.appendChild(item);
+                });
+            }
+        });
+    } catch (e) {
+        console.warn('[Foxen] Ошибка разделения неактивных предложений:', e);
+    } finally {
+        _fxnSeparatingLots = false;
+    }
+}
+
+window.separateInactiveLots = separateInactiveLots;
+
+// Запуск при загрузке DOM и реакция на изменения
+(function initInactiveLotsSeparation() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(separateInactiveLots, 50));
+    } else {
+        setTimeout(separateInactiveLots, 50);
+    }
+
+    try {
+        const extApi = typeof browser !== 'undefined' ? browser : chrome;
+        extApi.storage?.onChanged?.addListener((changes, area) => {
+            if (area === 'local' && changes.separateInactiveLots) {
+                separateInactiveLots();
+            }
+        });
+    } catch (_) {}
+
+    // Следим за изменениями таблицы лотов (поднятие, восстановление, переключение)
+    let _observerTimer = null;
+    const observer = new MutationObserver((mutations) => {
+        if (_fxnSeparatingLots) return;
+        let shouldCheck = false;
+        for (const m of mutations) {
+            if (m.type === 'childList' && (m.addedNodes.length > 0 || m.removedNodes.length > 0)) {
+                for (const node of m.addedNodes) {
+                    if (node.nodeType === 1 && (node.classList?.contains('tc-item') || node.querySelector?.('.tc-item'))) {
+                        shouldCheck = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldCheck) break;
+        }
+        if (shouldCheck) {
+            clearTimeout(_observerTimer);
+            _observerTimer = setTimeout(separateInactiveLots, 150);
+        }
+    });
+
+    const targetNode = document.getElementById('content') || document.body;
+    if (targetNode) {
+        observer.observe(targetNode, { childList: true, subtree: true });
+    }
+})();

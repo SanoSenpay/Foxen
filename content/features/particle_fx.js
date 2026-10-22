@@ -45,14 +45,19 @@
             });
 
             // Pause particle loop when Foxen popup is open to avoid 60fps backdrop blur recalculation & memory leaks
+            let _popupCheckTimer = null;
             const checkPopupState = () => {
-                const popup = document.querySelector('.foxen-popup') || document.querySelector('.fxn-popup');
-                const isPopupOpen = popup && (popup.classList.contains('active') || popup.style.display === 'flex');
-                if (isPopupOpen) {
-                    if (this.isRunning) this.stopLoop();
-                } else if (this.enabled && !document.hidden && !this.isRunning) {
-                    this.startLoop();
-                }
+                if (_popupCheckTimer) return;
+                _popupCheckTimer = setTimeout(() => {
+                    _popupCheckTimer = null;
+                    const popup = document.querySelector('.foxen-popup') || document.querySelector('.fxn-popup');
+                    const isPopupOpen = popup && (popup.classList.contains('active') || popup.style.display === 'flex');
+                    if (isPopupOpen) {
+                        if (this.isRunning) this.stopLoop();
+                    } else if (this.enabled && !document.hidden && !this.isRunning) {
+                        this.startLoop();
+                    }
+                }, 200);
             };
 
             try {

@@ -375,6 +375,22 @@ async function runSalesUpdateCycle() {
         let firstOrderId = await FPTSalesDB.getMeta('firstOrderId');
         let lastOrderId = await FPTSalesDB.getMeta('lastOrderId');
 
+        const repairedSalesMeta = await FPTSalesDB.getMeta('repairedBuyerNicknames_v402');
+        if (!repairedSalesMeta) {
+            try {
+                const sample = await FPTSalesDB.getAllAsArray();
+                const needsRepair = sample.some(o => !o.buyerUsername || o.buyerUsername === '-');
+                if (needsRepair) {
+                    firstOrderId = null;
+                    lastOrderId = null;
+                    await FPTSalesDB.setMeta('firstOrderId', null);
+                    await FPTSalesDB.setMeta('lastOrderId', null);
+                    console.log("Foxen: Обнаружены заказы продаж без никнеймов покупателей — запланирован разовый полный проход обновления.");
+                }
+                await FPTSalesDB.setMeta('repairedBuyerNicknames_v402', true);
+            } catch (_) {}
+        }
+
         const fetchAndParseSales = async (continueToken = null) => {
             const url = 'https://funpay.com/orders/trade';
             const body = continueToken ? new URLSearchParams({ 'continue': continueToken }) : null;
@@ -469,7 +485,8 @@ async function runSalesUpdateCycle() {
 
         // Множество уже известных orderId грузим ОДИН раз в память (а не с диска
         // на каждой странице) — иначе на 65к заказов проверки тормозили бы.
-        const _knownIds = new Set(Object.keys(await FPTSalesDB.getAllAsMap()));
+        const _knownSalesMap = await FPTSalesDB.getAllAsMap();
+        const _knownIds = new Set(Object.keys(_knownSalesMap));
 
         while (continueToken) {
             const { nextOrderId, orders } = await fetchAndParseSales(continueToken);
@@ -478,11 +495,22 @@ async function runSalesUpdateCycle() {
                 break;
             }
 
-            // Какие из заказов на странице — новые для базы.
+            // Какие из заказов на странице — новые для базы или требуют обновления никнейма
             let newOrdersOnPageCount = 0;
             const toPut = [];
             for (const order of orders) {
-                if (!_knownIds.has(order.orderId)) { toPut.push(order); _knownIds.add(order.orderId); newOrdersOnPageCount++; }
+                const existing = _knownSalesMap[order.orderId];
+                if (!existing) {
+                    toPut.push(order);
+                    _knownSalesMap[order.orderId] = order;
+                    _knownIds.add(order.orderId);
+                    newOrdersOnPageCount++;
+                } else if ((!existing.buyerUsername || existing.buyerUsername === '-') && order.buyerUsername && order.buyerUsername !== '-') {
+                    existing.buyerUsername = order.buyerUsername;
+                    if (!existing.buyerId && order.buyerId) existing.buyerId = order.buyerId;
+                    toPut.push(existing);
+                    newOrdersOnPageCount++;
+                }
             }
 
             if (newOrdersOnPageCount > 0) {
@@ -688,6 +716,22 @@ async function runPurchasesUpdateCycle() {
         let firstOrderId = await FPTPurchasesDB.getMeta('firstOrderId');
         let lastOrderId = await FPTPurchasesDB.getMeta('lastOrderId');
 
+        const repairedPurchasesMeta = await FPTPurchasesDB.getMeta('repairedBuyerNicknames_v402');
+        if (!repairedPurchasesMeta) {
+            try {
+                const sample = await FPTPurchasesDB.getAllAsArray();
+                const needsRepair = sample.some(o => !o.buyerUsername || o.buyerUsername === '-');
+                if (needsRepair) {
+                    firstOrderId = null;
+                    lastOrderId = null;
+                    await FPTPurchasesDB.setMeta('firstOrderId', null);
+                    await FPTPurchasesDB.setMeta('lastOrderId', null);
+                    console.log("Foxen: Обнаружены покупки без никнеймов продавцов — запланирован разовый полный проход обновления.");
+                }
+                await FPTPurchasesDB.setMeta('repairedBuyerNicknames_v402', true);
+            } catch (_) {}
+        }
+
         const fetchAndParseSales = async (continueToken = null) => {
             const url = 'https://funpay.com/orders/';
             const body = continueToken ? new URLSearchParams({ 'continue': continueToken }) : null;
@@ -782,7 +826,8 @@ async function runPurchasesUpdateCycle() {
 
         // Множество уже известных orderId грузим ОДИН раз в память (а не с диска
         // на каждой странице) — иначе на 65к заказов проверки тормозили бы.
-        const _knownIds = new Set(Object.keys(await FPTPurchasesDB.getAllAsMap()));
+        const _knownPurchasesMap = await FPTPurchasesDB.getAllAsMap();
+        const _knownIds = new Set(Object.keys(_knownPurchasesMap));
 
         while (continueToken) {
             const { nextOrderId, orders } = await fetchAndParseSales(continueToken);
@@ -791,11 +836,22 @@ async function runPurchasesUpdateCycle() {
                 break;
             }
 
-            // Какие из заказов на странице — новые для базы.
+            // Какие из заказов на странице — новые для базы или требуют обновления никнейма
             let newOrdersOnPageCount = 0;
             const toPut = [];
             for (const order of orders) {
-                if (!_knownIds.has(order.orderId)) { toPut.push(order); _knownIds.add(order.orderId); newOrdersOnPageCount++; }
+                const existing = _knownPurchasesMap[order.orderId];
+                if (!existing) {
+                    toPut.push(order);
+                    _knownPurchasesMap[order.orderId] = order;
+                    _knownIds.add(order.orderId);
+                    newOrdersOnPageCount++;
+                } else if ((!existing.buyerUsername || existing.buyerUsername === '-') && order.buyerUsername && order.buyerUsername !== '-') {
+                    existing.buyerUsername = order.buyerUsername;
+                    if (!existing.buyerId && order.buyerId) existing.buyerId = order.buyerId;
+                    toPut.push(existing);
+                    newOrdersOnPageCount++;
+                }
             }
 
             if (newOrdersOnPageCount > 0) {
@@ -2116,6 +2172,115 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    if (request && request.action === 'FOXEN_CAPTURE_VISIBLE_TAB') {
+        (async () => {
+            const winId = (sender && sender.tab && typeof sender.tab.windowId === 'number' && sender.tab.windowId > 0)
+                ? sender.tab.windowId
+                : undefined;
+            const tabId = (sender && sender.tab && typeof sender.tab.id === 'number' && sender.tab.id > 0)
+                ? sender.tab.id
+                : undefined;
+            const opts = { format: 'png' };
+
+            let lastErr = '';
+
+            // 1. Попытка через Firefox WebExtensions Promise API
+            if (typeof browser !== 'undefined' && browser.tabs) {
+                if (typeof browser.tabs.captureVisibleTab === 'function') {
+                    if (typeof winId === 'number') {
+                        try {
+                            const url = await browser.tabs.captureVisibleTab(winId, opts);
+                            if (url) return sendResponse({ ok: true, dataUrl: url });
+                        } catch (e) {
+                            lastErr = (e && e.message) || String(e);
+                        }
+                    }
+                    try {
+                        const url = await browser.tabs.captureVisibleTab(opts);
+                        if (url) return sendResponse({ ok: true, dataUrl: url });
+                    } catch (e) {
+                        lastErr = (e && e.message) || lastErr;
+                    }
+                    try {
+                        const url = await browser.tabs.captureVisibleTab();
+                        if (url) return sendResponse({ ok: true, dataUrl: url });
+                    } catch (_) {}
+                }
+
+                if (typeof browser.tabs.captureTab === 'function') {
+                    if (typeof tabId === 'number') {
+                        try {
+                            const url = await browser.tabs.captureTab(tabId, opts);
+                            if (url) return sendResponse({ ok: true, dataUrl: url });
+                        } catch (e) {
+                            lastErr = (e && e.message) || lastErr;
+                        }
+                    }
+                    try {
+                        const url = await browser.tabs.captureTab();
+                        if (url) return sendResponse({ ok: true, dataUrl: url });
+                    } catch (_) {}
+                }
+            }
+
+            // 2. Попытка через Chromium Callback / Promise API (chrome.tabs.captureVisibleTab)
+            if (typeof chrome !== 'undefined' && chrome.tabs && typeof chrome.tabs.captureVisibleTab === 'function') {
+                const tryChrome = (targetWinId, captureOpts) => {
+                    return new Promise((resolve) => {
+                        try {
+                            const cb = (res) => {
+                                if (chrome.runtime && chrome.runtime.lastError) {
+                                    lastErr = chrome.runtime.lastError.message || lastErr;
+                                    resolve(null);
+                                } else {
+                                    resolve(res || null);
+                                }
+                            };
+
+                            if (typeof targetWinId === 'number') {
+                                chrome.tabs.captureVisibleTab(targetWinId, captureOpts, cb);
+                            } else if (captureOpts) {
+                                chrome.tabs.captureVisibleTab(captureOpts, cb);
+                            } else {
+                                chrome.tabs.captureVisibleTab(cb);
+                            }
+                        } catch (err) {
+                            lastErr = (err && err.message) || String(err);
+                            resolve(null);
+                        }
+                    });
+                };
+
+                let url = null;
+                if (typeof winId === 'number') {
+                    url = await tryChrome(winId, opts);
+                }
+                if (!url) {
+                    url = await tryChrome(undefined, opts);
+                }
+                if (!url) {
+                    url = await tryChrome(undefined, null);
+                }
+
+                if (url) {
+                    return sendResponse({ ok: true, dataUrl: url });
+                }
+            }
+
+            const errorText = lastErr
+                ? ('Ошибка браузера при захвате экрана: ' + lastErr + '. Пожалуйста, обновите страницу FunPay.')
+                : 'Функция захвата страницы недоступна в этом окне. Пожалуйста, перезагрузите расширение или страницу FunPay.';
+
+            sendResponse({
+                ok: false,
+                error: errorText
+            });
+        })().catch(err => {
+            sendResponse({ ok: false, error: (err && err.message) || String(err) });
+        });
+        return true;
+    }
+
     if (request && request.action === 'FOXEN_FORWARD_THEME_INSTALL_TO_FUNPAY') {
         (async () => {
             try {
@@ -2253,6 +2418,108 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 sendResponse({ ok: true });
             } catch (e) {
                 sendResponse({ ok: false, error: e.message });
+            }
+        })();
+        return true;
+    }
+
+    if (request.action === 'FOXEN_INITIATE_FP_LINK') {
+        (async () => {
+            try {
+                const linkData = request.linkData || {};
+                const queryTabs = () => new Promise(resolve => {
+                    if (!chrome.tabs || !chrome.tabs.query) return resolve([]);
+                    chrome.tabs.query({ url: ['*://funpay.com/*', '*://*.funpay.com/*'] }, tabs => {
+                        if (chrome.runtime.lastError || !tabs) return resolve([]);
+                        resolve(tabs);
+                    });
+                });
+
+                const fpTabs = await queryTabs();
+                if (fpTabs && fpTabs.length > 0) {
+                    const targetTab = fpTabs.find(t => t.active) || fpTabs[0];
+                    chrome.tabs.update(targetTab.id, { active: true });
+                    if (targetTab.windowId) {
+                        chrome.windows.update(targetTab.windowId, { focused: true });
+                    }
+                    chrome.tabs.sendMessage(targetTab.id, { action: 'FOXEN_SHOW_LINK_CONFIRM_MODAL', linkData }, (resp) => {
+                        if (chrome.runtime.lastError || !resp) {
+                            sendResponse({ ok: false, error: 'Вкладка FunPay не ответила' });
+                        } else {
+                            sendResponse(resp);
+                        }
+                    });
+                } else {
+                    chrome.tabs.create({ url: 'https://funpay.com/', active: true }, (newTab) => {
+                        const listener = (tabId, info) => {
+                            if (tabId === newTab.id && info.status === 'complete') {
+                                chrome.tabs.onUpdated.removeListener(listener);
+                                setTimeout(() => {
+                                    chrome.tabs.sendMessage(newTab.id, { action: 'FOXEN_SHOW_LINK_CONFIRM_MODAL', linkData }, (resp) => {
+                                        sendResponse(resp || { ok: false, error: 'Вкладка FunPay не ответила' });
+                                    });
+                                }, 1200);
+                            }
+                        };
+                        chrome.tabs.onUpdated.addListener(listener);
+                    });
+                }
+            } catch (err) {
+                sendResponse({ ok: false, error: err && err.message });
+            }
+        })();
+        return true;
+    }
+
+    if (request.action === 'FOXEN_CONFIRM_FP_LINK') {
+        (async () => {
+            try {
+                const payload = request.payload || {};
+                const supabaseUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
+                const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
+                
+                const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/link_funpay_account`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': apiKey,
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        p_foxen_id: payload.foxenId || null,
+                        p_fp_user: payload.fpUser ? String(payload.fpUser).trim() : null,
+                        p_fp_user_id: payload.fpUserId ? parseInt(payload.fpUserId, 10) : null,
+                        p_avatar_url: payload.avatarUrl || null,
+                        p_user_id: payload.userId || null
+                    })
+                });
+
+                if (rpcRes.ok) {
+                    const result = await rpcRes.json();
+                    console.log('[Foxen BG] FunPay account linked successfully via RPC:', result);
+                    
+                    const profileData = result.profile || {
+                        fp_user: payload.fpUser,
+                        fp_user_id: payload.fpUserId,
+                        avatar_url: payload.avatarUrl,
+                        is_fp_verified: true,
+                        foxen_id: payload.foxenId
+                    };
+
+                    await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({
+                        fpCurrentUserInfo: { userId: String(payload.fpUserId), username: payload.fpUser },
+                        foxenUserProfile: profileData
+                    });
+
+                    sendResponse({ ok: true, profile: profileData });
+                } else {
+                    const errText = await rpcRes.text();
+                    console.warn('[Foxen BG] RPC link_funpay_account returned error:', rpcRes.status, errText);
+                    sendResponse({ ok: false, error: errText });
+                }
+            } catch (err) {
+                console.error('[Foxen BG] Error in FOXEN_CONFIRM_FP_LINK:', err);
+                sendResponse({ ok: false, error: err.message });
             }
         })();
         return true;
@@ -3450,6 +3717,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 _authCache = null;
                 _authCacheTime = 0;
 
+                // Сбрасываем сессию техподдержки support.funpay.com при смене аккаунта
+                try {
+                    const supportCookies = await fxnGetAllCookies({ domain: 'support.funpay.com' });
+                    for (const c of (supportCookies || [])) {
+                        await fxnRemoveCookie({
+                            url: `https://support.funpay.com${c.path || '/'}`,
+                            name: c.name,
+                            storeId: c.storeId
+                        });
+                    }
+                } catch (_) {}
+                globalThis._currentSupportUser = null;
+                globalThis._currentSupportKey = null;
+
                 // 4) Перезагружаем вкладку — FunPay выдаст/перепривяжет сессию под новый ключ.
                 const tabId = sender.tab && sender.tab.id;
                 if (tabId != null) {
@@ -3697,46 +3978,148 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
-    // ── Support / Tickets handlers ────────────────────────────────────────────
+    // ── Support / Tickets handlers (Multi-account synchronized) ───────────────
     if (request.action === 'supportGetTickets' || request.action === 'supportGetCategories' ||
         request.action === 'supportGetFields' || request.action === 'supportCreateTicket' ||
         request.action === 'getUnconfirmedOrders' || request.action === 'supportGetTicketDetails' ||
         request.action === 'supportAddComment' || request.action === 'supportCloseTicket') {
         (async () => {
             try {
-                const gkCookie = await fxnFindGoldenKey();
-                const phpCookie = await fxnFindPhpSessId();
-                if (!gkCookie) { sendResponse({ success: false, error: 'Не авторизован на FunPay' }); return; }
-                const baseCookie = `golden_key=${gkCookie.value}${phpCookie ? '; PHPSESSID=' + phpCookie.value : ''}`;
+                const requestedUser = (request.currentUsername || '').trim();
+                let targetKey = null;
+                let targetPhp = null;
+
+                // 1) Если передан username текущего таба, ищем ключ именно этого аккаунта в foxenAccounts
+                if (requestedUser) {
+                    try {
+                        const stored = await fxnStorageGet(['foxenAccounts']);
+                        const accs = stored?.foxenAccounts || [];
+                        const matched = accs.find(a => (a.name || '').trim().toLowerCase() === requestedUser.toLowerCase());
+                        if (matched?.key) {
+                            targetKey = matched.key;
+                        }
+                    } catch (_) {}
+                }
+
+                // 2) Если в сохранённых аккаунтах не найден, берём из куки вкладки-отправителя
+                if (!targetKey) {
+                    const storeId = sender?.tab?.cookieStoreId || null;
+                    const gkCookie = await fxnFindGoldenKey(storeId);
+                    if (gkCookie?.value) targetKey = gkCookie.value;
+                    const phpCookie = await fxnFindPhpSessId(storeId);
+                    if (phpCookie?.value) targetPhp = phpCookie.value;
+                }
+
+                if (!targetKey) {
+                    sendResponse({ success: false, error: 'Не авторизован на FunPay' });
+                    return;
+                }
+
+                const baseCookie = `golden_key=${targetKey}${targetPhp ? '; PHPSESSID=' + targetPhp : ''}`;
                 const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
                 const supportBase = 'https://support.funpay.com';
 
-                async function sfetch(url, opts = {}) {
-                    // SSO: first go through funpay.com/support/sso to get support session cookies
-                    const resp = await fetch(url, {
-                        ...opts,
-                        headers: { ...(opts.headers || {}), 'Cookie': baseCookie, 'User-Agent': ua }
-                    });
-                    return resp;
+                // 3) Синхронизация сессии на support.funpay.com с активным аккаунтом
+                if (typeof globalThis._currentSupportUser === 'undefined') {
+                    globalThis._currentSupportUser = null;
+                    globalThis._currentSupportKey = null;
+                }
+
+                const needResync = (globalThis._currentSupportUser !== (requestedUser || targetKey)) || (globalThis._currentSupportKey !== targetKey);
+                if (needResync) {
+                    // Удаляем старые куки support.funpay.com, чтобы сбросить чужую сессию
+                    try {
+                        const oldSupportCookies = await fxnGetAllCookies({ domain: 'support.funpay.com' });
+                        for (const c of (oldSupportCookies || [])) {
+                            await fxnRemoveCookie({
+                                url: `https://support.funpay.com${c.path || '/'}`,
+                                name: c.name,
+                                storeId: c.storeId
+                            });
+                        }
+                    } catch (_) {}
+
+                    // Запрашиваем SSO авторизацию через funpay.com/support/sso
+                    try {
+                        const ssoResp = await fetch('https://funpay.com/support/sso?return_to=%2Ftickets', {
+                            method: 'GET',
+                            redirect: 'manual',
+                            headers: { 'Cookie': baseCookie, 'User-Agent': ua }
+                        });
+                        const loc = ssoResp.headers.get('location');
+                        if (loc) {
+                            const ssoTarget = loc.startsWith('http') ? loc : `https://support.funpay.com${loc}`;
+                            await fetch(ssoTarget, {
+                                method: 'GET',
+                                redirect: 'follow',
+                                credentials: 'include',
+                                headers: { 'User-Agent': ua }
+                            });
+                        }
+                    } catch (ssoErr) {
+                        console.warn('[Foxen Support SSO]', ssoErr);
+                    }
+
+                    globalThis._currentSupportUser = requestedUser || targetKey;
+                    globalThis._currentSupportKey = targetKey;
                 }
 
                 async function sfetchSupport(url, opts = {}) {
-                    // For support.funpay.com we need to do SSO first to get the session
-                    const ssoResp = await fetch('https://funpay.com/support/sso?return_to=' + encodeURIComponent(url.replace(supportBase, '')), {
-                        redirect: 'follow',
-                        headers: { 'Cookie': baseCookie, 'User-Agent': ua }
-                    });
-                    // The SSO sets a cookie on support.funpay.com - but we can't read cross-domain cookies
-                    // Instead use the direct URL with the same golden_key (funpay SSO shares session)
-                    const finalResp = await fetch(url, {
+                    let supportCookies = [];
+                    try {
+                        supportCookies = await fxnGetAllCookies({ domain: 'support.funpay.com' });
+                    } catch (_) {}
+                    const cookieHeader = (supportCookies || []).map(c => `${c.name}=${c.value}`).join('; ');
+
+                    const fetchHeaders = {
+                        ...(opts.headers || {}),
+                        'User-Agent': ua
+                    };
+                    if (cookieHeader) {
+                        fetchHeaders['Cookie'] = cookieHeader;
+                    } else {
+                        fetchHeaders['Cookie'] = baseCookie;
+                    }
+
+                    let resp = await fetch(url, {
                         ...opts,
-                        headers: { ...(opts.headers || {}), 'Cookie': baseCookie, 'User-Agent': ua }
+                        credentials: 'include',
+                        headers: fetchHeaders
                     });
-                    return finalResp;
+
+                    // Если поддержка перенаправила на страницу входа — сессия слетела или не успела подхватиться, делаем быстрый SSO повтор
+                    if (resp.url && (resp.url.includes('/login') || resp.url.includes('/users/auth'))) {
+                        try {
+                            const ssoResp = await fetch('https://funpay.com/support/sso?return_to=%2Ftickets', {
+                                method: 'GET',
+                                redirect: 'manual',
+                                headers: { 'Cookie': baseCookie, 'User-Agent': ua }
+                            });
+                            const loc = ssoResp.headers.get('location');
+                            if (loc) {
+                                const ssoTarget = loc.startsWith('http') ? loc : `https://support.funpay.com${loc}`;
+                                await fetch(ssoTarget, {
+                                    method: 'GET',
+                                    redirect: 'follow',
+                                    credentials: 'include',
+                                    headers: { 'User-Agent': ua }
+                                });
+                                let freshCookies = [];
+                                try { freshCookies = await fxnGetAllCookies({ domain: 'support.funpay.com' }); } catch (_) {}
+                                const freshHeader = (freshCookies || []).map(c => `${c.name}=${c.value}`).join('; ');
+                                if (freshHeader) fetchHeaders['Cookie'] = freshHeader;
+                                resp = await fetch(url, { ...opts, credentials: 'include', headers: fetchHeaders });
+                            }
+                        } catch (_) {}
+                    }
+
+                    return resp;
                 }
 
                 if (request.action === 'getUnconfirmedOrders') {
-                    const r = await sfetch('https://funpay.com/orders/trade?state=paid');
+                    const r = await fetch('https://funpay.com/orders/trade?state=paid', {
+                        headers: { 'Cookie': baseCookie, 'User-Agent': ua }
+                    });
                     const html = await r.text();
                     const ids = await parseHtmlViaOffscreen(html, 'parseOrdersPage');
                     sendResponse({ success: true, orderIds: (ids || []).slice(0, request.maxOrders || 5) });
@@ -3744,12 +4127,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
 
                 if (request.action === 'supportGetTickets') {
-                    // FIX 2.9.1: грузим заявки ДВУМЯ наборами - status=all И status=active,
-                    // постранично, затем объединяем по id. Причина: в выдаче status=all
-                    // FunPay может показывать открытые заявки не на первой странице
-                    // (порядок last_answered), и при ранней остановке пагинации активная
-                    // заявка терялась - фильтр "Актуальные" оказывался пустым. Отдельная
-                    // загрузка status=active гарантирует, что все открытые заявки в кэше.
                     const all = [];
                     const seen = new Set();
                     const MAX_PAGES = 30;
@@ -3780,7 +4157,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     };
 
                     await loadStatus('all');
-                    // активные догружаем отдельно (их обычно немного - 1-2 страницы)
                     try { await loadStatus('active'); } catch (_) {}
 
                     sendResponse({ success: true, tickets: all });
@@ -3814,9 +4190,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     if (message) params.set('ticket[comment][body_html]', `<p>${message}</p>`);
                     params.set('ticket[comment][attachments]', '');
                     params.set('ticket[_token]', token);
-                    const createResp = await fetch(`${supportBase}/tickets/create/${categoryId}`, {
+                    const createResp = await sfetchSupport(`${supportBase}/tickets/create/${categoryId}`, {
                         method: 'POST',
-                        headers: { 'Cookie': baseCookie, 'User-Agent': ua, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'Referer': `${supportBase}/tickets/new/${categoryId}` },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'Referer': `${supportBase}/tickets/new/${categoryId}` },
                         body: params.toString()
                     });
                     const body = await createResp.text();
@@ -3831,11 +4207,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     return;
                 }
 
-
                 if (request.action === 'supportGetTicketDetails') {
-                    const r = await fetch(`${supportBase}/tickets/${request.ticketId}`, {
-                        headers: { 'Cookie': baseCookie, 'User-Agent': ua }
-                    });
+                    const r = await sfetchSupport(`${supportBase}/tickets/${request.ticketId}`);
                     const html = await r.text();
                     const details = await parseHtmlViaOffscreen(html, 'parseTicketDetails');
                     sendResponse({ success: true, ...details });
@@ -3848,9 +4221,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     params.set('add_comment[comment][body_html]', `<p>${message}</p>`);
                     params.set('add_comment[comment][attachments]', '');
                     params.set('add_comment[_token]', token);
-                    const r = await fetch(`${supportBase}/tickets/${ticketId}/comments/create`, {
+                    const r = await sfetchSupport(`${supportBase}/tickets/${ticketId}/comments/create`, {
                         method: 'POST',
-                        headers: { 'Cookie': baseCookie, 'User-Agent': ua, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'Referer': `${supportBase}/tickets/${ticketId}` },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'Referer': `${supportBase}/tickets/${ticketId}` },
                         body: params.toString()
                     });
                     if (!r.ok) {
@@ -3864,12 +4237,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 if (request.action === 'supportCloseTicket') {
                     const { ticketId } = request;
-                    // Get token from ticket page
-                    const pageResp = await fetch(`${supportBase}/tickets/${ticketId}`, {
-                        headers: { 'Cookie': baseCookie, 'User-Agent': ua }
-                    });
+                    const pageResp = await sfetchSupport(`${supportBase}/tickets/${ticketId}`);
                     const pageHtml = await pageResp.text();
-                    // Parse token: try close_ticket[_token] input, fallback to data-app-config csrfToken
                     let token = null;
                     const tokenMatch = pageHtml.match(/name="close_ticket\[_token\]"[^>]*value="([^"]+)"/);
                     if (tokenMatch) token = tokenMatch[1];
@@ -3879,10 +4248,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             try { token = JSON.parse(cfgMatch[1].replace(/&quot;/g, '"'))?.csrfToken || null; } catch(_) {}
                         }
                     }
-                    if (!token) { sendResponse({ success: false, error: 'Не удалось получить токен' }); return; }
-                    const closeResp = await fetch(`${supportBase}/tickets/${ticketId}/close`, {
+                    if (!token) { sendResponse({ success: false, error: 'Не удалось получить токен закрытия' }); return; }
+                    const closeResp = await sfetchSupport(`${supportBase}/tickets/${ticketId}/close`, {
                         method: 'POST',
-                        headers: { 'Cookie': baseCookie, 'User-Agent': ua, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                         body: new URLSearchParams({ csrf_token: token }).toString()
                     });
                     sendResponse({ success: closeResp.ok });
@@ -3924,15 +4293,16 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         await runSmartBumpCycle();
     }
     if (alarm.name === 'foxenAutoRestore') {
-        // Notify all FunPay tabs to check and restore/disable lots
         const tabs = await (typeof browser !== 'undefined' ? browser : chrome).tabs.query({ url: "https://funpay.com/*" });
-        tabs.forEach(tab => {
+        if (tabs && tabs.length > 0) {
             const b = typeof browser !== 'undefined' ? browser : chrome;
             try {
-                const p = b.tabs.sendMessage(tab.id, { action: 'foxenCheckRestoreLots' });
+                // Send only to the single most relevant FunPay tab to prevent parallel duplicate execution and memory spikes
+                const targetTab = tabs.find(t => t.active) || tabs[0];
+                const p = b.tabs.sendMessage(targetTab.id, { action: 'foxenCheckRestoreLots' });
                 if (p && typeof p.catch === 'function') p.catch(() => {});
             } catch (e) {}
-        });
+        }
     }
 });
 

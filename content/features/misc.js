@@ -723,27 +723,31 @@ function initializeMarkAllAsRead() {
             return;
         }
 
+        const actionsWrap = createElement('div', {
+            class: 'foxen-chat-header-actions'
+        });
+
         const readAllBtn = createElement('button', {
             id: 'foxen-read-all-btn',
-            class: 'fp-tooltip-host',
-            'data-fp-tooltip': 'Прочитать все'
+            class: 'fp-tooltip-host fxn-chat-action-btn',
+            'data-fp-tooltip': 'Прочитать все',
+            type: 'button'
         });
         readAllBtn.innerHTML = '<span class="material-icons">done_all</span>';
         
         const filterMarkedBtn = createElement('label', {
             id: 'foxen-filter-marked-btn',
-            class: 'fp-tooltip-host foxen-chat-toggle',
+            class: 'fp-tooltip-host fxn-chat-action-btn foxen-chat-toggle',
             'data-fp-tooltip': 'Только помеченные'
         });
         filterMarkedBtn.innerHTML = `
-            <input type="checkbox" id="filter-marked-checkbox">
-            <span class="foxen-chat-toggle-slider">
-                 <span class="material-icons">label</span>
-            </span>
+            <input type="checkbox" id="filter-marked-checkbox" style="display:none;">
+            <span class="material-icons">label</span>
         `;
         
-        header.appendChild(readAllBtn);
-        header.appendChild(filterMarkedBtn);
+        actionsWrap.appendChild(readAllBtn);
+        actionsWrap.appendChild(filterMarkedBtn);
+        header.appendChild(actionsWrap);
 
         readAllBtn.addEventListener('click', async () => {
             const unreadItems = Array.from(document.querySelectorAll('.contact-item.unread'));
@@ -804,6 +808,7 @@ function initializeMarkAllAsRead() {
 
         const applyMarkedFilter = () => {
             const isFilterActive = filterCheckbox.checked;
+            filterMarkedBtn.classList.toggle('active', isFilterActive);
             const contactItems = document.querySelectorAll('.contact-list .contact-item');
             
             contactItems.forEach(item => {

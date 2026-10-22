@@ -305,11 +305,11 @@ function isFoxenAdmin(profileData) {
     const uid = String(profileData.FP_USER_ID || profileData.fp_user_id || profileData.userId || '');
     const uname = String(profileData.FP_USER || profileData.fp_user || profileData.username || '').toLowerCase();
 
-    const adminIds = ['FX-000000', 'FX-000001'];
+    const adminIds = ['FX-000000', 'FX-000001', 'FX-774724', 'FX-15508026'];
     const adminUids = ['15508026', '13781813'];
-    const adminUsers = ['vireonshop', 'sanosenpai'];
+    const adminUsers = ['vireonshop', 'sanosenpai', 'sano'];
 
-    return adminIds.includes(fid) || adminUids.includes(uid) || adminUsers.includes(uname);
+    return adminIds.includes(fid) || adminUids.includes(uid) || adminUsers.includes(uname) || Boolean(profileData.is_admin || profileData.isAdmin);
 }
 
 /**

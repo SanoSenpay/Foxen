@@ -707,7 +707,12 @@ async function telegramNotifyNewOrders(orders) {
     let changed = false;
     for (const o of list) {
         if (processed.has(o.id)) continue;
-        if (!firstRun) {
+
+        const statusClean = String(o.status || '').toLowerCase().trim();
+        const isClosedOrRefund = statusClean.includes('закрыт') || statusClean.includes('closed') || statusClean.includes('возврат') || statusClean.includes('refund');
+        const isPaid = statusClean.includes('оплачен') || statusClean.includes('paid') || (!statusClean && !isClosedOrRefund);
+
+        if (!firstRun && isPaid && !isClosedOrRefund) {
             await tgSendMessage(
                 `🛒 <b>Новый заказ</b> • FunPay\n\n` +
                 `<b>Товар:</b> ${tgEscape(o.title || '-')}\n` +
@@ -728,7 +733,7 @@ async function telegramNotifyNewOrders(orders) {
 
     if (changed || firstRun) {
         let arr = Array.from(processed);
-        if (arr.length > 300) arr = arr.slice(-300);
+        if (arr.length > 500) arr = arr.slice(-500);
         await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ [key]: arr, [seededKey]: true });
     }
 }

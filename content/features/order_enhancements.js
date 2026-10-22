@@ -142,7 +142,7 @@ function initReviewRequestButtons() {
                 e.preventDefault(); e.stopPropagation();
 
                 const orderId = row.querySelector('.tc-order')?.textContent?.replace('#','') || '';
-                const buyerEl = row.querySelector('.media-user-name span[data-href], .media-user-name a');
+                const buyerEl = row.querySelector('.media-user-name span[data-href], .media-user-name a, .media-user-name .pseudo-a, .tc-user a[href*="/users/"], .tc-user [data-href*="/users/"]');
                 const buyerHref = buyerEl?.getAttribute('data-href') || buyerEl?.getAttribute('href') || '';
                 const buyerIdM = buyerHref.match(/\/users\/(\d+)/);
                 const buyerId  = buyerIdM ? buyerIdM[1] : null;

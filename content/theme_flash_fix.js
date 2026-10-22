@@ -73,7 +73,8 @@
         lot_pinned_container: '#foxen-pinned-lots-container',
         market_analytics_btn: '#fpTools-market-analytics-btn-wrapper',
         sales_stats_expand: '#fpTools-stats-extra, #fpTools-stats-expand-btn',
-        notes_add_status_btn: '#foxen-add-status-btn'
+        notes_add_status_btn: '#foxen-add-status-btn',
+        custom_screenshot: '.fxn-dock-item[data-section="custom_screenshot"], .fxn-ss-scrim, #fxn-screenshot-modal'
     };
 
     function hexToRgba(hex, alpha) {
@@ -188,12 +189,17 @@
             .chat-form-btn .btn-round { background-color: #cbcbcb1f !important; color: #fff !important; border-radius: 100px; border: 0px; }
             .chat-form-btn .btn-round:hover { background-color: #3466a1 !important; color: #fff !important; }
             .chat-img { border-radius: 8px; }
-            .btn-danger { border: 0px !important; border-radius: 8px; }
-            .btn-gray { background-color: #3466a1 !important; border-radius: 8px; color: #fff !important; border: 0px; }
-            .btn-primary, .bg-light-style .btn-primary { border: 0px solid #fff !important; border-radius: 8px; background-color: #PRIMARY_COLOR# !important; color: #fff !important; }
-            .btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary:active:hover, .btn-primary:active:focus, .btn-primary[disabled]:hover, .btn-primary[disabled]:focus, .btn-primary[disabled]:active, .btn-primary[disabled]:active:hover, .btn-primary[disabled]:active:focus { background-color: #1a3d6e !important; color: #fff !important; }
-            .btn-default, .bg-light-style .btn-default { border: 0px solid #fff !important; border-radius: 8px; background-color: #PRIMARY_COLOR#60 !important; color: #fff !important; }
-            .btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default:active:hover, .btn-default:active:focus, .btn-default[disabled]:hover, .btn-default[disabled]:focus, .btn-default[disabled]:active, .btn-default[disabled]:active:hover, .btn-default[disabled]:active:focus { border: 0px solid #1e4f8700 !important; background-color: #PRIMARY_COLOR# !important; color: #fff !important; }
+            .btn-gray:not(.promo-game-item .btn-group .btn) { background-color: #3466a1 !important; border-radius: 8px; color: #fff !important; border: 0px; }
+            .btn-primary:not(.promo-game-item .btn-group .btn), .bg-light-style .btn-primary:not(.promo-game-item .btn-group .btn) { border: 0px solid #fff !important; border-radius: 8px; background-color: #PRIMARY_COLOR# !important; color: #fff !important; }
+            .btn-primary:not(.promo-game-item .btn-group .btn):hover, .btn-primary:not(.promo-game-item .btn-group .btn):focus, .btn-primary:not(.promo-game-item .btn-group .btn):active { background-color: #1a3d6e !important; color: #fff !important; }
+            .btn-default:not(.promo-game-item .btn-group .btn), .bg-light-style .btn-default:not(.promo-game-item .btn-group .btn) { border: 0px solid #fff !important; border-radius: 8px; background-color: #PRIMARY_COLOR#60 !important; color: #fff !important; }
+            .btn-default:not(.promo-game-item .btn-group .btn):hover, .btn-default:not(.promo-game-item .btn-group .btn):focus, .btn-default:not(.promo-game-item .btn-group .btn):active { border: 0px solid #1e4f8700 !important; background-color: #PRIMARY_COLOR# !important; color: #fff !important; }
+            /* Promo Game Server Switcher Segmented Control */
+            .promo-game-item .btn-group, .promo-game-item .btn-group-xs { display: inline-flex !important; align-items: center !important; background: rgba(255, 255, 255, 0.06) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 7px !important; padding: 2px !important; gap: 2px !important; margin-top: 2px !important; margin-bottom: 8px !important; vertical-align: middle !important; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important; flex-wrap: nowrap !important; }
+            .promo-game-item .btn-group .btn, .promo-game-item .btn-group-xs > .btn { display: inline-flex !important; align-items: center !important; justify-content: center !important; float: none !important; height: 22px !important; min-height: 22px !important; max-height: 22px !important; padding: 0 8px !important; font-size: 11px !important; font-weight: 600 !important; letter-spacing: 0.3px !important; line-height: 1 !important; border-radius: 5px !important; border: none !important; margin: 0 !important; cursor: pointer !important; transition: all 0.15s ease !important; outline: none !important; box-shadow: none !important; white-space: nowrap !important; }
+            .promo-game-item .btn-group .btn.btn-gray, .promo-game-item .btn-group .btn:not(.btn-primary) { background: transparent !important; color: var(--fxn-theme-text-color, #9ca3af) !important; opacity: 0.82 !important; }
+            .promo-game-item .btn-group .btn.btn-gray:hover, .promo-game-item .btn-group .btn:not(.btn-primary):hover { background: rgba(255, 255, 255, 0.12) !important; color: #ffffff !important; opacity: 1 !important; }
+            .promo-game-item .btn-group .btn.btn-primary, .promo-game-item .btn-group .btn.active { background: var(--fxn-active, var(--fxn-accent, #ACCENT_COLOR#)) !important; color: #ffffff !important; opacity: 1 !important; font-weight: 700 !important; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35) !important; }
             .block-info { color: #ffffffd9 !important; }
             .navbar-form .form-control { background-color: transparent !important; }
             .logo-color, .footer-block-als { filter: brightness(0) invert(1) !important; }

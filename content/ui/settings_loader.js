@@ -519,7 +519,7 @@ async function setupTemplateSettingsHandlers() {
 async function loadSavedSettings() {
     const settings = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([
         'foxenTemplateSettings', 'enableCustomTheme', 'foxenTheme', 'aiModeActive',
-        'autoBumpEnabled', 'autoBumpCooldown', 'foxenSmartBumpEnabled', 'foxenCursorFx', 'foxenCustomCursor',
+        'autoBumpEnabled', 'autoBumpCooldown', 'foxenSmartBumpEnabled', 'foxenCursorFx', 'foxenClickFx', 'foxenCustomCursor',
         'foxenPopupPosition', 'foxenPopupSize', 'enableRedesignedHomepage', 'foxenPopupDragged',
         'foxenAccounts', 'showSalesStats', 'showFinanceStats', 'hideBalance', 'viewSellersPromo', 'notificationSound', 'notificationVolume',
         'foxenDiscord',
@@ -530,7 +530,8 @@ async function loadSavedSettings() {
         'foxenShowUnconfirmed',
         'foxenAutoRestoreEnabled',
         'foxenAutoDisableEnabled',
-        'foxenReviewRequestTemplate'
+        'foxenReviewRequestTemplate',
+        'separateInactiveLots'
     ]);
     
     foxenAccounts = settings.foxenAccounts || [];
@@ -662,6 +663,7 @@ async function loadSavedSettings() {
     fxnSetCheck('selectiveBumpEnabled', settings.foxenSelectiveBumpEnabled === true);
     fxnSetCheck('bumpOnlyAutoDelivery', settings.foxenBumpOnlyAutoDelivery === true);
     fxnSetCheck('foxenSmartBumpEnabled', settings.foxenSmartBumpEnabled === true);
+    fxnSetCheck('fxnSeparateInactiveLots', settings.separateInactiveLots !== false);
 
     const isHpRedesignEnabled = settings.enableRedesignedHomepage !== false;
     fxnSetCheck('enableRedesignedHomepage', isHpRedesignEnabled);
@@ -719,7 +721,12 @@ async function loadSavedSettings() {
     if (fxControls) fxControls.style.display = finalCursorFxSettings.enabled ? 'flex' : 'none';
 
     const fxType = document.getElementById('cursorFxType'); if (fxType) fxType.value = finalCursorFxSettings.type;
-    const fxC1 = document.getElementById('cursorFxColor1'); if (fxC1) fxC1.value = finalCursorFxSettings.color1;
+    const fxC1 = document.getElementById('cursorFxColor1');
+    if (fxC1) {
+        fxC1.value = finalCursorFxSettings.color1;
+        fxC1.dataset.color = finalCursorFxSettings.color1;
+        fxC1.style.backgroundColor = finalCursorFxSettings.color1;
+    }
     fxnSetCheck('cursorFxRgb', finalCursorFxSettings.rgb);
 
     // Sync active trail chip & label
@@ -746,6 +753,83 @@ async function loadSavedSettings() {
     }
 
     cursorFx.updateConfig(finalCursorFxSettings);
+
+    // Click FX Settings
+    const clickFxSettings = settings.foxenClickFx || {};
+    const clickFxDefaults = {
+        enabled: false,
+        type: 'ring',
+        color: '#c026d3',
+        rgb: false,
+        scale: 1.0,
+        speed: 1.0,
+        strokeWidth: 1.5
+    };
+    const finalClickFxSettings = { ...clickFxDefaults, ...clickFxSettings };
+
+    fxnSetCheck('clickFxEnabled', finalClickFxSettings.enabled);
+    const clickFxControls = document.getElementById('clickFxControls');
+    if (clickFxControls) clickFxControls.style.display = finalClickFxSettings.enabled ? 'flex' : 'none';
+
+    const cfxC1 = document.getElementById('clickFxColor1');
+    if (cfxC1) {
+        cfxC1.value = finalClickFxSettings.color;
+        cfxC1.dataset.color = finalClickFxSettings.color;
+        cfxC1.style.backgroundColor = finalClickFxSettings.color;
+    }
+    fxnSetCheck('clickFxRgb', finalClickFxSettings.rgb);
+
+    // Sync active click chips & label
+    const clickChips = document.querySelectorAll('#fxnClickPresets .fxn-trail-chip');
+    if (clickChips.length > 0) {
+        clickChips.forEach(chip => {
+            const matches = chip.dataset.type === finalClickFxSettings.type;
+            chip.classList.toggle('active', matches);
+            if (matches) {
+                const label = document.getElementById('clickFxActiveTypeLabel');
+                const title = chip.querySelector('.fxn-trail-title')?.textContent || finalClickFxSettings.type;
+                if (label) label.textContent = title;
+            }
+        });
+    }
+
+    // Sync quick swatches active state
+    const clickSwatches = document.querySelectorAll('#clickFxQuickSwatches .fxn-mini-swatch');
+    if (clickSwatches.length > 0) {
+        const curColor = (finalClickFxSettings.color || '').toLowerCase();
+        clickSwatches.forEach(sw => {
+            sw.classList.toggle('active', (sw.dataset.color || '').toLowerCase() === curColor);
+        });
+    }
+
+    // Sync sliders
+    const scaleSlider = document.getElementById('clickFxScale');
+    const scaleVal = document.getElementById('clickFxScaleValue');
+    if (scaleSlider) {
+        scaleSlider.value = finalClickFxSettings.scale;
+        if (scaleVal) scaleVal.textContent = `${Number(finalClickFxSettings.scale).toFixed(1)}x`;
+    }
+
+    const speedSlider = document.getElementById('clickFxSpeed');
+    const speedVal = document.getElementById('clickFxSpeedValue');
+    if (speedSlider) {
+        speedSlider.value = finalClickFxSettings.speed;
+        if (speedVal) speedVal.textContent = `${Number(finalClickFxSettings.speed).toFixed(1)}x`;
+    }
+
+    const strokeSlider = document.getElementById('clickFxStroke');
+    const strokeVal = document.getElementById('clickFxStrokeValue');
+    if (strokeSlider) {
+        strokeSlider.value = finalClickFxSettings.strokeWidth;
+        if (strokeVal) strokeVal.textContent = `${Number(finalClickFxSettings.strokeWidth).toFixed(1)}px`;
+    }
+
+    if (typeof clickFx !== 'undefined' && clickFx && typeof clickFx.updateConfig === 'function') {
+        clickFx.updateConfig(finalClickFxSettings);
+    }
+    if (typeof setupClickFxHandlers === 'function') {
+        setupClickFxHandlers();
+    }
     
     // Screen Particles
     const pSt = await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get([

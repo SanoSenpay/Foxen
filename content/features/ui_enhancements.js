@@ -613,9 +613,36 @@ function parseOrdersFromDocument() {
 
             const description = row.querySelector('.order-desc div, .tc-desc-text')?.textContent.trim() || '';
             const subcategoryName = row.querySelector('.text-muted')?.textContent.trim() || '';
-            const buyerEl = row.querySelector('.media-user-name span, .media-user-name a, .tc-user a, .tc-user span, .tc-user .pseudo-a');
-            const buyerUsername = buyerEl?.textContent.trim() || '';
-            const rawBuyerHref = buyerEl?.getAttribute('data-href') || buyerEl?.getAttribute('href') || '';
+            // Извлечение данных покупателя/продавца: строго приоритизируем .media-user-name,
+            // чтобы не захватывать статус-индикатор (.media-user-status) и аватарку из .tc-user span
+            const nameContainer = row.querySelector('.media-user-name');
+            let buyerEl = null;
+            if (nameContainer) {
+                buyerEl = nameContainer.querySelector('span[data-href], a, .pseudo-a, span') || nameContainer;
+            }
+            if (!buyerEl) {
+                const userCol = row.querySelector('.tc-user');
+                if (userCol) {
+                    buyerEl = userCol.querySelector('a[href*="/users/"], [data-href*="/users/"], .pseudo-a, a');
+                }
+            }
+            if (!buyerEl) {
+                buyerEl = row.querySelector('a[href*="/users/"], [data-href*="/users/"]');
+            }
+
+            let buyerUsername = buyerEl ? buyerEl.textContent.trim() : '';
+            if (!buyerUsername && nameContainer) {
+                buyerUsername = nameContainer.textContent.trim();
+            }
+            buyerUsername = buyerUsername.replace(/\s+/g, ' ').trim();
+
+            const rawBuyerHref = buyerEl?.getAttribute('data-href') || 
+                                 buyerEl?.getAttribute('href') || 
+                                 nameContainer?.querySelector('[data-href]')?.getAttribute('data-href') ||
+                                 nameContainer?.querySelector('[href]')?.getAttribute('href') ||
+                                 row.querySelector('.tc-user [data-href]')?.getAttribute('data-href') ||
+                                 row.querySelector('.tc-user [href]')?.getAttribute('href') || '';
+
             const buyerIdMatch = rawBuyerHref.match(/\/users\/(\d+)/);
             const buyerId = buyerIdMatch ? buyerIdMatch[1] : (rawBuyerHref.split('/').filter(Boolean).pop() || '');
 
@@ -727,8 +754,10 @@ async function calculateSalesStats(allOrders, startDate, endDate, targetLot = nu
             categoryCount.set(order.subcategoryName, (categoryCount.get(order.subcategoryName) || 0) + 1);
         }
         
-        const buyerKey = `${order.buyerUsername || ''}|${order.buyerId || ''}`;
-        if (order.buyerUsername || order.buyerId) {
+        const buyerUser = (order.buyerUsername || order.buyer || order.buyerName || '').trim();
+        const buyerId = order.buyerId || order.buyerUserId || '';
+        const buyerKey = `${buyerUser}|${buyerId}`;
+        if (buyerUser || buyerId) {
             buyerCount.set(buyerKey, (buyerCount.get(buyerKey) || 0) + 1);
         }
 
@@ -863,14 +892,22 @@ async function displaySalesStats() {
     const domOrders = parseOrdersFromDocument();
     if (domOrders.length > 0) {
         let hasNew = false;
+        const toSave = [];
         for (const o of domOrders) {
-            if (!foxenSalesData[o.orderId]) {
+            const existing = foxenSalesData[o.orderId];
+            if (!existing) {
                 foxenSalesData[o.orderId] = o;
+                toSave.push(o);
+                hasNew = true;
+            } else if ((!existing.buyerUsername || existing.buyerUsername === '-') && o.buyerUsername && o.buyerUsername !== '-') {
+                existing.buyerUsername = o.buyerUsername;
+                if (!existing.buyerId && o.buyerId) existing.buyerId = o.buyerId;
+                toSave.push(existing);
                 hasNew = true;
             }
         }
-        if (hasNew) {
-            try { (window.fxnOrdersDB || FPTSalesDB).putOrders(domOrders); } catch (_) {}
+        if (hasNew && toSave.length > 0) {
+            try { (window.fxnOrdersDB || FPTSalesDB).putOrders(toSave); } catch (_) {}
         }
     }
 

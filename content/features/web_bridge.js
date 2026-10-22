@@ -129,6 +129,25 @@
             return;
         }
 
+        if (action === 'FOXEN_INITIATE_FP_LINK' || action === 'FOXEN_REQUEST_FP_LINK') {
+            const linkData = {
+                foxenId: event.data.foxenId,
+                email: event.data.email,
+                userId: event.data.userId
+            };
+            const api = typeof browser !== 'undefined' ? browser : chrome;
+            if (api && api.runtime && api.runtime.sendMessage) {
+                api.runtime.sendMessage({ action: 'FOXEN_INITIATE_FP_LINK', linkData }, (resp) => {
+                    window.postMessage({
+                        source: 'foxen-extension',
+                        action: 'FOXEN_FP_LINK_RESPONSE',
+                        result: resp
+                    }, '*');
+                });
+            }
+            return;
+        }
+
         if (action === 'FOXEN_REQUEST_EXPORT' || action === 'FOXEN_REQUEST_SETTINGS_EXPORT' || event.data.type === 'FOXEN_REQUEST_SETTINGS_EXPORT') {
             const api = typeof browser !== 'undefined' ? browser : chrome;
             const allSettings = await api.storage.local.get(null);
@@ -819,6 +838,201 @@
         if (!str) return '';
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+    async function showFunPayLinkConfirmModal(linkData, sendResponse) {
+        try {
+            const existingModal = document.getElementById('foxenLinkConfirmModal');
+            if (existingModal) existingModal.remove();
+
+            let fpUsername = '';
+            let fpUserId = '';
+            let fpAvatarUrl = '';
+
+            try {
+                const appDataStr = document.body?.dataset?.appData;
+                if (appDataStr) {
+                    const parsed = JSON.parse(appDataStr);
+                    const appData = Array.isArray(parsed) ? parsed[0] : parsed;
+                    if (appData?.userId) fpUserId = String(appData.userId);
+                    if (appData?.userName || appData?.username) fpUsername = appData.userName || appData.username;
+                }
+            } catch (_) {}
+
+            if (!fpUsername || !fpUserId) {
+                const navNameEl = document.querySelector('.navbar-right a.user-link-dropdown .user-link-name') ||
+                                  document.querySelector('a.user-link-dropdown .user-link-name');
+                if (navNameEl) fpUsername = navNameEl.textContent.trim();
+                const navLink = document.querySelector('.navbar-right a.user-link-dropdown') ||
+                                document.querySelector('a.user-link-dropdown');
+                const hrefMatch = navLink ? navLink.getAttribute('href')?.match(/\/users\/(\d+)/) : null;
+                if (hrefMatch) fpUserId = hrefMatch[1];
+            }
+
+            const avEl = document.querySelector('.navbar-right .avatar-photo') || document.querySelector('.avatar-photo');
+            if (avEl) {
+                const bgImg = window.getComputedStyle(avEl).backgroundImage;
+                const match = bgImg?.match(/url\(["']?([^"']+)["']?\)/);
+                if (match) fpAvatarUrl = match[1];
+            }
+
+            if (!fpUsername || !fpUserId) {
+                const api = typeof browser !== 'undefined' ? browser : chrome;
+                const stored = await api.storage.local.get(['fpCurrentUserInfo', 'foxenUserProfile']);
+                fpUsername = stored?.fpCurrentUserInfo?.username || stored?.foxenUserProfile?.username || '';
+                fpUserId = stored?.fpCurrentUserInfo?.userId || stored?.foxenUserProfile?.userId || '';
+                if (stored?.foxenUserProfile?.avatarUrl) fpAvatarUrl = stored.foxenUserProfile.avatarUrl;
+            }
+
+            if (!fpUsername || !fpUserId) {
+                alert('⚠️ Foxen: Не удалось обнаружить активную авторизацию FunPay на этой странице.');
+                if (typeof sendResponse === 'function') sendResponse({ ok: false, error: 'FunPay authorization not found on page' });
+                return;
+            }
+
+            // Определение активной темы Foxen для точной синхронизации
+            let activeTheme = 'dark';
+            try {
+                const api = typeof browser !== 'undefined' ? browser : chrome;
+                const storedTheme = (await api.storage?.local?.get(['foxenPopupTheme', 'foxenTheme']))?.foxenPopupTheme;
+                const root = document.documentElement;
+                const attr = root.getAttribute('data-fxn-popup-theme') || root.getAttribute('data-theme');
+                if (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'transparent') {
+                    activeTheme = storedTheme;
+                } else if (attr === 'light' || attr === 'dark' || attr === 'transparent') {
+                    activeTheme = attr;
+                } else if (root.classList.contains('fxn-popup-theme-light') || root.classList.contains('theme-light')) {
+                    activeTheme = 'light';
+                } else if (root.classList.contains('fxn-popup-theme-transparent')) {
+                    activeTheme = 'transparent';
+                }
+            } catch (_) {}
+
+            const foxenLogoUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL)
+                ? chrome.runtime.getURL('icons/icon128.png')
+                : 'https://web.foxen.site/icons/icon128.png';
+
+            const backdrop = document.createElement('div');
+            backdrop.id = 'foxenLinkConfirmModal';
+            backdrop.setAttribute('data-theme', activeTheme);
+
+            backdrop.innerHTML = `
+                <div class="fxn-link-modal-dialog">
+                    <div class="fxn-link-modal-header">
+                        <div class="fxn-link-modal-icon-badge">
+                            <img src="${foxenLogoUrl}" alt="Foxen" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff7e36" stroke-width="2" style="display:none;">
+                                <path d="M2 7l10-4 10 4v6c0 5.5-4 10-10 11-6-1-10-5.5-10-11V7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="fxn-link-modal-title">Подтверждение привязки Foxen</h3>
+                            <p class="fxn-link-modal-sub">Запрос от сервиса web.foxen.site</p>
+                        </div>
+                    </div>
+
+                    <div class="fxn-link-modal-body" id="fxnLinkModalBody">
+                        <p class="fxn-link-modal-desc">
+                            Сайт <b>Foxen</b> запрашивает подтверждение привязки текущего аккаунта FunPay к вашему профилю.
+                        </p>
+
+                        <div class="fxn-link-modal-card">
+                            <div class="fxn-link-modal-row">
+                                <span class="fxn-link-modal-row-label">Профиль Foxen:</span>
+                                <span class="fxn-link-modal-row-val fxn-link-modal-val-foxen">${escapeHtml(linkData?.foxenId || 'Личный кабинет')}</span>
+                            </div>
+                            ${linkData?.email ? `
+                            <div class="fxn-link-modal-row">
+                                <span class="fxn-link-modal-row-label">Email:</span>
+                                <span class="fxn-link-modal-row-val">${escapeHtml(linkData.email)}</span>
+                            </div>` : ''}
+                            <div class="fxn-link-modal-divider"></div>
+                            <div class="fxn-link-modal-row">
+                                <span class="fxn-link-modal-row-label">Аккаунт FunPay:</span>
+                                <span class="fxn-link-modal-row-val fxn-link-modal-val-funpay">${escapeHtml(fpUsername)} (#${escapeHtml(fpUserId)})</span>
+                            </div>
+                        </div>
+
+                        <div class="fxn-link-modal-disclaimer">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <span>После подтверждения ник FunPay будет безопасно привязан к вашей учетной записи Foxen в базе данных.</span>
+                        </div>
+
+                        <div class="fxn-link-modal-actions">
+                            <button type="button" class="fxn-link-btn-cancel" id="fxnLinkModalCancel">
+                                Отклонить
+                            </button>
+                            <button type="button" class="fxn-link-btn-confirm" id="fxnLinkModalConfirm">
+                                Подтвердить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(backdrop);
+
+            const cancelBtn = backdrop.querySelector('#fxnLinkModalCancel');
+            cancelBtn.addEventListener('click', () => {
+                backdrop.remove();
+                if (typeof sendResponse === 'function') sendResponse({ ok: false, error: 'Отклонено пользователем' });
+            });
+
+            const confirmBtn = backdrop.querySelector('#fxnLinkModalConfirm');
+            confirmBtn.addEventListener('click', () => {
+                confirmBtn.disabled = true;
+                cancelBtn.disabled = true;
+                confirmBtn.innerHTML = `
+                    <svg class="fxn-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="border:none;border-radius:0;">
+                        <circle cx="12" cy="12" r="10" stroke-opacity="0.3"></circle>
+                        <path d="M12 2a10 10 0 0 1 10 10"></path>
+                    </svg>
+                    <span>Привязка...</span>
+                `;
+
+                const api = typeof browser !== 'undefined' ? browser : chrome;
+                api.runtime.sendMessage({
+                    action: 'FOXEN_CONFIRM_FP_LINK',
+                    payload: {
+                        foxenId: linkData?.foxenId || null,
+                        fpUser: fpUsername,
+                        fpUserId: fpUserId,
+                        avatarUrl: fpAvatarUrl,
+                        userId: linkData?.userId || null
+                    }
+                }, (resp) => {
+                    if (resp && resp.ok) {
+                        const bodyEl = backdrop.querySelector('#fxnLinkModalBody');
+                        if (bodyEl) {
+                            bodyEl.innerHTML = `
+                                <div class="fxn-link-modal-success">
+                                    <div class="fxn-link-modal-success-icon">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </div>
+                                    <h4>Аккаунт успешно привязан!</h4>
+                                    <p>FunPay <b>${escapeHtml(fpUsername)}</b> привязан к профилю Foxen.</p>
+                                </div>
+                            `;
+                        }
+                        setTimeout(() => backdrop.remove(), 1800);
+                        if (typeof sendResponse === 'function') sendResponse(resp);
+                    } else {
+                        confirmBtn.disabled = false;
+                        cancelBtn.disabled = false;
+                        confirmBtn.innerHTML = 'Подтвердить';
+                        alert('Ошибка привязки: ' + (resp?.error || 'Сервер не подтвердил операцию'));
+                    }
+                });
+            });
+        } catch (err) {
+            console.error('[Foxen Link Modal Error]:', err);
+            if (typeof sendResponse === 'function') sendResponse({ ok: false, error: err.message });
+        }
+    }
+
     // Слушатель для показа модалки установки темы прямо на FunPay
     const runtimeApi = typeof browser !== 'undefined' && browser.runtime ? browser.runtime : (typeof chrome !== 'undefined' ? chrome.runtime : null);
     if (runtimeApi && runtimeApi.onMessage) {
@@ -826,6 +1040,10 @@
             if (msg && msg.action === 'FOXEN_SHOW_THEME_INSTALL_MODAL') {
                 handleThemeInstallRequest(msg.theme, msg.themeName || msg.theme?.name || 'Кастомная тема');
                 if (typeof sendResponse === 'function') sendResponse({ ok: true });
+            }
+            if (msg && msg.action === 'FOXEN_SHOW_LINK_CONFIRM_MODAL') {
+                showFunPayLinkConfirmModal(msg.linkData, sendResponse);
+                return true;
             }
         });
     }

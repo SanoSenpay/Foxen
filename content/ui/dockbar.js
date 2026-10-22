@@ -45,7 +45,10 @@
 
         // 7. Справка & О проекте
         { id: 'overview', name: 'Обучение & Тур', default: false, icon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>` },
-        { id: 'support', name: 'Поддержка проекта', default: false, icon: `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>` }
+        { id: 'support', name: 'Поддержка проекта', default: false, icon: `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>` },
+
+        // 8. Быстрые инструменты
+        { id: 'custom_screenshot', name: 'Скриншот (Alt + Shift + S)', default: false, icon: `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>` }
     ];
 
     let dockContainer = null;
@@ -191,6 +194,13 @@
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 closeSectionPicker();
+
+                if (reg.id === 'custom_screenshot') {
+                    if (typeof window.foxenTriggerCustomScreenshot === 'function') {
+                        window.foxenTriggerCustomScreenshot();
+                    }
+                    return;
+                }
 
                 // Open Foxen popup directly to this section
                 let popup = document.querySelector('.foxen-popup') || document.getElementById('foxenMainPopup');

@@ -139,7 +139,19 @@
             --bs-light-border-subtle: ${glassBorder};
 
             --bs-link-color: ${accent};
+            --bs-link-color-rgb: ${accentRgb};
             --bs-link-hover-color: ${shade(accent, 25)};
+            --bs-link-hover-color-rgb: ${toRgb(shade(accent, 25))};
+
+            --bs-dark: ${hexToRgba(s.textColor, 0.9)};
+            --bs-dark-rgb: ${textRgb};
+            --bs-black-rgb: ${textRgb};
+            --bs-dark-text-emphasis: ${s.textColor};
+
+            --bs-tooltip-bg: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 6), 0.98)};
+            --bs-tooltip-color: ${s.textColor};
+            --bs-tooltip-opacity: 1;
+            --bs-tooltip-border-radius: 10px;
 
             --bs-primary: ${accent};
             --bs-primary-rgb: ${accentRgb};
@@ -183,7 +195,12 @@
 
         .text-dark,
         .text-body,
-        .text-black {
+        .text-black,
+        .text-reset,
+        .link-dark,
+        .link-body-emphasis,
+        a.text-reset,
+        a.link-dark {
             color: ${s.textColor} !important;
         }
 
@@ -263,15 +280,30 @@
         #content .container-xxl > form,
         .ticket-card,
         .card,
-        .ticket-search-panel,
-        .ticket-info-panel,
-        .ticket-main-panel {
+        .ticket-search-panel {
             background: ${glassBg} !important;
             backdrop-filter: blur(${safeBlur}px) saturate(160%) !important;
             -webkit-backdrop-filter: blur(${safeBlur}px) saturate(160%) !important;
             border: 1px solid ${glassBorder} !important;
             border-radius: ${rr} !important;
             box-shadow: ${glassShadow} !important;
+        }
+
+        .ticket-card .ticket-main-panel {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        .ticket-card .ticket-info-panel {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border-left: 1px solid ${glassBorder} !important;
+            box-shadow: none !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            border-right: none !important;
         }
 
         #content .container-xxl > form {
@@ -715,112 +747,295 @@
             color: #ffffff !important;
         }
 
-        /* ── Сообщения / Комментарии тикетов (Матовое стекло) ── */
-        .comment,
-        .comment-body,
-        .comment-content,
-        .comment-card,
-        .comment-item,
-        .comment-box,
-        .comment-wrapper,
-        .comment-container,
-        .ticket-comment,
-        .ticket-message,
-        .ticket-reply,
-        .ticket-content,
-        .ticket-thread,
-        .ticket-thread-item,
-        .timeline-comment,
-        .timeline-item,
-        .timeline-body,
-        .timeline-content,
-        .request-comment,
-        .request-message,
-        .request-content,
-        .request-reply,
-        .request-container,
-        .conversation-comment,
-        .conversation-item,
-        .speech-bubble,
-        .bubble,
-        .card,
-        .card-body,
-        div:has(> .comment-username),
-        div:has(> .username) {
-            background: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 12), op)} !important;
-            backdrop-filter: blur(${safeBlur}px) saturate(140%) !important;
-            -webkit-backdrop-filter: blur(${safeBlur}px) saturate(140%) !important;
-            border: 1px solid ${glassBorder} !important;
-            border-radius: ${rr} !important;
-            color: ${s.textColor} !important;
+        /* ── Тултипы предпросмотра тикетов и всплывающие подсказки ── */
+        .tooltip,
+        .popover {
+            --bs-tooltip-opacity: 1 !important;
+            --bs-tooltip-bg: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 6), 0.98)} !important;
+            --bs-tooltip-color: ${s.textColor} !important;
+            --bs-tooltip-border-radius: 10px !important;
+            opacity: 1 !important;
+            z-index: 9999 !important;
+            pointer-events: none !important;
         }
 
-        /* Предотвращение дублирования фона внутри вложенных card-body */
-        .card > .card-body,
-        .comment > .comment-body,
-        .timeline-item > .timeline-body {
+        .tooltip.show {
+            opacity: 1 !important;
+        }
+
+        .tooltip-inner,
+        .tooltip .tooltip-inner,
+        .popover .popover-body {
+            background-color: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 6), 0.98)} !important;
+            background: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 6), 0.98)} !important;
+            backdrop-filter: blur(20px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            color: ${s.textColor} !important;
+            border: 1px solid rgba(255, 255, 255, 0.22) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+            padding: 12px 18px !important;
+            font-size: 13.5px !important;
+            line-height: 1.55 !important;
+            text-align: left !important;
+            max-width: 580px !important;
+            word-break: break-word !important;
+        }
+
+        .tooltip-inner *,
+        .tooltip .tooltip-inner * {
+            color: ${s.textColor} !important;
+            background: transparent !important;
+        }
+
+        .tooltip-inner .text-muted,
+        .tooltip-inner .text-secondary {
+            color: ${hexToRgba(s.textColor, 0.6)} !important;
+        }
+
+        .tooltip .tooltip-arrow,
+        .tooltip-arrow {
+            display: none !important;
+        }
+
+        /* ── Список сообщений тикета (диалог) ── */
+        .ticket-comments {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 18px !important;
+            margin-bottom: 24px !important;
+            padding: 0 1rem !important;
+        }
+
+        /* Контейнер строки одного сообщения (аватар + бабл) */
+        .ticket-comments .ticket-comment,
+        .ticket-comment {
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: flex-start !important;
+            gap: 14px !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
 
-        /* Текст внутри комментариев */
+        /* Аватар пользователя / сотрудника поддержки */
+        .ticket-comments .comment-avatar,
+        .comment-avatar {
+            width: 42px !important;
+            height: 42px !important;
+            min-width: 42px !important;
+            border-radius: 50% !important;
+            border: 2px solid rgba(255, 255, 255, 0.16) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+            flex-shrink: 0 !important;
+            margin-top: 2px !important;
+            background-color: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 24), 0.85)} !important;
+            background-position: center !important;
+            background-size: cover !important;
+            transition: transform 0.2s ease, border-color 0.2s ease !important;
+        }
+        .ticket-comments .comment-avatar:hover {
+            transform: scale(1.05) !important;
+            border-color: ${accent} !important;
+        }
+
+        /* Внешняя колонка сообщения */
+        .ticket-comments .comment-container,
+        .comment-container {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        /* Бабл сообщения (эффект матового стекла для ВСЕХ сообщений) */
+        .ticket-comments .comment-body,
         .comment-body,
-        .comment-text,
-        .comment-content,
-        .ticket-comment,
-        .ticket-message,
+        .speech-bubble,
         .timeline-body,
-        .request-comment,
-        .comment p,
-        .comment div:not(.comment-username):not(.badge),
-        .comment span:not(.badge):not(.username),
-        .ticket-comment p,
-        .ticket-comment div:not(.comment-username):not(.badge),
-        .ticket-comment span:not(.badge):not(.username),
-        .timeline-item p,
-        .timeline-item div:not(.username):not(.badge) {
+        .timeline-comment,
+        .request-comment {
+            background: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 16), Math.min(0.92, op + 0.12))} !important;
+            backdrop-filter: blur(${safeBlur}px) saturate(150%) !important;
+            -webkit-backdrop-filter: blur(${safeBlur}px) saturate(150%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.13) !important;
+            border-radius: 12px !important;
+            padding: 14px 18px !important;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35) !important;
             color: ${s.textColor} !important;
+            position: relative !important;
+            overflow: visible !important;
+            word-break: break-word !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
-        /* Автор и дата */
+        .ticket-comments .comment-body:hover,
+        .comment-body:hover {
+            border-color: rgba(255, 255, 255, 0.22) !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45) !important;
+        }
+
+        /* Сообщения сотрудников поддержки (акцентный левый бордюр) */
+        .ticket-comments .comment-body.bg-light-subtle,
+        .comment-body.bg-light-subtle {
+            background: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 22), Math.min(0.95, op + 0.15))} !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            border-left: 3.5px solid ${accent} !important;
+            box-shadow: 0 6px 26px rgba(0, 0, 0, 0.4), inset 0 0 16px ${hexToRgba(accent, 0.06)} !important;
+        }
+
+        /* Сообщения автора с первичной подсветкой */
+        .ticket-comments .comment-body.bg-primary-subtle,
+        .comment-body.bg-primary-subtle {
+            background: ${hexToRgba(shade(s.containerBgColor || '#0b0b0b', 20), Math.min(0.94, op + 0.14))} !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35) !important;
+        }
+
+        /* Заголовок сообщения: Автор и Дата */
+        .ticket-comments .comment-body .comment-username,
+        .comment-body .comment-username,
+        .comment-username {
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            align-items: baseline !important;
+            gap: 10px !important;
+            margin-bottom: 10px !important;
+            padding: 0 0 6px 0 !important;
+        }
+
+        /* Имя автора (яркое, читаемое, в цвет акцента темы) */
         .comment-username,
+        .comment-username a,
         .comment-username .username,
+        .comment-username span:first-child,
+        .ticket-comments .username,
+        .ticket-comments .comment-author,
+        .ticket-comments .comment-author a,
         .comment-author,
+        .comment-author a,
         .author-name,
         .user-name,
         .username {
             color: ${accent} !important;
-            font-weight: 600 !important;
+            font-weight: 700 !important;
+            font-size: 14.5px !important;
+            text-decoration: none !important;
+            line-height: 1.3 !important;
+            letter-spacing: 0.15px !important;
         }
 
+        .comment-username a:hover,
+        .ticket-comments .username:hover,
+        .ticket-comments .comment-author a:hover {
+            color: ${shade(accent, 25)} !important;
+            text-decoration: underline !important;
+        }
+
+        /* Дата и время (второстепенный мягкий цвет, выровненный на десктопе вправо) */
+        .comment-username span:nth-child(2),
+        .comment-username span:last-child:not(:first-child),
+        .comment-username .text-muted,
+        .comment-username .text-secondary,
         .comment-date,
         .comment-time,
         .comment-meta,
         .ticket-comment-meta,
-        .text-muted,
-        .text-secondary {
-            color: ${hexToRgba(s.textColor, 0.65)} !important;
+        .ticket-comments .text-muted,
+        .ticket-comments .text-secondary {
+            color: ${hexToRgba(s.textColor, 0.55)} !important;
+            font-weight: 400 !important;
+            font-size: 12px !important;
+            line-height: 1.3 !important;
+            margin-left: auto !important;
         }
 
-        /* Ссылки внутри комментариев */
-        .comment a,
-        .comment-body a,
-        .ticket-comment a,
-        .timeline a,
-        .request a {
-            color: ${link || accent} !important;
+        /* Текст сообщения */
+        .comment-text,
+        .comment-text p,
+        .comment-content,
+        .ticket-comments .comment-text {
+            color: ${s.textColor} !important;
+            font-size: 14.5px !important;
+            line-height: 1.65 !important;
+            font-weight: 400 !important;
+        }
+
+        .comment-text p {
+            margin-bottom: 10px !important;
+        }
+        .comment-text p:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        /* Ссылки внутри текста сообщений */
+        .comment-text a,
+        .ticket-comments .comment-text a,
+        .comment-body a:not(.username):not([class*="author"]):not([class*="btn"]) {
+            color: ${accent} !important;
             text-decoration: underline !important;
+            word-break: break-all !important;
+        }
+        .comment-text a:hover,
+        .ticket-comments .comment-text a:hover,
+        .comment-body a:not(.username):not([class*="author"]):not([class*="btn"]):hover {
+            color: ${shade(accent, 25)} !important;
         }
 
-        .comment a:hover,
-        .comment-body a:hover,
-        .ticket-comment a:hover,
-        .timeline a:hover,
-        .request a:hover {
-            color: ${shade(link || accent, 25)} !important;
+        /* Кнопки действий над комментарием */
+        .ticket-comments .comment-convert-buttons {
+            gap: 8px !important;
+        }
+        .ticket-comments .comment-convert-buttons .btn {
+            background: ${inputBg} !important;
+            border: 1px solid ${inputBorder} !important;
+            color: ${s.textColor} !important;
+            border-radius: 6px !important;
+            padding: 4px 10px !important;
+            font-size: 12px !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+        }
+        .ticket-comments .comment-convert-buttons .btn:hover {
+            background: ${inputHoverBg} !important;
+            color: #ffffff !important;
+        }
+
+        /* Поле быстрого ответа / форма отправки в тикете */
+        .comment-form-wrapper {
+            background: transparent !important;
+            border-top: 1px solid ${glassBorder} !important;
+            padding: 18px 20px !important;
+        }
+        .comment-form-wrapper .comment-fake-input {
+            background: ${inputBg} !important;
+            border: 1px solid ${inputBorder} !important;
+            border-radius: ${rrInput} !important;
+            color: ${hexToRgba(s.textColor, 0.6)} !important;
+            padding: 10px 14px !important;
+            transition: all 0.2s ease !important;
+        }
+        .comment-form-wrapper .comment-fake-input:hover {
+            background: ${inputHoverBg} !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
+            color: ${s.textColor} !important;
         }
 
         blockquote {
@@ -980,7 +1195,7 @@
                     el.style.removeProperty('background-color');
                 }
                 const color = el.style.color;
-                if (/#000|#000000|rgb\(0,\s*0,\s*0\)|black/i.test(color)) {
+                if (/#000|#000000|rgb\(0,\s*0,\s*0\)|#212529|rgb\(33,\s*37,\s*41\)|#333|#343a40|black/i.test(color)) {
                     el.style.removeProperty('color');
                 }
             });

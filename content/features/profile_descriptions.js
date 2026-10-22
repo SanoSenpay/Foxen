@@ -1114,6 +1114,37 @@
     }
   }
 
+  async function isCurrentUserAdmin(profileId) {
+    const ADMIN_USER_IDS = ['15508026', '13781813'];
+    const ADMIN_USERS = ['vireonshop', 'sanosenpai', 'sano'];
+    const ADMIN_FOXEN_IDS = ['FX-000000', 'FX-000001', 'FX-774724', 'FX-15508026'];
+
+    if (profileId && ADMIN_USER_IDS.includes(String(profileId).trim())) return true;
+
+    try {
+      if (typeof window.isFoxenAdmin === 'function') {
+        const cached = await storageGet(['foxenUserProfile', 'foxen_user_profile']);
+        const prof = cached.foxenUserProfile || cached.foxen_user_profile;
+        if (prof && window.isFoxenAdmin(prof)) return true;
+      }
+    } catch (e) {}
+
+    try {
+      const data = await storageGet(['foxenUserProfile', 'foxen_user_profile', 'foxen_user_id', 'fpUser', 'fp_user', 'foxenId']);
+      const prof = data.foxenUserProfile || data.foxen_user_profile || {};
+      const fid = String(prof.FOXEN_ID || prof.foxen_id || prof.foxenId || data.foxenId || '').toUpperCase();
+      const uid = String(prof.FP_USER_ID || prof.fp_user_id || prof.userId || data.foxen_user_id || profileId || '');
+      const uname = String(prof.FP_USER || prof.fp_user || prof.username || data.fpUser || data.fp_user || '').toLowerCase();
+
+      if (ADMIN_FOXEN_IDS.includes(fid)) return true;
+      if (ADMIN_USER_IDS.includes(uid)) return true;
+      if (ADMIN_USERS.includes(uname)) return true;
+      if (prof.is_admin || prof.isAdmin) return true;
+    } catch (e) {}
+
+    return false;
+  }
+
   async function openBannerCatalog(cover, profileId, state) {
     if (document.querySelector('.fxn-banner-catalog')) return;
 
@@ -1298,17 +1329,20 @@
     let selectedId = null;
     let selectedUrl = null;
 
-    // Check cooldown on open
+    // Check cooldown on open (disabled for admins)
+    const isAdmin = await isCurrentUserAdmin(profileId);
     const now = Date.now();
     const lastUpdate = state.lastBannerUpdate || 0;
     const cooldownMs = 30 * 60 * 1000;
     const timePassed = now - lastUpdate;
-    let isOnCooldown = timePassed < cooldownMs;
+    let isOnCooldown = !isAdmin && (timePassed < cooldownMs);
     
     if (isOnCooldown) {
       const remaining = cooldownMs - timePassed;
       const m = Math.ceil(remaining / (60 * 1000));
       hint.textContent = `Баннер можно менять раз в 30 минут. Осталось: ${m} мин.`;
+    } else if (isAdmin) {
+      hint.innerHTML = '<span style="color:#c084fc; font-weight:500;">⚡ Режим администратора: без задержки</span>';
     }
 
     function getPic() {

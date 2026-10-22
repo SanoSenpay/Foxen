@@ -148,6 +148,53 @@ class CursorFX {
                 this.animationFrame = requestAnimationFrame(t => this.animate(t));
             }
         }, { passive: true });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.live = false;
+                this.pts = [];
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                    this.animationFrame = null;
+                }
+                if (this.canvas.parentNode) {
+                    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                }
+            } else if (this.isEnabled && !this.animationFrame) {
+                this.animationFrame = requestAnimationFrame(t => this.animate(t));
+            }
+        });
+
+        // Auto-load saved settings on page load / navigation
+        this.loadSettings();
+
+        // Cross-tab and live popup synchronization
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+            chrome.storage.onChanged.addListener((changes, area) => {
+                if (area === 'local') {
+                    if (changes.foxenCursorFx) {
+                        this.updateConfig(changes.foxenCursorFx.newValue || {});
+                    }
+                    if (changes.foxenCustomCursor) {
+                        this.updateCustomCursor(changes.foxenCustomCursor.newValue || {});
+                    }
+                }
+            });
+        }
+    }
+
+    async loadSettings() {
+        try {
+            const storage = (typeof browser !== 'undefined' ? browser : chrome).storage?.local;
+            if (!storage) return;
+            const res = await storage.get(['foxenCursorFx', 'foxenCustomCursor']);
+            if (res?.foxenCursorFx) {
+                this.updateConfig(res.foxenCursorFx);
+            }
+            if (res?.foxenCustomCursor) {
+                this.updateCustomCursor(res.foxenCustomCursor);
+            }
+        } catch (_) {}
     }
 
     resize() {
@@ -432,6 +479,9 @@ class CursorFX {
         while (this.pts.length && (now - this.pts[0].t > this.LIFE)) {
             this.pts.shift();
         }
+        if (this.pts.length > 150) {
+            this.pts.splice(0, this.pts.length - 150);
+        }
 
         this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
@@ -511,9 +561,13 @@ function setupCursorFxHandlers() {
     const colorInput = document.getElementById('cursorFxColor1');
     const quickSwatches = document.getElementById('cursorFxQuickSwatches');
 
-    const saveColor = async (color) => {
+    const saveColor = async (color, forceDisableRgb = false) => {
         if (!color) return;
-        if (colorInput) colorInput.value = color;
+        if (colorInput) {
+            colorInput.value = color;
+            colorInput.dataset.color = color;
+            colorInput.style.backgroundColor = color;
+        }
 
         if (quickSwatches) {
             quickSwatches.querySelectorAll('.fxn-mini-swatch').forEach(sw => {
@@ -524,6 +578,14 @@ function setupCursorFxHandlers() {
         const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
         const currentSettings = (await storage.get('foxenCursorFx')).foxenCursorFx || {};
         const newSettings = { ...currentSettings, color1: color };
+        if (forceDisableRgb) {
+            newSettings.rgb = false;
+            const rgbToggle = document.getElementById('cursorFxRgb');
+            if (rgbToggle) {
+                rgbToggle.checked = false;
+                rgbToggle.classList.remove('on');
+            }
+        }
         await storage.set({ foxenCursorFx: newSettings });
         cursorFx.updateConfig(newSettings);
     };
@@ -531,16 +593,16 @@ function setupCursorFxHandlers() {
     if (colorInput && !colorInput.dataset.fxnBound) {
         colorInput.dataset.fxnBound = '1';
         colorInput.addEventListener('click', (e) => {
+            e.preventDefault();
             if (typeof foxenOpenColorPicker === 'function') {
-                e.preventDefault();
-                foxenOpenColorPicker(colorInput, colorInput.value || '#c026d3', (newHex) => {
-                    colorInput.value = newHex;
-                    saveColor(newHex);
+                const cur = colorInput.dataset.color || colorInput.value || '#c026d3';
+                foxenOpenColorPicker(colorInput, cur, (newHex) => {
+                    saveColor(newHex, true);
                 });
             }
         });
-        colorInput.addEventListener('input', (e) => saveColor(e.target.value));
-        colorInput.addEventListener('change', (e) => saveColor(e.target.value));
+        colorInput.addEventListener('input', (e) => saveColor(e.target.value, true));
+        colorInput.addEventListener('change', (e) => saveColor(e.target.value, true));
     }
 
     if (quickSwatches && !quickSwatches.dataset.fxnBound) {
@@ -548,7 +610,7 @@ function setupCursorFxHandlers() {
         quickSwatches.addEventListener('click', (e) => {
             const swatch = e.target.closest('.fxn-mini-swatch');
             if (!swatch) return;
-            saveColor(swatch.dataset.color);
+            saveColor(swatch.dataset.color, true);
         });
     }
 

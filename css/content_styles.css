@@ -1616,7 +1616,7 @@ html:not(.fxn-header-bottom) .fxn-custom-theme-on .navbar-default,
     border-bottom: 1px solid rgba(255, 255, 255, 0.144) !important;
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 1050 !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0) !important;
     transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1733,7 +1733,7 @@ body.funpay-redesigned .user-link:hover .user-link-photo,
    Harmonized Navbar Search Forms (Game Filter & Foxen RMTHub Seller Search)
    ========================================================================== */
 
-/* Both search forms: align inline, remove Bootstrap negative margins */
+/* Search forms: align inline, remove Bootstrap negative margins */
 .navbar-header .navbar-form.promo-games-filter,
 .navbar-header .navbar-form.fp-rmthub-form,
 #header .navbar-form.promo-games-filter,
@@ -1756,8 +1756,23 @@ body.funpay-redesigned .navbar-header .navbar-form.fp-rmthub-form,
     box-shadow: none !important;
     background: transparent !important;
     vertical-align: middle !important;
-    position: relative !important;
     box-sizing: border-box !important;
+}
+
+/* Promo game search form must be position: static so dropdown-autocomplete spans full width */
+.navbar-header .navbar-form.promo-games-filter,
+#header .navbar-form.promo-games-filter,
+body.funpay-redesigned .navbar-header .navbar-form.promo-games-filter,
+.fxn-custom-theme-on .navbar-header .navbar-form.promo-games-filter {
+    position: static !important;
+}
+
+/* RMTHub seller search form maintains relative positioning */
+.navbar-header .navbar-form.fp-rmthub-form,
+#header .navbar-form.fp-rmthub-form,
+body.funpay-redesigned .navbar-header .navbar-form.fp-rmthub-form,
+.fxn-custom-theme-on .navbar-header .navbar-form.fp-rmthub-form {
+    position: relative !important;
 }
 
 /* Margin-right on game search to ensure clean separation from seller search */
@@ -1768,10 +1783,18 @@ body.funpay-redesigned .navbar-header .navbar-form.promo-games-filter,
     margin-right: 6px !important;
 }
 
-/* Inner form groups for both forms */
+/* Inner form groups: promo filter must be static so its dropdown is not squashed; RMTHub relative for spinner */
 .navbar-header .promo-games-filter .form-group,
+#header .promo-games-filter .form-group {
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: static !important;
+    box-sizing: border-box !important;
+}
+
 .navbar-header .fp-rmthub-form .form-group,
-#header .promo-games-filter .form-group,
 #header .fp-rmthub-form .form-group,
 .fp-rmthub-wrap {
     display: inline-flex !important;
@@ -2093,6 +2116,307 @@ body.funpay-redesigned .navbar-right.logged>li>a>.badge,
     border-radius: 10px !important;
 }
 
+/* ==========================================================================
+   Promo Game Search Autocomplete Dropdown (Frosted Glassmorphism Overlay)
+   ========================================================================== */
+@keyframes fxn-search-dropdown-rise {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fxn-search-items-rise {
+    0% {
+        opacity: 0;
+        transform: translateY(26px) scale(0.96);
+    }
+    50% {
+        opacity: 0.85;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dropdown-menu.dropdown-autocomplete,
+#header .dropdown-menu.dropdown-autocomplete,
+.navbar-form .dropdown-menu.dropdown-autocomplete,
+.promo-games-filter .dropdown-menu.dropdown-autocomplete {
+    position: fixed !important;
+    top: 61px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    /* Pure Frosted Glass (Матовое стекло) */
+    background: rgba(14, 16, 24, 0.74) !important;
+    background: linear-gradient(180deg, rgba(22, 25, 36, 0.78) 0%, rgba(13, 15, 23, 0.82) 100%) !important;
+    backdrop-filter: blur(32px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    max-height: calc(100vh - 85px) !important;
+    overflow-y: auto !important;
+    z-index: 1060 !important;
+    padding: 22px 0 32px !important;
+    pointer-events: auto !important;
+    animation: fxn-search-dropdown-rise 0.42s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    will-change: transform, opacity !important;
+}
+
+html.fxn-header-bottom .dropdown-menu.dropdown-autocomplete,
+body.fxn-header-bottom .dropdown-menu.dropdown-autocomplete,
+html.fxn-header-bottom #header .dropdown-menu.dropdown-autocomplete,
+body.fxn-header-bottom #header .dropdown-menu.dropdown-autocomplete {
+    top: auto !important;
+    bottom: 65px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-bottom: none !important;
+    border-radius: 18px 18px 0 0 !important;
+    box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.65), inset 0 -1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .container {
+    width: min(1200px, 94vw) !important;
+    margin: 0 auto !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    box-sizing: border-box !important;
+    pointer-events: auto !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .promo-games,
+.dropdown-menu.dropdown-autocomplete .content-with-cd {
+    padding: 0 !important;
+    background: transparent !important;
+    margin-right: 0 !important;
+    animation: fxn-search-items-rise 0.46s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    will-change: transform, opacity !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .promo-game-list-header {
+    float: left !important;
+    width: 40px !important;
+    margin-top: 0 !important;
+    animation: fxn-search-items-rise 0.46s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .promo-game-list-header .title-mini {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: var(--fxn-active, var(--fxn-accent, #c026d3)) !important;
+    line-height: 1 !important;
+    text-shadow: 0 0 16px var(--fxn-accent-soft, rgba(192, 38, 211, 0.45)) !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .promo-game-list {
+    margin-left: 52px !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .promo-game-item {
+    margin-bottom: 22px !important;
+    pointer-events: auto !important;
+    animation: fxn-search-items-rise 0.46s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    will-change: transform, opacity !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .game-title {
+    margin-bottom: 10px !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .game-title a {
+    color: #ffffff !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: color 0.18s ease, text-shadow 0.18s ease !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    display: inline-block !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .game-title a:hover {
+    color: var(--fxn-active, var(--fxn-accent, #c026d3)) !important;
+    text-shadow: 0 0 14px var(--fxn-accent-soft, rgba(192, 38, 211, 0.5)) !important;
+    text-decoration: none !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .list-inline {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 6px 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+    pointer-events: auto !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .list-inline > li {
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: auto !important;
+    animation: fxn-search-items-rise 0.48s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    will-change: transform, opacity !important;
+}
+
+/* Staggered wave pop-in for individual section pills */
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(1) { animation-delay: 0.02s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(2) { animation-delay: 0.04s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(3) { animation-delay: 0.06s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(4) { animation-delay: 0.08s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(5) { animation-delay: 0.10s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(6) { animation-delay: 0.12s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(7) { animation-delay: 0.14s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(8) { animation-delay: 0.16s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(9) { animation-delay: 0.18s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(10) { animation-delay: 0.20s !important; }
+.dropdown-menu.dropdown-autocomplete .list-inline > li:nth-child(n+11) { animation-delay: 0.22s !important; }
+
+/* Frosted Glass Section Pills */
+.dropdown-menu.dropdown-autocomplete .list-inline > li > a {
+    color: #e2e8f0 !important;
+    text-decoration: none !important;
+    padding: 5px 12px !important;
+    border-radius: 9px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(10px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    display: inline-block !important;
+    font-size: 13px !important;
+    line-height: 19px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .list-inline > li > a:hover {
+    color: #ffffff !important;
+    background: var(--fxn-accent-soft, rgba(192, 38, 211, 0.25)) !important;
+    border-color: var(--fxn-active, var(--fxn-accent, #c026d3)) !important;
+    box-shadow: 0 4px 18px var(--fxn-accent-soft, rgba(192, 38, 211, 0.45)), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+    text-decoration: none !important;
+    transform: translateY(-2px) scale(1.03) !important;
+    backdrop-filter: blur(14px) !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .list-inline > li > a:active {
+    transform: translateY(0) scale(0.98) !important;
+}
+
+.dropdown-menu.dropdown-autocomplete .list-inline > li:after {
+    display: none !important;
+}
+
+.search-fade {
+    background: rgba(0, 0, 0, 0.55) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    z-index: 950 !important;
+    transition: opacity 0.3s ease, backdrop-filter 0.3s ease !important;
+}
+
+/* ==========================================================================
+   Promo Game Items: Server / Region Switcher (.btn-group-xs)
+   ========================================================================== */
+.promo-game-item .btn-group,
+.promo-game-item .btn-group-xs {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 7px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    margin-top: 2px !important;
+    margin-bottom: 8px !important;
+    vertical-align: middle !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+    max-width: 100% !important;
+    flex-wrap: nowrap !important;
+}
+
+.promo-game-item .btn-group .btn,
+.promo-game-item .btn-group-xs > .btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    float: none !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    line-height: 1 !important;
+    border-radius: 5px !important;
+    border: none !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    outline: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    white-space: nowrap !important;
+}
+
+/* Inactive button state (e.g. .btn-gray) */
+.promo-game-item .btn-group .btn.btn-gray,
+.promo-game-item .btn-group .btn:not(.btn-primary) {
+    background: transparent !important;
+    color: var(--fxn-theme-text-color, #9ca3af) !important;
+    opacity: 0.82 !important;
+}
+
+.promo-game-item .btn-group .btn.btn-gray:hover,
+.promo-game-item .btn-group .btn:not(.btn-primary):hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+.promo-game-item .btn-group .btn.btn-gray:active,
+.promo-game-item .btn-group .btn:not(.btn-primary):active {
+    transform: scale(0.96) !important;
+}
+
+/* Active button state (e.g. .btn-primary) */
+.promo-game-item .btn-group .btn.btn-primary,
+.promo-game-item .btn-group .btn.active {
+    background: var(--fxn-active, var(--fxn-accent, var(--fxn-theme-primary-color, #c026d3))) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 6px var(--fxn-accent-soft, rgba(192, 38, 211, 0.45)) !important;
+}
+
+.promo-game-item .btn-group .btn.btn-primary:hover,
+.promo-game-item .btn-group .btn.active:hover {
+    filter: brightness(1.1) !important;
+    color: #ffffff !important;
+}
+
 #content.redesigned-content-container {
     padding: 0;
     width: 100%;
@@ -2155,7 +2479,8 @@ body.funpay-redesigned .chat-header {
     align-items: center !important;
     justify-content: space-between !important;
     flex-wrap: nowrap !important;
-    gap: 8px !important;
+    gap: 12px !important;
+    padding: 10px 16px !important;
     background-color: transparent !important;
     border-bottom: 1px solid var(--fp-border-color) !important;
     border-top-left-radius: var(--fp-radius);
@@ -2176,27 +2501,77 @@ body.funpay-redesigned .chat-header {
     overflow: hidden !important;
 }
 
-.chat-header .media-left {
+.chat-header .media-left,
+.media-left,
+.media > .pull-left {
+    padding: 0 !important;
+}
+
+.chat-header .media-left,
+.chat-header .media > .pull-left {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
     width: 40px !important;
     height: 40px !important;
-    margin-right: 8px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    margin-right: 10px !important;
     float: none !important;
+    overflow: hidden !important;
+    border-radius: 50% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+}
+
+.chat-header .media-left a,
+.chat-header .media > .pull-left a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
 }
 
 .chat-header .media-left img,
 .chat-header .media-left a img {
     width: 40px !important;
     height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
     max-width: 40px !important;
     max-height: 40px !important;
+    aspect-ratio: 1 / 1 !important;
     border-radius: 50% !important;
     object-fit: cover !important;
     flex-shrink: 0 !important;
     display: block !important;
+    box-sizing: border-box !important;
+}
+
+.chat-header .avatar-photo,
+.chat-header .media-left .avatar-photo {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 50% !important;
+    background-size: cover !important;
+    background-position: center !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+    box-sizing: border-box !important;
 }
 
 .chat-header .media-body {
@@ -5245,7 +5620,8 @@ body.funpay-redesigned .promo-games {
   100% { background: rgba(255, 0, 0, 0.05); }
 }
 
-.warning {
+.foxen-popup .warning:not(.tc-item),
+.fxn-popup .warning:not(.tc-item) {
     animation: redPulse 6s ease-in-out infinite;
     backdrop-filter: blur(6px); 
     border-radius: 16px;
@@ -5255,9 +5631,87 @@ body.funpay-redesigned .promo-games {
     transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
-.warning:hover {
+.foxen-popup .warning:not(.tc-item):hover,
+.fxn-popup .warning:not(.tc-item):hover {
     box-shadow: 0 0 12px 2px rgba(255, 0, 0, 0.4), 0 0 24px 4px rgba(255, 0, 0, 0.1) inset;
     transform: scale(1.02);
+}
+
+/* Стили для неактивных лотов FunPay (ранее лоты были чуть тусклее и отличались от активных лотов, без красных рамок и зума) */
+.tc.table-hover .tc-item.warning,
+.tc .tc-item.warning,
+a.tc-item.warning {
+    opacity: 0.60 !important;
+    filter: grayscale(15%) !important;
+    animation: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: opacity 0.22s ease, background-color 0.22s ease, filter 0.22s ease !important;
+}
+
+.tc.table-hover .tc-item.warning:hover,
+.tc .tc-item.warning:hover,
+a.tc-item.warning:hover {
+    opacity: 0.88 !important;
+    filter: none !important;
+    animation: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+.tc.table-hover .tc-item.warning .tc-desc-text,
+.tc .tc-item.warning .tc-desc-text,
+a.tc-item.warning .tc-desc-text {
+    opacity: 0.85 !important;
+}
+
+/* Разделитель и блок неактивных лотов на FunPay */
+.fxn-inactive-lots-separator {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    margin: 32px 0 20px 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    user-select: none !important;
+}
+
+.fxn-inactive-line-left {
+    flex: 1 !important;
+    height: 1.5px !important;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 100%) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+}
+
+.fxn-inactive-line-right {
+    flex: 1 !important;
+    height: 1.5px !important;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 100%) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+}
+
+.fxn-inactive-title {
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: rgba(255, 255, 255, 0.72) !important;
+    font-family: inherit !important;
+    padding: 0 16px !important;
+    white-space: nowrap !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7) !important;
+}
+
+.fxn-inactive-lots-table {
+    margin-top: 0 !important;
+}
+
+.fxn-inactive-lots-table .tc-header {
+    opacity: 0.72 !important;
 }
 
 /* === Улучшенная панель управления темами (Версия 3) === */
@@ -5999,52 +6453,7 @@ input:checked + .slider:before {
     flex-shrink: 0;
 }
 
-.chat-full-header {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
 
-#foxen-read-all-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 5px;
-    margin-left: auto;
-    color: #a0a0a0;
-    transition: color 0.2s ease, transform 0.2s ease;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#foxen-read-all-btn .material-icons {
-    font-size: 22px;
-}
-
-#foxen-read-all-btn:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.1);
-}
-
-#foxen-read-all-btn.loading .material-icons {
-    display: none;
-}
-
-#foxen-read-all-btn.loading::after {
-    content: '';
-    display: block;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #a0a0a0;
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
 
 /* Исправление основного контейнера фильтров */
 .filter-container {
@@ -6350,95 +6759,103 @@ a.contact-item:hover {
 
 
 
-/* === Chat Header Toggles === */
+/* === Chat Header Toggles & Actions === */
 .chat-full-header {
-    position: relative;
-    display: flex;
-    align-items: center;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    gap: 8px !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
 }
 
-#foxen-read-all-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 5px;
-    margin-left: auto;
-    color: #a0a0a0;
-    transition: color 0.2s ease, transform 0.2s ease;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.foxen-chat-header-actions {
+    margin-left: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
 }
 
-#foxen-read-all-btn .material-icons {
-    font-size: 22px;
+.fxn-chat-action-btn,
+#foxen-read-all-btn,
+#foxen-filter-marked-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #a0a0a0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    user-select: none !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
 }
 
-#foxen-read-all-btn:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.1);
+.fxn-chat-action-btn:hover,
+#foxen-read-all-btn:hover,
+#foxen-filter-marked-btn:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: var(--fxn-accent, #c026d3) !important;
+    box-shadow: 0 0 0 1px var(--fxn-accent, #c026d3), 0 0 10px var(--fxn-accent-soft, rgba(192, 38, 211, 0.35)) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fxn-chat-action-btn .material-icons,
+#foxen-read-all-btn .material-icons,
+#foxen-filter-marked-btn .material-icons {
+    font-size: 18px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: inherit !important;
+    position: static !important;
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Active state for filter marked */
+#foxen-filter-marked-btn.active,
+#foxen-filter-marked-btn:has(input:checked),
+.foxen-chat-toggle input:checked ~ .material-icons {
+    background: var(--fxn-accent-soft, rgba(192, 38, 211, 0.2)) !important;
+    border-color: var(--fxn-accent, #c026d3) !important;
+    color: var(--fxn-accent, #c026d3) !important;
+    box-shadow: 0 0 0 1px var(--fxn-accent, #c026d3), 0 0 10px var(--fxn-accent-soft, rgba(192, 38, 211, 0.35)) !important;
 }
 
 #foxen-read-all-btn.loading .material-icons {
-    display: none;
+    display: none !important;
 }
 
 #foxen-read-all-btn.loading::after {
-    content: '';
-    display: block;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #a0a0a0;
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-.foxen-chat-toggle {
-    display: inline-block;
-    position: relative;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    margin-left: 8px;
-    vertical-align: middle;
-}
-
-.foxen-chat-toggle input {
-    display: none;
+    content: '' !important;
+    display: block !important;
+    width: 14px !important;
+    height: 14px !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-top-color: var(--fxn-accent, #c026d3) !important;
+    border-radius: 50% !important;
+    animation: fxnSpin 0.8s linear infinite !important;
 }
 
 .foxen-chat-toggle-slider {
-    width: 48px;
-    height: 28px;
-    background-color: #333;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.foxen-chat-toggle-slider .material-icons {
-    font-size: 20px;
-    color: #888;
-    position: absolute;
-    left: 4px;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.foxen-chat-toggle input:checked + .foxen-chat-toggle-slider {
-    background-color: #1a4d2e;
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
-}
-
-.foxen-chat-toggle input:checked + .foxen-chat-toggle-slider .material-icons {
-    transform: translateX(20px);
-    color: #4CAF50;
-    text-shadow: 0 0 8px #4CAF50;
+    display: contents !important;
 }
 
 .foxen-modal-overlay {
@@ -10071,12 +10488,99 @@ h5.mb10.text-bold {
     display: inline-flex !important;
 }
 
+/* Стилизация верхних кнопок управления лотами на странице предложений */
+.foxen-offer-controls {
+    margin-bottom: 0 !important;
+}
+
+.foxen-offer-controls .col-sm-6 {
+    margin-bottom: 10px !important;
+}
+
+.foxen-offer-controls .fp-header-action-btn {
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-radius: var(--fxn-theme-border-radius, 10px) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.foxen-offer-controls .fp-header-action-btn:hover {
+    background: rgba(255, 255, 255, 0.14) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+    transform: none !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+}
+
+#foxen-selection-controls.foxen-selection-controls-category.active {
+    display: flex !important;
+    gap: 10px !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 10px !important;
+}
+
+#foxen-selection-controls.foxen-selection-controls-category .fp-header-action-btn {
+    flex: 1 1 auto !important;
+    min-width: max-content !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    border-radius: var(--fxn-theme-border-radius, 10px) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    white-space: nowrap !important;
+}
+
+#foxen-selection-controls.foxen-selection-controls-profile {
+    margin-left: 10px !important;
+    vertical-align: middle !important;
+    flex-wrap: wrap !important;
+}
+
+#foxen-selection-controls.foxen-selection-controls-profile .fp-header-action-btn {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 12px !important;
+    font-size: 12.5px !important;
+    white-space: nowrap !important;
+}
+
 .fp-header-action-btn {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
-    padding: 6px 14px !important;
+    padding: 0 14px !important;
+    height: 36px !important;
+    min-height: 36px !important;
     font-size: 13px !important;
     font-weight: 600 !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
@@ -10087,11 +10591,31 @@ h5.mb10.text-bold {
     cursor: pointer !important;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
     margin: 0 !important;
-    line-height: 1.2 !important;
+    line-height: 1 !important;
     text-transform: none !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15) !important;
     vertical-align: middle !important;
     user-select: none !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.fp-header-action-btn span {
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    display: inline-block !important;
+}
+
+.fp-header-action-btn .material-symbols-rounded {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
 }
 
 .fp-header-action-btn:hover {
@@ -10114,6 +10638,101 @@ h5.mb10.text-bold {
     border-color: rgba(239, 68, 68, 0.4) !important;
     color: #fca5a5 !important;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Кнопка удаления неактивных лотов и стили опасных кнопок */
+.fp-header-action-btn.fp-btn-danger,
+#foxen-delete-inactive-btn {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.28) !important;
+    color: #ef4444 !important;
+}
+
+.fp-header-action-btn.fp-btn-danger:hover,
+#foxen-delete-inactive-btn:hover {
+    background: rgba(239, 68, 68, 0.22) !important;
+    border-color: rgba(239, 68, 68, 0.55) !important;
+    color: #fca5a5 !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.28) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fp-header-action-btn.fp-btn-danger:active,
+#foxen-delete-inactive-btn:active {
+    background: rgba(239, 68, 68, 0.32) !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    transform: translateY(0) !important;
+}
+
+/* Модальное окно подтверждения удаления неактивных лотов */
+.foxen-delete-warning-box {
+    background: #141418 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 16px !important;
+    padding: 24px 22px !important;
+    width: 440px !important;
+    max-width: 92vw !important;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 16px !important;
+    animation: fxnModalZoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    box-sizing: border-box !important;
+}
+
+.foxen-delete-warning-icon {
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 50% !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #ef4444 !important;
+}
+
+.foxen-delete-warning-icon .material-symbols-rounded {
+    font-size: 30px !important;
+}
+
+.foxen-delete-warning-title {
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    color: #f4f4f5 !important;
+    margin: 0 0 6px 0 !important;
+}
+
+.foxen-delete-warning-desc {
+    font-size: 13.5px !important;
+    color: #a1a1aa !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+}
+
+.foxen-delete-sub-warning {
+    display: block !important;
+    margin-top: 6px !important;
+    font-size: 12px !important;
+    color: #ef4444 !important;
+}
+
+.foxen-delete-warning-actions {
+    display: flex !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: 6px !important;
+}
+
+.foxen-delete-warning-actions .fp-header-action-btn {
+    flex: 1 !important;
+    height: 40px !important;
+    border-radius: 9px !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
 }
 
 /* ==========================================
@@ -13320,3 +13939,1510 @@ body:has(.fxn-popup.active) .dropdown-menu {
     pointer-events: none !important;
 }
 
+/* ==========================================================================
+   FOXEN CUSTOM SCREENSHOT MODAL & STYLES (Alt + Shift + S) - MONOCHROME EDITION
+   ========================================================================== */
+
+/* Вспышка затвора камеры при захвате */
+.fxn-camera-shutter-flash {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483645 !important;
+    background: rgba(255, 255, 255, 0.45) !important;
+    pointer-events: none !important;
+    animation: fxnShutterFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes fxnShutterFade {
+    0% { opacity: 0.65; }
+    100% { opacity: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   КАСТОМНЫЙ СКРИНШОТ FOXEN — СОВРЕМЕННЫЙ ДИЗАЙН (САЙДБАР СЛЕВА, ПРЕВЬЮ СПРАВА)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Затемняющий оверлей модалки */
+.fxn-ss-scrim {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483640 !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px !important;
+    box-sizing: border-box !important;
+    animation: fxnSsFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    font-family: var(--fxn-font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
+}
+
+.fxn-ss-scrim.fxn-closing {
+    animation: fxnSsFadeOut 0.16s ease-in forwards !important;
+}
+
+@keyframes fxnSsFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fxnSsFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Окно модалки (Единый гладкий контейнер) */
+.fxn-ss-window [style*="display: none"],
+.fxn-ss-window [style*="display:none"] {
+    display: none !important;
+}
+
+.fxn-ss-window {
+    width: 1200px !important;
+    max-width: 96vw !important;
+    height: 86vh !important;
+    max-height: 860px !important;
+    border-radius: 22px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow: hidden !important;
+    transform: scale(0.985) translateY(8px) !important;
+    animation: fxnSsCardIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    box-sizing: border-box !important;
+
+    /* Тёмная тема Foxen по умолчанию (как на макете) */
+    background: #131417 !important;
+    color: #f4f4f5 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* Светлая тема */
+.fxn-ss-scrim[data-theme="light"] .fxn-ss-window,
+.fxn-ss-window[data-theme="light"] {
+    background: #ececf0 !important;
+    color: #111113 !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 25px 65px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Прозрачная тема Liquid Glass */
+.fxn-ss-scrim[data-theme="transparent"] .fxn-ss-window,
+.fxn-ss-window[data-theme="transparent"] {
+    background: rgba(18, 19, 23, 0.75) !important;
+    backdrop-filter: blur(28px) !important;
+    -webkit-backdrop-filter: blur(28px) !important;
+    color: #f4f4f5 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75) !important;
+}
+
+@keyframes fxnSsCardIn {
+    to {
+        transform: scale(1) translateY(0) !important;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ЛЕВАЯ ПАНЕЛЬ: САЙДБАР С НАСТРОЙКАМИ (САЙДБАР СЛЕВА)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.fxn-ss-sidebar {
+    width: 350px !important;
+    min-width: 350px !important;
+    background: #18191d !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-sidebar {
+    background: #f4f4f8 !important;
+    border-right-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.fxn-ss-window[data-theme="transparent"] .fxn-ss-sidebar {
+    background: rgba(22, 23, 28, 0.5) !important;
+}
+
+.fxn-ss-sidebar-scroll {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-sidebar-scroll::-webkit-scrollbar {
+    width: 5px !important;
+}
+.fxn-ss-sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+.fxn-ss-sidebar-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-radius: 3px !important;
+}
+
+/* Карточки настроек Foxen (.fxn-ss-card) */
+.fxn-ss-card {
+    background: #1f2025 !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 14px 15px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-card {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.07) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.fxn-ss-window[data-theme="transparent"] .fxn-ss-card {
+    background: rgba(28, 29, 36, 0.55) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fxn-ss-card-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.fxn-ss-card-title {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #9ca3af !important;
+    letter-spacing: -0.1px !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-card-title {
+    color: #52525b !important;
+}
+
+/* Сетка стилей окна: ровно 2 кнопки на всю ширину ряда */
+.fxn-ss-style-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 2px !important;
+}
+
+.fxn-ss-style-btn {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    height: 44px !important;
+    width: 100% !important;
+    background: #1e1f26 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    padding: 0 14px !important;
+    outline: none !important;
+    user-select: none !important;
+    transition: all 0.16s ease !important;
+    box-sizing: border-box !important;
+    color: #a1a1aa !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-style-btn {
+    background: #f0f0f4 !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    color: #52525b !important;
+}
+
+.fxn-ss-style-btn:hover {
+    background: #272832 !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-style-btn:hover {
+    background: #e4e4ea !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    color: #000000 !important;
+}
+
+/* Активная кнопка стиля (Фирменный синий Apple) */
+.fxn-ss-style-btn.active {
+    background: #007aff !important;
+    border-color: #007aff !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(0, 122, 255, 0.35) !important;
+}
+
+.fxn-ss-style-icon-box {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: inherit !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    box-shadow: none !important;
+}
+
+.fxn-ss-style-icon-box svg,
+.fxn-ss-style-icon-box .material-symbols-rounded {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 20px !important;
+    color: inherit !important;
+}
+
+.fxn-ss-style-label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: inherit !important;
+    letter-spacing: -0.1px !important;
+    white-space: nowrap !important;
+}
+
+.fxn-ss-style-btn.active .fxn-ss-style-label {
+    color: #ffffff !important;
+}
+
+.fxn-ss-toggle-extra-btn {
+    background: transparent !important;
+    border: none !important;
+    color: #71717a !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    padding: 4px !important;
+    margin-top: 2px !important;
+    transition: color 0.14s ease !important;
+}
+
+.fxn-ss-toggle-extra-btn:hover {
+    color: #007aff !important;
+}
+
+/* Сегментные контролы */
+.fxn-ss-seg-control {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 1fr !important;
+    gap: 2px !important;
+    background: #16171a !important;
+    padding: 3px !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-seg-control {
+    background: #e6e6ec !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.fxn-ss-seg-item {
+    height: 28px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #71717a !important;
+    border-radius: 7px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.14s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 4px !important;
+    user-select: none !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-seg-item {
+    color: #636366 !important;
+}
+
+.fxn-ss-seg-item:hover {
+    color: #ffffff !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-seg-item:hover {
+    color: #000000 !important;
+}
+
+.fxn-ss-seg-item.active {
+    background: #2c2d33 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-seg-item.active {
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Круглые свотчи палитр */
+.fxn-ss-circle-swatches {
+    display: flex;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 4px 2px !important;
+    margin-top: 2px !important;
+}
+
+.fxn-ss-circle-swatch {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: transform 0.14s ease, box-shadow 0.14s ease !important;
+    padding: 0 !important;
+    outline: none !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+}
+
+.fxn-ss-circle-swatch:hover {
+    transform: scale(1.15) !important;
+}
+
+.fxn-ss-circle-swatch.active {
+    transform: scale(1.1) !important;
+    box-shadow: 0 0 0 2px #1f2025, 0 0 0 4px #007aff !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-circle-swatch.active {
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #007aff !important;
+}
+
+/* Цвета градиента */
+.fxn-ss-grad-controls {
+    display: flex;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-top: 2px !important;
+}
+
+.fxn-ss-solid-wrap {
+    display: block;
+    width: 100% !important;
+}
+
+.fxn-ss-color-row {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+.fxn-ss-color-picker-btn {
+    flex: 1 !important;
+    height: 38px !important;
+    background: #26272d !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 0 10px !important;
+    cursor: pointer !important;
+    transition: background 0.14s ease, border-color 0.14s ease !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-color-picker-btn {
+    background: #f4f4f8 !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.fxn-ss-color-picker-btn:hover {
+    background: #303138 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-color-picker-btn:hover {
+    background: #e8e8ee !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.fxn-ss-color-square {
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 6px !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset, 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.fxn-ss-color-hex-text {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: #a1a1aa !important;
+    font-family: var(--fxn-font-mono, monospace) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-color-hex-text {
+    color: #52525b !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   APPLE / FLUENT PILL SLIDERS (ИНТЕРАКТИВНЫЕ ПОЛЗУНКИ С СИНИМ ЗАПОЛНЕНИЕМ)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.fxn-ss-pill-slider {
+    height: 40px !important;
+    border-radius: 12px !important;
+    background: #26272d !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    user-select: none !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-pill-slider {
+    background: #e8e8ee !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.fxn-ss-pill-fill {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    background: #007aff !important;
+    border-radius: 11px 0 0 11px !important;
+    pointer-events: none !important;
+    transition: width 0.04s ease !important;
+}
+
+.fxn-ss-pill-content {
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 14px !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+}
+
+.fxn-ss-pill-label {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-pill-label {
+    color: #1c1c1e !important;
+    text-shadow: none !important;
+}
+
+.fxn-ss-pill-val {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #ffffff !important;
+    font-family: var(--fxn-font-mono, monospace) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-pill-val {
+    color: #1c1c1e !important;
+    text-shadow: none !important;
+}
+
+.fxn-ss-pill-range {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    opacity: 0 !important;
+    cursor: ew-resize !important;
+    z-index: 3 !important;
+}
+
+/* Группа слайдеров геометрических настроек */
+.fxn-ss-sliders-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+/* Дополнительные настройки (сворачиваемый блок) */
+.fxn-ss-collapsible-card .fxn-ss-clickable {
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+.fxn-ss-chevron {
+    font-size: 18px !important;
+    color: #71717a !important;
+    transition: transform 0.15s ease !important;
+}
+
+.fxn-ss-collapsible-body {
+    margin-top: 8px !important;
+    display: none !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+.fxn-ss-collapsible-body.open {
+    display: flex !important;
+}
+
+.fxn-ss-sub-label {
+    font-size: 11px !important;
+    color: #888890 !important;
+    font-weight: 500 !important;
+}
+
+/* Тумблер переключатель */
+.fxn-ss-switch {
+    position: relative !important;
+    display: inline-block !important;
+    width: 34px !important;
+    height: 18px !important;
+}
+
+.fxn-ss-switch input {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.fxn-ss-slider {
+    position: absolute !important;
+    cursor: pointer !important;
+    inset: 0 !important;
+    background: rgba(255, 255, 255, 0.16) !important;
+    transition: 0.18s !important;
+    border-radius: 20px !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-slider {
+    background: rgba(0, 0, 0, 0.16) !important;
+}
+
+.fxn-ss-slider:before {
+    position: absolute !important;
+    content: "" !important;
+    height: 12px !important;
+    width: 12px !important;
+    left: 3px !important;
+    bottom: 3px !important;
+    background-color: #ffffff !important;
+    transition: 0.18s !important;
+    border-radius: 50% !important;
+}
+
+.fxn-ss-switch input:checked + .fxn-ss-slider {
+    background: #007aff !important;
+}
+
+.fxn-ss-switch input:checked + .fxn-ss-slider:before {
+    background-color: #ffffff !important;
+    transform: translateX(16px) !important;
+}
+
+/* Поле ввода заголовка */
+.fxn-ss-text-input {
+    width: 100% !important;
+    height: 34px !important;
+    background: #26272d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-text-input {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    color: #111113 !important;
+}
+
+/* Нижние кнопки сайдбара */
+.fxn-ss-sidebar-footer,
+.fxn-ss-sidebar-actions {
+    padding: 12px 16px !important;
+    background: #18191d !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    gap: 10px !important;
+    z-index: 10 !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-sidebar-footer,
+.fxn-ss-window[data-theme="light"] .fxn-ss-sidebar-actions {
+    background: #f4f4f8 !important;
+    border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.fxn-ss-window[data-theme="transparent"] .fxn-ss-sidebar-footer,
+.fxn-ss-window[data-theme="transparent"] .fxn-ss-sidebar-actions {
+    background: rgba(22, 23, 28, 0.75) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.fxn-ss-action-btn {
+    height: 42px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    cursor: pointer !important;
+    flex: 1 !important;
+    transition: all 0.16s ease !important;
+    user-select: none !important;
+    border: none !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-action-btn .material-symbols-rounded {
+    font-size: 17px !important;
+}
+
+/* Кнопка Скопировать */
+.fxn-ss-btn-copy {
+    background: #25262c !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.fxn-ss-btn-copy:hover {
+    background: #303138 !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-btn-copy {
+    background: #ffffff !important;
+    color: #111113 !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-btn-copy:hover {
+    background: #f4f4f8 !important;
+}
+
+/* Кнопка Скачать PNG (Яркий синий Apple акцент) */
+.fxn-ss-btn-download {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 14px rgba(0, 122, 255, 0.35) !important;
+}
+
+.fxn-ss-btn-download:hover {
+    background: #006ee6 !important;
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.45) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ПРАВАЯ ОБЛАСТЬ: ПРЕВЬЮ С ШАПКОЙ
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.fxn-ss-preview-pane {
+    flex: 1 !important;
+    min-width: 0 !important;
+    background: #0e0f12 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-preview-pane {
+    background: #dedee4 !important;
+}
+
+.fxn-ss-window[data-theme="transparent"] .fxn-ss-preview-pane {
+    background: rgba(14, 15, 18, 0.6) !important;
+}
+
+.fxn-ss-preview-header {
+    height: 52px !important;
+    padding: 0 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    flex-shrink: 0 !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-preview-header {
+    border-bottom-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.fxn-ss-preview-title-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.fxn-ss-preview-title-bold {
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.2px !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-preview-title-bold {
+    color: #111113 !important;
+}
+
+.fxn-ss-preview-meta {
+    font-size: 12px !important;
+    color: #71717a !important;
+    font-family: var(--fxn-font-mono, monospace) !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-preview-meta {
+    color: #8e8e93 !important;
+}
+
+.fxn-ss-preview-tools {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.fxn-ss-tool-btn {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    color: #a1a1aa !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.14s ease !important;
+    padding: 0 !important;
+}
+
+.fxn-ss-tool-btn .material-symbols-rounded {
+    font-size: 17px !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-tool-btn {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #52525b !important;
+}
+
+.fxn-ss-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-tool-btn:hover {
+    background: #e4e4e7 !important;
+    color: #000000 !important;
+}
+
+.fxn-ss-tool-btn.active {
+    background: #007aff !important;
+    border-color: #007aff !important;
+    color: #ffffff !important;
+}
+
+.fxn-ss-tool-btn.fxn-ss-btn-close:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #f87171 !important;
+}
+
+.fxn-ss-canvas-scroll {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 28px !important;
+    overflow: auto !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+}
+
+.fxn-ss-crop-hint {
+    position: absolute !important;
+    top: 14px !important;
+    z-index: 25 !important;
+    font-size: 12px !important;
+    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+.fxn-ss-canvas-container {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+.fxn-ss-canvas-preview {
+    display: block !important;
+    max-width: 100% !important;
+    max-height: calc(84vh - 120px) !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    border-radius: 10px !important;
+}
+
+/* Оверлей кадрирования */
+.fxn-ss-crop-overlay {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 20 !important;
+    cursor: crosshair !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+}
+
+.fxn-ss-crop-box {
+    position: absolute !important;
+    border: 2px dashed #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6) !important;
+    pointer-events: none !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-crop-size-badge {
+    position: absolute !important;
+    bottom: -22px !important;
+    left: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 1px 5px !important;
+    border-radius: 3px !important;
+    white-space: nowrap !important;
+    font-family: var(--fxn-font-mono, monospace) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ПОЛНОЭКРАННЫЙ РЕЖИМ (LIGHTBOX)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.fxn-ss-lightbox-scrim {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483647 !important;
+    background: rgba(5, 5, 8, 0.96) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    animation: fxnSsFadeIn 0.16s ease-out forwards !important;
+}
+
+.fxn-ss-lightbox-scrim.fxn-closing {
+    animation: fxnSsFadeOut 0.14s ease-in forwards !important;
+}
+
+.fxn-ss-lb-bar {
+    height: 52px !important;
+    min-height: 52px !important;
+    padding: 0 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(18, 18, 22, 0.8) !important;
+}
+
+.fxn-ss-lb-title-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    color: #f4f4f5 !important;
+}
+
+.fxn-ss-lb-title {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+.fxn-ss-lb-badge {
+    font-size: 11px !important;
+    font-family: var(--fxn-font-mono, monospace) !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #a1a1aa !important;
+}
+
+.fxn-ss-lb-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.fxn-ss-lb-viewport {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px !important;
+    overflow: auto !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-lb-img {
+    max-width: 95vw !important;
+    max-height: calc(100vh - 100px) !important;
+    object-fit: contain !important;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9) !important;
+    border-radius: 8px !important;
+}
+
+/* Общие стили для lightbox кнопок */
+.fxn-ss-btn {
+    height: 36px !important;
+    padding: 0 16px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    transition: all 0.14s ease !important;
+    box-sizing: border-box !important;
+    user-select: none !important;
+    border: none !important;
+}
+
+.fxn-ss-btn .material-symbols-rounded {
+    font-size: 17px !important;
+}
+
+.fxn-ss-btn-sm {
+    height: 28px !important;
+    padding: 0 10px !important;
+    font-size: 11.5px !important;
+    border-radius: 6px !important;
+}
+
+.fxn-ss-btn-sm .material-symbols-rounded {
+    font-size: 15px !important;
+}
+
+.fxn-ss-btn-secondary {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+}
+
+.fxn-ss-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.13) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.fxn-ss-btn-primary {
+    background: #007aff !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(0, 122, 255, 0.3) !important;
+}
+
+.fxn-ss-btn-primary:hover {
+    background: #006ee6 !important;
+    box-shadow: 0 4px 14px rgba(0, 122, 255, 0.45) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fxn-ss-icon-btn {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    color: #a1a1aa !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.15s ease !important;
+    padding: 0 !important;
+}
+
+.fxn-ss-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+/* Мобильная адаптивность */
+@media (max-width: 900px) {
+    .fxn-ss-window {
+        flex-direction: column !important;
+        height: 94vh !important;
+    }
+    .fxn-ss-sidebar {
+        width: 100% !important;
+        min-width: 100% !important;
+        height: 300px !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+}
+
+
+/* Выпадающий список типа заливки фона */
+.fxn-ss-select-wrap {
+    position: relative !important;
+    width: 100% !important;
+    margin-bottom: 8px !important;
+}
+
+.fxn-ss-select {
+    width: 100% !important;
+    height: 38px !important;
+    background: #1a1b20 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    color: #f4f4f5 !important;
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    padding: 0 34px 0 12px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    cursor: pointer !important;
+    outline: none !important;
+    transition: all 0.16s ease !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-ss-select:hover {
+    background: #24252c !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+}
+
+.fxn-ss-select:focus {
+    border-color: #007aff !important;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25) !important;
+}
+
+.fxn-ss-select option {
+    background: #18191e !important;
+    color: #f4f4f5 !important;
+    padding: 8px 12px !important;
+}
+
+.fxn-ss-select-arrow {
+    position: absolute !important;
+    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    color: #8e8e93 !important;
+    font-size: 18px !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-select {
+    background: #f4f4f8 !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #18181b !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-select:hover {
+    background: #e8e8ee !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-select option {
+    background: #ffffff !important;
+    color: #18181b !important;
+}
+
+.fxn-ss-window[data-theme="light"] .fxn-ss-select-arrow {
+    color: #636366 !important;
+}
+
+
+/* =============================================================================
+   Foxen Link Confirm Modal (Синхронизация с темами Foxen, минимализм, без эмодзи)
+   ============================================================================= */
+#foxenLinkConfirmModal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483647 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "SF Pro Text", sans-serif !important;
+    animation: fxn-link-modal-fade 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes fxn-link-modal-fade {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+#foxenLinkConfirmModal[data-theme="light"] {
+    background: rgba(15, 23, 42, 0.35) !important;
+}
+
+.fxn-link-modal-dialog {
+    width: 100% !important;
+    max-width: 480px !important;
+    background: #14151b !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
+    overflow: hidden !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Светлая тема */
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-dialog {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.09) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.04) inset !important;
+}
+
+/* Тема жидкого стекла (Transparent) */
+#foxenLinkConfirmModal[data-theme="transparent"] .fxn-link-modal-dialog {
+    background: rgba(18, 20, 26, 0.78) !important;
+    backdrop-filter: blur(30px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(160%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+}
+
+/* Шапка модалки */
+.fxn-link-modal-header {
+    padding: 22px 24px 18px 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.fxn-link-modal-icon-badge {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+    background: rgba(255, 126, 54, 0.12) !important;
+    border: 1px solid rgba(255, 126, 54, 0.25) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 4px 12px rgba(255, 126, 54, 0.15) !important;
+}
+
+.fxn-link-modal-icon-badge img {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain !important;
+    display: block !important;
+}
+
+.fxn-link-modal-title {
+    margin: 0 !important;
+    font-size: 19px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.2px !important;
+    line-height: 1.25 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-title {
+    color: #0f172a !important;
+}
+
+.fxn-link-modal-sub {
+    margin: 3px 0 0 0 !important;
+    font-size: 13.5px !important;
+    color: #94a3b8 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-sub {
+    color: #64748b !important;
+}
+
+/* Тело модалки */
+.fxn-link-modal-body {
+    padding: 22px 24px !important;
+}
+
+.fxn-link-modal-desc {
+    margin: 0 0 18px 0 !important;
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+    color: #cbd5e1 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-desc {
+    color: #334155 !important;
+}
+
+.fxn-link-modal-desc b {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-desc b {
+    color: #0f172a !important;
+}
+
+/* Карточка данных привязки */
+.fxn-link-modal-card {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 14px !important;
+    padding: 16px 18px !important;
+    margin-bottom: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-card {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.fxn-link-modal-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 14.5px !important;
+}
+
+.fxn-link-modal-row-label {
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-row-label {
+    color: #64748b !important;
+}
+
+.fxn-link-modal-row-val {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-row-val {
+    color: #0f172a !important;
+}
+
+.fxn-link-modal-val-foxen {
+    color: #ff7e36 !important;
+    font-weight: 700 !important;
+}
+
+.fxn-link-modal-val-funpay {
+    color: #22c55e !important;
+    font-weight: 700 !important;
+}
+
+.fxn-link-modal-divider {
+    height: 1px !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    margin: 1px 0 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-divider {
+    background: #e2e8f0 !important;
+}
+
+/* Пояснение безопасности */
+.fxn-link-modal-disclaimer {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 9px !important;
+    font-size: 13.5px !important;
+    line-height: 1.5 !important;
+    color: #94a3b8 !important;
+    margin-bottom: 22px !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-disclaimer {
+    color: #64748b !important;
+}
+
+.fxn-link-modal-disclaimer svg {
+    width: 17px !important;
+    height: 17px !important;
+    color: #94a3b8 !important;
+    flex-shrink: 0 !important;
+    margin-top: 2px !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-disclaimer svg {
+    color: #64748b !important;
+}
+
+/* Кнопки действий */
+.fxn-link-modal-actions {
+    display: flex !important;
+    gap: 12px !important;
+    justify-content: flex-end !important;
+}
+
+.fxn-link-btn-cancel {
+    height: 44px !important;
+    padding: 0 22px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #e2e8f0 !important;
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-link-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-btn-cancel {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-btn-cancel:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+.fxn-link-btn-confirm {
+    height: 44px !important;
+    padding: 0 26px !important;
+    border-radius: 12px !important;
+    background: #16a34a !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.35) !important;
+    transition: all 0.15s ease !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+}
+
+.fxn-link-btn-confirm:hover {
+    background: #15803d !important;
+    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.45) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fxn-link-btn-confirm:active {
+    transform: translateY(0) !important;
+}
+
+.fxn-link-btn-confirm:disabled,
+.fxn-link-btn-cancel:disabled {
+    opacity: 0.65 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* Состояние успешного завершения */
+.fxn-link-modal-success {
+    text-align: center !important;
+    padding: 28px 12px !important;
+}
+
+.fxn-link-modal-success-icon {
+    width: 54px !important;
+    height: 54px !important;
+    border-radius: 50% !important;
+    background: rgba(34, 197, 94, 0.14) !important;
+    border: 1px solid rgba(34, 197, 94, 0.28) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #22c55e !important;
+    margin-bottom: 14px !important;
+}
+
+.fxn-link-modal-success-icon svg {
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.fxn-link-modal-success h4 {
+    margin: 0 0 8px 0 !important;
+    font-size: 18.5px !important;
+    font-weight: 700 !important;
+    color: #22c55e !important;
+}
+
+.fxn-link-modal-success p {
+    margin: 0 !important;
+    font-size: 15px !important;
+    color: #94a3b8 !important;
+}
+
+#foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-success p {
+    color: #64748b !important;
+}

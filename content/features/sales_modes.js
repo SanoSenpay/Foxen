@@ -94,6 +94,16 @@
     function getOrders(range) {
         return new Promise(async resolve => {
             let all = await (window.fxnOrdersDB || FPTSalesDB).getAllAsArray();
+            if (window._fxnOrdersMap) {
+                // Обогащаем заказы из оперативной карты DOM, если в БД сохранены записи без никнеймов
+                all = (all || []).map(o => {
+                    const mapped = window._fxnOrdersMap[o.orderId];
+                    if (mapped && (!o.buyerUsername || o.buyerUsername === '-') && mapped.buyerUsername && mapped.buyerUsername !== '-') {
+                        return Object.assign({}, o, { buyerUsername: mapped.buyerUsername, buyerId: o.buyerId || mapped.buyerId });
+                    }
+                    return o;
+                });
+            }
             if ((!all || all.length === 0) && window._fxnOrdersMap) {
                 all = Object.values(window._fxnOrdersMap);
             }
@@ -165,9 +175,11 @@
                 count++;
             }
 
-            const buyer = o.buyerUsername || '-';
-            if (!byBuyer[buyer]) byBuyer[buyer] = { count: 0, id: o.buyerId };
+            const buyer = (o.buyerUsername || o.buyer || o.buyerName || o.user || '').trim() || '-';
+            const buyerId = o.buyerId || o.buyerUserId || o.userId || '';
+            if (!byBuyer[buyer]) byBuyer[buyer] = { count: 0, id: buyerId };
             byBuyer[buyer].count++;
+            if (!byBuyer[buyer].id && buyerId) byBuyer[buyer].id = buyerId;
 
             const prod = o.description || '-';
             byProduct[prod] = (byProduct[prod] || 0) + 1;
@@ -322,7 +334,7 @@
         const topBuyers = Object.entries(agg.byBuyer).map(([name, v]) => ({ name, count: v.count, id: v.id }))
             .sort((a, b) => b.count - a.count).slice(0, 100)
             .map(b => ({
-                name: b.name,
+                name: (b.name && b.name !== '-') ? b.name : (b.id ? `ID ${b.id}` : '-'),
                 value: `${b.count} зак.`,
                 href: b.id ? `https://funpay.com/users/${b.id}/` : null,
                 filterType: 'buyer', filterKey: b.name
