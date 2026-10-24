@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-24T11:24:23.143Z",
+  "updated_at": "2026-10-24T16:09:31.735Z",
   "version": 1,
   "total_active": 5,
   "registry": {
@@ -23,20 +23,9 @@
     },
     "15508026": {
       "foxen_id": "FX-000001",
-      "is_premium": true,
+      "is_premium": false,
       "emoji": "https://cdn.foxen.site/preview/image/foxenlogo.png",
-      "effect": {
-        "id": "auroraRibbon",
-        "colors": {
-          "single": "#ecd08a",
-          "gradient": [
-            "#38bdf8",
-            "#c084fc",
-            "#f59e0b"
-          ]
-        },
-        "updated_at": "2026-10-18T19:02:30.906Z"
-      },
+      "effect": null,
       "fp_user_id": 15508026
     },
     "foxenteam": {
@@ -77,20 +66,9 @@
     },
     "vireonshop": {
       "foxen_id": "FX-000001",
-      "is_premium": true,
+      "is_premium": false,
       "emoji": "https://cdn.foxen.site/preview/image/foxenlogo.png",
-      "effect": {
-        "id": "auroraRibbon",
-        "colors": {
-          "single": "#ecd08a",
-          "gradient": [
-            "#38bdf8",
-            "#c084fc",
-            "#f59e0b"
-          ]
-        },
-        "updated_at": "2026-10-18T19:02:30.906Z"
-      },
+      "effect": null,
       "username": "VireonShop"
     }
   }
