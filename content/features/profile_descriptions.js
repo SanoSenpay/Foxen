@@ -1282,7 +1282,7 @@
         <div class="fxn-filters">
           <button class="fxn-chip active fxn-cat-btn" data-cat="all">Все</button>
           ${catalog.categories.map(c => `<button class="fxn-chip fxn-cat-btn" data-cat="${c}">${c}</button>`).join('')}
-          <button class="fxn-chip fxn-custom-banner-btn" style="border-color: rgba(168,85,247,0.6); color: #c084fc;">✨ Примерить свой файл/URL</button>
+          <button class="fxn-chip fxn-custom-banner-btn" style="border-color: rgba(168,85,247,0.6); color: #c084fc;">✨ Загрузить свой файл с ПК</button>
         </div>
 
         <div class="fxn-sheet-body">
@@ -1290,8 +1290,7 @@
             <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
               <input type="file" id="fxn-custom-file-input" accept="image/png,image/jpeg,image/gif,video/mp4" style="display:none;">
               <button class="fxn-btn-ghost" id="fxn-pick-file-btn" style="border-color:#a855f7; color:#e9d5ff; padding:8px 16px;">📁 Загрузить файл с ПК</button>
-              <span style="font-size:12px; color:rgba(255,255,255,0.4);">или</span>
-              <input type="text" id="fxn-custom-url-input" placeholder="Вставьте прямую ссылку на .gif / .png / .jpg" class="fxn-banner-input" style="flex:1; min-width:220px; background:rgba(0,0,0,0.4); border-color:rgba(255,255,255,0.15); color:#fff; font-size:13px; padding:8px 14px; border-radius:8px;">
+              
             </div>
             <div style="font-size:12.5px; color:#c084fc; margin-top:10px; display:flex; align-items:center; gap:6px;">
               <span>👁 <b>Интерактивная примерка:</b> выбранное изображение сразу подставляется в вашу шапку на странице.</span>
@@ -1409,7 +1408,6 @@
     const customPanel = modal.querySelector('#fxn-custom-banner-panel');
     const customFileInput = modal.querySelector('#fxn-custom-file-input');
     const pickFileBtn = modal.querySelector('#fxn-pick-file-btn');
-    const customUrlInput = modal.querySelector('#fxn-custom-url-input');
 
     if (customBtn && customPanel) {
       customBtn.addEventListener('click', () => {
@@ -1432,15 +1430,7 @@
       });
     }
 
-    if (customUrlInput) {
-      customUrlInput.addEventListener('input', () => {
-        const val = customUrlInput.value.trim();
-        if (val) {
-          showPreview(val);
-          hint.innerHTML = '<span class="fxn-catalog-hint-info">👁 Примерка ссылки</span>';
-        }
-      });
-    }
+
 
     // Items
     items.forEach(item => {

@@ -2974,7 +2974,7 @@ function createMainPopup() {
                                                 <div style="font-size:11px;color:var(--fxn-text-desc);">PNG, SVG, WEBP, ICO или CUR</div>
                                             </div>
                                         </div>
-                                        <input type="text" id="customCursorUrl" class="fxn-input" placeholder="Или вставьте прямую ссылку на изображение..." style="width:100%;">
+                                        
                                     </div>
 
                                     <div class="settings-grid" style="margin-bottom:0;border:none;padding:0;background:transparent;">

@@ -1,0 +1,39 @@
+name: Sync Foxen Nickname Effects Registry
+
+on:
+  schedule:
+    # Run every 30 minutes automatically
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sync-effects]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run sync effects script
+        run: node scripts/sync_effects.js
+
+      - name: Commit and push changes if updated
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add effects.json
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto-sync effects registry [skip ci]"
+            git push origin main
+          else
+            echo "No changes in effects registry."
+          fi

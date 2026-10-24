@@ -143,11 +143,15 @@ function extractFeedbackAuthor(text) {
 
 let _authCache = null;
 let _authCacheTime = 0;
+let _lastSavedUserId = null;
+let _lastSavedUsername = null;
 const AUTH_CACHE_TTL_MS = 60000;
 
 export function clearAutoresponderAuthCache() {
     _authCache = null;
     _authCacheTime = 0;
+    _lastSavedUserId = null;
+    _lastSavedUsername = null;
     clearAuthCache();
 }
 
@@ -169,7 +173,12 @@ async function getAuth() {
         username: auth.username || ''
     };
     if (res.userId && res.username) {
-        (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: String(res.userId), username: res.username } });
+        const strId = String(res.userId);
+        if (_lastSavedUserId !== strId || _lastSavedUsername !== res.username) {
+            _lastSavedUserId = strId;
+            _lastSavedUsername = res.username;
+            (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ fpCurrentUserInfo: { userId: strId, username: res.username } });
+        }
     }
     return res;
 }

@@ -706,35 +706,7 @@ function setupCursorFxHandlers() {
         updateCurControls();
     }
 
-    const customCursorUrlInput = document.getElementById('customCursorUrl');
-    if (customCursorUrlInput) {
-        const applyUrl = async () => {
-            const url = customCursorUrlInput.value.trim();
-            const preview = document.getElementById('cursor-image-preview');
-            if (!url) {
-                if (preview) {
-                    preview.style.backgroundImage = 'none';
-                    preview.textContent = 'Нет';
-                }
-                const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-                const newSettings = { ...settings, image: null };
-                await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
-                cursorFx.updateCustomCursor(newSettings);
-                return;
-            }
-
-            if (preview) {
-                preview.style.backgroundImage = `url("${url}")`;
-                preview.textContent = '';
-            }
-            const settings = (await (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenCustomCursor')).foxenCustomCursor || {};
-            const newSettings = { ...settings, image: url };
-            await (typeof browser !== 'undefined' ? browser : chrome).storage.local.set({ foxenCustomCursor: newSettings });
-            cursorFx.updateCustomCursor(newSettings);
-        };
-
-        customCursorUrlInput.addEventListener('change', applyUrl);
-    }
+    // customCursorUrl input removed - users upload local cursor files directly
 
     const uploadCursorBtn = document.getElementById('uploadCursorImageBtn');
     const cursorInput = document.getElementById('cursorImageInput');

@@ -18,7 +18,12 @@
     // FunPay seller scanning is 100% in-memory with ZERO network requests!
     const globalEffectsRegistry = new Map(); // cleanUsername / fpUserId -> { effect, emoji, is_premium }
     let lastRegistryFetchTime = 0;
-    const REGISTRY_TTL_MS = 15 * 60 * 1000; // 15 minutes
+    const REGISTRY_TTL_MS = 60 * 1000; // 60 seconds (fast Stale-While-Revalidate via GitHub/CDN)
+
+    const GITHUB_REGISTRY_URLS = [
+        'https://raw.githubusercontent.com/SanoSenpay/Foxen/main/effects.json',
+        'https://cdn.jsdelivr.net/gh/SanoSenpay/Foxen@main/effects.json'
+    ];
 
     const userEffectsCache = new Map(); // username.toLowerCase() -> effectPayload
     const userEffectsExpiry = new Map(); // username.toLowerCase() -> expireTimestamp
@@ -69,46 +74,56 @@
         }
         lastRegistryFetchTime = now;
 
-        try {
-            const res = await proxiedSupabaseFetch('https://api.foxen.site/api/effects/registry');
-            if (res && res.ok) {
-                const data = await res.json();
-                if (data && data.ok && data.registry) {
-                    let hasChanges = false;
-                    Object.entries(data.registry).forEach(([k, item]) => {
-                        const low = k.toLowerCase();
-                        const cln = cleanUser(k);
-                        const payload = (item && (item.effect || item.emoji)) ? { effect: item.effect, emoji: item.emoji, is_premium: item.is_premium } : null;
+        for (const baseUrl of GITHUB_REGISTRY_URLS) {
+            try {
+                const fetchUrl = baseUrl.includes('raw.githubusercontent.com') ? `${baseUrl}?t=${now}` : baseUrl;
+                const res = await fetch(fetchUrl, { cache: 'no-cache' });
+                if (res && res.ok) {
+                    const data = await res.json();
+                    if (data && data.registry) {
+                        let hasChanges = false;
+                        Object.entries(data.registry).forEach(([k, item]) => {
+                            const low = k.toLowerCase();
+                            const cln = cleanUser(k);
+                            const payload = (item && (item.effect || item.emoji)) ? {
+                                effect: item.effect,
+                                emoji: item.emoji,
+                                is_premium: item.is_premium,
+                                username: item.username,
+                                fp_user_id: item.fp_user_id
+                            } : null;
 
-                        if (JSON.stringify(globalEffectsRegistry.get(low)) !== JSON.stringify(payload)) {
-                            hasChanges = true;
-                        }
-                        globalEffectsRegistry.set(low, payload);
-                        globalEffectsRegistry.set(cln, payload);
-                        origCacheSet(low, payload);
-                        origCacheSet(cln, payload);
-                    });
-
-                    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                        chrome.storage.local.set({
-                            fxn_global_effects_registry: {
-                                ts: now,
-                                registry: data.registry
+                            if (JSON.stringify(globalEffectsRegistry.get(low)) !== JSON.stringify(payload)) {
+                                hasChanges = true;
                             }
+                            globalEffectsRegistry.set(low, payload);
+                            globalEffectsRegistry.set(cln, payload);
+                            origCacheSet(low, payload);
+                            origCacheSet(cln, payload);
                         });
-                    }
 
-                    if (hasChanges) {
-                        reapplyAllEffects();
+                        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                            chrome.storage.local.set({
+                                fxn_global_effects_registry: {
+                                    ts: now,
+                                    registry: data.registry
+                                }
+                            });
+                        }
+
+                        if (hasChanges) {
+                            reapplyAllEffects();
+                        }
+                        break; // Successfully loaded from GitHub / CDN
                     }
                 }
+            } catch (e) {
+                console.debug('[Foxen Nickname FX] Error syncing registry from ' + baseUrl + ':', e);
             }
-        } catch (e) {
-            console.debug('[Foxen Nickname FX] Error syncing global registry:', e);
         }
     }
 
-    function loadInitialEffectsCache() {
+        function loadInitialEffectsCache() {
         return new Promise((resolve) => {
             // 1. First load from sessionStorage synchronously
             try {
@@ -1073,132 +1088,29 @@
             let newlyDiscovered = false;
 
             try {
-                // 1. Primary: Edge Worker Batch Endpoint (1 request for ALL usernames!)
-                let handled = false;
-                try {
-                    const batchRes = await proxiedSupabaseFetch('https://api.foxen.site/api/users/effects/batch', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            usernames: batch,
-                            user_ids: currentProfileLookup ? [currentProfileLookup] : []
-                        })
-                    });
-
-                    if (batchRes && batchRes.ok) {
-                        const json = await batchRes.json();
-                        if (json && json.ok && json.effects) {
-                            handled = true;
-                            batch.forEach(u => {
-                                const low = u.toLowerCase();
-                                const cln = cleanUser(u);
-                                const item = json.effects[low] || json.effects[cln] || null;
-                                const userPayload = (item && (item.effect || item.emoji)) ? { effect: item.effect, emoji: item.emoji } : null;
-                                userEffectsCache.set(low, userPayload);
-                                userEffectsCache.set(cln, userPayload);
-                                if (myUsername && cleanUser(myUsername) === cln) {
-                                    if (item?.emoji) myFoxenEmoji = item.emoji;
-                                    if (item?.effect) myFoxenEffect = item.effect;
-                                }
-                                if (userPayload) newlyDiscovered = true;
-                            });
-
-                            if (currentProfileLookup) {
-                                const pItem = json.effects[currentProfileLookup] || null;
-                                const pPayload = (pItem && (pItem.effect || pItem.emoji)) ? { effect: pItem.effect, emoji: pItem.emoji } : null;
-                                userEffectsCache.set(String(currentProfileLookup), pPayload);
-                                if (pPayload) newlyDiscovered = true;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.debug('[Foxen Nickname FX] Worker batch fallback:', e);
-                }
-
-                // 2. Fallback: Supabase REST Batch Query if Worker batch endpoint is unreachable
-                if (!handled) {
-                    let queryParts = [];
-                    if (batch.length > 0) {
-                        const uniqueNames = new Set();
-                        batch.forEach(n => {
-                            if (n) {
-                                uniqueNames.add(n.trim());
-                                uniqueNames.add(cleanUser(n));
-                            }
-                        });
-                        const names = Array.from(uniqueNames).map(n => `"${n.replace(/"/g, '')}"`).join(',');
-                        queryParts.push(`fp_user.in.(${names})`);
-                        queryParts.push(`nickname_effect->>username.in.(${names})`);
-                    }
-                    if (currentProfileLookup) {
-                        queryParts.push(`fp_user_id.eq.${encodeURIComponent(currentProfileLookup)}`);
-                        queryParts.push(`nickname_effect->>fp_user_id.eq.${encodeURIComponent(currentProfileLookup)}`);
-                    }
-
-                    if (queryParts.length > 0) {
-                        const sbUrl = `${SUPABASE_REST_URL}/rest/v1/profiles?select=id,fp_user,fp_user_id,foxen_id,nickname_effect,custom_emoji,is_premium&or=(${queryParts.join(',')})`;
-                        const sbRes = await proxiedSupabaseFetch(sbUrl, {
-                            headers: {
-                                'apikey': SUPABASE_REST_KEY,
-                                'Authorization': `Bearer ${SUPABASE_REST_KEY}`
-                            }
-                        });
-
-                        if (sbRes && sbRes.ok) {
-                            const rows = await sbRes.json();
-                            if (Array.isArray(rows)) {
-                                rows.forEach(r => {
-                                    if (r) {
-                                        const effUser = r.fp_user || r.nickname_effect?.username || null;
-                                        const effUserId = r.fp_user_id || r.nickname_effect?.fp_user_id || null;
-                                        let isUserPrem = Boolean(r.is_premium ?? r.has_premium);
-                                        const eff = (isUserPrem && r.nickname_effect && r.nickname_effect.id) ? r.nickname_effect : null;
-                                        const emoji = (isUserPrem && r.custom_emoji) ? r.custom_emoji : null;
-                                        const userPayload = (eff || emoji) ? { effect: eff, emoji: emoji } : null;
-
-                                        if (effUser) {
-                                            const low = effUser.toLowerCase();
-                                            const cln = cleanUser(effUser);
-                                            userEffectsCache.set(low, userPayload);
-                                            userEffectsCache.set(cln, userPayload);
-                                            if (myUsername && cleanUser(myUsername) === cln) {
-                                                if (emoji) myFoxenEmoji = emoji;
-                                                if (eff) myFoxenEffect = eff;
-                                            }
-                                            if (userPayload) newlyDiscovered = true;
-                                        }
-                                        if (effUserId) {
-                                            userEffectsCache.set(String(effUserId), userPayload);
-                                            if (userPayload) newlyDiscovered = true;
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }
-            } catch (sbErr) {
-                console.warn('[Foxen Nickname FX] Batch lookup error:', sbErr);
-            } finally {
-                // Mark all unresolved users in batch as null so we NEVER query them again!
+                // 100% In-Memory resolution from Global Registry (ZERO network requests)
                 batch.forEach(u => {
-                    const lower = u.toLowerCase();
+                    const low = u.toLowerCase();
                     const cln = cleanUser(u);
-                    inFlightUsernames.delete(lower);
-                    inFlightUsernames.delete(cln);
-                    if (!userEffectsCache.has(lower) && !userEffectsCache.has(cln)) {
-                        userEffectsCache.set(lower, null);
-                        userEffectsCache.set(cln, null);
+                    const item = globalEffectsRegistry.get(low) || globalEffectsRegistry.get(cln) || null;
+                    const userPayload = (item && (item.effect || item.emoji)) ? { effect: item.effect, emoji: item.emoji } : null;
+                    userEffectsCache.set(low, userPayload);
+                    userEffectsCache.set(cln, userPayload);
+                    if (myUsername && cleanUser(myUsername) === cln) {
+                        if (item?.emoji) myFoxenEmoji = item.emoji;
+                        if (item?.effect) myFoxenEffect = item.effect;
                     }
+                    if (userPayload) newlyDiscovered = true;
                 });
+
                 if (currentProfileLookup) {
-                    inFlightProfileId = null;
-                    if (!userEffectsCache.has(currentProfileLookup)) {
-                        userEffectsCache.set(currentProfileLookup, null);
-                    }
+                    const pItem = globalEffectsRegistry.get(String(currentProfileLookup)) || null;
+                    const pPayload = (pItem && (pItem.effect || pItem.emoji)) ? { effect: pItem.effect, emoji: pItem.emoji } : null;
+                    userEffectsCache.set(String(currentProfileLookup), pPayload);
+                    if (pPayload) newlyDiscovered = true;
                 }
+            } catch (e) {
+                console.debug('[Foxen Nickname FX] In-memory batch error:', e);
             }
 
             if (newlyDiscovered) {
@@ -1373,10 +1285,9 @@
                 return;
             }
 
-            // 3. Seller is not yet in local cache -> queue for real-time batch lookup
-            if (!userEffectsCache.has(lower) && !userEffectsCache.has(clean)) {
-                usernamesToLookup.push(text);
-            }
+            // 3. Mark non-registered sellers as checked with no effect (0 network requests)
+            userEffectsCache.set(lower, null);
+            userEffectsCache.set(clean, null);
             rawEl.dataset.fxnChecked = '1';
         });
 
@@ -1385,9 +1296,9 @@
         }
 
         // Consolidated debounced single batch request for any newly parsed sellers on the page
-        if (usernamesToLookup.length > 0) {
-            fetchNicknameEffectsForUsers(usernamesToLookup);
-        }
+        // Eliminated per-seller network lookup: Whitelist registry is the single source of truth
+
+
     }
 
     // --- Live Verification of Current User Premium Status ---
@@ -1395,7 +1306,7 @@
     const ADMIN_USERS = ['vireonshop', 'sanosenpai'];
     const ADMIN_USER_IDS = ['15508026', '13781813'];
     let lastLiveSubCheckTimestamp = 0;
-    const LIVE_SUB_CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+    const LIVE_SUB_CHECK_INTERVAL_MS = 60 * 60 * 1000; // 30 minutes
 
     async function verifyLiveUserSubscriptionAndSync(force = false) {
         try {
@@ -1405,122 +1316,56 @@
             const uClean = cleanUser(uName);
 
             const now = Date.now();
-            if (!force && (now - lastLiveSubCheckTimestamp < 60000)) {
-                return; // In-memory debounce 60s
+            if (!force && lastLiveSubCheckTimestamp && (now - lastLiveSubCheckTimestamp < 60000)) {
+                return;
             }
+            lastLiveSubCheckTimestamp = now;
 
-            let isPremium = false;
-
-            // 1. Check if profile in chrome.storage already has confirmed premium & fresh live cache
+            // 1. Check local storage for user's own nickname effect / custom emoji
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
                 const localData = await new Promise(r => chrome.storage.local.get([
                     'foxen_user_profile', 'foxenUserProfile', 'foxenUserProfileCache',
                     'fxn_my_custom_emoji', 'fxn_my_nickname_effect',
-                    `fxn_custom_emoji_${uClean}`, `fxn_effect_${uClean}`,
-                    `fxn_live_sub_cache_${uClean}`
+                    `fxn_custom_emoji_${uClean}`, `fxn_effect_${uClean}`
                 ], r));
+
                 const prof = localData?.foxen_user_profile || localData?.foxenUserProfile || localData?.foxenUserProfileCache?.data;
                 const profUser = (prof?.fp_user || prof?.username || '').toLowerCase();
                 const isCurrentProfile = Boolean(profUser && cleanUser(profUser) === uClean);
 
-                if (isCurrentProfile && prof) {
-                    if (prof.has_premium || prof.is_premium || prof.subscription?.is_active || (prof.SUBSCRIPTION && prof.SUBSCRIPTION !== 'free')) {
-                        isPremium = true;
-                    }
+                const cachedUserEmoji = localData?.[ `fxn_custom_emoji_${uClean}` ] || (isCurrentProfile ? (prof?.custom_emoji || localData?.fxn_my_custom_emoji) : null);
+                const cachedUserEffect = localData?.[ `fxn_effect_${uClean}` ] || (isCurrentProfile ? (prof?.nickname_effect || localData?.fxn_my_nickname_effect) : null);
+
+                if (cachedUserEmoji) myFoxenEmoji = cachedUserEmoji;
+                if (cachedUserEffect) myFoxenEffect = cachedUserEffect;
+            }
+
+            // 2. Check in-memory globalEffectsRegistry (from GitHub)
+            const regItem = globalEffectsRegistry.get(uClean) || globalEffectsRegistry.get(uName.toLowerCase());
+            let changed = false;
+            if (regItem) {
+                if (regItem.emoji && myFoxenEmoji !== regItem.emoji) {
+                    myFoxenEmoji = regItem.emoji;
+                    changed = true;
                 }
-                const cachedUserEmoji = localData?.[`fxn_custom_emoji_${uClean}`] || (isCurrentProfile ? (prof?.custom_emoji || localData?.fxn_my_custom_emoji) : null);
-                const cachedUserEffect = localData?.[`fxn_effect_${uClean}`] || (isCurrentProfile ? (prof?.nickname_effect || localData?.fxn_my_nickname_effect) : null);
-
-                myFoxenEmoji = cachedUserEmoji || null;
-                myFoxenEffect = cachedUserEffect || null;
-
-                const liveSubCache = localData?.[`fxn_live_sub_cache_${uClean}`];
-                if (!force && liveSubCache && (now - liveSubCache.ts < LIVE_SUB_CHECK_INTERVAL_MS)) {
-                    // Fresh cache, skip network request entirely!
-                    lastLiveSubCheckTimestamp = now;
-                    return;
+                if (regItem.effect && JSON.stringify(myFoxenEffect) !== JSON.stringify(regItem.effect)) {
+                    myFoxenEffect = regItem.effect;
+                    changed = true;
                 }
             }
 
-            lastLiveSubCheckTimestamp = now;
+            // 3. Trigger GitHub registry sync if stale
+            await syncGlobalEffectsRegistry(force);
 
-            // 2. Sync latest effect & custom emoji from profiles table for this account
-            let changed = false;
-            try {
-                const profUrl = `${SUPABASE_REST_URL}/rest/v1/profiles?fp_user=ilike.${encodeURIComponent(uName)}&select=foxen_id,is_premium,custom_emoji,nickname_effect&limit=1`;
-                const profRes = await proxiedSupabaseFetch(profUrl, {
-                    headers: {
-                        'apikey': SUPABASE_REST_KEY,
-                        'Authorization': `Bearer ${SUPABASE_REST_KEY}`
-                    }
-                });
-                if (profRes.ok) {
-                    const profs = await profRes.json();
-                    if (Array.isArray(profs) && profs.length > 0) {
-                        const p = profs[0];
-                        if (p?.is_premium || p?.has_premium) {
-                            isPremium = true;
-                        } else {
-                            isPremium = false;
-                        }
-                        const serverEmoji = (isPremium && p?.custom_emoji) ? p.custom_emoji : null;
-                        const serverEffect = (isPremium && p?.nickname_effect && p?.nickname_effect?.id) ? p.nickname_effect : null;
-
-                        if (myFoxenEmoji !== serverEmoji) {
-                            myFoxenEmoji = serverEmoji;
-                            changed = true;
-                        }
-                        if (JSON.stringify(myFoxenEffect) !== JSON.stringify(serverEffect)) {
-                            myFoxenEffect = serverEffect;
-                            changed = true;
-                        }
-
-                        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                            chrome.storage.local.set({
-                                [`fxn_live_sub_cache_${uClean}`]: {
-                                    ts: now,
-                                    isPremium,
-                                    emoji: serverEmoji,
-                                    effect: serverEffect
-                                }
-                            });
-                        }
-                    } else {
-                        // User not found in profiles or has no profile
-                        if (!ADMIN_USERS.includes(uName.toLowerCase())) {
-                            isPremium = false;
-                            if (myFoxenEmoji !== null) { myFoxenEmoji = null; changed = true; }
-                            if (myFoxenEffect !== null) { myFoxenEffect = null; changed = true; }
-                        }
-                        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                            chrome.storage.local.set({
-                                [`fxn_live_sub_cache_${uClean}`]: {
-                                    ts: now,
-                                    isPremium: false,
-                                    emoji: null,
-                                    effect: null
-                                }
-                            });
-                        }
-                    }
-                }
-            } catch(e) {}
-
-            const low = uName.toLowerCase();
-            const cln = cleanUser(uName);
-            userEffectsCache.set(low, { effect: myFoxenEffect, emoji: myFoxenEmoji });
-            userEffectsCache.set(cln, { effect: myFoxenEffect, emoji: myFoxenEmoji });
             if (changed) {
                 reapplyAllEffects();
             }
-
-            if (!isPremium) {
-                console.log('[Foxen Nickname FX] Подписка Premium не активна для текущего аккаунта FunPay:', uName);
-            }
-        } catch(err) {
-            console.warn('[Foxen Nickname FX] Error checking live subscription:', err);
+        } catch (err) {
+            console.debug('[Foxen Nickname FX] Error syncing user effects:', err);
         }
     }
+
+    
 
     // --- Initialize ---
     async function initNicknameFX() {
@@ -1603,9 +1448,16 @@
                         }
 
                         if (changes.fpCurrentUserInfo && changes.fpCurrentUserInfo.newValue?.username) {
-                            myUsername = changes.fpCurrentUserInfo.newValue.username;
-                            reapplyAllEffects();
-                            verifyLiveUserSubscriptionAndSync();
+                            const newU = changes.fpCurrentUserInfo.newValue.username;
+                            if (newU && cleanUser(newU) !== cleanUser(myUsername)) {
+                                myUsername = newU;
+                                reapplyAllEffects();
+                                verifyLiveUserSubscriptionAndSync(true);
+                            }
+                            return;
+
+
+
                         }
                     }
                 });
@@ -1629,8 +1481,9 @@
                     userEffectsCache.set(targetUser, { effect: event.data.effect || null, emoji: event.data.custom_emoji || null });
                     userEffectsCache.set(cleanUser(targetUser), { effect: event.data.effect || null, emoji: event.data.custom_emoji || null });
                 }
+                globalEffectsRegistry.set(cleanUser(targetUser || myUsername), { effect: event.data.effect || null, emoji: event.data.custom_emoji || null, is_premium: true });
                 reapplyAllEffects();
-                verifyLiveUserSubscriptionAndSync();
+                verifyLiveUserSubscriptionAndSync(true);
             }
         });
 
