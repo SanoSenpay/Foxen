@@ -30,10 +30,15 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add effects.json
-          if ! git diff --staged --quiet; then
+          if ! git diff --quiet effects.json; then
+            echo "Changes detected in effects registry. Pushing single snapshot to data branch..."
+            cp effects.json /tmp/effects.json
+            git checkout --orphan data
+            git rm -rf . > /dev/null 2>&1 || true
+            cp /tmp/effects.json effects.json
+            git add effects.json
             git commit -m "Auto-sync effects registry [skip ci]"
-            git push origin main
+            git push -f origin data
           else
             echo "No changes in effects registry."
           fi

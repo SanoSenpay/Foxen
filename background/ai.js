@@ -1,6 +1,24 @@
 const VERCEL_API_URL = 'https://ai.foxen.site/api/ai'; 
 const API_SECRET_KEY = 'fptoolsdim';
 
+/**
+ * Генерация плавающей криптографической подписи запроса (Rolling HMAC)
+ * Защищает ai.foxen.site от паразитного использования сторонними бэкендами.
+ */
+async function generateFoxenAiSignature(bodyStr, timestamp) {
+    try {
+        const timeSlot = Math.floor(timestamp / 30000);
+        const salt = `fxn_ai_v4_${timeSlot}`;
+        const dataToHash = `${salt}:${bodyStr.length}:${timeSlot}`;
+        const enc = new TextEncoder();
+        const hashBuf = await crypto.subtle.digest('SHA-256', enc.encode(dataToHash));
+        const hashArr = Array.from(new Uint8Array(hashBuf));
+        return hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (_) {
+        return '';
+    }
+}
+
 const SYSTEM_PROMPT = 'Ты — профессиональный ИИ-ассистент и опытный копирайтер для продавцов на игровой торговой площадке FunPay. Ты создаешь лаконичные, живые, грамотные и продающие тексты без рекламных клише, водянистых вступлений и фальшивого пафоса. Твои ответы звучат естественно, по делу и вызывают доверие покупателей.';
 
 /**
@@ -636,13 +654,19 @@ async function makeAIRequest(finalPrompt, customSystemPrompt = null) {
         const timeoutId = setTimeout(() => controller.abort(), 45000);
         let response;
         try {
+            const bodyStr = JSON.stringify(payload);
+            const now = Date.now();
+            const sign = await generateFoxenAiSignature(bodyStr, now);
+
             response = await fetch(VERCEL_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${API_SECRET_KEY}`
+                    'Authorization': `Bearer ${API_SECRET_KEY}`,
+                    'X-Foxen-Time': String(now),
+                    'X-Foxen-Sign': sign
                 },
-                body: JSON.stringify(payload),
+                body: bodyStr,
                 signal: controller.signal
             });
         } finally {
@@ -807,6 +831,112 @@ ${textForAI}`;
             res.data = cleanTranslationOutput(res.data);
         }
         return res;
+
+    } else if (type === 'generate_messages_config') {
+        let opts = {};
+        try {
+            if (context) opts = typeof context === 'string' ? JSON.parse(context) : context;
+        } catch (_) {}
+
+        const rawUserStyle = textForAI || 'Вежливо, коротко и по делу';
+        const sellerName = myUsername || opts.sellerName || 'Foxen Seller';
+        const useVars = opts.useVars !== false;
+        const noEmoji = opts.noEmoji !== undefined ? !!opts.noEmoji : (opts.useEmoji !== undefined ? !opts.useEmoji : true);
+        const useSpintax = !!opts.useSpintax;
+        const requestedBlocks = Array.isArray(opts.blocks) && opts.blocks.length ? opts.blocks : ['reviews', 'autoReplies', 'bonus', 'templates', 'reviewRequest'];
+
+        // Очищаем противоречия: если эмодзи разрешены тумблером, убираем из стиля застрявшие "строго без эмодзи"
+        let cleanUserStyle = rawUserStyle;
+        if (!noEmoji) {
+            cleanUserStyle = cleanUserStyle.replace(/строго\s+без\s+эмодзи[.,]?/gi, '').replace(/без\s+эмодзи[.,]?/gi, '').trim() || 'Дружелюбно, вежливо и по делу';
+        }
+
+        const emojiInstruction = noEmoji
+            ? 'КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО использовать любые эмодзи, смайлы и значки. Пиши строго чистым текстом и стандартными знаками препинания.'
+            : 'РАЗРЕШЕНО добавить ровно 1 уместный эмодзи (👍, ⭐, 🤝, ✨, 🎮, 📦) в позитивные сообщения (5 звезд, приветствие, подтверждение заказа). ВНИМАНИЕ: на негативные отзывы (1 и 2 звезды) смайлики и эмодзи СТРОГО ЗАПРЕЩЕНЫ даже в этом режиме!';
+
+        const toneRules = `
+СТРОГИЕ ПРАВИЛА ТОНАЛЬНОСТИ И СООТВЕТСТВИЯ СИТУАЦИИ:
+1. НА ОТЗЫВЫ 1 И 2 ЗВЕЗДЫ — ЮМОР, ШУТКИ, САРКАЗМ И ЭМОДЗИ СТРОГО ЗАПРЕЩЕНЫ:
+   - Даже если в индивидуальном стиле запрошены "шутки", "юмор" или "креатив", на 1 и 2 звезды тон ОБЯЗАН быть исключительно серьезным, вежливым и ориентированным на решение проблемы.
+   - ЗАПРЕЩЕН любой нейросетевой кринж и клоунада вроде: "Ой, кажется наш сервис застрял в лобби 😅", "исправим быстрее, чем вы скажете глюк" и т.п. Это возмущает покупателей!
+   - Правильная реакция на 1-2 звезды: искренне признать проблему, попросить покупателя немедленно написать в чат заказа и гарантировать замену товара или полный возврат средств.
+2. НА ОТЗЫВ 3 ЗВЕЗДЫ: Спокойный, конструктивный тон. Уточнить, что пошло не так, и предложить оперативную помощь.
+3. НА ОТЗЫВ 4 ЗВЕЗДЫ: Вежливая благодарность, предложение обратиться в чат при любых вопросах.
+4. НА ОТЗЫВ 5 ЗВЕЗД: Искренняя человеческая благодарность. Здесь уместен легкий позитивный тон/юмор (если запрошен стиль с юмором), пожелание отличной игры и легких побед.
+5. ЗАПРЕТ РОБОТИЗИРОВАННОГО КАНЦЕЛЯРИТА: Пиши как реальный опытный продавец FunPay, а не автоответчик сотового оператора. Без слащавых фальшивых восторгов ("Мы безмерно ценим ваше доверие", "В знак глубочайшего признания").
+6. ЗАПРЕТ ВНЕШНИХ КОНТАКТОВ: Никаких ссылок на Telegram, Discord, VK и телефонные номера (строго запрещено правилами FunPay).`;
+
+        const sysPrompt = `Ты — эксперт по деловой коммуникации и поддержке клиентов для продавцов на FunPay.
+Твоя задача — сгенерировать готовые естественные тексты шаблонов и автоответов для продавца "${sellerName}" в соответствии с выбранным стилем и параметрами (${noEmoji ? 'строго без эмодзи' : 'с аккуратными эмодзи'}, ${useVars ? 'с переменными FunPay' : 'без переменных'}, ${useSpintax ? 'со Spintax' : 'без Spintax'}).
+
+${toneRules}
+
+Ответ ДОЛЖЕН быть строго в формате JSON без кавычек и markdown вокруг него.`;
+
+        const varsRule = useVars
+            ? `1. Переменные FunPay: активно используй теги FunPay там, где это уместно:
+   - {buyername} — имя покупателя в чате
+   - {sellername} — ник продавца
+   - {lotname} — название товара
+   - {orderid} — номер заказа
+   - {orderlink} — ссылка на заказ
+   - {welcome} — приветствие по времени суток (Доброе утро/день/вечер)
+   - {date} — текущая дата`
+            : `1. БЕЗ ПЕРЕМЕННЫХ: КАТЕГОРИЧЕСКИ НЕ используй теги в фигурных скобках ({buyername}, {lotname}, {welcome}, {orderlink} и т.д.). Пиши готовый универсальный текст без переменных и без фигурных скобок (например, вместо "{welcome}, {buyername}!" пиши "Здравствуйте!").`;
+
+        const emojiRule = `2. Эмодзи: ${emojiInstruction} (Приоритет этого правила абсолютен)`;
+        const spintaxRule = `3. Spintax: ${useSpintax ? 'ОБЯЗАТЕЛЬНО используй spintax {вариант 1|вариант 2} для ключевых фраз (приветствий, благодарностей, подтверждений) для анти-спама и разнообразия сообщений' : 'без spintax (пиши цельный текст без фигурных скобок spintax)'}`;
+
+        finalPrompt = `Сгенерируй тексты сообщений для FunPay для продавца "${sellerName}".
+
+ИНДИВИДУАЛЬНЫЙ СТИЛЬ:
+"${cleanUserStyle}"
+
+ЗАПРОШЕННЫЕ БЛОКИ:
+${requestedBlocks.join(', ')}
+
+ПРАВИЛА И ТРЕБОВАНИЯ:
+${varsRule}
+${emojiRule}
+${spintaxRule}
+${toneRules}
+
+Верни СТРОГО валидный JSON-объект следующей структуры:
+
+{
+  "reviews": {
+    "5": "текст авто-ответа на отзыв 5 звезд",
+    "4": "текст на 4 звезды",
+    "3": "текст на 3 звезды",
+    "2": "текст на 2 звезды",
+    "1": "текст на 1 звезду"
+  },
+  "bonus": {
+    "singleBonusText": "текст подарка/промокода/бонуса за отзыв 5 звезд"
+  },
+  "autoReplies": {
+    "greetingText": "авто-приветствие в чате",
+    "newOrderReplyText": "сообщение при оплате нового заказа",
+    "orderConfirmReplyText": "сообщение при подтверждении заказа"
+  },
+  "templates": {
+    "greeting": "быстрый шаблон: Приветствие",
+    "completed": "быстрый шаблон: Заказ выполнен",
+    "review": "быстрый шаблон: Просьба оставить отзыв",
+    "thanks": "быстрый шаблон: Спасибо за заказ",
+    "custom": [
+      { "label": "Инструкция", "text": "шаблон с краткой инструкцией по получению товара" },
+      { "label": "Ожидание", "text": "шаблон при задержке/подготовке" },
+      { "label": "Гарантия", "text": "шаблон с напоминанием о гарантии" }
+    ]
+  },
+  "reviewRequest": "шаблон просьбы об отзыве для кнопки в карточке заказа"
+}
+
+ТОЛЬКО JSON:`;
+
+        return makeAIRequest(finalPrompt, sysPrompt);
 
     } else if (type === 'lot_audit_raw') {
         // Pass the full constructed prompt directly - no wrapping

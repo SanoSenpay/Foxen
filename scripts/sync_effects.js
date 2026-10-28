@@ -78,6 +78,24 @@ async function run() {
         }
     }
 
+    // Проверяем, изменились ли реальные данные реестра
+    let hasActualChanges = true;
+    try {
+        if (fs.existsSync(OUTPUT_FILE)) {
+            const currentContent = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf-8'));
+            if (currentContent && currentContent.registry) {
+                if (JSON.stringify(currentContent.registry) === JSON.stringify(registry)) {
+                    hasActualChanges = false;
+                }
+            }
+        }
+    } catch (_) {}
+
+    if (!hasActualChanges) {
+        console.log('[Foxen Sync] Реестр эффектов не изменился в Supabase. Пропуск перезаписи файла (0 коммитов).');
+        return;
+    }
+
     const outputData = {
         updated_at: new Date().toISOString(),
         version: 1,

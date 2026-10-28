@@ -21,6 +21,8 @@
     const REGISTRY_TTL_MS = 60 * 1000; // 60 seconds (fast Stale-While-Revalidate via GitHub/CDN)
 
     const GITHUB_REGISTRY_URLS = [
+        'https://raw.githubusercontent.com/SanoSenpay/Foxen/data/effects.json',
+        'https://cdn.jsdelivr.net/gh/SanoSenpay/Foxen@data/effects.json',
         'https://raw.githubusercontent.com/SanoSenpay/Foxen/main/effects.json',
         'https://cdn.jsdelivr.net/gh/SanoSenpay/Foxen@main/effects.json'
     ];
@@ -133,7 +135,7 @@
                     const now = Date.now();
                     if (parsed && parsed.ts && (now - parsed.ts < 900000) && parsed.data) {
                         Object.entries(parsed.data).forEach(([k, v]) => {
-                            if (!userEffectsCache.has(k)) {
+                            if (v !== null && !userEffectsCache.has(k)) {
                                 origCacheSet(k, v);
                             }
                         });
@@ -797,6 +799,7 @@
             this.effectId = effectPayload?.id || 'liquidGold';
             this.colors = effectPayload?.colors || {};
             this.state = {};
+            this.isNavbarOrDropdown = Boolean(hostEl.closest('#header, #navbar, .navbar-right, .dropdown-menu, .nav-profile, .dropdown'));
             this.isVisible = true;
 
             this.canvas = document.createElement('canvas');
@@ -810,14 +813,22 @@
             // Wrap text transparently
             this.measureAndAttach();
 
-            if (fxObserver) {
+            if (fxObserver && !this.isNavbarOrDropdown) {
                 fxObserver.observe(this.canvas);
             }
         }
 
         measureAndAttach() {
+            if (!this.hostEl || !this.canvas) return;
             const computed = window.getComputedStyle(this.hostEl);
             const rect = this.hostEl.getBoundingClientRect();
+
+            if (rect.width === 0) {
+                this._needsMeasureOnShow = true;
+            } else {
+                this._needsMeasureOnShow = false;
+            }
+
             const fontSize = parseFloat(computed.fontSize) || 14;
             const fontWeight = computed.fontWeight || '700';
             const fontFamily = computed.fontFamily || 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -850,9 +861,12 @@
 
             this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-            this.hostEl.style.setProperty('color', 'transparent', 'important');
-            this.hostEl.style.setProperty('-webkit-text-fill-color', 'transparent', 'important');
-            this.hostEl.style.setProperty('text-shadow', 'none', 'important');
+            // Hide native text ONLY when canvas has valid dimensions
+            if (this.w > 0 && this.h > 0) {
+                this.hostEl.style.setProperty('color', 'transparent', 'important');
+                this.hostEl.style.setProperty('-webkit-text-fill-color', 'transparent', 'important');
+                this.hostEl.style.setProperty('text-shadow', 'none', 'important');
+            }
 
             if (!this.canvas.parentNode) {
                 this.hostEl.appendChild(this.canvas);
@@ -860,7 +874,14 @@
         }
 
         tick(timestamp) {
-            if (!this.isVisible || !this.canvas.parentNode) return;
+            if (!this.canvas.parentNode) return;
+            if (this._needsMeasureOnShow || this.isNavbarOrDropdown) {
+                const rect = this.hostEl.getBoundingClientRect();
+                if (rect.width > 0 && (!this.w || Math.abs(rect.width - (this.w - 48)) > 5)) {
+                    this.measureAndAttach();
+                }
+            }
+            if (!this.isVisible) return;
             const fn = EFFECTS[this.effectId];
             if (fn) {
                 try {
@@ -926,7 +947,9 @@
                     const isVisible = entry.isIntersecting;
                     for (const item of activeCanvases) {
                         if (item.canvas === canvas) {
-                            item.isVisible = isVisible;
+                            if (!item.isNavbarOrDropdown) {
+                                item.isVisible = isVisible;
+                            }
                             break;
                         }
                     }
@@ -955,7 +978,9 @@
         const navNameEl = document.querySelector('.navbar-right a.user-link-dropdown .user-link-name') ||
                           document.querySelector('.nav-profile a.user-link-dropdown .user-link-name') ||
                           document.querySelector('a.user-link-dropdown .user-link-name') ||
-                          document.querySelector('.navbar .user-link-dropdown .user-link-name');
+                          document.querySelector('.navbar .user-link-dropdown .user-link-name') ||
+                          document.querySelector('.user-link-dropdown .user-link-name') ||
+                          document.querySelector('.user-link-name');
         if (navNameEl && navNameEl.textContent.trim()) {
             return navNameEl.textContent.trim();
         }
@@ -1137,8 +1162,36 @@
             span.style.color = '';
             span.querySelectorAll('canvas').forEach(c => c.remove());
         });
-        document.querySelectorAll('.fxn-nick-decorated, .fxn-nick-target').forEach(el => delete el.dataset.fxnChecked);
+        document.querySelectorAll('[data-fxn-checked]').forEach(el => delete el.dataset.fxnChecked);
         scanAndApplyNicknameEffects();
+
+    function refreshDropdownNicknames() {
+        for (const item of activeCanvases) {
+            if (item.isNavbarOrDropdown) {
+                item.isVisible = true;
+                item.measureAndAttach();
+                item.tick(performance.now());
+            }
+        }
+        if (activeCanvases.size > 0 && !isMasterLoopRunning) {
+            startLoop();
+        }
+    }
+
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.closest && e.target.closest('.dropdown-toggle, .navbar-right, #navbar, .nav-profile, .dropdown')) {
+            refreshDropdownNicknames();
+            setTimeout(refreshDropdownNicknames, 30);
+            setTimeout(refreshDropdownNicknames, 150);
+        }
+    }, true);
+
+    document.addEventListener('mouseenter', (e) => {
+        if (e.target && e.target.closest && e.target.closest('.dropdown-toggle, .navbar-right, #navbar, .nav-profile')) {
+            refreshDropdownNicknames();
+        }
+    }, true);
+
     }
 
     const cleanUser = (u) => String(u || '').toLowerCase().replace(/[\s_-]+/g, '');
@@ -1156,6 +1209,8 @@
             '.profile-header .mr4',
             '.profile .mr4',
             '.media-body > h1 .mr4',
+            '.profile h1 .mr4',
+            '.profile h1',
             '.mr4',
             '.contact-item .media-user-name',
             '.chat .media-user-name',
@@ -1165,6 +1220,8 @@
             '.chat-message .chat-msg-author a',
             '.chat-message .chat-msg-author',
             '.chat-msg-author',
+            '.user-link-dropdown .user-link-name',
+            '.navbar-right .user-link-name',
             '.user-link-name',
             '.tc-user .media-user-name',
             '.order-desc .media-user-name',
@@ -1182,6 +1239,19 @@
             // Skip elements that are explicitly hidden or already scanned
             if (rawEl.hidden || rawEl.style?.display === 'none' || rawEl.style?.visibility === 'hidden') return;
             if (rawEl.dataset.fxnChecked) return;
+
+            // Skip non-username elements in navbar (language switcher, currency switcher)
+            if (rawEl.closest('.menu-item-lang, .menu-item-currency, .user-cy-switcher') || 
+                rawEl.classList.contains('menu-item-lang') || 
+                rawEl.classList.contains('user-cy-switcher') ||
+                rawEl.getAttribute('href')?.includes('setlocale')) {
+                return;
+            }
+
+            // If rawEl is an anchor link that contains a distinct username element, skip it (inner element will be decorated)
+            if (rawEl.tagName === 'A' && rawEl.querySelector('.user-link-name, .media-user-name, .chat-msg-author, .fxn-nick-target')) {
+                return;
+            }
 
             // Никогда не применять эффекты ника или кастом эмодзи внутри меню профиля, кроме самого ника (#fxnSpmUsername)
             if (rawEl.closest('#fxnSidebarProfileModal, #fxnSpmStatsCard, .fxn-spm-grid-stats, .fxn-spm-card, #foxenMainPopup, .fxn-popup') && rawEl.id !== 'fxnSpmUsername') {
@@ -1202,43 +1272,64 @@
             const lower = text.toLowerCase();
             const clean = cleanUser(text);
 
-            // Fast exit if user is cached as having NO effects/emojis
-            if (userEffectsCache.has(lower) && userEffectsCache.get(lower) === null &&
-                userEffectsCache.has(clean) && userEffectsCache.get(clean) === null) {
-                rawEl.dataset.fxnChecked = '1';
-                return;
-            }
-
-            // 1. Check local user effects / emoji cache
+            // 1. Check if on user profile page or user link
             const profileIdMatch = window.location.pathname.match(/\/users\/(\d+)/);
             const currentUrlProfileId = profileIdMatch ? profileIdMatch[1] : null;
 
-            // Check if element is or is contained in an explicit user link
             const userLink = rawEl.tagName === 'A' ? rawEl : rawEl.closest('a[href*="/users/"]');
             const userHrefMatch = userLink ? userLink.getAttribute('href')?.match(/\/users\/(\d+)/) : null;
             const elUserId = userHrefMatch ? userHrefMatch[1] : null;
 
-            // Determine if rawEl is specifically the profile header of the current profile page
+            // Header of profile page includes .fxn-profile-name and elements inside .profile-header / .profile
             const isProfileHeader = Boolean(
                 currentUrlProfileId &&
-                rawEl.closest('.profile-header, .media-body > h1, .profile > .media-body') && 
+                (rawEl.classList.contains('fxn-profile-name') ||
+                 rawEl.closest('.profile-header, .media-body > h1, .profile, .fxn-profile-identity, .fxn-profile-body')) && 
                 !rawEl.closest('.review-item, .review, .rating, .reviews, .order-desc, .tc-item')
             );
 
-            // 1a. Whitelist lookup from Global Registry (Memory Map, 0ms latency)
-            let data = globalEffectsRegistry.get(clean) || globalEffectsRegistry.get(lower) || userEffectsCache.get(clean) || userEffectsCache.get(lower);
+            // Determine if element represents the currently authenticated user
+            const effObj = (myFoxenEffect && typeof myFoxenEffect === 'string') ? { id: myFoxenEffect } : myFoxenEffect;
+            const isMe = Boolean(
+                (myUsername && (lower === myUsername.toLowerCase() || clean === cleanUser(myUsername))) || 
+                rawEl.id === 'fxnSpmUsername' || rawEl.classList.contains('fxn-spm-username') ||
+                rawEl.classList.contains('user-link-name') ||
+                rawEl.closest('a.user-link-dropdown, .nav-profile, .navbar-right')
+            );
 
-            // 1b. Whitelist lookup by numeric FunPay user ID
+            // 2. Global Registry lookup (authoritative data from GitHub / effects.json)
+            let data = globalEffectsRegistry.get(clean) || globalEffectsRegistry.get(lower);
+
             if (!data && elUserId) {
-                data = globalEffectsRegistry.get(String(elUserId)) || userEffectsCache.get(String(elUserId));
+                data = globalEffectsRegistry.get(String(elUserId));
             }
 
-            // 1c. ONLY apply current profile ID effect if the element IS the profile header or explicitly links to this profile owner
             if (!data && currentUrlProfileId && (isProfileHeader || elUserId === currentUrlProfileId)) {
-                data = globalEffectsRegistry.get(String(currentUrlProfileId)) || userEffectsCache.get(String(currentUrlProfileId));
+                data = globalEffectsRegistry.get(String(currentUrlProfileId));
             }
 
-            if (data) {
+            // Fallback to memory cache
+            if (!data) {
+                data = userEffectsCache.get(clean) || userEffectsCache.get(lower);
+                if (!data && elUserId) data = userEffectsCache.get(String(elUserId));
+                if (!data && currentUrlProfileId && (isProfileHeader || elUserId === currentUrlProfileId)) {
+                    data = userEffectsCache.get(String(currentUrlProfileId));
+                }
+            }
+
+            // If it is the current user, merge with myFoxenEffect / myFoxenEmoji
+            if (isMe) {
+                if (!data) {
+                    if (effObj?.id || myFoxenEmoji) {
+                        data = { effect: effObj, emoji: myFoxenEmoji, is_premium: true };
+                    }
+                } else {
+                    if (!data.effect && effObj?.id) data.effect = effObj;
+                    if (!data.emoji && myFoxenEmoji) data.emoji = myFoxenEmoji;
+                }
+            }
+
+            if (data && (data.effect || data.emoji)) {
                 rawEl.dataset.fxnChecked = '1';
                 const eff = data.effect || (data.id ? data : null);
                 const emoji = data.emoji || null;
@@ -1257,26 +1348,11 @@
                 return;
             }
 
-            // 2. Check if this is the currently authenticated Foxen user with bound effect / emoji
-            const effObj = (myFoxenEffect && typeof myFoxenEffect === 'string') ? { id: myFoxenEffect } : myFoxenEffect;
-            const isMe = (myUsername && (lower === myUsername.toLowerCase() || clean === cleanUser(myUsername))) || 
-                         rawEl.id === 'fxnSpmUsername' || rawEl.classList.contains('fxn-spm-username');
-
-            if (isMe) {
+            // Fast exit ONLY for non-registered users (never skip current user or profile header)
+            if (!isMe && !isProfileHeader &&
+                userEffectsCache.has(lower) && userEffectsCache.get(lower) === null &&
+                userEffectsCache.has(clean) && userEffectsCache.get(clean) === null) {
                 rawEl.dataset.fxnChecked = '1';
-                if (effObj?.id || myFoxenEmoji) {
-                    let targetEl = rawEl;
-                    if (effObj?.id && !rawEl.classList.contains('fxn-nick-decorated')) {
-                        targetEl = wrapTextNodeForNicknameFX(rawEl, text);
-                        if (targetEl && !targetEl.classList.contains('fxn-nick-decorated')) {
-                            const overlay = new NicknameOverlayCanvas(targetEl, text, effObj);
-                            activeCanvases.add(overlay);
-                        }
-                    }
-                    if (myFoxenEmoji) {
-                        attachCustomEmojiBadge(targetEl || rawEl, myFoxenEmoji);
-                    }
-                }
                 return;
             }
 
