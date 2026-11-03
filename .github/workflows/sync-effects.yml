@@ -6,7 +6,7 @@ on:
     - cron: '*/30 * * * *'
   workflow_dispatch:
   repository_dispatch:
-    types: [sync-effects]
+    types: [sync-effects, update-banner]
 
 jobs:
   sync:
@@ -23,22 +23,27 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Run sync effects script
+      - name: Run sync effects & public profiles script
         run: node scripts/sync_effects.js
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Commit and push changes if updated
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          if ! git diff --quiet effects.json; then
-            echo "Changes detected in effects registry. Pushing single snapshot to data branch..."
-            cp effects.json /tmp/effects.json
-            git checkout --orphan data
-            git rm -rf . > /dev/null 2>&1 || true
-            cp /tmp/effects.json effects.json
-            git add effects.json
-            git commit -m "Auto-sync effects registry [skip ci]"
-            git push -f origin data
-          else
-            echo "No changes in effects registry."
-          fi
+          
+          # Stage newly generated snapshots in temporary location
+          cp effects.json /tmp/effects.json
+          cp public_profiles.json /tmp/public_profiles.json
+          
+          # Switch to orphan data branch
+          git checkout --orphan data
+          git rm -rf . > /dev/null 2>&1 || true
+          cp /tmp/effects.json effects.json
+          cp /tmp/public_profiles.json public_profiles.json
+          git add effects.json public_profiles.json
+          
+          # Commit and push snapshot to data branch
+          git commit -m "Auto-sync effects & public profiles [skip ci]" || echo "No changes to commit"
+          git push -f origin data
