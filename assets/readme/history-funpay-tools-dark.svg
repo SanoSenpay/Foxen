@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 410 126" width="410" height="126">
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .card-bg { transition: fill 0.2s ease, stroke 0.2s ease; cursor: pointer; }
+    :hover .card-bg {
+      fill: #101116;
+      stroke: rgba(255,255,255,0.28);
+    }
+  </style>
+  <rect class="card-bg" width="410" height="126" rx="14" fill="#08080A" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- Top Badges -->
+  <g transform="translate(18, 14)">
+    <rect width="148" height="22" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+    <text x="10" y="15" class="font-mono" font-size="9" font-weight="700" fill="rgba(255,255,255,0.6)" letter-spacing="0.5">ОРИГИНАЛЬНЫЙ ПРОЕКТ</text>
+  </g>
+  <g transform="translate(296, 14)">
+    <rect width="96" height="22" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+    <text x="48" y="15" text-anchor="middle" class="font-mono" font-size="9.5" font-weight="600" fill="rgba(255,255,255,0.6)">XaviersDev</text>
+  </g>
+
+  <!-- Title and Description -->
+  <text x="20" y="66" class="font-sans" font-size="17" font-weight="700" fill="#FFFFFF" letter-spacing="-0.3">FunPay Tools</text>
+  <text x="20" y="85" class="font-sans" font-size="11.5" font-weight="500" fill="#A1A1AA">Базовая концепция, интерфейс и первая версия инструментов</text>
+
+  <!-- Bottom Link -->
+  <g transform="translate(20, 107)">
+    <text class="font-mono" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.75)">↗ github.com/XaviersDev/FunPay-Tools</text>
+  </g>
+</svg>

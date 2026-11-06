@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 76" width="840" height="76">
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Manrope', 'Segoe UI', Roboto, sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', 'Geist Mono', monospace; }
+  </style>
+  <rect width="840" height="76" rx="14" fill="#08080A" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  
+  <rect x="20" y="18" width="40" height="40" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <path d="M12 2L9.5 7.5 4 10l5.5 2.5L12 18l2.5-5.5L20 10l-5.5-2.5L12 2zm7 13l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15zm0-14l-1.25 2.75L15 5l2.75 1.25L19 9l1.25-2.75L23 5l-2.75-1.25L19 1z" fill="#FFFFFF" transform="translate(30, 28) scale(0.9)"/>
+
+  <text x="76" y="34" class="font-mono" font-size="11" font-weight="700" fill="rgba(255,255,255,0.4)" letter-spacing="1">04</text>
+  <text x="110" y="35" class="font-sans" font-size="16" font-weight="700" fill="#FFFFFF" letter-spacing="-0.2">ИИ-ФУНКЦИИ</text>
+  <text x="76" y="54" class="font-sans" font-size="12.5" font-weight="500" fill="#A1A1AA">Нейросетевой ассистент, аудит магазина, генератор лотов и превью</text>
+
+  <g transform="translate(710, 25)">
+    <rect width="108" height="26" rx="13" fill="rgba(255,255,255,0.05)"/>
+    <text x="14" y="17" class="font-mono" font-size="10.5" font-weight="600" fill="#E4E4E7">9 ФУНКЦИЙ</text>
+  </g>
+</svg>

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 280" width="840" height="280">
+  <defs>
+    <linearGradient id="monoTitleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#000000"/>
+      <stop offset="100%" stop-color="#52525B"/>
+    </linearGradient>
+    <radialGradient id="monoAura" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="gridPattern" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="rgba(0,0,0,0.02)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Manrope', 'Segoe UI', Roboto, sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', 'Geist Mono', monospace; }
+    .pulse-dot { animation: pulseDot 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    .aura-anim { animation: ambientAura 6s ease-in-out infinite; }
+    @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.85); } }
+    @keyframes ambientAura { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .pulse-dot, .aura-anim { animation: none; } }
+  </style>
+
+  <!-- Card Background -->
+  <rect width="840" height="280" rx="20" fill="#FAFAFA" stroke="#E4E4E7" stroke-width="1"/>
+  <rect width="840" height="280" rx="20" fill="url(#gridPattern)"/>
+
+  <!-- Monochrome Ambient Spotlight -->
+  <circle class="aura-anim" cx="420" cy="0" r="320" fill="url(#monoAura)"/>
+
+  <!-- Top Status Badge -->
+  <g transform="translate(48, 36)">
+    <rect width="260" height="28" rx="14" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+    <circle cx="16" cy="14" r="4" fill="#FFFFFF" class="pulse-dot"/>
+    <text x="28" y="18" class="font-mono" font-size="10.5" font-weight="600" fill="#18181B" letter-spacing="0.5">FOXEN 4.0.6 · FIREFOX EDITION</text>
+  </g>
+
+  <!-- Open Source Pill -->
+  <g transform="translate(318, 36)">
+    <rect width="116" height="28" rx="14" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill="#18181B" transform="translate(12, 6) scale(0.66)"/>
+    <text x="32" y="18" class="font-mono" font-size="10.5" font-weight="600" fill="#18181B">OPEN SOURCE</text>
+  </g>
+
+  <!-- 85 Functions Badge -->
+  <g transform="translate(444, 36)">
+    <rect width="112" height="28" rx="14" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+    <text x="14" y="18" class="font-mono" font-size="10.5" font-weight="600" fill="#18181B">85 ФУНКЦИЙ</text>
+  </g>
+
+  <!-- Foxen Brand Logo and Title -->
+  <g transform="translate(48, 86)">
+    <rect width="64" height="64" rx="14" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+    <image href="data:image/png;base64,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" x="6" y="6" width="52" height="52" preserveAspectRatio="xMidYMid meet"/>
+
+    <text x="82" y="44" class="font-sans" font-size="46" font-weight="700" fill="url(#monoTitleGrad)" letter-spacing="-0.5">FOXEN</text>
+    <text x="84" y="64" class="font-sans" font-size="13.5" font-weight="500" fill="#71717A">Полная экосистема инструментов, AI и автоматизации для продавцов FunPay</text>
+  </g>
+
+  <!-- Bottom Feature Chips Row -->
+  <g transform="translate(48, 194)">
+    <g transform="translate(0, 0)">
+      <rect width="138" height="40" rx="10" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+      <path d="M12 2L9.5 7.5 4 10l5.5 2.5L12 18l2.5-5.5L20 10l-5.5-2.5L12 2zm7 13l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15zm0-14l-1.25 2.75L15 5l2.75 1.25L19 9l1.25-2.75L23 5l-2.75-1.25L19 1z" fill="#000000" transform="translate(12, 10) scale(0.82)"/>
+      <text x="38" y="25" class="font-sans" font-size="12.5" font-weight="600" fill="#18181B">ИИ-ассистент</text>
+    </g>
+    <g transform="translate(148, 0)">
+      <rect width="148" height="40" rx="10" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+      <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.9 17.55 11 21 11 21z" fill="#000000" transform="translate(12, 10) scale(0.82)"/>
+      <text x="36" y="25" class="font-sans" font-size="12.5" font-weight="600" fill="#18181B">Авто-поднятие</text>
+    </g>
+    <g transform="translate(306, 0)">
+      <rect width="144" height="40" rx="10" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+      <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" fill="#000000" transform="translate(12, 10) scale(0.82)"/>
+      <text x="38" y="25" class="font-sans" font-size="12.5" font-weight="600" fill="#18181B">Авто-выдача</text>
+    </g>
+    <g transform="translate(460, 0)">
+      <rect width="138" height="40" rx="10" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+      <path d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10a2.5 2.5 0 0 0 2.5-2.5c0-.68-.27-1.3-.7-1.78-.44-.48-.7-1.12-.7-1.82 0-1.38 1.12-2.5 2.5-2.5H17a5 5 0 0 0 5-5c0-5.52-4.48-10-10-10zm-5.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="#000000" transform="translate(12, 10) scale(0.82)"/>
+      <text x="38" y="25" class="font-sans" font-size="12.5" font-weight="600" fill="#18181B">Live Styler</text>
+    </g>
+    <g transform="translate(608, 0)">
+      <rect width="136" height="40" rx="10" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="1"/>
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z" fill="#000000" transform="translate(12, 10) scale(0.82)"/>
+      <text x="38" y="25" class="font-sans" font-size="12.5" font-weight="600" fill="#18181B">Мультичат</text>
+    </g>
+  </g>
+</svg>

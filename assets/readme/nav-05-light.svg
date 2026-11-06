@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266 48" width="266" height="48">
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .card-bg { transition: fill 0.18s ease, stroke 0.18s ease; cursor: pointer; }
+    :hover .card-bg {
+      fill: #F0F0F3;
+      stroke: #A1A1AA;
+    }
+  </style>
+  <rect class="card-bg" width="266" height="48" rx="10" fill="#FAFAFA" stroke="#E4E4E7" stroke-width="1"/>
+  
+  <!-- Left Box -->
+  <rect x="8" y="8" width="32" height="32" rx="7" fill="#F4F4F5" stroke="#E4E4E7" stroke-width="0.8"/>
+  <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z" fill="#18181B" transform="translate(16, 16) scale(0.68)"/>
+
+  <!-- Texts -->
+  <text x="48" y="23" class="font-sans" font-size="12.5" font-weight="700" fill="#18181B">Статистика и аналитика</text>
+  <text x="48" y="37" class="font-mono" font-size="10" font-weight="600" fill="#71717A">05 · 6 ФУНКЦИЙ</text>
+</svg>

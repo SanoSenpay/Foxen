@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 196 46" width="196" height="46">
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Manrope', 'Segoe UI', Roboto, sans-serif; }
+    .btn-bg { transition: background-color 0.2s ease, border-color 0.2s ease; cursor: pointer; }
+    :hover .btn-bg { stroke: #A1A1AA; }
+  </style>
+  <rect class="btn-bg" width="196" height="46" rx="10" fill="#F4F4F5" stroke="#D4D4D8" stroke-width="1.2"/>
+  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm7.93 9h-3.18a15.65 15.65 0 0 0-1.37-5.06A8.02 8.02 0 0 1 19.93 11zM12 4.07c.97 1.48 1.84 3.9 2.06 6.93H9.94C10.16 7.97 11.03 5.55 12 4.07zM4.07 13h3.18a15.65 15.65 0 0 0 1.37 5.06A8.02 8.02 0 0 1 4.07 13zm3.18-2H4.07a8.02 8.02 0 0 1 4.55-5.06A15.65 15.65 0 0 0 7.25 11zm4.69 8.93c-.97-1.48-1.84-3.9-2.06-6.93h4.12c-.22 3.03-1.09 5.45-2.06 6.93zM15.38 18.06A15.65 15.65 0 0 0 16.75 13h3.18a8.02 8.02 0 0 1-4.55 5.06z" fill="#000000" transform="translate(18, 11) scale(0.92)"/>
+  <text x="48" y="28" class="font-sans" font-size="13" font-weight="600" fill="#000000">ВЕБ-САЙТ FOXEN</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266 48" width="266" height="48">
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .card-bg { transition: fill 0.18s ease, stroke 0.18s ease; cursor: pointer; }
+    :hover .card-bg {
+      fill: #13141B;
+      stroke: rgba(255,255,255,0.32);
+    }
+  </style>
+  <rect class="card-bg" width="266" height="48" rx="10" fill="#08080A" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  
+  <!-- Left Box -->
+  <rect x="8" y="8" width="32" height="32" rx="7" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+  <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" fill="#FFFFFF" transform="translate(16, 16) scale(0.68)"/>
+
+  <!-- Texts -->
+  <text x="48" y="23" class="font-sans" font-size="12.5" font-weight="700" fill="#FFFFFF">Лоты и цены</text>
+  <text x="48" y="37" class="font-mono" font-size="10" font-weight="600" fill="rgba(255,255,255,0.5)">02 · 15 ФУНКЦИЙ</text>
+</svg>

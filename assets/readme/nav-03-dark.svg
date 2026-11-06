@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266 48" width="266" height="48">
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .card-bg { transition: fill 0.18s ease, stroke 0.18s ease; cursor: pointer; }
+    :hover .card-bg {
+      fill: #13141B;
+      stroke: rgba(255,255,255,0.32);
+    }
+  </style>
+  <rect class="card-bg" width="266" height="48" rx="10" fill="#08080A" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  
+  <!-- Left Box -->
+  <rect x="8" y="8" width="32" height="32" rx="7" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+  <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z" fill="#FFFFFF" transform="translate(16, 16) scale(0.68)"/>
+
+  <!-- Texts -->
+  <text x="48" y="23" class="font-sans" font-size="12.5" font-weight="700" fill="#FFFFFF">Чат и переписка</text>
+  <text x="48" y="37" class="font-mono" font-size="10" font-weight="600" fill="rgba(255,255,255,0.5)">03 · 17 ФУНКЦИЙ</text>
+</svg>

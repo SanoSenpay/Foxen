@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266 48" width="266" height="48">
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .card-bg { transition: fill 0.18s ease, stroke 0.18s ease; cursor: pointer; }
+    :hover .card-bg {
+      fill: #13141B;
+      stroke: rgba(255,255,255,0.32);
+    }
+  </style>
+  <rect class="card-bg" width="266" height="48" rx="10" fill="#08080A" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  
+  <!-- Left Box -->
+  <rect x="8" y="8" width="32" height="32" rx="7" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+  <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.9 17.55 11 21 11 21z" fill="#FFFFFF" transform="translate(16, 16) scale(0.68)"/>
+
+  <!-- Texts -->
+  <text x="48" y="23" class="font-sans" font-size="12.5" font-weight="700" fill="#FFFFFF">Автоматизация</text>
+  <text x="48" y="37" class="font-mono" font-size="10" font-weight="600" fill="rgba(255,255,255,0.5)">01 · 8 ФУНКЦИЙ</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266 48" width="266" height="48">
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .card-bg { transition: fill 0.18s ease, stroke 0.18s ease; cursor: pointer; }
+    :hover .card-bg {
+      fill: #13141B;
+      stroke: rgba(255,255,255,0.32);
+    }
+  </style>
+  <rect class="card-bg" width="266" height="48" rx="10" fill="#08080A" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  
+  <!-- Left Box -->
+  <rect x="8" y="8" width="32" height="32" rx="7" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+  <path d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10a2.5 2.5 0 0 0 2.5-2.5c0-.68-.27-1.3-.7-1.78-.44-.48-.7-1.12-.7-1.82 0-1.38 1.12-2.5 2.5-2.5H17a5 5 0 0 0 5-5c0-5.52-4.48-10-10-10zm-5.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="#FFFFFF" transform="translate(16, 16) scale(0.68)"/>
+
+  <!-- Texts -->
+  <text x="48" y="23" class="font-sans" font-size="12.5" font-weight="700" fill="#FFFFFF">Кастомизация</text>
+  <text x="48" y="37" class="font-mono" font-size="10" font-weight="600" fill="rgba(255,255,255,0.5)">07 · 10 ФУНКЦИЙ</text>
+</svg>

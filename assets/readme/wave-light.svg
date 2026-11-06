@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 28" width="840" height="28" fill="none">
+  <defs>
+    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="10%" stop-color="#000000" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#000000" stop-opacity="1"/>
+      <stop offset="90%" stop-color="#000000" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="viewportClip">
+      <rect x="0" y="0" width="840" height="28"/>
+    </clipPath>
+  </defs>
+
+  <style>
+    .wave { animation: waveFlow 4.5s linear infinite; }
+    @keyframes waveFlow {
+      from { transform: translateX(0); }
+      to { transform: translateX(-210px); }
+    }
+  </style>
+
+  <g clip-path="url(#viewportClip)">
+    <path class="wave" d="M 0 14 C 38.2 5.5, 66.8 5.5, 105 14 C 143.2 22.5, 171.8 22.5, 210 14 C 248.2 5.5, 276.8 5.5, 315 14 C 353.2 22.5, 381.8 22.5, 420 14 C 458.2 5.5, 486.8 5.5, 525 14 C 563.2 22.5, 591.8 22.5, 630 14 C 668.2 5.5, 696.8 5.5, 735 14 C 773.2 22.5, 801.8 22.5, 840 14 C 878.2 5.5, 906.8 5.5, 945 14 C 983.2 22.5, 1011.8 22.5, 1050 14 C 1088.2 5.5, 1116.8 5.5, 1155 14 C 1193.2 22.5, 1221.8 22.5, 1260 14" stroke="url(#waveGrad)" stroke-width="3.2" stroke-linecap="round"/>
+  </g>
+</svg>
