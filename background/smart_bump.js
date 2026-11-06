@@ -1,5 +1,6 @@
 // background/smart_bump.js - Foxen 2.8
 import { getAuthDetailsForBackground, fetchWithTabFallback } from './auth_helper.js';
+import { parseHtmlViaOffscreen } from './offscreen_helper.js';
 
 export const SMART_BUMP_ALARM = 'foxenSmartBump';
 const STATE_KEY = 'foxenSmartBumpState'; // { [categoryUrl]: { nextRaiseAt, name } }
@@ -16,15 +17,7 @@ function parseWaitTime(msg) {
     return 10;
 }
 
-async function parseHtmlViaOffscreen(html, action, extra = {}) {
-    return Promise.resolve().then(() => {
-        if (action === 'parseSellerLotPrice') return window[action](html, extra.offerId);
-        else if (action === 'solveCloneForm') return window[action](html, extra.attributes, extra.attributePairs);
-        else if (action === 'parseBuyerHistory') return window[action](html, extra.buyerUserId);
-        else if (typeof window[action] === 'function') return window[action](html);
-        else throw new Error('Unknown parser action: ' + action);
-    });
-}
+// parseHtmlViaOffscreen imported from ./offscreen_helper.js
 
 async function getAuth() {
     const auth = await getAuthDetailsForBackground();

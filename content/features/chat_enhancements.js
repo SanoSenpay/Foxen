@@ -194,8 +194,89 @@
         }, 150);
     }
 
+    
+    // --- 4. Hidden Dialogs (Client-side privacy) ---
+    const HIDDEN_DIALOGS_KEY = 'foxenHiddenDialogs';
+    let _hiddenDialogs = []; // string[]
+
+    async function loadClearedState() {
+        try {
+            const extApi = typeof browser !== 'undefined' ? browser : chrome;
+            const data = await extApi.storage.local.get([HIDDEN_DIALOGS_KEY]);
+            _hiddenDialogs = Array.isArray(data[HIDDEN_DIALOGS_KEY]) ? data[HIDDEN_DIALOGS_KEY] : [];
+            extApi.storage.local.remove(['foxenClearedChats']);
+        } catch (_) {}
+    }
+
+    function getActiveChatKey() {
+        const urlMatch = window.location.search.match(/[?&]node=(\d+)/);
+        if (urlMatch) return String(urlMatch[1]);
+        const activeContact = document.querySelector('.contact-list .contact-item.active, .contact-item.active');
+        if (activeContact?.dataset?.id) return String(activeContact.dataset.id);
+        const chatEl = document.querySelector('.chat, .chat-detail .chat');
+        if (chatEl?.dataset?.user) return String(chatEl.dataset.user);
+        return null;
+    }
+
+    window.fxnGetActiveChatKey = getActiveChatKey;
+
+    window.fxnHideDialog = async function (userId) {
+        if (!userId) return;
+        const sId = String(userId);
+        if (!_hiddenDialogs.includes(sId)) {
+            _hiddenDialogs.push(sId);
+            try {
+                const extApi = typeof browser !== 'undefined' ? browser : chrome;
+                await extApi.storage.local.set({ [HIDDEN_DIALOGS_KEY]: _hiddenDialogs });
+            } catch (_) {}
+        }
+        applyHiddenDialogs();
+        if (typeof showNotification === 'function') {
+            showNotification('Диалог скрыт из списка ✓', false);
+        }
+    };
+
+    window.fxnRestoreHiddenDialogs = async function () {
+        _hiddenDialogs = [];
+        try {
+            const extApi = typeof browser !== 'undefined' ? browser : chrome;
+            await extApi.storage.local.set({ [HIDDEN_DIALOGS_KEY]: [] });
+        } catch (_) {}
+        applyHiddenDialogs();
+        if (typeof showNotification === 'function') {
+            showNotification('Все скрытые диалоги восстановлены ✓', false);
+        }
+    };
+
+
+
+    function applyHiddenDialogs() {
+        document.querySelectorAll('.contact-list .contact-item').forEach(item => {
+            const id = item.dataset.id;
+            if (id && _hiddenDialogs.includes(String(id))) {
+                item.style.display = 'none';
+            } else if (!document.getElementById('filter-marked-checkbox')?.checked) {
+                item.style.display = '';
+            }
+        });
+
+        const restoreBtn = document.getElementById('foxen-restore-hidden-dialogs-btn');
+        if (restoreBtn) {
+            if (_hiddenDialogs.length > 0) {
+                restoreBtn.style.display = 'flex';
+                const countEl = restoreBtn.querySelector('.fxn-hidden-count');
+                if (countEl) countEl.textContent = `(${_hiddenDialogs.length})`;
+            } else {
+                restoreBtn.style.display = 'none';
+            }
+        }
+    }
+
+    window.fxnApplyHiddenDialogs = applyHiddenDialogs;
+
     function init() {
         initCtrlEnterSend();
+        loadClearedState().then(() => { applyHiddenDialogs(); });
 
         // For chat pages, init draft + char counter
         const isChatPage = window.location.pathname.includes('/chat/') ||
@@ -205,6 +286,7 @@
             initDraftSaving();
             initCharCounter();
             scrollChatToBottom();
+            applyHiddenDialogs();
         }
 
         // Watch for chat form appearing (SPA routing)
@@ -226,7 +308,7 @@
             // chatId is used for saving.
             if (window.location.href !== _lastUrl) {
                 _lastUrl = window.location.href;
-                if (document.querySelector('.chat-form-input')) { initDraftSaving(); scrollChatToBottom(); }
+                if (document.querySelector('.chat-form-input')) { initDraftSaving(); scrollChatToBottom(); applyHiddenDialogs(); }
             }
         }).observe(root, { childList: true, subtree: true });
     }

@@ -1952,3 +1952,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true; 
 });
+
+// Expose parsers globally for Firefox background module/page environments
+const _fxnParsers = {
+    parseSalesPage,
+    parseFinancePage,
+    parseLotEditPage,
+    parsePublicLotForClone,
+    parseSellerLotPrice,
+    parseOfferEditPrice,
+    solveCloneForm,
+    parseChatList,
+    parseUserLotsList,
+    parseGameSearchResults,
+    parseCategoryPage,
+    parseLotListPage,
+    parseUserCategories,
+    parseOrderPageForReview,
+    parseUnconfirmedBalance,
+    parseBuyerHistory,
+    parseOrderPageForDelivery,
+    parseOrderParticipants,
+    parseSupportTickets,
+    parseSupportCategories,
+    parseSupportFields,
+    parseSupportFormToken,
+    parseOrdersPage,
+    parseOrdersDetailed,
+    parseProfileInfo,
+    parseAuthData,
+    parseAccountSnapshot,
+    parseUserProfileFull,
+    parseTicketDetails
+};
+for (const [name, fn] of Object.entries(_fxnParsers)) {
+    if (typeof globalThis !== 'undefined') globalThis[name] = fn;
+    if (typeof window !== 'undefined') window[name] = fn;
+}

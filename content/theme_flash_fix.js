@@ -17,6 +17,7 @@
     const DISABLED_FEATURES_STYLE_ID = 'foxen-disabled-features';
     const BALANCE_PREHIDE_STYLE_ID = 'foxen-balance-prehide';
     const LIVE_STYLES_ID = 'foxen-magic-stick-persistent-styles';
+    const BLUR_STYLE_ID = 'foxen-blur-style-early';
 
     const GOOGLE_FONTS = ['Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Source Sans Pro'];
     const DEFAULT_THEME = {
@@ -138,7 +139,7 @@
             body, body.bg-light-style, .wrapper, .bg-light-style .wrapper, .content-orders, .bg-light-style .content-orders, .bg-light-color #header, .bg-light-color #footer, .wrapper-footer, .bg-light-style .wrapper-footer, #footer, .bg-light-style #footer { background: transparent !important; }
             .wrapper-content, .bg-light-style .wrapper-content, .wrapper-footer, .bg-light-style .wrapper-footer { background: transparent !important; background-color: rgba(0,0,0,0.4) !important; }
             #header, header, #header.navbar-default, .bg-light-style #header, .bg-light-color #header { background: rgba(0,0,0,0.08) !important; background-color: rgba(0,0,0,0.08) !important; border-color: rgba(228, 228, 228, 0.4) !important; }
-            #header .navbar, #header .navbar-default, #header .container, #header .navbar-header, #header .navbar-collapse { background: transparent !important; background-color: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-color: transparent !important; }
+            #header .navbar, #header .navbar-default, #header .container, #header .navbar-header, #header .navbar-collapse:not(.in):not(.collapsing) { background: transparent !important; background-color: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-color: transparent !important; }
             body { font-family: '${settings.font}', Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.428571429; color: #TEXT_COLOR# !important; }
             .profile-cover-img { background-clip: border-box; background: url(https://funpay.com/img/layout/profile-header.jpg) no-repeat center bottom; background-size: 100% auto; }
             .profile-cover { overflow: unset; }
@@ -328,7 +329,9 @@
         if (settings.enableImprovedSeparators) {
             themedCss += `
                 .tc:not(.tc-selling):not(.tc-finance) .tc-item > div { position: relative; border-top: none !important; }
-                .tc:not(.tc-selling):not(.tc-finance) .tc-item > div::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: rgba(255, 255, 255, 0.2); filter: blur(2px); pointer-events: none; }
+                .tc:not(.tc-selling):not(.tc-finance) .tc-item > div::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 20%, rgba(255, 255, 255, 0.38) 50%, rgba(255, 255, 255, 0.22) 80%, transparent 100%) !important; filter: blur(1px); box-shadow: 0 0 8px rgba(255, 255, 255, 0.16); pointer-events: none; }
+                .dropdown-menu>li+li, .dropdown-menu .dropdown-menu>li { border-top: none !important; position: relative; }
+                .dropdown-menu>li+li::before, .dropdown-menu .dropdown-menu>li::before { content: ""; position: absolute; top: 0; left: 8px; right: 8px; height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 20%, rgba(255, 255, 255, 0.38) 50%, rgba(255, 255, 255, 0.22) 80%, transparent 100%) !important; filter: blur(1px); box-shadow: 0 0 8px rgba(255, 255, 255, 0.16); pointer-events: none; }
             `;
         }
         if (settings.enableGlassmorphism) {
@@ -349,7 +352,7 @@
                 #header .navbar-default,
                 #header .container,
                 #header .navbar-header,
-                #header .navbar-collapse {
+                #header .navbar-collapse:not(.in):not(.collapsing) {
                     background: transparent !important;
                     background-color: transparent !important;
                     backdrop-filter: none !important;
@@ -370,6 +373,12 @@
                 .chat-full,
                 .fxn-chat-translate-banner,
                 .dropdown-menu, 
+                .navbar-collapse.no-transition.collapse.in,
+                .navbar-collapse.in,
+                #header .navbar-collapse.in,
+                #header .navbar-collapse.collapsing,
+                #header #navbar.in,
+                #header #navbar.collapsing,
                 #fp-rmthub-drop,
                 .fp-rmthub-drop,
                 .panel, 
@@ -381,7 +390,9 @@
                 .foxen-stats-container,
                 .fp-stat-card,
                 .fp-stats-card,
-                .col-lg-9 {
+                .col-lg-9,
+                .fxn-profile-card,
+                .container.profile-header.fxn-profile-card {
                     background: ${glassBg} !important;
                     background-color: ${glassBg} !important;
                     backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;
@@ -454,6 +465,188 @@
         }
     }
 
+    function getEarlyBlurCss() {
+        return `
+            /* Early Blur Shield for Contact List (Zero-Flash on reload) */
+            html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .media-user-name,
+            html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .contact-item-message,
+            html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .avatar-photo,
+            html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .media-object,
+            html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .contact-item-time,
+            html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .media-user-name,
+            html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .contact-item-message,
+            html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .avatar-photo,
+            html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .media-object,
+            html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .contact-item-time,
+            html.fxn-blur-chats .contact-item:not(.active):not(:hover) .media-user-name,
+            html.fxn-blur-chats .contact-item:not(.active):not(:hover) .contact-item-message,
+            body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .media-user-name,
+            body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .contact-item-message,
+            body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .avatar-photo,
+            body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .media-object,
+            body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .contact-item-time,
+            body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .media-user-name,
+            body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .contact-item-message,
+            body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .avatar-photo,
+            body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .media-object,
+            body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .contact-item-time,
+            body.fxn-blur-chats .contact-item:not(.active):not(:hover) .media-user-name,
+            body.fxn-blur-chats .contact-item:not(.active):not(:hover) .contact-item-message {
+                filter: blur(6px) !important;
+                user-select: none !important;
+            }
+            html.fxn-blur-chats .contact-list .contact-item.active,
+            html.fxn-blur-chats .contact-list .contact-item.active *,
+            html.fxn-blur-chats a.contact-item.active,
+            html.fxn-blur-chats a.contact-item.active *,
+            html.fxn-blur-chats .contact-item.active,
+            html.fxn-blur-chats .contact-item.active *,
+            body.fxn-blur-chats .contact-list .contact-item.active,
+            body.fxn-blur-chats .contact-list .contact-item.active *,
+            body.fxn-blur-chats a.contact-item.active,
+            body.fxn-blur-chats a.contact-item.active *,
+            body.fxn-blur-chats .contact-item.active,
+            body.fxn-blur-chats .contact-item.active * {
+                filter: blur(0px) !important;
+                user-select: auto !important;
+            }
+            html.fxn-blur-chats .contact-list .contact-item:hover,
+            html.fxn-blur-chats .contact-list .contact-item:hover *,
+            html.fxn-blur-chats .contact-list .contact-item:not(.active):hover,
+            html.fxn-blur-chats .contact-list .contact-item:not(.active):hover *,
+            html.fxn-blur-chats a.contact-item:not(.active):hover,
+            html.fxn-blur-chats a.contact-item:not(.active):hover *,
+            html.fxn-blur-chats a.contact-item:hover,
+            html.fxn-blur-chats a.contact-item:hover *,
+            html.fxn-blur-chats .contact-item:hover,
+            html.fxn-blur-chats .contact-item:hover *,
+            body.fxn-blur-chats .contact-list .contact-item:hover,
+            body.fxn-blur-chats .contact-list .contact-item:hover *,
+            body.fxn-blur-chats .contact-list .contact-item:not(.active):hover,
+            body.fxn-blur-chats .contact-list .contact-item:not(.active):hover *,
+            body.fxn-blur-chats a.contact-item:not(.active):hover,
+            body.fxn-blur-chats a.contact-item:not(.active):hover *,
+            body.fxn-blur-chats a.contact-item:hover,
+            body.fxn-blur-chats a.contact-item:hover *,
+            body.fxn-blur-chats .contact-item:hover,
+            body.fxn-blur-chats .contact-item:hover * {
+                filter: blur(0px) !important;
+                user-select: auto !important;
+            }
+            .contact-item,
+            .contact-item .media-user-name,
+            .contact-item .contact-item-message,
+            .contact-item .avatar-photo,
+            .contact-item .media-object,
+            .contact-item .contact-item-time {
+                transition: filter 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+
+            /* Early Blur Shield for Messages (Zero-Flash on reload) */
+            html.fxn-blur-messages .chat-msg-text,
+            html.fxn-blur-messages .chat-message-text,
+            html.fxn-blur-messages .chat-msg-item:not(:hover) .media-user-name,
+            html.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-author-link,
+            html.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-author,
+            html.fxn-blur-messages .chat-msg-item:not(:hover) img,
+            html.fxn-blur-messages .chat-msg-item:not(:hover) .chat-img,
+            html.fxn-blur-messages .chat-msg-item:not(:hover) a[href*="/s/chat/"],
+            html.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-body,
+            html.fxn-blur-messages .chat-detail-header:not(:hover) .media-user-name,
+            html.fxn-blur-messages .chat-detail-header:not(:hover) .media-user-name a,
+            html.fxn-blur-messages .chat-detail-header:not(:hover) .media-left a,
+            html.fxn-blur-messages .chat-header:not(:hover) .chat-header-title,
+            html.fxn-blur-messages .chat-header:not(:hover) .media-user-name,
+            html.fxn-blur-messages .chat-header:not(:hover) .media-user-name a,
+            html.fxn-blur-messages .chat-header:not(:hover) .media-left a,
+            body.fxn-blur-messages .chat-msg-text,
+            body.fxn-blur-messages .chat-message-text,
+            body.fxn-blur-messages .chat-msg-item:not(:hover) .media-user-name,
+            body.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-author-link,
+            body.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-author,
+            body.fxn-blur-messages .chat-msg-item:not(:hover) img,
+            body.fxn-blur-messages .chat-msg-item:not(:hover) .chat-img,
+            body.fxn-blur-messages .chat-msg-item:not(:hover) a[href*="/s/chat/"],
+            body.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-body,
+            body.fxn-blur-messages .chat-detail-header:not(:hover) .media-user-name,
+            body.fxn-blur-messages .chat-detail-header:not(:hover) .media-user-name a,
+            body.fxn-blur-messages .chat-detail-header:not(:hover) .media-left a,
+            body.fxn-blur-messages .chat-header:not(:hover) .chat-header-title,
+            body.fxn-blur-messages .chat-header:not(:hover) .media-user-name,
+            body.fxn-blur-messages .chat-header:not(:hover) .media-user-name a,
+            body.fxn-blur-messages .chat-header:not(:hover) .media-left a {
+                filter: blur(6px) !important;
+                user-select: none !important;
+            }
+            html.fxn-blur-messages .chat-msg-item:hover,
+            html.fxn-blur-messages .chat-msg-item:hover *,
+            body.fxn-blur-messages .chat-msg-item:hover,
+            body.fxn-blur-messages .chat-msg-item:hover *,
+            html.fxn-blur-messages .chat-header:hover,
+            html.fxn-blur-messages .chat-header:hover *,
+            body.fxn-blur-messages .chat-header:hover,
+            body.fxn-blur-messages .chat-header:hover *,
+            html.fxn-blur-messages .chat-detail-header:hover,
+            html.fxn-blur-messages .chat-detail-header:hover *,
+            body.fxn-blur-messages .chat-detail-header:hover,
+            body.fxn-blur-messages .chat-detail-header:hover * {
+                filter: blur(0px) !important;
+                user-select: auto !important;
+            }
+
+            /* Never blur dropdown menus, popovers, or interactive action menus in chat */
+            .chat-header .dropdown-menu,
+            .chat-header .dropdown-menu *,
+            .chat-header-controls .dropdown-menu,
+            .chat-header-controls .dropdown-menu *,
+            .chat .dropdown-menu,
+            .chat .dropdown-menu *,
+            .dropdown-menu.dropdown-menu-right,
+            .dropdown-menu.dropdown-menu-right *,
+            .fxn-chat-dd-item,
+            .fxn-chat-dd-item * {
+                filter: none !important;
+                -webkit-filter: none !important;
+                user-select: auto !important;
+            }
+
+            /* Layering to prevent messages underneath dropdown from stealing hover/events */
+            .chat-header,
+            .chat-full-header,
+            .chat-detail-header,
+            body.funpay-redesigned .chat-header {
+                position: relative !important;
+                z-index: 1060 !important;
+            }
+            .chat-header-controls,
+            .chat-header .dropdown,
+            .chat-header-controls .dropdown {
+                position: relative !important;
+                z-index: 1061 !important;
+            }
+            .chat-header .dropdown.open,
+            .chat-header-controls .dropdown.open {
+                z-index: 1065 !important;
+            }
+            .chat-header .dropdown-menu,
+            .chat-header-controls .dropdown-menu,
+            .chat .dropdown-menu,
+            .dropdown-menu.dropdown-menu-right {
+                z-index: 99999 !important;
+            }
+            .chat-msg-text,
+            .chat-message-text,
+            .chat-msg-item .media-user-name,
+            .chat-msg-item .chat-msg-author-link,
+            .chat-msg-item .chat-msg-author,
+            .chat-msg-item img,
+            .chat-msg-item .chat-img,
+            .chat-msg-item .chat-msg-body {
+                transition: filter 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+        `;
+    }
+
     function getTargetParent() {
         return document.head || document.documentElement;
     }
@@ -517,11 +710,31 @@
     // ──────────────────────────────────────────────────────────────────────────
     const cached = getCachedThemeData();
     const isThemeOn = cached.enabled !== false;
+    const isBlurChats = (function() {
+        try {
+            return sessionStorage.getItem('foxen_blur_chat_contacts') === '1' || localStorage.getItem('foxen_blur_chat_contacts') === '1';
+        } catch (_) { return false; }
+    })();
+    const isBlurMessages = (function() {
+        try {
+            return sessionStorage.getItem('foxen_blur_chat_messages') === '1' || localStorage.getItem('foxen_blur_chat_messages') === '1';
+        } catch (_) { return false; }
+    })();
 
     if (document.documentElement) {
         document.documentElement.classList.toggle('fxn-custom-theme-on', isThemeOn);
         document.documentElement.classList.toggle('fxn-custom-theme-off', !isThemeOn);
         document.documentElement.classList.toggle('fxn-header-bottom', !!cached.isBottom);
+        if (isBlurChats) {
+            document.documentElement.classList.add('fxn-blur-chats');
+        }
+        if (isBlurMessages) {
+            document.documentElement.classList.add('fxn-blur-messages');
+        }
+        if (isBlurChats || isBlurMessages) {
+            const blurStyle = ensureStyle(BLUR_STYLE_ID);
+            blurStyle.textContent = getEarlyBlurCss();
+        }
         if (cached.accent) {
             document.documentElement.style.setProperty('--fxn-accent', cached.accent);
             document.documentElement.style.setProperty('--fxn-active', cached.accent);
@@ -592,6 +805,10 @@
             if (themeEl && document.head && themeEl.parentNode !== document.head) {
                 document.head.appendChild(themeEl);
             }
+            const blurEl = document.getElementById(BLUR_STYLE_ID);
+            if (blurEl && document.head && blurEl.parentNode !== document.head) {
+                document.head.appendChild(blurEl);
+            }
         });
     }
 
@@ -621,7 +838,9 @@
                 'foxenPopupTheme',
                 'foxenAccentColor',
                 'foxenGlassBlur',
-                'foxenHeaderButtonStyles'
+                'foxenHeaderButtonStyles',
+                'foxen_blur_chat_contacts',
+                'foxen_blur_chat_messages'
             ]);
 
             const enableCustomTheme = data.enableCustomTheme !== false;
@@ -652,6 +871,39 @@
                 sessionStorage.setItem('foxen_popup_theme', popupTheme);
                 localStorage.setItem('foxen_popup_theme', popupTheme);
             } catch (_) {}
+
+            if (typeof data.foxen_blur_chat_contacts === 'boolean') {
+                try {
+                    sessionStorage.setItem('foxen_blur_chat_contacts', data.foxen_blur_chat_contacts ? '1' : '0');
+                    localStorage.setItem('foxen_blur_chat_contacts', data.foxen_blur_chat_contacts ? '1' : '0');
+                } catch (_) {}
+                if (document.documentElement) {
+                    document.documentElement.classList.toggle('fxn-blur-chats', data.foxen_blur_chat_contacts);
+                }
+                if (document.body) {
+                    document.body.classList.toggle('fxn-blur-chats', data.foxen_blur_chat_contacts);
+                }
+            }
+            if (typeof data.foxen_blur_chat_messages === 'boolean') {
+                try {
+                    sessionStorage.setItem('foxen_blur_chat_messages', data.foxen_blur_chat_messages ? '1' : '0');
+                    localStorage.setItem('foxen_blur_chat_messages', data.foxen_blur_chat_messages ? '1' : '0');
+                } catch (_) {}
+                if (document.documentElement) {
+                    document.documentElement.classList.toggle('fxn-blur-messages', data.foxen_blur_chat_messages);
+                }
+                if (document.body) {
+                    document.body.classList.toggle('fxn-blur-messages', data.foxen_blur_chat_messages);
+                }
+            }
+            const curBlurChats = sessionStorage.getItem('foxen_blur_chat_contacts') === '1' || localStorage.getItem('foxen_blur_chat_contacts') === '1';
+            const curBlurMsgs = sessionStorage.getItem('foxen_blur_chat_messages') === '1' || localStorage.getItem('foxen_blur_chat_messages') === '1';
+            if (curBlurChats || curBlurMsgs) {
+                ensureStyle(BLUR_STYLE_ID).textContent = getEarlyBlurCss();
+            } else {
+                const bEl = document.getElementById(BLUR_STYLE_ID);
+                if (bEl) bEl.remove();
+            }
 
             if (document.documentElement) {
                 document.documentElement.classList.toggle('fxn-custom-theme-on', enableCustomTheme);
@@ -792,6 +1044,38 @@
                                 root.style.setProperty('--fxn-active', newAccent);
                                 root.style.setProperty('--fxn-btn-color', newAccent);
                                 document.dispatchEvent(new CustomEvent('foxenThemeChanged', { detail: { accent: newAccent } }));
+                            }
+                        }
+                        if (changes.foxen_blur_chat_contacts) {
+                            const blurEnabled = !!changes.foxen_blur_chat_contacts.newValue;
+                            try {
+                                sessionStorage.setItem('foxen_blur_chat_contacts', blurEnabled ? '1' : '0');
+                                localStorage.setItem('foxen_blur_chat_contacts', blurEnabled ? '1' : '0');
+                            } catch (_) {}
+                            root.classList.toggle('fxn-blur-chats', blurEnabled);
+                            if (document.body) document.body.classList.toggle('fxn-blur-chats', blurEnabled);
+                            const msgsOn = sessionStorage.getItem('foxen_blur_chat_messages') === '1' || localStorage.getItem('foxen_blur_chat_messages') === '1';
+                            if (blurEnabled || msgsOn) {
+                                ensureStyle(BLUR_STYLE_ID).textContent = getEarlyBlurCss();
+                            } else {
+                                const bEl = document.getElementById(BLUR_STYLE_ID);
+                                if (bEl) bEl.remove();
+                            }
+                        }
+                        if (changes.foxen_blur_chat_messages) {
+                            const blurMsgEnabled = !!changes.foxen_blur_chat_messages.newValue;
+                            try {
+                                sessionStorage.setItem('foxen_blur_chat_messages', blurMsgEnabled ? '1' : '0');
+                                localStorage.setItem('foxen_blur_chat_messages', blurMsgEnabled ? '1' : '0');
+                            } catch (_) {}
+                            root.classList.toggle('fxn-blur-messages', blurMsgEnabled);
+                            if (document.body) document.body.classList.toggle('fxn-blur-messages', blurMsgEnabled);
+                            const chatsOn = sessionStorage.getItem('foxen_blur_chat_contacts') === '1' || localStorage.getItem('foxen_blur_chat_contacts') === '1';
+                            if (blurMsgEnabled || chatsOn) {
+                                ensureStyle(BLUR_STYLE_ID).textContent = getEarlyBlurCss();
+                            } else {
+                                const bEl = document.getElementById(BLUR_STYLE_ID);
+                                if (bEl) bEl.remove();
                             }
                         }
                         if (changes.foxenGlassBlur) {

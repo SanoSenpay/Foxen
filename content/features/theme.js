@@ -203,7 +203,7 @@ function getCustomThemeCss(settings) {
         body, body.bg-light-style, .wrapper, .bg-light-style .wrapper, .content-orders, .bg-light-style .content-orders, .bg-light-color #header, .bg-light-color #footer, .wrapper-footer, .bg-light-style .wrapper-footer, #footer, .bg-light-style #footer { background: transparent !important; }
         .wrapper-content, .bg-light-style .wrapper-content, .wrapper-footer, .bg-light-style .wrapper-footer { background: transparent !important; background-color: rgba(0,0,0,0.4) !important; }
         #header, header, #header.navbar-default, .bg-light-style #header, .bg-light-color #header { background: rgba(0,0,0,0.08) !important; background-color: rgba(0,0,0,0.08) !important; border-color: rgba(228, 228, 228, 0.4) !important; }
-        #header .navbar, #header .navbar-default, #header .container, #header .navbar-header, #header .navbar-collapse { background: transparent !important; background-color: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-color: transparent !important; }
+        #header .navbar, #header .navbar-default, #header .container, #header .navbar-header, #header .navbar-collapse:not(.in):not(.collapsing) { background: transparent !important; background-color: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-color: transparent !important; }
         body { font-family: '${settings.font}', Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.428571429; color: #TEXT_COLOR# !important; }
         .profile-cover-img { background-clip: border-box; background: url(https://funpay.com/img/layout/profile-header.jpg) no-repeat center bottom; background-size: 100% auto; }
         .profile-cover { overflow: unset; }
@@ -432,8 +432,25 @@ function getCustomThemeCss(settings) {
                 left: 0;
                 width: 100%;
                 height: 1px;
-                background: rgba(255, 255, 255, 0.2);
-                filter: blur(2px);
+                background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 20%, rgba(255, 255, 255, 0.38) 50%, rgba(255, 255, 255, 0.22) 80%, transparent 100%) !important;
+                filter: blur(1px);
+                box-shadow: 0 0 8px rgba(255, 255, 255, 0.16);
+                pointer-events: none;
+            }
+            .dropdown-menu>li+li, .dropdown-menu .dropdown-menu>li {
+                border-top: none !important;
+                position: relative;
+            }
+            .dropdown-menu>li+li::before, .dropdown-menu .dropdown-menu>li::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 8px;
+                right: 8px;
+                height: 1px;
+                background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 20%, rgba(255, 255, 255, 0.38) 50%, rgba(255, 255, 255, 0.22) 80%, transparent 100%) !important;
+                filter: blur(1px);
+                box-shadow: 0 0 8px rgba(255, 255, 255, 0.16);
                 pointer-events: none;
             }
         `;
@@ -457,7 +474,7 @@ function getCustomThemeCss(settings) {
             #header .navbar-default,
             #header .container,
             #header .navbar-header,
-            #header .navbar-collapse {
+            #header .navbar-collapse:not(.in):not(.collapsing) {
                 background: transparent !important;
                 background-color: transparent !important;
                 backdrop-filter: none !important;
@@ -478,6 +495,12 @@ function getCustomThemeCss(settings) {
             .chat-full,
             .fxn-chat-translate-banner,
             .dropdown-menu, 
+            .navbar-collapse.no-transition.collapse.in,
+            .navbar-collapse.in,
+            #header .navbar-collapse.in,
+            #header .navbar-collapse.collapsing,
+            #header #navbar.in,
+            #header #navbar.collapsing,
             #fp-rmthub-drop,
             .fp-rmthub-drop,
             .panel, 
@@ -490,7 +513,9 @@ function getCustomThemeCss(settings) {
             .foxen-stats-container,
             .fp-stat-card,
             .fp-stats-card,
-            .col-lg-9 {
+            .col-lg-9,
+            .fxn-profile-card,
+            .container.profile-header.fxn-profile-card {
                 background: ${glassBg} !important;
                 background-color: ${glassBg} !important;
                 backdrop-filter: blur(var(--fxn-theme-glass-blur, ${safeBlur}px)) saturate(140%) !important;

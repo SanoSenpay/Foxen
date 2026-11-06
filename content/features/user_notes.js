@@ -183,8 +183,9 @@ function closePopover() {
 }
 
 function onDocClickClosePopover(e) {
+    const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
     if (activePopover && !activePopover.contains(e.target) &&
-        !e.target.classList.contains('foxen-chat-dots')) {
+        !targetEl?.classList?.contains('foxen-chat-dots')) {
         closePopover();
     }
 }
@@ -271,6 +272,25 @@ function openChatPopover(contactItem, anchorBtn) {
         closePopover();
     });
     pop.appendChild(pinRow);
+
+    // --- Раздел: Скрытие диалога ---
+    pop.appendChild(createElement('div', { class: 'foxen-pop-divider' }));
+
+    const hideRow = createElement('div', { class: 'foxen-pop-item' });
+    const hIc = createElement('span', { class: 'foxen-pop-icon material-icons' });
+    hIc.textContent = 'visibility_off';
+    const hT = createElement('span', { class: 'foxen-pop-text' });
+    hT.textContent = 'Скрыть из списка';
+    hideRow.appendChild(hIc);
+    hideRow.appendChild(hT);
+    hideRow.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        closePopover();
+        if (typeof fxnHideDialog === 'function') {
+            fxnHideDialog(userId);
+        }
+    });
+    pop.appendChild(hideRow);
 
     document.body.appendChild(pop);
     fxnApplyThemeSurface(pop);
@@ -438,12 +458,14 @@ function renderHeaderMenu(chatMenu) {
 
     foxenCustomLabels.forEach(label => {
         const li = createElement('li', { class: 'foxen-status-item' });
-        const a = createElement('a', { href: '#' });
+        const a = createElement('a', { href: '#', class: 'fxn-chat-dd-item' });
+        const iconSpan = createElement('span', { class: 'fxn-chat-dd-icon' });
         const dot = createElement('span', { class: 'foxen-status-circle' });
         dot.style.backgroundColor = label.color;
-        const span = createElement('span', { class: 'foxen-status-name' });
+        iconSpan.appendChild(dot);
+        const span = createElement('span', { class: 'fxn-chat-dd-text foxen-status-name' });
         span.textContent = label.name;
-        a.appendChild(dot);
+        a.appendChild(iconSpan);
         a.appendChild(span);
         a.addEventListener('click', (e) => {
             e.preventDefault();
@@ -453,9 +475,15 @@ function renderHeaderMenu(chatMenu) {
         chatMenu.appendChild(li);
     });
 
+    const FXN_NOTE_ICONS = {
+        pin: `<svg width="15" height="15" viewBox="0 0 24 24" fill="#f43f5e"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>`,
+        settings: `<svg width="15" height="15" viewBox="0 0 24 24" fill="#94a3b8"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`,
+        removeTag: `<svg width="15" height="15" viewBox="0 0 24 24" fill="#94a3b8"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>`
+    };
+
     const removeLi = createElement('li', { class: 'foxen-status-item' });
-    const removeA = createElement('a', { href: '#' });
-    removeA.textContent = 'Убрать метку';
+    const removeA = createElement('a', { href: '#', class: 'fxn-chat-dd-item' });
+    removeA.innerHTML = `<span class="fxn-chat-dd-icon">${FXN_NOTE_ICONS.removeTag}</span><span class="fxn-chat-dd-text">Убрать метку</span>`;
     removeA.addEventListener('click', (e) => {
         e.preventDefault();
         setUserStatus(getUserId(), null);
@@ -465,8 +493,12 @@ function renderHeaderMenu(chatMenu) {
     chatMenu.appendChild(removeLi);
 
     const pinLi = createElement('li', { class: 'foxen-status-item' });
-    const pinA = createElement('a', { href: '#' });
-    const syncPinText = () => { pinA.textContent = isPinned(getUserId()) ? '📌 Открепить чат' : '📌 Закрепить чат'; };
+    const pinA = createElement('a', { href: '#', class: 'fxn-chat-dd-item' });
+    const syncPinText = () => {
+        const pinned = isPinned(getUserId());
+        pinA.innerHTML = `<span class="fxn-chat-dd-icon">${FXN_NOTE_ICONS.pin}</span><span class="fxn-chat-dd-text">${pinned ? 'Открепить чат' : 'Закрепить чат'}</span>`;
+        pinA.classList.toggle('active', pinned);
+    };
     syncPinText();
     pinA.addEventListener('click', (e) => {
         e.preventDefault();
@@ -492,8 +524,8 @@ function renderHeaderMenu(chatMenu) {
     }
 
     const manageLi = createElement('li', { class: 'foxen-status-item' });
-    const manageA = createElement('a', { href: '#' });
-    manageA.textContent = '⚙️ Управление метками';
+    const manageA = createElement('a', { href: '#', class: 'fxn-chat-dd-item' });
+    manageA.innerHTML = `<span class="fxn-chat-dd-icon">${FXN_NOTE_ICONS.settings}</span><span class="fxn-chat-dd-text">Управление метками</span>`;
     manageA.addEventListener('click', (e) => {
         e.preventDefault();
         openLabelManager();

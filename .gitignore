@@ -91,10 +91,17 @@ $RECYCLE.BIN/
 # ВСПОМОГАТЕЛЬНЫЕ РЕСУРСЫ
 # ==========================================
 mozilla-instruction.md
+CHROMEWEBSTORE.md
+PRIVACY_POLICY.md
 CHANGELOG.md
 website/
 supabase/
 bot/
+manifests/
+public_profiles.json
+firebase.json
+firestore.indexes.json
+firestore.rules
 # Секреты и ключи
 background/secrets.js
 .env
@@ -133,4 +140,6 @@ other_assets/
 build.bat
 build.js
 check-git.js
+scripts/*
+!scripts/sync_effects.js
 

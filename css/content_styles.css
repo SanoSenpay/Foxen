@@ -2117,6 +2117,334 @@ body.funpay-redesigned .navbar-right.logged>li>a>.badge,
 }
 
 /* ==========================================================================
+   Mobile Header & Dropdown Glassmorphism + Organized Layout (max-width: 991px)
+   ========================================================================== */
+@media (max-width: 991px) {
+    /* Main Dropdown Container (Mobile Collapsed Navbar) Premium Frosted Glass Card */
+    .navbar-collapse.no-transition.collapse.in,
+    .navbar-collapse.no-transition.collapsing,
+    .navbar-collapse.collapse.in,
+    .navbar-collapse.in,
+    .navbar-collapse.collapsing,
+    #navbar.in,
+    #navbar.collapsing,
+    #header .navbar-collapse.in,
+    #header .navbar-collapse.collapsing,
+    #header #navbar.in,
+    #header #navbar.collapsing,
+    body.funpay-redesigned .navbar-collapse.in,
+    body.funpay-redesigned .navbar-collapse.collapsing,
+    .fxn-custom-theme-on .navbar-collapse.in,
+    .fxn-custom-theme-on .navbar-collapse.collapsing {
+        display: flex !important;
+        flex-direction: column !important;
+        position: absolute !important;
+        top: 100% !important;
+        right: 0 !important;
+        left: auto !important;
+        background: linear-gradient(165deg, rgba(22, 27, 40, 0.82) 0%, rgba(10, 13, 20, 0.92) 100%) !important;
+        backdrop-filter: blur(28px) saturate(190%) contrast(105%) brightness(1.05) !important;
+        -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(105%) brightness(1.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.32) !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.45) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.85),
+                    0 10px 28px -6px rgba(0, 0, 0, 0.6),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+                    inset 0 0 24px rgba(255, 255, 255, 0.03) !important;
+        padding: 10px 8px 12px !important;
+        margin-top: 10px !important;
+        margin-right: 8px !important;
+        min-width: 260px !important;
+        max-width: min(320px, calc(100vw - 20px)) !important;
+        max-height: calc(100vh - 85px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        scrollbar-width: thin;
+        z-index: 1050 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Bottom-header mobile variant support */
+    html.fxn-header-bottom #navbar.in,
+    html.fxn-header-bottom #navbar.collapsing,
+    body.fxn-header-bottom #navbar.in,
+    body.fxn-header-bottom #navbar.collapsing {
+        top: auto !important;
+        bottom: 100% !important;
+        margin-top: 0 !important;
+        margin-bottom: 12px !important;
+        border-radius: 16px !important;
+    }
+
+    /* Flatten inner UL lists so all items participate in the flex container */
+    .navbar-collapse > ul.nav.navbar-nav,
+    .navbar-collapse > ul.nav.navbar-nav.navbar-right,
+    #navbar > ul.nav.navbar-nav,
+    #navbar > ul.nav.navbar-nav.navbar-right {
+        display: contents !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Remove harsh default white/gray solid lines */
+    #navbar,
+    #navbar ul,
+    #navbar li,
+    #navbar a,
+    #header #navbar.in,
+    #header #navbar.collapsing,
+    #navbar .navbar-nav>li,
+    #navbar .navbar-nav>li>a,
+    #navbar .navbar-nav.logged>li>a,
+    #navbar .navbar-nav .open>a,
+    #navbar .dropdown-menu>li,
+    #navbar .dropdown-menu>li+li,
+    #navbar .dropdown-menu .dropdown-menu>li,
+    #navbar .dropdown-menu>li:first-child {
+        border-top: none !important;
+        border-bottom: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Clean ergonomic card items */
+    .navbar-collapse .navbar-nav>li>a,
+    .navbar-collapse .dropdown-menu>li>a,
+    #navbar .navbar-nav>li>a,
+    #navbar .dropdown-menu>li>a {
+        display: flex !important;
+        align-items: center !important;
+        padding: 9px 14px !important;
+        margin: 2px 4px !important;
+        border-radius: 10px !important;
+        font-size: 13.5px !important;
+        font-weight: 500 !important;
+        color: #e2e8f0 !important;
+        background: transparent !important;
+        transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        text-decoration: none !important;
+        line-height: 1.4 !important;
+        position: relative !important;
+    }
+
+    .navbar-collapse .navbar-nav>li>a:hover,
+    .navbar-collapse .navbar-nav>li>a:focus,
+    .navbar-collapse .dropdown-menu>li>a:hover,
+    .navbar-collapse .dropdown-menu>li>a:focus,
+    #navbar .navbar-nav>li>a:hover,
+    #navbar .navbar-nav>li>a:focus,
+    #navbar .dropdown-menu>li>a:hover,
+    #navbar .dropdown-menu>li>a:focus {
+        color: #ffffff !important;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        transform: translateX(3px) !important;
+    }
+
+    /* ─── Logical Grouping & Ordering ─── */
+    /* 1. User Header & Profile (Top) */
+    .navbar-collapse li:has(a.user-link),
+    .navbar-collapse li:has(.user-link-name),
+    .navbar-collapse li[data-fxn-mobile-item="user-header"],
+    #navbar li:has(a.user-link),
+    #navbar li:has(.user-link-name),
+    #navbar li[data-fxn-mobile-item="user-header"] {
+        order: 1 !important;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.25) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+        order: 1 !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        margin: 2px 4px 4px !important;
+        padding: 2px !important;
+    }
+    #navbar li:has(a.user-link) a.user-link,
+    #navbar li[data-fxn-mobile-item="user-header"] a,
+    .navbar-collapse li:has(a.user-link) a.user-link,
+    .navbar-collapse li[data-fxn-mobile-item="user-header"] a {
+        font-weight: 600 !important;
+        font-size: 14.5px !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 6px 10px !important;
+    }
+
+    /* Hide redundant "Профиль" text/badge inside dropdown */
+    .navbar-collapse .user-link-desc,
+    #navbar .user-link-desc,
+    .navbar-collapse a.user-link .user-link-desc,
+    #navbar a.user-link .user-link-desc,
+    .navbar-collapse li[data-fxn-mobile-item="user-profile"],
+    #navbar li[data-fxn-mobile-item="user-profile"],
+    .navbar-collapse li:has(a[href*="/users/"]):not(:has(.user-link-name)),
+    #navbar li:has(a[href*="/users/"]):not(:has(.user-link-name)) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 2. Commerce & Trading */
+    #navbar li:has(a[href*="/chat/"]),
+    #navbar li[data-fxn-mobile-item="chat"] {
+        order: 10 !important;
+    }
+    #navbar li:has(a[href*="/orders/trade"]),
+    #navbar li[data-fxn-mobile-item="sales"] {
+        order: 11 !important;
+    }
+    #navbar li:has(a[href="/orders/"]):not(:has(a[href*="/orders/trade"])),
+    #navbar li:has(a[href*="/orders/"]):not(:has(a[href*="/orders/trade"])):not(:has(a[href*="/chat/"])),
+    #navbar li[data-fxn-mobile-item="orders"] {
+        order: 12 !important;
+    }
+    #navbar li:has(a[href*="/finances/"]),
+    #navbar li[data-fxn-mobile-item="finance"] {
+        order: 13 !important;
+    }
+
+    /* 3. Features, Games & Foxen */
+    #navbar li#foxenButtonLi,
+    #navbar li:has(#foxenButton),
+    #navbar li[data-fxn-mobile-item="foxen"] {
+        order: 20 !important;
+    }
+    #navbar li:has(a.menu-item-fp-games),
+    #navbar li:has(a[href*="/games/"]),
+    #navbar li.menu-item-fp-games,
+    #navbar li[data-fxn-mobile-item="games"] {
+        order: 21 !important;
+    }
+    #navbar li:has(a[href*="/lootery"]),
+    #navbar li:has(a.menu-item-lootery),
+    #navbar li[data-fxn-mobile-item="lootery"] {
+        order: 22 !important;
+    }
+    #navbar li:has(a.menu-item-info),
+    #navbar li:has(a[href*="/help/"]),
+    #navbar li:has(a[href*="/trade/info"]),
+    #navbar li[data-fxn-mobile-item="help"] {
+        order: 23 !important;
+    }
+
+    /* 4. Settings & System */
+    #navbar li:has(a[href*="/settings/"]),
+    #navbar li[data-fxn-mobile-item="settings"] {
+        order: 30 !important;
+    }
+    #navbar li:has(.menu-item-langs),
+    #navbar li:has(.menu-icon-lang-ru),
+    #navbar li:has(.menu-icon-lang-en),
+    #navbar li[data-fxn-mobile-item="languages"] {
+        order: 31 !important;
+    }
+    #navbar li:has(.menu-item-currencies),
+    #navbar li:has(.user-cy-switcher),
+    #navbar li[data-fxn-mobile-item="currencies"] {
+        order: 32 !important;
+    }
+    #navbar li:has(a[href*="/account/logout"]),
+    #navbar li:has(a.menu-item-logout),
+    #navbar li[data-fxn-mobile-item="logout"] {
+        order: 33 !important;
+    }
+
+    /* ─── Glowing Gradient Separators Between Logical Sections ─── */
+    #navbar li:has(a[href*="/chat/"])::before,
+    #navbar li[data-fxn-mobile-item="chat"]::before,
+    #navbar li#foxenButtonLi::before,
+    #navbar li[data-fxn-mobile-item="foxen"]::before,
+    #navbar li:has(a[href*="/settings/"])::before,
+    #navbar li[data-fxn-mobile-item="settings"]::before,
+    #navbar li:has(a[href*="/account/logout"])::before,
+    #navbar li[data-fxn-mobile-item="logout"]::before {
+        content: "" !important;
+        display: block !important;
+        height: 1px !important;
+        margin: 6px 10px 8px !important;
+        background: linear-gradient(90deg, 
+            rgba(255, 255, 255, 0) 0%, 
+            rgba(255, 255, 255, 0.22) 20%, 
+            rgba(255, 255, 255, 0.40) 50%, 
+            rgba(255, 255, 255, 0.22) 80%, 
+            rgba(255, 255, 255, 0) 100%) !important;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.16) !important;
+        border: none !important;
+        pointer-events: none !important;
+    }
+
+    /* FOXEN button branding on mobile */
+    #navbar li#foxenButtonLi a,
+    #navbar li#foxenButtonLi #foxenButton {
+        color: var(--fxn-btn-color, var(--fxn-accent, #c026d3)) !important;
+        font-weight: 700 !important;
+        font-family: 'Jim Nightshade', cursive, sans-serif !important;
+        font-size: 20px !important;
+        letter-spacing: 2px !important;
+        text-shadow: 0 0 12px var(--fxn-accent-soft, rgba(192, 38, 211, 0.4)) !important;
+    }
+
+    /* Logout button styled with subtle warning tone */
+    #navbar li:has(a[href*="/account/logout"]) a,
+    #navbar li[data-fxn-mobile-item="logout"] a {
+        color: #fca5a5 !important;
+        opacity: 0.9 !important;
+    }
+    #navbar li:has(a[href*="/account/logout"]) a:hover,
+    #navbar li[data-fxn-mobile-item="logout"] a:hover {
+        color: #ffffff !important;
+        background: rgba(239, 68, 68, 0.16) !important;
+    }
+
+    /* Sub-dropdown menus (e.g. Help, Games, Languages) */
+    #navbar .dropdown-menu {
+        background: rgba(0, 0, 0, 0.3) !important;
+        border-radius: 10px !important;
+        margin: 4px 6px 6px 12px !important;
+        padding: 4px 0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+    }
+    #navbar .dropdown-menu>li>a {
+        padding: 7px 12px 7px 18px !important;
+        font-size: 13px !important;
+        color: #cbd5e1 !important;
+    }
+
+    /* Notification Badges */
+    #navbar .badge,
+    #navbar .navbar-right.logged>li>a>.badge {
+        margin-left: auto !important;
+        background: var(--fxn-active, var(--fxn-accent, #c026d3)) !important;
+        color: #ffffff !important;
+        font-size: 11px !important;
+        padding: 2px 7px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 0 8px var(--fxn-accent-soft, rgba(192, 38, 211, 0.4)) !important;
+    }
+}
+
+
+/* ==========================================================================
    Promo Game Search Autocomplete Dropdown (Frosted Glassmorphism Overlay)
    ========================================================================== */
 @keyframes fxn-search-dropdown-rise {
@@ -2475,6 +2803,8 @@ body.funpay-redesigned .chat {
 body.funpay-redesigned .chat-header {
     container-type: inline-size;
     container-name: chat-header;
+    position: relative !important;
+    z-index: 1060 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -2764,62 +3094,127 @@ body.funpay-redesigned .chat-header .chat-header-controls > button {
     line-height: 16px !important;
 }
 
-/* Glassmorphism for Chat Dropdown & 3-dots Menu */
+/* Cohesive Glassmorphism for Chat Dropdown & 3-dots Menu */
 .chat-header .dropdown-menu,
 .chat-header-controls .dropdown-menu,
 .chat-header .dropdown.open .dropdown-menu,
+.chat .chat-header .dropdown-menu,
 .chat .dropdown-menu,
 .dropdown-menu.dropdown-menu-right {
-    background: rgba(22, 24, 34, 0.75) !important;
-    backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+    background: rgba(18, 20, 29, 0.94) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
     padding: 6px !important;
-    min-width: 210px !important;
-    z-index: 1050 !important;
+    min-width: 235px !important;
+    z-index: 99999 !important;
     list-style: none !important;
 }
 
 .chat-header .dropdown-menu > li,
 .chat-header-controls .dropdown-menu > li,
 .chat .dropdown-menu > li {
-    margin: 1px 0 !important;
+    margin: 2px 0 !important;
     padding: 0 !important;
     list-style: none !important;
 }
 
+/* All links/buttons inside the chat dropdown */
 .chat-header .dropdown-menu > li > a,
 .chat-header-controls .dropdown-menu > li > a,
 .chat .dropdown-menu > li > a {
-    color: #e5e7eb !important;
-    border-radius: 8px !important;
-    padding: 8px 12px !important;
-    font-size: 13px !important;
+    color: #cbd5e1 !important;
+    border-radius: 9px !important;
+    padding: 7px 10px !important;
+    font-size: 13.5px !important;
     font-weight: 500 !important;
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
-    transition: background-color 0.15s ease, color 0.15s ease !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    transition: background 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.15s ease !important;
     text-decoration: none !important;
     white-space: nowrap !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    line-height: 1.3 !important;
 }
 
+/* Hover, focus, and active state overrides for all dropdown items */
 .chat-header .dropdown-menu > li > a:hover,
+.chat-header .dropdown-menu > li > a:focus,
+.chat-header .dropdown-menu > li > a:active,
 .chat-header-controls .dropdown-menu > li > a:hover,
+.chat-header-controls .dropdown-menu > li > a:focus,
+.chat-header-controls .dropdown-menu > li > a:active,
 .chat .dropdown-menu > li > a:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    outline: none !important;
 }
 
+/* Subtle icon badge slot for every dropdown item */
+.chat-header .dropdown-menu .fxn-chat-dd-icon,
+.chat-header-controls .dropdown-menu .fxn-chat-dd-icon {
+    width: 26px !important;
+    height: 26px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    border-radius: 7px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e2e8f0 !important;
+    transition: background 0.15s ease, transform 0.15s ease !important;
+}
+
+.chat-header .dropdown-menu > li > a:hover .fxn-chat-dd-icon,
+.chat-header-controls .dropdown-menu > li > a:hover .fxn-chat-dd-icon {
+    background: rgba(255, 255, 255, 0.12) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Dropdown label text */
+.chat-header .dropdown-menu .fxn-chat-dd-text,
+.chat-header-controls .dropdown-menu .fxn-chat-dd-text {
+    flex-grow: 1 !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Dividers */
 .chat-header .dropdown-menu .divider,
 .chat-header-controls .dropdown-menu .divider,
-.chat .dropdown-menu .divider {
+.chat .dropdown-menu .divider,
+.chat-header .dropdown-menu .foxen-divider {
     height: 1px !important;
-    margin: 6px 4px !important;
+    margin: 5px 4px !important;
     background: rgba(255, 255, 255, 0.08) !important;
     border: none !important;
+}
+
+/* Status circle dots inside user notes status items */
+.chat-header .dropdown-menu .foxen-status-circle,
+.chat-header-controls .dropdown-menu .foxen-status-circle {
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    display: block !important;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* Fix FunPay Native Modals (Notice modal layout & left-clipping fix) */
@@ -6777,11 +7172,11 @@ a.contact-item:hover {
     align-items: center !important;
     gap: 6px !important;
     flex-shrink: 0 !important;
+    position: relative !important;
 }
 
-.fxn-chat-action-btn,
-#foxen-read-all-btn,
-#foxen-filter-marked-btn {
+/* 3-dots trigger button */
+.fxn-chat-action-btn {
     width: 28px !important;
     height: 28px !important;
     min-width: 28px !important;
@@ -6804,9 +7199,7 @@ a.contact-item:hover {
     flex-shrink: 0 !important;
 }
 
-.fxn-chat-action-btn:hover,
-#foxen-read-all-btn:hover,
-#foxen-filter-marked-btn:hover {
+.fxn-chat-action-btn:hover {
     color: #ffffff !important;
     background: rgba(255, 255, 255, 0.12) !important;
     border-color: var(--fxn-accent, #c026d3) !important;
@@ -6814,9 +7207,7 @@ a.contact-item:hover {
     transform: translateY(-1px) !important;
 }
 
-.fxn-chat-action-btn .material-icons,
-#foxen-read-all-btn .material-icons,
-#foxen-filter-marked-btn .material-icons {
+.fxn-chat-action-btn .material-icons {
     font-size: 18px !important;
     line-height: 1 !important;
     display: inline-flex !important;
@@ -6827,6 +7218,200 @@ a.contact-item:hover {
     transform: none !important;
     width: auto !important;
     height: auto !important;
+}
+
+/* Active indicator dot */
+.fxn-chat-action-btn .fxn-chat-active-dot {
+    position: absolute !important;
+    top: 3px !important;
+    right: 3px !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: var(--fxn-accent, #c026d3) !important;
+    box-shadow: 0 0 6px var(--fxn-accent, #c026d3) !important;
+    opacity: 0 !important;
+    transform: scale(0.4) !important;
+    transition: all 0.2s ease !important;
+    pointer-events: none !important;
+}
+
+.fxn-chat-action-btn.fxn-has-active .fxn-chat-active-dot {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+}
+
+/* Dropdown Container */
+.fxn-chat-dropdown-wrap {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.fxn-chat-header-dropdown {
+    display: none !important;
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    min-width: 220px !important;
+    max-width: 280px !important;
+    padding: 6px 8px !important;
+    background: linear-gradient(165deg, rgba(22, 27, 40, 0.88) 0%, rgba(12, 15, 23, 0.96) 100%) !important;
+    backdrop-filter: blur(24px) saturate(180%) contrast(105%) brightness(1.05) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) contrast(105%) brightness(1.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.85),
+                0 6px 16px -4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+    z-index: 99999 !important;
+    box-sizing: border-box !important;
+    animation: fxnChatDropIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.fxn-chat-dropdown-wrap.open .fxn-chat-header-dropdown {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+}
+
+@keyframes fxnChatDropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Dropdown Menu Items */
+.fxn-chat-dd-item {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 32px !important;
+    padding: 7px 10px !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 9px !important;
+    color: #e2e8f0 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    user-select: none !important;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease !important;
+    text-align: left !important;
+}
+
+.fxn-chat-dd-item:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+.fxn-chat-dd-ico {
+    font-size: 17px !important;
+    color: #94a3b8 !important;
+    margin-right: 9px !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: color 0.15s ease !important;
+}
+
+.fxn-chat-dd-item:hover .fxn-chat-dd-ico {
+    color: var(--fxn-accent, #c026d3) !important;
+}
+
+.fxn-chat-dd-text {
+    flex-grow: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.fxn-chat-dd-divider {
+    height: 1px !important;
+    margin: 4px 6px !important;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.15) 25%, 
+        rgba(255, 255, 255, 0.15) 75%, 
+        rgba(255, 255, 255, 0) 100%) !important;
+    border: none !important;
+    pointer-events: none !important;
+}
+
+.fxn-chat-dd-action {
+    color: #cbd5e1 !important;
+}
+
+.fxn-chat-dd-action:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateX(2px) !important;
+}
+
+.fxn-chat-dd-action:active {
+    transform: translateX(1px) scale(0.99) !important;
+}
+
+/* Mini Switch Toggle (iOS style) */
+.fxn-mini-switch {
+    position: relative !important;
+    display: inline-block !important;
+    width: 34px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+    margin-left: 10px !important;
+}
+
+.fxn-mini-switch input {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    pointer-events: none !important;
+}
+
+.fxn-mini-slider {
+    position: absolute !important;
+    cursor: pointer !important;
+    inset: 0 !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    border-radius: 18px !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.fxn-mini-slider::before {
+    position: absolute !important;
+    content: "" !important;
+    height: 12px !important;
+    width: 12px !important;
+    left: 2px !important;
+    bottom: 2px !important;
+    background: #ffffff !important;
+    border-radius: 50% !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+.fxn-mini-switch input:checked + .fxn-mini-slider {
+    background: var(--fxn-accent, #c026d3) !important;
+    border-color: var(--fxn-accent, #c026d3) !important;
+    box-shadow: 0 0 10px var(--fxn-accent-soft, rgba(192, 38, 211, 0.4)) !important;
+}
+
+.fxn-mini-switch input:checked + .fxn-mini-slider::before {
+    transform: translateX(16px) !important;
 }
 
 /* Active state for filter marked */
@@ -15446,3 +16031,968 @@ body:has(.fxn-popup.active) .dropdown-menu {
 #foxenLinkConfirmModal[data-theme="light"] .fxn-link-modal-success p {
     color: #64748b !important;
 }
+
+
+/* =============================================================================
+   PROFILE CARD CUSTOMIZATION & RMT HUB STATS BANNER
+   ============================================================================= */
+.fxn-profile-card,
+.container.profile-header.fxn-profile-card {
+    background: var(--fxn-theme-container-bg, rgba(18, 18, 18, 0.75)) !important;
+    border-radius: var(--fxn-theme-border-radius, 16px) !important;
+}
+
+html.fxn-glass-enabled .fxn-profile-card,
+body.fxn-glass-enabled .fxn-profile-card,
+html.fxn-glass-enabled .container.profile-header.fxn-profile-card,
+body.fxn-glass-enabled .container.profile-header.fxn-profile-card {
+    backdrop-filter: blur(var(--fxn-theme-glass-blur, 12px)) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(var(--fxn-theme-glass-blur, 12px)) saturate(140%) !important;
+}
+
+html:not(.fxn-glass-enabled) .fxn-profile-card,
+body:not(.fxn-glass-enabled) .fxn-profile-card,
+html:not(.fxn-glass-enabled) .container.profile-header.fxn-profile-card,
+body:not(.fxn-glass-enabled) .container.profile-header.fxn-profile-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Eliminate double glass blur on RMT Hub banner inside profile card */
+.fxn-profile-card .fxn-rmth-banner,
+.container.profile-header .fxn-rmth-banner,
+.profile .fxn-rmth-banner {
+    background: rgba(255, 255, 255, 0.035) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+}
+
+.fxn-profile-card .fxn-rmth-banner:hover,
+.container.profile-header .fxn-rmth-banner:hover,
+.profile .fxn-rmth-banner:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+
+
+/* ==========================================================================
+   Streamer Mode: Left Block - Blur Contact List (Размытие списка чатов)
+   ========================================================================== */
+html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .media-user-name,
+html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .contact-item-message,
+html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .avatar-photo,
+html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .media-object,
+html.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .contact-item-time,
+html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .media-user-name,
+html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .contact-item-message,
+html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .avatar-photo,
+html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .media-object,
+html.fxn-blur-chats a.contact-item:not(.active):not(:hover) .contact-item-time,
+html.fxn-blur-chats .contact-item:not(.active):not(:hover) .media-user-name,
+html.fxn-blur-chats .contact-item:not(.active):not(:hover) .contact-item-message,
+body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .media-user-name,
+body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .contact-item-message,
+body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .avatar-photo,
+body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .media-object,
+body.fxn-blur-chats .contact-list .contact-item:not(.active):not(:hover) .contact-item-time,
+body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .media-user-name,
+body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .contact-item-message,
+body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .avatar-photo,
+body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .media-object,
+body.fxn-blur-chats a.contact-item:not(.active):not(:hover) .contact-item-time,
+body.fxn-blur-chats .contact-item:not(.active):not(:hover) .media-user-name,
+body.fxn-blur-chats .contact-item:not(.active):not(:hover) .contact-item-message {
+    filter: blur(6px) !important;
+    user-select: none !important;
+}
+
+/* Active / Selected chat in the contact list is NEVER blurred */
+html.fxn-blur-chats .contact-list .contact-item.active,
+html.fxn-blur-chats .contact-list .contact-item.active *,
+html.fxn-blur-chats a.contact-item.active,
+html.fxn-blur-chats a.contact-item.active *,
+html.fxn-blur-chats .contact-item.active,
+html.fxn-blur-chats .contact-item.active *,
+body.fxn-blur-chats .contact-list .contact-item.active,
+body.fxn-blur-chats .contact-list .contact-item.active *,
+body.fxn-blur-chats a.contact-item.active,
+body.fxn-blur-chats a.contact-item.active *,
+body.fxn-blur-chats .contact-item.active,
+body.fxn-blur-chats .contact-item.active * {
+    filter: blur(0px) !important;
+    user-select: auto !important;
+}
+
+/* Hover to peek at any blurred contact item - smoothly dissolves blur */
+html.fxn-blur-chats .contact-list .contact-item:hover,
+html.fxn-blur-chats .contact-list .contact-item:hover *,
+html.fxn-blur-chats .contact-list .contact-item:not(.active):hover,
+html.fxn-blur-chats .contact-list .contact-item:not(.active):hover *,
+html.fxn-blur-chats a.contact-item:not(.active):hover,
+html.fxn-blur-chats a.contact-item:not(.active):hover *,
+html.fxn-blur-chats a.contact-item:hover,
+html.fxn-blur-chats a.contact-item:hover *,
+html.fxn-blur-chats .contact-item:hover,
+html.fxn-blur-chats .contact-item:hover *,
+body.fxn-blur-chats .contact-list .contact-item:hover,
+body.fxn-blur-chats .contact-list .contact-item:hover *,
+body.fxn-blur-chats .contact-list .contact-item:not(.active):hover,
+body.fxn-blur-chats .contact-list .contact-item:not(.active):hover *,
+body.fxn-blur-chats a.contact-item:not(.active):hover,
+body.fxn-blur-chats a.contact-item:not(.active):hover *,
+body.fxn-blur-chats a.contact-item:hover,
+body.fxn-blur-chats a.contact-item:hover *,
+body.fxn-blur-chats .contact-item:hover,
+body.fxn-blur-chats .contact-item:hover * {
+    filter: blur(0px) !important;
+    user-select: auto !important;
+}
+
+/* Smooth transition for contact list items */
+.contact-item,
+.contact-item .media-user-name,
+.contact-item .contact-item-message,
+.contact-item .avatar-photo,
+.contact-item .media-object,
+.contact-item .contact-item-time {
+    transition: filter 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* ==========================================================================
+   Streamer Mode: Center Block - Blur Active Messages (Размытие сообщений)
+   ========================================================================== */
+html.fxn-blur-messages .chat-msg-text,
+html.fxn-blur-messages .chat-message-text,
+html.fxn-blur-messages .chat-msg-item:not(:hover) .media-user-name,
+html.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-author-link,
+html.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-author,
+html.fxn-blur-messages .chat-msg-item:not(:hover) img,
+html.fxn-blur-messages .chat-msg-item:not(:hover) .chat-img,
+html.fxn-blur-messages .chat-msg-item:not(:hover) a[href*="/s/chat/"],
+html.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-body,
+html.fxn-blur-messages .chat-detail-header:not(:hover) .media-user-name,
+html.fxn-blur-messages .chat-detail-header:not(:hover) .media-user-name a,
+html.fxn-blur-messages .chat-detail-header:not(:hover) .media-left a,
+html.fxn-blur-messages .chat-header:not(:hover) .chat-header-title,
+html.fxn-blur-messages .chat-header:not(:hover) .media-user-name,
+html.fxn-blur-messages .chat-header:not(:hover) .media-user-name a,
+html.fxn-blur-messages .chat-header:not(:hover) .media-left a,
+body.fxn-blur-messages .chat-msg-text,
+body.fxn-blur-messages .chat-message-text,
+body.fxn-blur-messages .chat-msg-item:not(:hover) .media-user-name,
+body.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-author-link,
+body.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-author,
+body.fxn-blur-messages .chat-msg-item:not(:hover) img,
+body.fxn-blur-messages .chat-msg-item:not(:hover) .chat-img,
+body.fxn-blur-messages .chat-msg-item:not(:hover) a[href*="/s/chat/"],
+body.fxn-blur-messages .chat-msg-item:not(:hover) .chat-msg-body,
+body.fxn-blur-messages .chat-detail-header:not(:hover) .media-user-name,
+body.fxn-blur-messages .chat-detail-header:not(:hover) .media-user-name a,
+body.fxn-blur-messages .chat-detail-header:not(:hover) .media-left a,
+body.fxn-blur-messages .chat-header:not(:hover) .chat-header-title,
+body.fxn-blur-messages .chat-header:not(:hover) .media-user-name,
+body.fxn-blur-messages .chat-header:not(:hover) .media-user-name a,
+body.fxn-blur-messages .chat-header:not(:hover) .media-left a {
+    filter: blur(6px) !important;
+    user-select: none !important;
+}
+
+/* Hover to peek at a blurred message or header */
+html.fxn-blur-messages .chat-msg-item:hover,
+html.fxn-blur-messages .chat-msg-item:hover *,
+body.fxn-blur-messages .chat-msg-item:hover,
+body.fxn-blur-messages .chat-msg-item:hover *,
+html.fxn-blur-messages .chat-header:hover,
+html.fxn-blur-messages .chat-header:hover *,
+body.fxn-blur-messages .chat-header:hover,
+body.fxn-blur-messages .chat-header:hover *,
+html.fxn-blur-messages .chat-detail-header:hover,
+html.fxn-blur-messages .chat-detail-header:hover *,
+body.fxn-blur-messages .chat-detail-header:hover,
+body.fxn-blur-messages .chat-detail-header:hover * {
+    filter: blur(0px) !important;
+    user-select: auto !important;
+}
+
+/* Never blur dropdown menus, popovers, or interactive action menus in chat */
+.chat-header .dropdown-menu,
+.chat-header .dropdown-menu *,
+.chat-header-controls .dropdown-menu,
+.chat-header-controls .dropdown-menu *,
+.chat .dropdown-menu,
+.chat .dropdown-menu *,
+.dropdown-menu.dropdown-menu-right,
+.dropdown-menu.dropdown-menu-right *,
+.fxn-chat-dd-item,
+.fxn-chat-dd-item * {
+    filter: none !important;
+    -webkit-filter: none !important;
+    user-select: auto !important;
+}
+
+/* Layering to prevent messages underneath dropdown from stealing hover/events */
+.chat-header,
+.chat-full-header,
+.chat-detail-header,
+body.funpay-redesigned .chat-header {
+    position: relative !important;
+    z-index: 1060 !important;
+}
+.chat-header-controls,
+.chat-header .dropdown,
+.chat-header-controls .dropdown {
+    position: relative !important;
+    z-index: 1061 !important;
+}
+.chat-header .dropdown.open,
+.chat-header-controls .dropdown.open {
+    z-index: 1065 !important;
+}
+.chat-header .dropdown-menu,
+.chat-header-controls .dropdown-menu,
+.chat .chat-header .dropdown-menu,
+.chat .dropdown-menu,
+.dropdown-menu.dropdown-menu-right {
+    z-index: 99999 !important;
+}
+.fxn-chat-dd-item .fxn-chat-dd-icon,
+.fxn-chat-dd-item .fxn-chat-dd-text,
+.fxn-chat-dd-item svg {
+    pointer-events: none !important;
+}
+
+/* Smooth transition for messages */
+.chat-msg-text,
+.chat-message-text,
+.chat-msg-item .media-user-name,
+.chat-msg-item .chat-msg-author-link,
+.chat-msg-item .chat-msg-author,
+.chat-msg-item img,
+.chat-msg-item .chat-img,
+.chat-msg-item .chat-msg-body,
+.chat-header .media-user-name,
+.chat-header .media-user-name a,
+.chat-header .media-left a,
+.chat-detail-header .media-user-name,
+.chat-detail-header .media-user-name a,
+.chat-detail-header .media-left a {
+    transition: filter 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Active state & filled icon styling for chat header dropdown items */
+.chat-header .dropdown-menu .fxn-chat-dd-icon svg,
+.chat-header-controls .dropdown-menu .fxn-chat-dd-icon svg {
+    display: block !important;
+    width: 15px !important;
+    height: 15px !important;
+    flex-shrink: 0 !important;
+}
+
+.chat-header .dropdown-menu .fxn-chat-dd-item.active,
+.chat-header-controls .dropdown-menu .fxn-chat-dd-item.active {
+    background: rgba(168, 85, 247, 0.16) !important;
+    color: #ffffff !important;
+}
+
+.chat-header .dropdown-menu .fxn-chat-dd-item.active:hover,
+.chat-header-controls .dropdown-menu .fxn-chat-dd-item.active:hover {
+    background: rgba(168, 85, 247, 0.26) !important;
+    color: #ffffff !important;
+}
+
+.chat-header .dropdown-menu .fxn-chat-dd-item.active .fxn-chat-dd-icon,
+.chat-header-controls .dropdown-menu .fxn-chat-dd-item.active .fxn-chat-dd-icon {
+    background: rgba(168, 85, 247, 0.28) !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.45) !important;
+}
+
+
+/* ==========================================================================
+   Custom Profile Identity & Perfectly Centered Nickname with Emoji Beside It
+   ========================================================================== */
+.fxn-profile-identity {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    align-items: center !important;
+    justify-items: center !important;
+    margin-bottom: 16px !important;
+    width: 100% !important;
+}
+
+.fxn-profile-identity::before {
+    content: "" !important;
+    display: block !important;
+    grid-column: 1 !important;
+}
+
+.fxn-profile-name {
+    grid-column: 2 !important;
+    text-align: center !important;
+    font-size: 26px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Badges slot in Column 3 sits immediately to the right of the centered nickname */
+.fxn-profile-identity .fxn-profile-badges-slot,
+.fxn-profile-identity > .user-badges,
+.fxn-profile-identity > .fxn-custom-emoji-img,
+.fxn-profile-identity > .fxn-custom-emoji-badge {
+    grid-column: 3 !important;
+    justify-self: start !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    margin: 0 0 0 2px !important;
+    line-height: 1.2 !important;
+}
+
+.fxn-profile-badges-slot .user-badges,
+.fxn-profile-badges-slot .badge {
+    font-size: 13px !important;
+}
+
+.fxn-profile-badges-slot .fxn-custom-emoji-img,
+.fxn-profile-identity .fxn-custom-emoji-img,
+.fxn-profile-name > .fxn-custom-emoji-img,
+.profile-header .fxn-custom-emoji-img,
+.profile .fxn-custom-emoji-img,
+.container.profile-header .fxn-custom-emoji-img,
+h1 .fxn-custom-emoji-img {
+    width: 48px !important;
+    height: 48px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    top: 1px !important;
+    margin-left: -6px !important;
+    margin-right: 0px !important;
+    object-fit: contain !important;
+}
+
+.fxn-profile-badges-slot .fxn-custom-emoji-badge,
+.fxn-profile-identity .fxn-custom-emoji-badge,
+.fxn-profile-name > .fxn-custom-emoji-badge,
+.profile-header .fxn-custom-emoji-badge,
+.profile .fxn-custom-emoji-badge,
+.container.profile-header .fxn-custom-emoji-badge,
+h1 .fxn-custom-emoji-badge {
+    font-size: 36px !important;
+    line-height: 1 !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    top: 1px !important;
+    margin-left: -6px !important;
+    margin-right: 0px !important;
+}
+
+/* Fallback: If emoji is placed inside .fxn-profile-name, float it absolutely to the right without shifting the text center */
+.fxn-profile-name > .fxn-custom-emoji-img,
+.fxn-profile-name > .fxn-custom-emoji-badge {
+    position: absolute !important;
+    left: calc(100% - 6px) !important;
+    top: calc(50% + 1px) !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+}
+
+.fxn-profile-name > .fxn-custom-emoji-img:hover,
+.fxn-profile-name > .fxn-custom-emoji-badge:hover {
+    transform: translateY(-50%) scale(1.15) rotate(4deg) !important;
+}
+
+/* ==========================================================================
+   FOXEN QUICK PINNED PAGES (Spotlight Launcher)
+   Apple macOS Minimalist Design & Theme Sync (Dark, Light, Transparent)
+   ========================================================================== */
+
+dialog.fxn-quick-pages-dialog {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding-top: 14vh !important;
+    box-sizing: border-box !important;
+    z-index: 2147483640 !important;
+    overflow: hidden !important;
+    overscroll-behavior: contain !important;
+    outline: none !important;
+}
+
+dialog.fxn-quick-pages-dialog:not([open]) {
+    display: none !important;
+}
+
+dialog.fxn-quick-pages-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.52) !important;
+    backdrop-filter: blur(14px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+    overflow: hidden !important;
+    overscroll-behavior: contain !important;
+}
+
+dialog.fxn-quick-pages-dialog.theme-light::backdrop {
+    background: rgba(0, 0, 0, 0.26) !important;
+    backdrop-filter: blur(12px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+}
+
+dialog.fxn-quick-pages-dialog.theme-transparent::backdrop {
+    background: rgba(0, 0, 0, 0.38) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Palette Window Container */
+.fxn-quick-pages-dialog .fxn-qp-window {
+    width: 600px;
+    max-width: 92vw;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 2;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif !important;
+    box-sizing: border-box;
+    animation: fxnQpEntrance 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fxnQpEntrance {
+    0% {
+        opacity: 0;
+        transform: scale(0.96) translateY(-12px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* --- Dark Theme (Default) --- */
+.fxn-quick-pages-dialog.theme-dark .fxn-qp-window,
+.fxn-quick-pages-dialog:not(.theme-light):not(.theme-transparent) .fxn-qp-window {
+    background: rgba(26, 26, 30, 0.88);
+    backdrop-filter: blur(36px) saturate(190%);
+    -webkit-backdrop-filter: blur(36px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 32px 75px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    color: #f5f5f7;
+}
+
+/* --- Light Theme --- */
+.fxn-quick-pages-dialog.theme-light .fxn-qp-window {
+    background: rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(36px) saturate(190%);
+    -webkit-backdrop-filter: blur(36px) saturate(190%);
+    border: 1px solid rgba(0, 0, 0, 0.09);
+    box-shadow: 0 32px 75px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
+    color: #1c1c1e;
+}
+
+/* --- Transparent Theme (Liquid Glass) --- */
+.fxn-quick-pages-dialog.theme-transparent .fxn-qp-window {
+    background: rgba(14, 14, 18, 0.54);
+    backdrop-filter: blur(var(--fxn-glass-blur, 20px)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--fxn-glass-blur, 20px)) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 32px 85px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+    color: #ffffff;
+}
+
+/* Header & Search Bar */
+.fxn-qp-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 16px;
+    box-sizing: border-box;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-header {
+    border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+
+.fxn-qp-search-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fxn-accent, #c026d3);
+    opacity: 0.9;
+    flex-shrink: 0;
+}
+
+.fxn-qp-search-input {
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    font-size: 15.5px !important;
+    font-weight: 480 !important;
+    color: inherit !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
+    font-family: inherit !important;
+}
+
+.fxn-qp-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.42);
+    font-weight: 400;
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-search-input::placeholder {
+    color: rgba(0, 0, 0, 0.38);
+}
+
+.fxn-qp-clear-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    padding: 0;
+}
+
+.fxn-qp-clear-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-clear-btn {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-clear-btn:hover {
+    background: rgba(0, 0, 0, 0.12);
+}
+
+/* Header Action Buttons (Pin Current, Close) */
+.fxn-qp-header-btn {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    opacity: 0.55;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.fxn-qp-header-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-header-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.fxn-qp-header-btn.pinned {
+    color: var(--fxn-accent, #c026d3) !important;
+    opacity: 1 !important;
+    background: rgba(192, 38, 211, 0.16) !important;
+}
+
+.fxn-qp-header-btn.spinning svg {
+    animation: fxnQpSpin 0.7s linear infinite;
+}
+
+@keyframes fxnQpSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Rebind Hotkey Pill */
+.fxn-qp-rebind-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 550;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Mono", Menlo, monospace;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.3;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.fxn-qp-rebind-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    transform: translateY(-0.5px);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-rebind-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.09);
+    color: rgba(0, 0, 0, 0.65);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-rebind-btn:hover {
+    background: rgba(0, 0, 0, 0.09);
+    color: #111113;
+}
+
+.fxn-qp-rebind-icon {
+    display: flex;
+    align-items: center;
+    opacity: 0.8;
+}
+
+/* Hotkey recording active state */
+.fxn-qp-rebind-btn.recording {
+    border-color: var(--fxn-accent, #c026d3) !important;
+    color: var(--fxn-accent, #c026d3) !important;
+    background: rgba(192, 38, 211, 0.15) !important;
+    box-shadow: 0 0 0 2px var(--fxn-accent-soft, rgba(192, 38, 211, 0.3)) !important;
+    animation: fxnQpPulse 0.9s infinite alternate;
+}
+
+@keyframes fxnQpPulse {
+    from { opacity: 0.85; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.03); }
+}
+
+/* Results Content */
+.fxn-qp-content {
+    box-sizing: border-box;
+}
+
+.fxn-qp-scroll-body {
+    max-height: 430px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px 10px 12px;
+    box-sizing: border-box;
+}
+
+.fxn-qp-scroll-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.fxn-qp-scroll-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fxn-qp-scroll-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 3px;
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-scroll-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.14);
+}
+
+/* Section Headings */
+.fxn-qp-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px 4px;
+    font-size: 10.5px;
+    font-weight: 650;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+    user-select: none;
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-section-heading {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.fxn-qp-badge-count {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-badge-count {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.fxn-qp-items-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+/* Individual List Item */
+.fxn-qp-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.14s ease, transform 0.14s ease;
+    user-select: none;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.fxn-qp-item:hover,
+.fxn-qp-item.selected {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.fxn-qp-item.selected {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-item:hover,
+.fxn-quick-pages-dialog.theme-light .fxn-qp-item.selected {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-item.selected {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.fxn-quick-pages-dialog.theme-transparent .fxn-qp-item:hover,
+.fxn-quick-pages-dialog.theme-transparent .fxn-qp-item.selected {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.fxn-qp-item-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+.fxn-qp-item-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fxn-qp-item-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fxn-qp-item-title {
+    font-size: 13.5px;
+    font-weight: 560;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fxn-qp-external-icon {
+    display: flex;
+    align-items: center;
+    opacity: 0.5;
+}
+
+.fxn-qp-item-desc {
+    font-size: 11.5px;
+    opacity: 0.55;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Mono", Menlo, monospace;
+}
+
+.fxn-qp-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.fxn-qp-item-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Mono", monospace;
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-item-number {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.fxn-qp-action-btn {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    opacity: 0.35;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.fxn-qp-action-btn:hover {
+    opacity: 0.85;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-action-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* FILLED PIN styling */
+.fxn-qp-action-btn.fxn-qp-pin-btn.pinned {
+    color: var(--fxn-accent, #c026d3) !important;
+    opacity: 1 !important;
+}
+
+.fxn-qp-action-btn.fxn-qp-delete-btn:hover {
+    color: #ef4444;
+    opacity: 1;
+}
+
+.fxn-qp-item-jump-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all 0.15s ease;
+    color: var(--fxn-accent, #c026d3);
+}
+
+.fxn-qp-item:hover .fxn-qp-item-jump-icon,
+.fxn-qp-item.selected .fxn-qp-item-jump-icon {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Empty State */
+.fxn-qp-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    color: inherit;
+}
+
+.fxn-qp-empty-icon {
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 10px;
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-empty-icon {
+    color: rgba(0, 0, 0, 0.25);
+}
+
+.fxn-qp-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.fxn-qp-empty-desc {
+    font-size: 12.5px;
+    opacity: 0.55;
+    max-width: 380px;
+    line-height: 1.4;
+}
+
+/* Toast Floating Pill */
+.fxn-qp-toast {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(18, 18, 22, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: #ffffff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 550;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.fxn-quick-pages-dialog.theme-light .fxn-qp-toast {
+    background: rgba(255, 255, 255, 0.95);
+    color: #111113;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.fxn-qp-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+

@@ -1,4 +1,5 @@
 import { getAuthDetailsForBackground, fetchWithTabFallback, clearAuthCache } from './auth_helper.js';
+import { parseHtmlViaOffscreen as parseViaOffscreen } from './offscreen_helper.js';
 import { telegramNotifyNewOrders } from './telegram.js';
 
 function randomTag() {
@@ -183,15 +184,7 @@ async function getAuth() {
     return res;
 }
 
-async function parseViaOffscreen(html, action, extra = {}) {
-    return Promise.resolve().then(() => {
-        if (action === 'parseSellerLotPrice') return window[action](html, extra.offerId);
-        else if (action === 'solveCloneForm') return window[action](html, extra.attributes, extra.attributePairs);
-        else if (action === 'parseBuyerHistory') return window[action](html, extra.buyerUserId);
-        else if (typeof window[action] === 'function') return window[action](html);
-        else throw new Error('Unknown parser action: ' + action);
-    });
-}
+// parseViaOffscreen imported from ./offscreen_helper.js
 
 async function sendChatMessage(chatId, text, auth) {
     // Для корректной работы раннера FunPay необходимы куки golden_key и PHPSESSID

@@ -1,10 +1,7 @@
 // content/features/supabase_client.js - Foxen Worker & API Integration Client
 
-const FOXEN_API_BASE = 'https://api.foxen.site';
+window.FOXEN_API_BASE = (typeof window !== 'undefined' && window.FOXEN_API_BASE) || 'https://api.foxen.site';
 const WORKER_API_URL = 'https://api.foxen.site/api';
-const SUPABASE_URL = 'https://api.foxen.site';
-const SUPABASE_FALLBACK_URL = 'https://yoacfrbedwksnfksjjmv.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
 
 /**
  * Запросить данные профиля пользователя по ID, Foxen ID или нику в FunPay
@@ -29,103 +26,6 @@ async function fxnFetchProfileByFpUser(identifier) {
             if (json && json.ok && json.profile) {
                 profile = json.profile;
                 sub = profile.subscription || json.subscription || {};
-            }
-        }
-
-        // 2. Прямой запрос к Supabase RPC get_public_profile (1 атомарный SQL запрос)
-        const supabaseUrl = SUPABASE_FALLBACK_URL || 'https://yoacfrbedwksnfksjjmv.supabase.co';
-        const apiKey = SUPABASE_ANON_KEY;
-        if (!profile) {
-            try {
-                const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/get_public_profile`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': apiKey,
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ p_query: identifier })
-                });
-                if (rpcRes.ok) {
-                    const pub = await rpcRes.json();
-                    if (pub && pub.id) {
-                        profile = pub;
-                        sub = pub.subscription || {};
-                    }
-                }
-            } catch (_) {}
-        }
-
-        // 3. Fallback: Прямой запрос к Supabase profiles (если RPC недоступен)
-        if (!profile) {
-            try {
-                const target = encodeURIComponent(identifier);
-                const q = `or=(foxen_id.eq.${target},fp_user.ilike.${target},fp_user_id.eq.${target})`;
-                const sbRes = await fetch(`${supabaseUrl}/rest/v1/profiles?${q}&select=*&limit=1`, {
-                    headers: {
-                        'apikey': apiKey,
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (sbRes.ok) {
-                    const sbList = await sbRes.json();
-                    if (sbList && sbList.length > 0) {
-                        const sbProf = sbList[0];
-                        profile = sbProf;
-                        if (sbProf.is_premium) {
-                            profile.is_premium = true;
-                            sub = {
-                                is_active: true,
-                                is_lifetime: false,
-                                plan_id: 'premium',
-                                status: 'active'
-                            };
-                        }
-                        if (sbProf.foxen_id) profile.foxen_id = sbProf.foxen_id;
-                    }
-                }
-            } catch (_) {}
-
-            // 4. Прямой запрос к subscriptions (только при fallback-поиске, если подписка ещё не подтверждена)
-            if (profile && !sub.is_active) {
-                try {
-                    const subFilters = [];
-                    if (profile.id) subFilters.push(`user_id.eq.${encodeURIComponent(profile.id)}`);
-                    if (profile.foxen_id) subFilters.push(`foxen_id.eq.${encodeURIComponent(profile.foxen_id)}`);
-                    if (profile.fp_user) subFilters.push(`fp_user.ilike.${encodeURIComponent(profile.fp_user)}`);
-                    if (identifier) subFilters.push(`fp_user.ilike.${encodeURIComponent(identifier)}`);
-                    
-                    const subQuery = subFilters.length > 0 ? `or=(${subFilters.join(',')})&` : '';
-                    const subRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?${subQuery}select=*&order=starts_at.desc&limit=1`, {
-                        headers: {
-                            'apikey': apiKey,
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    if (subRes.ok) {
-                        const sList = await subRes.json();
-                        if (sList && sList.length > 0) {
-                            const s = sList[0];
-                            const hasExp = Boolean(s.expires_at);
-                            const isNotExp = !hasExp || new Date(s.expires_at) > new Date();
-                            const isLife = !hasExp && Boolean(s.is_lifetime || s.plan_id === 'lifetime');
-                            const isSActive = (s.status === 'active' || isLife || isNotExp) && isNotExp;
-                            if (isSActive) {
-                                sub = {
-                                    is_active: true,
-                                    is_lifetime: isLife,
-                                    plan_id: isLife ? 'lifetime' : (s.plan_id || 'premium'),
-                                    status: s.status || 'active',
-                                    starts_at: s.starts_at,
-                                    expires_at: s.expires_at
-                                };
-                                profile.is_premium = true;
-                            }
-                        }
-                    }
-                } catch (_) {}
             }
         }
 
@@ -208,23 +108,18 @@ async function fxnActivateKeyInSupabase(key, fpUsername, tgUsername = '') {
         }
     }
 
-    // 2) Прямой запрос к Supabase (если Worker не настроен)
-    if (SUPABASE_URL && !SUPABASE_URL.includes('YOUR_SUPABASE')) {
-        const url = `${SUPABASE_URL}/rest/v1/foxen_users?USED_KEY=eq.${encodeURIComponent(formattedKey)}&select=*`;
-        const res = await fetch(url, {
-            credentials: 'omit',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json'
-            }
+    // 2) Запрос к Promo API
+    try {
+        const res = await fetch(`${FOXEN_API_BASE}/api/promo/redeem`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: formattedKey, fp_user: fpUsername })
         });
         if (res.ok) {
             const records = await res.json();
-            if (!records || records.length === 0) throw new Error('Ключ не найден или недействителен.');
-            return records[0];
+            return records;
         }
-    }
+    } catch (_) {}
 
     throw new Error('Не удалось связаться с сервером подписок.');
 }
@@ -250,33 +145,19 @@ async function fxnVerifyAuthCodeInSupabase(authCode, fpUsername) {
         }
     }
 
-    // 2) Прямой запрос к Supabase (создание / обновление профиля)
-    if (SUPABASE_URL && !SUPABASE_URL.includes('YOUR_SUPABASE')) {
-        try {
-            const url = `${SUPABASE_URL}/rest/v1/foxen_users`;
-            const payload = {
-                FP_USER: fpUsername,
-                TG_USER: `@tg_${code}`,
-                CREATED_AT: new Date().toISOString()
-            };
-            const res = await fetch(url, {
-                method: 'POST',
-                credentials: 'omit',
-                headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'resolution=merge-duplicates,return=representation'
-                },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.length > 0) return data[0];
-            }
-        } catch (e) {
-            console.error('Foxen Supabase Auth Verification Error:', e);
+    // 2) Запрос к Link Confirm API
+    try {
+        const res = await fetch(`${FOXEN_API_BASE}/api/link/confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, fp_user: fpUsername })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.profile) return data.profile;
         }
+    } catch (e) {
+        console.error('Foxen Auth Verification Error:', e);
     }
 
     // 3) Локальный фоллбэк
@@ -374,7 +255,7 @@ async function isFoxenPremiumUser(profileData = null) {
     return false;
 }
 
-const FXN_CACHE_TTL_MS = 30 * 60 * 1000; // 30 минут TTL для кэша профиля
+var FXN_CACHE_TTL_MS = 30 * 60 * 1000; // 30 минут TTL для кэша профиля
 
 /**
  * Сохранить кэш профиля локально в storage с полной синхронизацией всех ключей

@@ -531,7 +531,8 @@ async function loadSavedSettings() {
         'foxenAutoRestoreEnabled',
         'foxenAutoDisableEnabled',
         'foxenReviewRequestTemplate',
-        'separateInactiveLots'
+        'separateInactiveLots',
+        'foxen_blur_chat_contacts'
     ]);
     
     foxenAccounts = settings.foxenAccounts || [];
@@ -944,6 +945,7 @@ async function loadSavedSettings() {
     fxnSetCheck('foxenInlinePriceEditor', settings.foxenInlinePriceEditor !== false);
     fxnSetCheck('foxenChatReply', settings.foxenChatReply !== false);
     fxnSetCheck('foxenChatLotNotes', settings.foxenChatLotNotes !== false);
+    fxnSetCheck('foxenBlurChatContacts', settings.foxen_blur_chat_contacts === true);
 
     const reviewTplEl = document.getElementById('reviewRequestTemplate');
     if (reviewTplEl) reviewTplEl.value = settings.foxenReviewRequestTemplate || '';

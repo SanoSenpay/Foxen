@@ -225,7 +225,8 @@
 
         // Capture button clicks
         document.body.addEventListener('click', (e) => {
-            const btn = e.target.closest('button[type="submit"], button.btn-round, .chat-form-btn button');
+            const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+            const btn = targetEl?.closest?.('button[type="submit"], button.btn-round, .chat-form-btn button');
             if (!btn) return;
             const form = btn.closest('form');
             const textarea = form ? form.querySelector('textarea[name="content"]') : document.querySelector('textarea[name="content"]');
@@ -235,7 +236,8 @@
         // Capture Enter keypress
         document.body.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
-                const textarea = e.target.closest('textarea[name="content"]');
+                const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+                const textarea = targetEl?.closest?.('textarea[name="content"]');
                 if (textarea) {
                     injectSignatureIntoTextarea(textarea);
                 }

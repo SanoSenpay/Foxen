@@ -719,7 +719,7 @@ async function initializeQuickGamesMenu() {
 function initializeMarkAllAsRead() {
     const observer = new MutationObserver(async (mutationsList, obs) => {
         const header = document.querySelector('.chat-full-header');
-        if (!header || document.getElementById('foxen-read-all-btn')) {
+        if (!header || document.getElementById('foxen-chat-options-btn') || document.getElementById('foxen-read-all-btn')) {
             return;
         }
 
@@ -727,36 +727,157 @@ function initializeMarkAllAsRead() {
             class: 'foxen-chat-header-actions'
         });
 
-        const readAllBtn = createElement('button', {
-            id: 'foxen-read-all-btn',
-            class: 'fp-tooltip-host fxn-chat-action-btn',
-            'data-fp-tooltip': 'Прочитать все',
-            type: 'button'
+        const dropdownWrap = createElement('div', {
+            class: 'fxn-chat-dropdown-wrap'
         });
-        readAllBtn.innerHTML = '<span class="material-icons">done_all</span>';
-        
-        const filterMarkedBtn = createElement('label', {
-            id: 'foxen-filter-marked-btn',
-            class: 'fp-tooltip-host fxn-chat-action-btn foxen-chat-toggle',
-            'data-fp-tooltip': 'Только помеченные'
+
+        const optionsBtn = createElement('button', {
+            id: 'foxen-chat-options-btn',
+            class: 'fxn-chat-action-btn',
+            title: 'Опции диалогов',
+            type: 'button',
+            'aria-haspopup': 'true',
+            'aria-expanded': 'false'
         });
-        filterMarkedBtn.innerHTML = `
-            <input type="checkbox" id="filter-marked-checkbox" style="display:none;">
-            <span class="material-icons">label</span>
+        optionsBtn.innerHTML = '<span class="material-icons">more_vert</span><span class="fxn-chat-active-dot"></span>';
+
+        const dropdownMenu = createElement('div', {
+            class: 'fxn-chat-header-dropdown',
+            role: 'menu'
+        });
+
+        dropdownMenu.innerHTML = `
+            <label class="fxn-chat-dd-item fxn-chat-dd-row">
+                <span class="material-icons fxn-chat-dd-ico">blur_on</span>
+                <span class="fxn-chat-dd-text">Размытие чатов</span>
+                <span class="fxn-mini-switch">
+                    <input type="checkbox" id="foxen-chat-blur-checkbox">
+                    <span class="fxn-mini-slider"></span>
+                </span>
+            </label>
+            <label class="fxn-chat-dd-item fxn-chat-dd-row">
+                <span class="material-icons fxn-chat-dd-ico">label</span>
+                <span class="fxn-chat-dd-text">Только помеченные</span>
+                <span class="fxn-mini-switch">
+                    <input type="checkbox" id="filter-marked-checkbox">
+                    <span class="fxn-mini-slider"></span>
+                </span>
+            </label>
+            <div class="fxn-chat-dd-divider"></div>
+            <button type="button" class="fxn-chat-dd-item fxn-chat-dd-action" id="foxen-restore-hidden-dialogs-btn" style="display:none;">
+                <span class="material-icons fxn-chat-dd-ico">visibility</span>
+                <span class="fxn-chat-dd-text">Скрытые диалоги <span class="fxn-hidden-count"></span></span>
+            </button>
+            <button type="button" class="fxn-chat-dd-item fxn-chat-dd-action" id="foxen-read-all-btn">
+                <span class="material-icons fxn-chat-dd-ico">done_all</span>
+                <span class="fxn-chat-dd-text">Прочитать все</span>
+            </button>
         `;
-        
-        actionsWrap.appendChild(readAllBtn);
-        actionsWrap.appendChild(filterMarkedBtn);
+
+        dropdownWrap.appendChild(optionsBtn);
+        dropdownWrap.appendChild(dropdownMenu);
+        actionsWrap.appendChild(dropdownWrap);
         header.appendChild(actionsWrap);
 
-        readAllBtn.addEventListener('click', async () => {
-            const unreadItems = Array.from(document.querySelectorAll('.contact-item.unread'));
+        const blurCheckbox = dropdownMenu.querySelector('#foxen-chat-blur-checkbox');
+        const filterCheckbox = dropdownMenu.querySelector('#filter-marked-checkbox');
+        const readAllBtn = dropdownMenu.querySelector('#foxen-read-all-btn');
+
+        const updateIndicator = () => {
+            const hasActive = (blurCheckbox && blurCheckbox.checked) || (filterCheckbox && filterCheckbox.checked);
+            optionsBtn.classList.toggle('fxn-has-active', hasActive);
+        };
+
+        // Open/close dropdown
+        optionsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpen = dropdownWrap.classList.toggle('open');
+            optionsBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+            if (!targetEl?.closest?.('.fxn-chat-dropdown-wrap')) {
+                dropdownWrap.classList.remove('open');
+                optionsBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // --- 1. Размытие чатов (режим стримера) ---
+        const applyBlur = (enabled) => {
+            if (blurCheckbox) blurCheckbox.checked = !!enabled;
+            document.documentElement.classList.toggle('fxn-blur-chats', !!enabled);
+            document.body?.classList.toggle('fxn-blur-chats', !!enabled);
+            try {
+                sessionStorage.setItem('foxen_blur_chat_contacts', enabled ? '1' : '0');
+                localStorage.setItem('foxen_blur_chat_contacts', enabled ? '1' : '0');
+            } catch (_) {}
+            const popupSwitch = document.getElementById('foxenBlurChatContacts');
+            if (popupSwitch) {
+                popupSwitch.classList.toggle('on', !!enabled);
+            }
+            updateIndicator();
+        };
+
+        blurCheckbox?.addEventListener('change', async (e) => {
+            e.stopPropagation();
+            const isChecked = blurCheckbox.checked;
+            applyBlur(isChecked);
+            window.dispatchEvent(new CustomEvent('foxen_blur_chat_changed', { detail: { enabled: isChecked } }));
+            if (fxnExtAlive()) {
+                const extApi = typeof browser !== 'undefined' ? browser : chrome;
+                await fxnSafe(() => extApi.storage.local.set({ foxen_blur_chat_contacts: isChecked }));
+            }
+        });
+
+        // --- 2. Фильтр только помеченные ---
+        const applyMarkedFilter = () => {
+            const isFilterActive = filterCheckbox ? filterCheckbox.checked : false;
+            const contactItems = document.querySelectorAll('.contact-list .contact-item');
+            
+            contactItems.forEach(item => {
+                const hasMark = item.querySelector('.foxen-user-status[data-fp-tooltip]');
+                if (isFilterActive) {
+                    item.style.display = hasMark ? '' : 'none';
+                } else {
+                    item.style.display = '';
+                }
+            });
+            updateIndicator();
+        };
+
+        filterCheckbox?.addEventListener('change', async (e) => {
+            e.stopPropagation();
+            applyMarkedFilter();
+            if (fxnExtAlive()) {
+                const extApi = typeof browser !== 'undefined' ? browser : chrome;
+                await fxnSafe(() => extApi.storage.local.set({ foxenIsMarkedFilterActive: filterCheckbox.checked }));
+            }
+        });
+
+        const restoreHiddenBtn = dropdownMenu.querySelector('#foxen-restore-hidden-dialogs-btn');
+        restoreHiddenBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownWrap.classList.remove('open');
+            optionsBtn.setAttribute('aria-expanded', 'false');
+            if (typeof fxnRestoreHiddenDialogs === 'function') {
+                fxnRestoreHiddenDialogs();
+            }
+        });
+
+        readAllBtn?.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            dropdownWrap.classList.remove('open');
+            optionsBtn.setAttribute('aria-expanded', 'false');
+
+            const unreadItems = Array.from(document.querySelectorAll('.contact-list .contact-item.unread, .contact-item.unread'));
             if (unreadItems.length === 0) {
                 showNotification('Нет непрочитанных сообщений.', false);
                 return;
             }
 
-            // --- Start: Immediate visual update ---
             readAllBtn.classList.add('loading');
             readAllBtn.disabled = true;
 
@@ -766,7 +887,7 @@ function initializeMarkAllAsRead() {
                 if (nodeId) {
                     nodeIdsToRead.push(nodeId);
                 }
-                item.classList.remove('unread'); // Visually mark as read immediately
+                item.classList.remove('unread');
             });
 
             const counter = document.querySelector('.chat-full-header .badge');
@@ -776,11 +897,9 @@ function initializeMarkAllAsRead() {
             }
             
             showNotification(`Начинаю отмечать ${unreadItems.length} диалогов как прочитанные...`, false);
-            // --- End: Immediate visual update ---
 
             let processedCount = 0;
             const intervalId = setInterval(async () => {
-                // If the list of IDs is empty, we're done.
                 if (nodeIdsToRead.length === 0) {
                     clearInterval(intervalId);
                     readAllBtn.classList.remove('loading');
@@ -793,50 +912,60 @@ function initializeMarkAllAsRead() {
                 const chatUrl = `https://funpay.com/chat/?node=${nodeId}`;
 
                 try {
-                    // Just making the GET request is enough to mark it as read on the server
                     await fetch(chatUrl);
                     processedCount++;
                 } catch (error) {
-                    console.error(`Foxen: Ошибка при "посещении" чата ${nodeId} для прочтения`, error);
-                    // We don't re-add the nodeId to the list to avoid getting stuck on a failing one.
+                    console.error(`Foxen: Ошибка при посещении чата ${nodeId} для прочтения`, error);
                 }
 
-            }, 800); // 0.8 second interval
-        });
-        
-        const filterCheckbox = document.getElementById('filter-marked-checkbox');
-
-        const applyMarkedFilter = () => {
-            const isFilterActive = filterCheckbox.checked;
-            filterMarkedBtn.classList.toggle('active', isFilterActive);
-            const contactItems = document.querySelectorAll('.contact-list .contact-item');
-            
-            contactItems.forEach(item => {
-                const hasMark = item.querySelector('.foxen-user-status[data-fp-tooltip]');
-                if (isFilterActive) {
-                    item.style.display = hasMark ? '' : 'none';
-                } else {
-                    item.style.display = '';
-                }
-            });
-        };
-
-        filterCheckbox.addEventListener('change', async () => {
-            if (!fxnExtAlive()) return;
-            const extApi = typeof browser !== 'undefined' ? browser : chrome;
-            await fxnSafe(() => extApi.storage.local.set({ foxenIsMarkedFilterActive: filterCheckbox.checked }));
-            applyMarkedFilter();
+            }, 800);
         });
 
+        // Немедленная инициализация из локального кэша
+        const cachedBlur = (function() {
+            try {
+                return sessionStorage.getItem('foxen_blur_chat_contacts') === '1' || localStorage.getItem('foxen_blur_chat_contacts') === '1';
+            } catch (_) { return false; }
+        })();
+        if (cachedBlur) {
+            applyBlur(true);
+        }
+
+        // Инициализация сохраненных состояний из storage
         if (fxnExtAlive()) {
             const extApi = typeof browser !== 'undefined' ? browser : chrome;
-            fxnSafe(() => extApi.storage.local.get('foxenIsMarkedFilterActive'), {}).then(data => {
-                if (data && data.foxenIsMarkedFilterActive) {
-                    filterCheckbox.checked = true;
+            fxnSafe(() => extApi.storage.local.get(['foxen_blur_chat_contacts', 'foxenIsMarkedFilterActive']), {}).then(data => {
+                if (data) {
+                    if (data.foxen_blur_chat_contacts) {
+                        applyBlur(true);
+                    }
+                    if (data.foxenIsMarkedFilterActive) {
+                        if (filterCheckbox) filterCheckbox.checked = true;
+                        applyMarkedFilter();
+                    }
+                }
+            });
+        }
+
+        // Синхронизация при внешних изменениях storage (например, из настроек Foxen)
+        if (fxnExtAlive() && typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+            chrome.storage.onChanged.addListener((changes, area) => {
+                if (area !== 'local') return;
+                if (changes.foxen_blur_chat_contacts) {
+                    applyBlur(!!changes.foxen_blur_chat_contacts.newValue);
+                }
+                if (changes.foxenIsMarkedFilterActive) {
+                    if (filterCheckbox) filterCheckbox.checked = !!changes.foxenIsMarkedFilterActive.newValue;
                     applyMarkedFilter();
                 }
             });
         }
+
+        window.addEventListener('foxen_blur_chat_changed', (e) => {
+            if (typeof e.detail?.enabled === 'boolean') {
+                applyBlur(e.detail.enabled);
+            }
+        });
         
         const contactList = document.querySelector('.contact-list');
         if (contactList) {
@@ -846,8 +975,6 @@ function initializeMarkAllAsRead() {
             filterObserver.observe(contactList, { childList: true, subtree: true });
         }
 
-        // 3.0: stop the outer observer once our controls exist - it observed the whole body
-        // subtree forever, which was a constant performance drain on the chat page.
         obs.disconnect();
     });
 

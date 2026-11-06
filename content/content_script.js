@@ -331,7 +331,11 @@
     if (!window.__fpButtonDelegatedListenerAdded) {
         window.__fpButtonDelegatedListenerAdded = true;
         document.addEventListener('click', (e) => {
-            const btn = e.target.closest('#foxenButton');
+            const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+            if (targetEl?.closest?.('.navbar-toggle, .navbar-xs-icon, .user-link, [data-toggle="collapse"], [data-toggle="dropdown"]')) {
+                setTimeout(applyMobileNavbarGrouping, 10);
+            }
+            const btn = targetEl?.closest?.('#foxenButton');
             if (btn) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -409,7 +413,91 @@
         });
 
         console.log("Foxen: Кнопка в хедере успешно добавлена.");
+        applyMobileNavbarGrouping();
+
+        // Continuous navbar observer for mobile dropdown grouping and profile cleanup
+        if (!window.__fxnNavbarObserverAttached) {
+            window.__fxnNavbarObserverAttached = true;
+            const nb = document.getElementById('navbar') || document.querySelector('.navbar-collapse');
+            if (nb) {
+                const obs = new MutationObserver(() => {
+                    applyMobileNavbarGrouping();
+                });
+                obs.observe(nb, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+            }
+        }
+
         return true;
+    }
+
+    function applyMobileNavbarGrouping() {
+        const navbar = document.getElementById('navbar');
+        if (!navbar) return;
+
+        // Thoroughly hide and remove "Профиль" text/badges from mobile navbar card
+        navbar.querySelectorAll('.user-link-desc, .user-link-profile').forEach(desc => {
+            desc.style.setProperty('display', 'none', 'important');
+            desc.textContent = '';
+        });
+
+        const userHeaders = navbar.querySelectorAll('li[data-fxn-mobile-item="user-header"], li:has(.user-link-name), li:has(a.user-link), li:has(a.user-link-dropdown)');
+        userHeaders.forEach(uh => {
+            uh.querySelectorAll('*').forEach(el => {
+                if (el.classList.contains('user-link-name') || el.classList.contains('user-link-photo') || el.classList.contains('fxn-user-effect')) return;
+                const txt = (el.textContent || '').trim().toLowerCase();
+                if (txt === 'профиль' || el.classList.contains('user-link-desc')) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.textContent = '';
+                }
+            });
+            const walker = document.createTreeWalker(uh, NodeFilter.SHOW_TEXT);
+            const toRemove = [];
+            let textNode;
+            while ((textNode = walker.nextNode())) {
+                if (textNode.nodeValue && textNode.nodeValue.trim().toLowerCase() === 'профиль') {
+                    toRemove.push(textNode);
+                }
+            }
+            toRemove.forEach(n => n.remove());
+        });
+
+        navbar.querySelectorAll('li').forEach(li => {
+            const link = li.querySelector('a');
+            if (!link && !li.id) return;
+            const href = link?.getAttribute('href') || '';
+            const text = (link?.textContent || '').trim().toLowerCase();
+
+            if (li.id === 'foxenButtonLi' || link?.id === 'foxenButton' || text === 'foxen') {
+                li.dataset.fxnMobileItem = 'foxen';
+            } else if (link?.classList.contains('user-link') || link?.querySelector('.user-link-name') || li.querySelector('.user-link-name')) {
+                li.dataset.fxnMobileItem = 'user-header';
+            } else if (href.includes('/users/') || text === 'профиль') {
+                li.dataset.fxnMobileItem = 'user-profile';
+                li.style.setProperty('display', 'none', 'important');
+            } else if (href.includes('/chat/') || text.startsWith('сообщения')) {
+                li.dataset.fxnMobileItem = 'chat';
+            } else if (href.includes('/orders/trade') || text.startsWith('продажи')) {
+                li.dataset.fxnMobileItem = 'sales';
+            } else if ((href.includes('/orders') || text.startsWith('покупки')) && !href.includes('/orders/trade')) {
+                li.dataset.fxnMobileItem = 'orders';
+            } else if (href.includes('/finances') || text.startsWith('финансы')) {
+                li.dataset.fxnMobileItem = 'finance';
+            } else if (li.classList.contains('menu-item-fp-games') || href.includes('/games/') || link?.classList.contains('menu-item-games') || text.startsWith('игры')) {
+                li.dataset.fxnMobileItem = 'games';
+            } else if (href.includes('/lootery') || link?.classList.contains('menu-item-lootery') || text.includes('лутерея') || text.includes('лотерея')) {
+                li.dataset.fxnMobileItem = 'lootery';
+            } else if (href.includes('/help/') || href.includes('/trade/info') || link?.classList.contains('menu-item-info') || text.startsWith('помощь')) {
+                li.dataset.fxnMobileItem = 'help';
+            } else if (href.includes('/settings') || text.startsWith('настройки')) {
+                li.dataset.fxnMobileItem = 'settings';
+            } else if (link?.classList.contains('menu-item-langs') || li.querySelector('.menu-item-langs') || li.querySelector('.menu-icon-lang-ru') || text.includes('по-русски') || text.includes('english')) {
+                li.dataset.fxnMobileItem = 'languages';
+            } else if (link?.classList.contains('menu-item-currencies') || li.querySelector('.menu-item-currencies') || li.querySelector('.user-cy-switcher') || text.includes('доллары') || text.includes('рубли')) {
+                li.dataset.fxnMobileItem = 'currencies';
+            } else if (href.includes('/account/logout') || link?.classList.contains('menu-item-logout') || text.startsWith('выйти')) {
+                li.dataset.fxnMobileItem = 'logout';
+            }
+        });
     }
 
     async function handleAIReviewReply(event) {
@@ -597,6 +685,7 @@
         
         initializeDynamicFeatures();
         initializeQuickGamesMenu();
+        applyMobileNavbarGrouping();
 
         // Popup DOM and background initializers are handled on-demand by ensureFpToolsPopup / window.__fpTogglePopup
 

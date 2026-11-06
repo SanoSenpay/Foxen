@@ -209,22 +209,24 @@ function initializePiggyBank() {
     });
 
     document.addEventListener('click', e => {
-        const createBtn = e.target.closest('#create-piggy-bank-btn');
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        if (!targetEl) return;
+        const createBtn = targetEl.closest('#create-piggy-bank-btn');
         if (createBtn) {
             showPiggyBankModal();
             return;
         }
 
-        const item = e.target.closest('.piggy-bank-item');
+        const item = targetEl.closest('.piggy-bank-item');
         if (!item) return;
 
         const id = parseInt(item.dataset.id, 10);
         const pb = piggyBanks.find(p => p.id === id);
         if (!pb) return;
 
-        if (e.target.closest('.edit-btn')) showPiggyBankModal(pb);
+        if (targetEl.closest('.edit-btn')) showPiggyBankModal(pb);
         
-        if (e.target.closest('.delete-btn')) {
+        if (targetEl.closest('.delete-btn')) {
             if (confirm(`Вы уверены, что хотите удалить копилку "${pb.name}"?`)) {
                 piggyBanks = piggyBanks.filter(p => p.id !== id);
                 if (pb.isMain && piggyBanks.length > 0) {
@@ -233,7 +235,7 @@ function initializePiggyBank() {
                 savePiggyBanks();
             }
         }
-        if (e.target.closest('.set-main-btn')) {
+        if (targetEl.closest('.set-main-btn')) {
             piggyBanks.forEach(p => p.isMain = false);
             const index = piggyBanks.findIndex(p => p.id === id);
             if (index !== -1) piggyBanks[index].isMain = true;

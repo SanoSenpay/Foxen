@@ -12,6 +12,7 @@ import {
     TELEGRAM_ALARM, telegramInit, telegramSyncAlarm, telegramPollOnce, startTelegramPollingLoop,
     telegramValidateAndResolve, telegramNotifyNewMessages, telegramNotifyNewOrders, tgSendMessage
 } from './telegram.js';
+import { parseHtmlViaOffscreen } from './offscreen_helper.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX 2.8.1 - НАДЁЖНАЯ ОТПРАВКА КУКОВ.
@@ -1162,15 +1163,9 @@ async function tgFetchProfileInfo() {
             (typeof browser !== 'undefined' ? browser : chrome).storage.local.get('foxenTelegram').catch(() => ({}))
         ]);
 
-        const [homeSnapshot, userProfile, apiAvatar] = await Promise.all([
+        const [homeSnapshot, userProfile] = await Promise.all([
             homeHtml ? parseHtmlViaOffscreen(homeHtml, 'parseAccountSnapshot').catch(() => null) : null,
-            userHtml ? parseHtmlViaOffscreen(userHtml, 'parseUserProfileFull').catch(() => null) : null,
-            auth.userId
-                ? fetch(`https://api.foxen.site/api/avatar?user_id=${encodeURIComponent(auth.userId)}`)
-                    .then(r => r.ok ? r.json() : null)
-                    .then(j => (j && j.avatar && !j.avatar.includes('layout/avatar.png')) ? j.avatar : '')
-                    .catch(() => '')
-                : Promise.resolve('')
+            userHtml ? parseHtmlViaOffscreen(userHtml, 'parseUserProfileFull').catch(() => null) : null
         ]);
 
         const activeStatuses = ['paid', 'active', 'pending', 'оплачен', 'в работе'];
@@ -1180,7 +1175,7 @@ async function tgFetchProfileInfo() {
             return activeStatuses.some(a => s.includes(a));
         }).length;
 
-        let resolvedAvatar = apiAvatar || (userProfile && userProfile.avatar) || (homeSnapshot && homeSnapshot.avatar) || '';
+        let resolvedAvatar = (userProfile && userProfile.avatar) || (homeSnapshot && homeSnapshot.avatar) || '';
         if (resolvedAvatar && /avatar\.png|default-avatar/i.test(resolvedAvatar)) {
             resolvedAvatar = '';
         }
@@ -1499,22 +1494,7 @@ async function runTelegramCheckCycle() {
     }
 }
 
-// Функция для парсинга HTML (в Firefox выполняется синхронно в фоне)
-async function parseHtmlViaOffscreen(html, action, extra = {}) {
-    return Promise.resolve().then(() => {
-        if (action === 'parseSellerLotPrice') {
-            return window[action](html, extra.offerId);
-        } else if (action === 'solveCloneForm') {
-            return window[action](html, extra.attributes, extra.attributePairs);
-        } else if (action === 'parseBuyerHistory') {
-            return window[action](html, extra.buyerUserId);
-        } else if (typeof window[action] === 'function') {
-            return window[action](html);
-        } else {
-            throw new Error(`Unknown parser action: ${action}`);
-        }
-    });
-}
+// parseHtmlViaOffscreen imported from ./offscreen_helper.js
 
 async function cloneBuildFieldsInternal(auth, nodeId, attributes, attributePairs) {
     if (!nodeId) throw new Error('Неизвестна подкатегория (node) лота.');
@@ -2475,28 +2455,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 const payload = request.payload || {};
-                const supabaseUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
-                const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
-                
-                const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/link_funpay_account`, {
+                const res = await fetch('https://api.foxen.site/api/link/confirm', {
                     method: 'POST',
-                    headers: {
-                        'apikey': apiKey,
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        p_foxen_id: payload.foxenId || null,
-                        p_fp_user: payload.fpUser ? String(payload.fpUser).trim() : null,
-                        p_fp_user_id: payload.fpUserId ? parseInt(payload.fpUserId, 10) : null,
-                        p_avatar_url: payload.avatarUrl || null,
-                        p_user_id: payload.userId || null
+                        foxen_id: payload.foxenId || null,
+                        fp_user: payload.fpUser ? String(payload.fpUser).trim() : null,
+                        fp_user_id: payload.fpUserId ? parseInt(payload.fpUserId, 10) : null,
+                        avatar_url: payload.avatarUrl || null,
+                        user_id: payload.userId || null
                     })
                 });
 
-                if (rpcRes.ok) {
-                    const result = await rpcRes.json();
-                    console.log('[Foxen BG] FunPay account linked successfully via RPC:', result);
+                if (res.ok) {
+                    const result = await res.json();
+                    console.log('[Foxen BG] FunPay account linked successfully via API:', result);
                     
                     const profileData = result.profile || {
                         fp_user: payload.fpUser,
@@ -2797,28 +2770,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     fpCurrentUserInfo: { userId: profileData.userId, username: profileData.username }
                 });
 
-                // Синхронизируем avatar_url в Supabase profiles для сайта
+                // Синхронизируем avatar_url в profiles для сайта
                 if (avatarUrl && avatarUrl.startsWith('http') && !avatarUrl.includes('layout/avatar.png')) {
                     (async () => {
                         try {
-                            const supabaseUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
-                            const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
-                            const target = encodeURIComponent(userId);
-                            const uTarget = encodeURIComponent(username);
-                            await fetch(`${supabaseUrl}/rest/v1/profiles?or=(fp_user_id.eq.${target},fp_user.ilike.${uTarget})`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'apikey': apiKey,
-                                    'Authorization': `Bearer ${apiKey}`,
-                                    'Content-Type': 'application/json',
-                                    'Prefer': 'return=minimal'
-                                },
+                            await fetch('https://api.foxen.site/api/link/confirm', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                    avatar_url: avatarUrl,
-                                    updated_at: new Date().toISOString()
+                                    fp_user_id: userId,
+                                    fp_user: username,
+                                    avatar_url: avatarUrl
                                 })
                             });
-                            console.log('[Foxen BG] avatar_url synced to Supabase profiles:', avatarUrl);
+                            console.log('[Foxen BG] avatar_url synced to profiles:', avatarUrl);
                         } catch(e) {}
                     })();
                 }
@@ -2833,6 +2798,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // Generic Fetch Proxy for bypassing CSP (used by profile_descriptions.js & nickname_fx_renderer.js)
+    
+    // Safe rate-limited GitHub sync trigger (25 min cooldown)
+    if (request.action === 'fxnTriggerGithubSync') {
+        (async () => {
+            try {
+                const now = Date.now();
+                const storage = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
+                const { fxn_bg_last_gh_dispatch = 0 } = await storage.get('fxn_bg_last_gh_dispatch');
+                if (now - fxn_bg_last_gh_dispatch < 25 * 60 * 1000) {
+                    sendResponse({ ok: false, error: 'Cooldown active' });
+                    return;
+                }
+                await storage.set({ fxn_bg_last_gh_dispatch: now });
+                fetch('https://api.foxen.site/api/sync/trigger', { method: 'POST', credentials: 'omit' }).catch(() => {});
+                sendResponse({ ok: true });
+            } catch (err) {
+                sendResponse({ ok: false, error: err.message });
+            }
+        })();
+        return true;
+    }
+
     if (request.action === 'fxnFetchProxy') {
         (async () => {
             try {
@@ -2889,16 +2876,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (!res.ok) { sendResponse({ ok: false, status: res.status }); return; }
                 const json = await res.json();
                 if (json.error) { sendResponse({ ok: false, notFound: true }); return; }
-                // Fetch avatar
-                let avatar = 'https://funpay.com/img/layout/avatar.png';
-                const uid = String(json.user?.id || '');
-                if (uid) {
-                    try {
-                        const ar = await fetch(`${API}/avatar?user_id=${uid}`);
-                        const aj = await ar.json();
-                        if (aj.avatar && aj.avatar !== avatar) avatar = aj.avatar;
-                    } catch (_) {}
-                }
+                // Use RMTHub profile image directly (0 extra network requests)
+                let avatar = json.user?.profile_image_url || 'https://funpay.com/img/layout/avatar.png';
                 sendResponse({ ok: true, data: json, avatar });
             } catch (e) {
                 sendResponse({ ok: false, error: String(e) });

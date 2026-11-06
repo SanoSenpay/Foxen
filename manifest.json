@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Foxen",
-    "version": "4.0.5",
+    "version": "4.0.6",
     "description": "Расширение нового поколения для FunPay, которое улучшает функционал сайта и добавляет новые возможности.",
     "homepage_url": "https://web.foxen.site/",
     "developer": {
@@ -38,8 +38,9 @@
         "https://clients5.google.com/*",
         "https://translate.google.com/*",
         "https://api.mymemory.translated.net/*",
-        "https://*.supabase.co/*",
-        "https://yoacfrbedwksnfksjjmv.supabase.co/*",
+        "https://*.firebaseio.com/*",
+        "https://firestore.googleapis.com/*",
+        "https://identitytoolkit.googleapis.com/*",
         "https://generativelanguage.googleapis.com/*",
         "https://api.openai.com/*",
         "https://openrouter.ai/*"
@@ -121,7 +122,7 @@
                 "content/ui/settings_loader.js",
                 "content/features/font_tools.js",
                 "content/features/accounts.js",
-                "content/features/supabase_client.js",
+                "content/features/firebase_client.js",
                 "content/features/ai_chat.js",
                 "content/features/auto_delivery.js",
                 "content/features/homepage_redesign.js",
@@ -202,6 +203,7 @@
                 "content/features/nickname_fx_renderer.js",
                 "content/features/review_screenshot.js",
                 "content/features/custom_screenshot.js",
+                "content/features/quick_pinned_pages.js",
                 "content/error_page_reload.js"
             ],
             "css": [

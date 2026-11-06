@@ -806,7 +806,8 @@ function _attachImageFile(file) {
 if (!window._fxnTktGlobalSubtabDelegate) {
     window._fxnTktGlobalSubtabDelegate = true;
     document.addEventListener('click', (e) => {
-        const segBtn = e.target.closest('.fxn-tkt-segment-btn');
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        const segBtn = targetEl?.closest?.('.fxn-tkt-segment-btn');
         if (!segBtn) return;
         e.preventDefault();
         e.stopPropagation();

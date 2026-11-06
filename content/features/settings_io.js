@@ -211,14 +211,15 @@ function initializeSettingsIO() {
     // Используем делегирование событий на document, чтобы кнопки экспорта/импорта
     // работали независимо от момента динамического рендеринга попапа/модального окна.
     document.addEventListener('click', (e) => {
-        const exportBtn = e.target.closest('#fp-settings-export-btn, #fxnExportAllSettingsBtn');
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        const exportBtn = targetEl?.closest?.('#fp-settings-export-btn, #fxnExportAllSettingsBtn');
         if (exportBtn) {
             e.preventDefault();
             exportSettings();
             return;
         }
 
-        const importBtn = e.target.closest('#fp-settings-import-btn, #fxnImportAllSettingsBtn');
+        const importBtn = targetEl?.closest?.('#fp-settings-import-btn, #fxnImportAllSettingsBtn');
         if (importBtn) {
             e.preventDefault();
             let importInput = document.getElementById('fp-settings-import-input') || document.getElementById('fxnImportAllSettingsFile');

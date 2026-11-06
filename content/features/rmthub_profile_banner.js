@@ -9,11 +9,12 @@
             .fxn-rmth-banner {
                 margin-top: 15px;
                 margin-bottom: 15px;
-                background: rgba(20, 20, 30, 0.4);
+                background: rgba(255, 255, 255, 0.035) !important;
                 border: 1px solid rgba(255, 255, 255, 0.08);
                 border-radius: 12px;
                 overflow: hidden;
-                backdrop-filter: blur(8px);
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
                 transition: all 0.3s ease;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             }

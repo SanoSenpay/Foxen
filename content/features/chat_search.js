@@ -54,6 +54,7 @@
         const notice = controls.querySelector('.notice-button-container');
         if (notice) controls.insertBefore(btn, notice);
         else controls.insertBefore(btn, controls.firstChild);
+
     }
 
     function toggleInChatSearch() {

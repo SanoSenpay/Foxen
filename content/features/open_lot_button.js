@@ -78,7 +78,8 @@
     h.classList.add('fxn-head-link');
     h.addEventListener('click', (e) => {
       // клик по самой иконке обрабатывается отдельно
-      if (e.target.closest('.fxn-open-lot')) return;
+      const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+      if (targetEl?.closest?.('.fxn-open-lot')) return;
       window.open('https://funpay.com/lots/offer?id=' + id, '_blank', 'noopener');
     });
 

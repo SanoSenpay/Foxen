@@ -482,7 +482,7 @@
     // --- Отображение красивого счетчика рейтинга рядом с ником ---
     async function loadAndInjectRatingBadge() {
         // Проверяем отключена ли фича в реестре настроек
-        if (window.foxenDisabledFeatures && window.foxenDisabledFeatures.includes('buyer_ratings_supabase')) {
+        if (window.foxenDisabledFeatures && window.foxenDisabledFeatures.includes('buyer_ratings_cloud')) {
             return;
         }
 
@@ -549,10 +549,10 @@
         badge.dataset.userId = String(buyerId);
         targetEl.appendChild(badge);
 
-        chrome.runtime.sendMessage({ action: 'supabaseGetRating', buyerId }, (res) => {
+        chrome.runtime.sendMessage({ action: 'foxenGetRating', buyerId }, (res) => {
             if (!res || !res.success) {
                 badge.textContent = '?';
-                badge.title = res?.error || 'Не удалось загрузить данные Supabase';
+                badge.title = res?.error || 'Не удалось загрузить данные рейтинга';
                 return;
             }
 
@@ -574,8 +574,8 @@
             badge.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                // Получаем currentUserId через supabaseGetStatus
-                chrome.runtime.sendMessage({ action: 'supabaseGetStatus' }, (statusRes) => {
+                // Получаем currentUserId через foxenGetRatingStatus
+                chrome.runtime.sendMessage({ action: 'foxenGetRatingStatus' }, (statusRes) => {
                     const currentUserId = String(statusRes?.userId || '');
                     console.log('[Foxen] openReviewsModal currentUserId:', currentUserId, '| isAdmin:', currentUserId === ADMIN_USER_ID);
                     openReviewsModal(buyerId, buyerUsername, rating, res.reviews || [], currentUserId);
@@ -709,7 +709,7 @@
                             const originalContent = delBtn.innerHTML;
                             delBtn.innerHTML = '⏳';
                             delBtn.disabled = true;
-                            chrome.runtime.sendMessage({ action: 'supabaseDeleteReview', reviewId: rev.id }, (delRes) => {
+                            chrome.runtime.sendMessage({ action: 'foxenDeleteReview', reviewId: rev.id }, (delRes) => {
                                 if (!delRes || !delRes.success) {
                                     delBtn.innerHTML = originalContent;
                                     delBtn.disabled = false;
@@ -737,7 +737,7 @@
         let pasteHandler = () => {};
         let capturedFiles = []; // массив { file, url }
 
-        chrome.runtime.sendMessage({ action: 'supabaseGetStatus' }, (statusRes) => {
+        chrome.runtime.sendMessage({ action: 'foxenGetRatingStatus' }, (statusRes) => {
             if (!statusRes || !statusRes.isVerified) {
                 formWrap.innerHTML = `<div class="fxn-not-verified">🔐 Вы не можете оставить отзыв. Пожалуйста, пройдите однократную <strong>верификацию</strong> в настройках Foxen → «База отзывов».</div>`;
                 return;
@@ -977,7 +977,7 @@
 
                 submitBtn.textContent = 'Публикация…';
                 chrome.runtime.sendMessage({
-                    action: 'supabaseSubmitReview',
+                    action: 'foxenSubmitReview',
                     buyerId, buyerUsername,
                     ratingChange: selectedRating,
                     comment,
@@ -997,7 +997,7 @@
                     loadAndInjectRatingBadge();
                 });
             }; // end submitBtn.onclick
-        }); // end supabaseGetStatus
+        }); // end foxenGetRatingStatus
     }
 
     // Полноэкранный зум картинок пруфов
@@ -1015,13 +1015,13 @@
         return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // --- Инжекция настроек Supabase на вкладку settings_io ---
-    async function injectSupabaseSettings(container) {
+    // --- Инжекция настроек рейтинга на вкладку settings_io ---
+    async function injectRatingSettings(container) {
         if (!container) return;
-        if (container.querySelector('#fxn-supabase-settings')) return;
+        if (container.querySelector('#fxn-rating-settings')) return;
 
         const sbDiv = document.createElement('div');
-        sbDiv.id = 'fxn-supabase-settings';
+        sbDiv.id = 'fxn-rating-settings';
         sbDiv.style.marginTop = '24px';
         sbDiv.style.borderTop = '1px solid rgba(255,255,255,0.06)';
         sbDiv.style.paddingTop = '16px';
@@ -1092,8 +1092,8 @@
 
     function updateVerificationStatusUI(container) {
         const storageApi = (typeof browser !== 'undefined' ? browser : chrome).storage.local;
-        storageApi.get('foxenSupabaseJwt', (storeData) => {
-            const isVerified = !!storeData.foxenSupabaseJwt;
+        storageApi.get('foxenRatingJwt', (storeData) => {
+            const isVerified = !!storeData.foxenRatingJwt;
             const userData = getLocalUserData();
 
             if (isVerified) {
@@ -1105,7 +1105,7 @@
                     </div>
                 `;
                 container.querySelector('#fxn-sb-reset-verify').onclick = async () => {
-                    await storageApi.remove('foxenSupabaseJwt');
+                    await storageApi.remove('foxenRatingJwt');
                     if (typeof showNotification === 'function') showNotification('Верификация сброшена.');
                     updateVerificationStatusUI(container);
                 };
@@ -1133,7 +1133,7 @@
                     verifyBtn.textContent = 'Активация...';
 
                     chrome.runtime.sendMessage({
-                        action: 'supabaseVerifySeller',
+                        action: 'foxenVerifyRatingSeller',
                         userId: userData.userId,
                         username: userData.username
                     }, (verifyRes) => {
@@ -1163,7 +1163,7 @@
 
         // 2. Проверяем настройки
         const settingsContainer = document.querySelector('.foxen-page-content[data-page="settings_io"]');
-        if (settingsContainer) injectSupabaseSettings(settingsContainer);
+        if (settingsContainer) injectRatingSettings(settingsContainer);
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
@@ -1180,8 +1180,8 @@
 
             // Настройки
             const settingsContainer = document.querySelector('.foxen-page-content[data-page="settings_io"]');
-            if (settingsContainer && !settingsContainer.querySelector('#fxn-supabase-settings')) {
-                injectSupabaseSettings(settingsContainer);
+            if (settingsContainer && !settingsContainer.querySelector('#fxn-rating-settings')) {
+                injectRatingSettings(settingsContainer);
             }
         }, 350);
     }).observe(document.body, { childList: true, subtree: true });

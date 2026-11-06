@@ -366,7 +366,8 @@
         }, true);
 
         document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.chat-form-btn button[type="submit"], .chat-form button.btn-round');
+            const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+            const btn = targetEl?.closest?.('.chat-form-btn button[type="submit"], .chat-form button.btn-round');
             if (!btn || !activeReply) return;
             const inp = chatInput();
             if (inp) applyReplyToInput(inp);
@@ -536,7 +537,8 @@
         document.addEventListener('scroll', hideSelBtn, true);
         window.addEventListener('resize', hideSelBtn);
         document.addEventListener('mousedown', (e) => {
-            if (_selBtn && e.target.closest && e.target.closest('#fxn-sel-reply')) return;
+            const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+            if (_selBtn && targetEl?.closest?.('#fxn-sel-reply')) return;
             // если кликнули вне выделения - спрячем (выделение всё равно сбросится)
             setTimeout(() => {
                 const s = window.getSelection();

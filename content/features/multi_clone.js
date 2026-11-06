@@ -431,7 +431,8 @@
 
         // Навешиваем обработчик на клик по кнопке .export-lots в панели действий
         document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.actions .export-lots');
+            const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+            const btn = targetEl?.closest?.('.actions .export-lots');
             if (btn) {
                 e.preventDefault();
                 e.stopImmediatePropagation();

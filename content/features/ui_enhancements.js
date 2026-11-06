@@ -1316,7 +1316,8 @@ function initializeSalesStatistics() {
 
     // Закрытие дропдауна при клике вне его
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('#fpTools-lot-combobox-wrap')) {
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        if (!targetEl?.closest?.('#fpTools-lot-combobox-wrap')) {
             _closeLotDropdown();
         }
     });

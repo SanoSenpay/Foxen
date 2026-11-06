@@ -318,7 +318,16 @@
     async function fetchThemesCatalogForBridge() {
         if (_catalogThemesCache && _catalogThemesCache.length > 0) return _catalogThemesCache;
         try {
-            const resp = await fetch('https://cdn.foxen.site/download/Catalog/Themes/index.json', { cache: 'no-store' }).catch(() => null);
+            let resp = null;
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+                const proxyRes = await new Promise(r => chrome.runtime.sendMessage({ action: 'fxnFetchProxy', url: 'https://cdn.foxen.site/download/Catalog/Themes/index.json', options: { cache: 'no-store' } }, r)).catch(() => null);
+                if (proxyRes && proxyRes.ok && proxyRes.text) {
+                    try { resp = { ok: true, json: async () => JSON.parse(proxyRes.text) }; } catch (_) {}
+                }
+            }
+            if (!resp) {
+                resp = await fetch('https://cdn.foxen.site/download/Catalog/Themes/index.json', { cache: 'no-store' }).catch(() => null);
+            }
             if (resp && resp.ok) {
                 const data = await resp.json();
                 _catalogThemesCache = Array.isArray(data) ? data : (data.themes || []);

@@ -574,7 +574,8 @@ class MagicStickStyler {
     }
     
     isStylerUI(el) {
-        return el.closest('#ms-panel, #ms-exit-btn, #ms-my-styles-modal, #ms-selector-modal');
+        if (!el || typeof el.closest !== 'function') return false;
+        return !!el.closest('#ms-panel, #ms-exit-btn, #ms-my-styles-modal, #ms-selector-modal');
     }
 
     throttle(func, limit) {

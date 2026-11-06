@@ -82,9 +82,10 @@
                 const res = await fetch(fetchUrl, { cache: 'no-cache' });
                 if (res && res.ok) {
                     const data = await res.json();
-                    if (data && data.registry) {
-                        let hasChanges = false;
-                        Object.entries(data.registry).forEach(([k, item]) => {
+                    const reg = data ? (data.registry || data.users) : null;
+        if (data && reg) {
+            let hasChanges = false;
+            Object.entries(reg).forEach(([k, item]) => {
                             const low = k.toLowerCase();
                             const cln = cleanUser(k);
                             const payload = (item && (item.effect || item.emoji)) ? {
@@ -148,9 +149,9 @@
                 try {
                     chrome.storage.local.get(['fxn_global_effects_registry', 'fxn_persistent_effects_cache'], (res) => {
                         const regData = res?.fxn_global_effects_registry;
-                        if (regData && regData.registry && typeof regData.registry === 'object') {
-                            lastRegistryFetchTime = regData.ts || 0;
-                            Object.entries(regData.registry).forEach(([k, item]) => {
+                        const storedReg = regData ? (regData.registry || regData.users) : null;
+            if (regData && storedReg && typeof storedReg === 'object') {
+                Object.entries(storedReg).forEach(([k, item]) => {
                                 const low = k.toLowerCase();
                                 const cln = cleanUser(k);
                                 const payload = (item && (item.effect || item.emoji)) ? { effect: item.effect, emoji: item.emoji, is_premium: item.is_premium } : null;
@@ -219,19 +220,80 @@
         const parent = targetEl.parentNode || targetEl;
         const isUrl = /^https?:\/\//i.test(val) || val.startsWith('data:') || val.startsWith('blob:') || val.startsWith('chrome-extension:') || val.startsWith('moz-extension:');
 
-        // Ensure we only check this specific target's immediate sibling or inner child, NOT adjacent rows/messages
+        // Check if targetEl is inside the custom profile identity (where nickname text must stay perfectly centered)
+        const profileIdentity = targetEl.closest ? targetEl.closest('.fxn-profile-identity') : null;
+        const profileBadgesSlot = profileIdentity ? profileIdentity.querySelector('.fxn-profile-badges-slot') : null;
+
+        // Ensure we check this target's sibling, badges slot, or inner child
         let existing = null;
-        if (targetEl.nextElementSibling && (targetEl.nextElementSibling.classList.contains('fxn-custom-emoji-img') || targetEl.nextElementSibling.classList.contains('fxn-custom-emoji-badge'))) {
-            existing = targetEl.nextElementSibling;
-        } else if (targetEl.querySelector) {
-            existing = targetEl.querySelector('.fxn-custom-emoji-img, .fxn-custom-emoji-badge');
+        if (profileBadgesSlot) {
+            existing = profileBadgesSlot.querySelector('.fxn-custom-emoji-img, .fxn-custom-emoji-badge');
         }
+        if (!existing) {
+            if (targetEl.nextElementSibling && (targetEl.nextElementSibling.classList.contains('fxn-custom-emoji-img') || targetEl.nextElementSibling.classList.contains('fxn-custom-emoji-badge'))) {
+                existing = targetEl.nextElementSibling;
+            } else if (targetEl.querySelector) {
+                existing = targetEl.querySelector('.fxn-custom-emoji-img, .fxn-custom-emoji-badge');
+            }
+        }
+
+        const isProfileHeader = Boolean(
+            profileIdentity || profileBadgesSlot || 
+            (targetEl.closest && targetEl.closest('.profile-header, .profile, .container.profile-header, .fxn-profile-identity, .media-body > h1'))
+        );
+
+        const placeBadge = (badgeEl) => {
+            if (isProfileHeader) {
+                // Exact styling aligned with user preference (40px effective, -6px margin-left, 1px top)
+                badgeEl.style.setProperty('width', '48px', 'important');
+                badgeEl.style.setProperty('height', '48px', 'important');
+                badgeEl.style.setProperty('max-width', '40px', 'important');
+                badgeEl.style.setProperty('max-height', '40px', 'important');
+                badgeEl.style.setProperty('min-width', '32px', 'important');
+                badgeEl.style.setProperty('min-height', '32px', 'important');
+                badgeEl.style.setProperty('position', 'relative', 'important');
+                badgeEl.style.setProperty('top', '1px', 'important');
+                badgeEl.style.setProperty('margin-left', '-6px', 'important');
+                badgeEl.style.setProperty('margin-right', '0px', 'important');
+                badgeEl.style.setProperty('vertical-align', 'middle', 'important');
+                badgeEl.style.setProperty('object-fit', 'contain', 'important');
+
+                if (profileBadgesSlot) {
+                    profileBadgesSlot.style.setProperty('margin-left', '0px', 'important');
+                    profileBadgesSlot.style.setProperty('gap', '0px', 'important');
+                    profileBadgesSlot.style.setProperty('align-items', 'center', 'important');
+
+                    const nameEl = profileIdentity?.querySelector('.fxn-profile-name');
+                    if (nameEl) {
+                        nameEl.querySelectorAll('.fxn-custom-emoji-img, .fxn-custom-emoji-badge').forEach(e => {
+                            if (e !== badgeEl) e.remove();
+                        });
+                    }
+                    profileBadgesSlot.prepend(badgeEl);
+                    return;
+                }
+            }
+            if (targetEl.nextSibling) {
+                parent.insertBefore(badgeEl, targetEl.nextSibling);
+            } else {
+                parent.appendChild(badgeEl);
+            }
+        };
 
         if (!isUrl) {
             // Unicode emoji badge
             if (existing) {
                 if (existing.classList.contains('fxn-custom-emoji-badge')) {
                     if (existing.textContent !== val) existing.textContent = val;
+                    if (isProfileHeader) {
+                        existing.style.setProperty('font-size', '36px', 'important');
+                        existing.style.setProperty('line-height', '1', 'important');
+                        existing.style.setProperty('position', 'relative', 'important');
+                        existing.style.setProperty('top', '1px', 'important');
+                        existing.style.setProperty('margin-left', '-6px', 'important');
+                        existing.style.setProperty('margin-right', '0px', 'important');
+                        existing.style.setProperty('vertical-align', 'middle', 'important');
+                    }
                     return;
                 }
                 existing.remove();
@@ -244,11 +306,7 @@
             span.onmouseenter = () => { span.style.transform = 'scale(1.2) rotate(4deg)'; };
             span.onmouseleave = () => { span.style.transform = 'scale(1) rotate(0deg)'; };
 
-            if (targetEl.nextSibling) {
-                parent.insertBefore(span, targetEl.nextSibling);
-            } else {
-                parent.appendChild(span);
-            }
+            placeBadge(span);
             return;
         }
 
@@ -259,6 +317,20 @@
         if (existing) {
             if (existing.classList.contains('fxn-custom-emoji-img')) {
                 if (existing.src !== resolvedSrc) existing.src = resolvedSrc;
+                if (isProfileHeader) {
+                    existing.style.setProperty('width', '48px', 'important');
+                    existing.style.setProperty('height', '48px', 'important');
+                    existing.style.setProperty('max-width', '40px', 'important');
+                    existing.style.setProperty('max-height', '40px', 'important');
+                    existing.style.setProperty('min-width', '32px', 'important');
+                    existing.style.setProperty('min-height', '32px', 'important');
+                    existing.style.setProperty('position', 'relative', 'important');
+                    existing.style.setProperty('top', '1px', 'important');
+                    existing.style.setProperty('margin-left', '-6px', 'important');
+                    existing.style.setProperty('margin-right', '0px', 'important');
+                    existing.style.setProperty('vertical-align', 'middle', 'important');
+                    existing.style.setProperty('object-fit', 'contain', 'important');
+                }
                 return;
             }
             existing.remove();
@@ -306,11 +378,7 @@
 
         img.src = resolvedSrc;
 
-        if (targetEl.nextSibling) {
-            parent.insertBefore(img, targetEl.nextSibling);
-        } else {
-            parent.appendChild(img);
-        }
+        placeBadge(img);
     }
 
     // Helper: Hex to RGB
@@ -799,6 +867,9 @@
             this.effectId = effectPayload?.id || 'liquidGold';
             this.colors = effectPayload?.colors || {};
             this.state = {};
+            this.isPersistentVisible = Boolean(
+                hostEl.closest('#header, #navbar, .navbar-right, .dropdown-menu, .nav-profile, .dropdown, .chat-header, .chat-float, .profile-header, .fxn-profile-card, #fxnSidebarProfileModal')
+            );
             this.isNavbarOrDropdown = Boolean(hostEl.closest('#header, #navbar, .navbar-right, .dropdown-menu, .nav-profile, .dropdown'));
             this.isVisible = true;
 
@@ -813,7 +884,10 @@
             // Wrap text transparently
             this.measureAndAttach();
 
-            if (fxObserver && !this.isNavbarOrDropdown) {
+            // Paint first frame immediately so there is never a blank frame
+            this.tick(performance.now());
+
+            if (fxObserver && !this.isPersistentVisible) {
                 fxObserver.observe(this.canvas);
             }
         }
@@ -875,7 +949,7 @@
 
         tick(timestamp) {
             if (!this.canvas.parentNode) return;
-            if (this._needsMeasureOnShow || this.isNavbarOrDropdown) {
+            if (this._needsMeasureOnShow || this.isPersistentVisible) {
                 const rect = this.hostEl.getBoundingClientRect();
                 if (rect.width > 0 && (!this.w || Math.abs(rect.width - (this.w - 48)) > 5)) {
                     this.measureAndAttach();
@@ -906,8 +980,8 @@
     function masterLoop(timestamp) {
         if (!isMasterLoopRunning) return;
 
-        // Auto-pause if window is not focused or tab is hidden
-        if (document.hidden || (typeof document.hasFocus === 'function' && !document.hasFocus())) {
+        // Auto-pause if tab is hidden
+        if (document.hidden) {
             isMasterLoopRunning = false;
             return;
         }
@@ -915,18 +989,21 @@
         const elapsed = timestamp - lastFrameTime;
         if (elapsed >= TARGET_INTERVAL) {
             lastFrameTime = timestamp - (elapsed % TARGET_INTERVAL);
-            activeCanvases.forEach(item => {
+            for (const item of activeCanvases) {
+                if (!item.hostEl || !item.hostEl.isConnected) {
+                    item.destroy();
+                    activeCanvases.delete(item);
+                    continue;
+                }
                 if (item.isVisible) item.tick(timestamp);
-            });
+            }
         }
 
         requestAnimationFrame(masterLoop);
     }
 
     function startLoop() {
-        if (document.hidden || (typeof document.hasFocus === 'function' && !document.hasFocus())) {
-            return;
-        }
+        if (document.hidden) return;
         if (!isMasterLoopRunning && activeCanvases.size > 0) {
             isMasterLoopRunning = true;
             lastFrameTime = performance.now();
@@ -947,7 +1024,7 @@
                     const isVisible = entry.isIntersecting;
                     for (const item of activeCanvases) {
                         if (item.canvas === canvas) {
-                            if (!item.isNavbarOrDropdown) {
+                            if (!item.isPersistentVisible) {
                                 item.isVisible = isVisible;
                             }
                             break;
@@ -957,7 +1034,7 @@
             }, {
                 root: null,
                 rootMargin: '120px',
-                threshold: 0.05
+                threshold: 0
             });
         }
     }
@@ -985,6 +1062,16 @@
             return navNameEl.textContent.trim();
         }
 
+        // 3. Fallback from localStorage / sessionStorage cached user info
+        try {
+            const cachedInfo = localStorage.getItem('fxn_user_info') || sessionStorage.getItem('fxn_user_info');
+            if (cachedInfo) {
+                const p = JSON.parse(cachedInfo);
+                const u = p?.userName || p?.username || p?.fpUsername;
+                if (u && typeof u === 'string' && u.trim()) return u.trim();
+            }
+        } catch (_) {}
+
         return myUsername || null;
     }
 
@@ -993,7 +1080,7 @@
         'badge', 'rating', 'avatar', 'media-user', 'fxn-custom-emoji-img', 
         'online-status', 'pull-right', 'text-muted', 'time', 'date', 
         'contact-item-time', 'media-user-status', 'user-status', 
-        'foxen-user-status', 'chat-msg-time', 'text-nowrap'
+        'foxen-user-status', 'chat-msg-time', 'chat-msg-date', 'text-nowrap'
     ];
 
     function getCleanNicknameText(el) {
@@ -1017,9 +1104,7 @@
         return (text || '').trim();
     }
 
-    const SUPABASE_REST_URL = 'https://api.foxen.site';
-    const SUPABASE_FALLBACK_URL = 'https://yoacfrbedwksnfksjjmv.supabase.co';
-    const SUPABASE_REST_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
+    const FOXEN_API_URL = 'https://api.foxen.site';
 
     async function proxiedSupabaseFetch(url, options = {}) {
         const fetchOptions = {
@@ -1044,7 +1129,6 @@
                             return;
                         } catch(e) {}
                     }
-                    // Fallback to direct fetch
                     fetch(targetUrl, fetchOptions).then(resolve).catch(() => resolve({ ok: false }));
                 });
             } else {
@@ -1052,14 +1136,7 @@
             }
         });
 
-        let res = await doFetch(url);
-        // Если api.foxen.site временно недоступен или вернул ошибку, пробуем напрямую через supabase.co
-        if ((!res || !res.ok) && url.includes('api.foxen.site')) {
-            const fallbackUrl = url.replace('https://api.foxen.site', SUPABASE_FALLBACK_URL);
-            const fbRes = await doFetch(fallbackUrl);
-            if (fbRes && fbRes.ok) return fbRes;
-        }
-        return res;
+        return await doFetch(url);
     }
 
     // --- Batch User Effects Fetching & Cache ---
@@ -1157,17 +1234,21 @@
         document.querySelectorAll('.fxn-nick-decorated').forEach(el => {
             el.classList.remove('fxn-nick-decorated');
             el.style.color = '';
+            el.style.webkitTextFillColor = '';
         });
         document.querySelectorAll('.fxn-nick-target').forEach(span => {
             span.style.color = '';
+            span.style.webkitTextFillColor = '';
+            span.style.textShadow = '';
             span.querySelectorAll('canvas').forEach(c => c.remove());
         });
         document.querySelectorAll('[data-fxn-checked]').forEach(el => delete el.dataset.fxnChecked);
         scanAndApplyNicknameEffects();
+    }
 
     function refreshDropdownNicknames() {
         for (const item of activeCanvases) {
-            if (item.isNavbarOrDropdown) {
+            if (item.isNavbarOrDropdown || item.isPersistentVisible) {
                 item.isVisible = true;
                 item.measureAndAttach();
                 item.tick(performance.now());
@@ -1184,6 +1265,10 @@
             setTimeout(refreshDropdownNicknames, 30);
             setTimeout(refreshDropdownNicknames, 150);
         }
+        if (e.target && e.target.closest && e.target.closest('.contact-item, .chat, .chat-list, .chat-message-list')) {
+            setTimeout(scanAndApplyNicknameEffects, 100);
+            setTimeout(scanAndApplyNicknameEffects, 400);
+        }
     }, true);
 
     document.addEventListener('mouseenter', (e) => {
@@ -1191,8 +1276,6 @@
             refreshDropdownNicknames();
         }
     }, true);
-
-    }
 
     const cleanUser = (u) => String(u || '').toLowerCase().replace(/[\s_-]+/g, '');
 
@@ -1217,9 +1300,13 @@
             '.media-user-name',
             '.chat-header .media-user-name a',
             '.chat-header .media-user-name',
+            '.chat-msg-author-link',
+            '.chat-msg-author-label',
+            '.chat-msg-head .chat-msg-author-link',
+            '.chat-msg-item .chat-msg-author-link',
+            '.chat-msg-author',
             '.chat-message .chat-msg-author a',
             '.chat-message .chat-msg-author',
-            '.chat-msg-author',
             '.user-link-dropdown .user-link-name',
             '.navbar-right .user-link-name',
             '.user-link-name',
@@ -1248,8 +1335,8 @@
                 return;
             }
 
-            // If rawEl is an anchor link that contains a distinct username element, skip it (inner element will be decorated)
-            if (rawEl.tagName === 'A' && rawEl.querySelector('.user-link-name, .media-user-name, .chat-msg-author, .fxn-nick-target')) {
+            // If rawEl contains a distinct inner username element, skip it (inner element will be decorated)
+            if (rawEl.querySelector('.chat-msg-author-link, .user-link-name, .media-user-name, .chat-msg-author')) {
                 return;
             }
 
@@ -1259,9 +1346,7 @@
             }
 
             // Prevent decorating if already currently decorated with an active canvas
-            if (rawEl.classList.contains('fxn-nick-decorated') || 
-                rawEl.closest('.fxn-nick-decorated') || 
-                rawEl.querySelector('.fxn-nick-overlay-canvas')) {
+            if (rawEl.querySelector('.fxn-nick-overlay-canvas')) {
                 rawEl.dataset.fxnChecked = '1';
                 return;
             }
@@ -1335,9 +1420,9 @@
                 const emoji = data.emoji || null;
 
                 let targetEl = rawEl;
-                if (eff && eff.id && !rawEl.classList.contains('fxn-nick-decorated')) {
+                if (eff && eff.id && !rawEl.querySelector('.fxn-nick-overlay-canvas')) {
                     targetEl = wrapTextNodeForNicknameFX(rawEl, text);
-                    if (targetEl && !targetEl.classList.contains('fxn-nick-decorated')) {
+                    if (targetEl && !targetEl.querySelector('.fxn-nick-overlay-canvas')) {
                         const overlay = new NicknameOverlayCanvas(targetEl, text, eff);
                         activeCanvases.add(overlay);
                     }
@@ -1362,9 +1447,11 @@
             }
 
             // 3. Mark non-registered sellers as checked with no effect (0 network requests)
-            userEffectsCache.set(lower, null);
-            userEffectsCache.set(clean, null);
-            rawEl.dataset.fxnChecked = '1';
+            if (!isMe && !isProfileHeader) {
+                userEffectsCache.set(lower, null);
+                userEffectsCache.set(clean, null);
+                rawEl.dataset.fxnChecked = '1';
+            }
         });
 
         if (activeCanvases.size > 0) {
@@ -1481,7 +1568,11 @@
                     myFoxenEmoji = null;
                 }
 
-                scanAndApplyNicknameEffects();
+                if (myFoxenEffect || myFoxenEmoji) {
+                    reapplyAllEffects();
+                } else {
+                    scanAndApplyNicknameEffects();
+                }
                 verifyLiveUserSubscriptionAndSync();
             });
 
@@ -1570,7 +1661,7 @@
             domMutationTimer = setTimeout(() => {
                 domMutationTimer = null;
                 scanAndApplyNicknameEffects();
-            }, 400);
+            }, 250);
         });
 
         domObserver.observe(document.body, {
@@ -1588,10 +1679,6 @@
         } else {
             startLoop();
         }
-    });
-
-    window.addEventListener('blur', () => {
-        stopLoop();
     });
 
     window.addEventListener('focus', () => {

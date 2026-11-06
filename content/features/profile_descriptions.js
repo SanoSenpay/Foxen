@@ -95,8 +95,7 @@
   async function cacheRead(id) {
     const all = (await storageGet([CACHE_KEY]))[CACHE_KEY] || {};
     const e = all[id] || all[String(id)];
-    if (e && e.description) return e; // Всегда возвращаем сохранённое описание
-    if (e && Date.now() - e.t < CLIENT_CACHE_TTL && e.lastDescUpdate !== undefined) return e;
+    if (e && (e.description || e.bannerId)) return e; // Возвращаем кэш только если в нём есть реальные данные
     const backupKey = 'fxn_saved_desc_' + id;
     const bkp = (await storageGet([backupKey]))[backupKey];
     if (bkp) return { description: bkp, bannerId: null, lastDescUpdate: 0, lastBannerUpdate: 0 };
@@ -126,35 +125,140 @@
   }
 
   async function proxiedFetch(url, options = {}) {
-    if (!url.startsWith(SERVER)) return fetch(url, options);
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ action: 'fxnFetchProxy', url, options }, (res) => {
-        if (!res || chrome.runtime.lastError) return reject(new Error('Proxy connection error'));
-        if (res.error) return reject(new Error(res.error));
-        resolve({
-          ok: res.ok,
-          status: res.status,
-          statusText: res.statusText,
-          headers: new Headers(res.headers || {}),
-          text: async () => res.text,
-          json: async () => JSON.parse(res.text)
+    // When called from extension context, route requests through background fetch proxy to bypass page CORS/CSP
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      return new Promise((resolve) => {
+        chrome.runtime.sendMessage({ action: 'fxnFetchProxy', url, options }, (res) => {
+          if (chrome.runtime.lastError || !res) {
+            return fetch(url, options).then(resolve).catch((err) => resolve({
+              ok: false,
+              status: 0,
+              statusText: err?.message || 'Network error',
+              headers: new Headers(),
+              text: async () => '',
+              json: async () => null
+            }));
+          }
+          if (res.error) {
+            return resolve({
+              ok: false,
+              status: res.status || 0,
+              statusText: res.error,
+              headers: new Headers(res.headers || {}),
+              text: async () => '',
+              json: async () => null
+            });
+          }
+          resolve({
+            ok: Boolean(res.ok),
+            status: res.status || (res.ok ? 200 : 500),
+            statusText: res.statusText || '',
+            headers: new Headers(res.headers || {}),
+            text: async () => res.text || '',
+            json: async () => {
+              try { return JSON.parse(res.text); } catch { return null; }
+            }
+          });
         });
       });
-    });
+    }
+    return fetch(url, options);
+  }
+
+  const GITHUB_PUBLIC_REGISTRY_URLS = [
+    'https://raw.githubusercontent.com/SanoSenpay/Foxen/data/public_profiles.json',
+    'https://cdn.jsdelivr.net/gh/SanoSenpay/Foxen@data/public_profiles.json',
+    'https://raw.githubusercontent.com/SanoSenpay/Foxen/main/public_profiles.json'
+  ];
+
+  let _publicProfilesRegistry = null;
+  let _lastRegistryFetchTime = 0;
+  const REGISTRY_TTL_MS = 15 * 60 * 1000; // 15 минут кэш
+
+  async function loadPublicProfilesRegistry(force = false) {
+    const now = Date.now();
+    if (!force && _publicProfilesRegistry && (now - _lastRegistryFetchTime < REGISTRY_TTL_MS)) {
+      return _publicProfilesRegistry;
+    }
+
+    if (!_publicProfilesRegistry) {
+      try {
+        const stored = (await storageGet(['fxnPublicProfilesRegistry']))['fxnPublicProfilesRegistry'];
+        if (stored && stored.data && (!stored.ts || (now - stored.ts < REGISTRY_TTL_MS))) {
+          _publicProfilesRegistry = stored.data;
+          _lastRegistryFetchTime = stored.ts || now;
+          if (!force) return _publicProfilesRegistry;
+        }
+      } catch (_) {}
+    }
+
+    _lastRegistryFetchTime = now;
+
+    for (const baseUrl of GITHUB_PUBLIC_REGISTRY_URLS) {
+      try {
+        const url = baseUrl.includes('raw.githubusercontent.com') ? `${baseUrl}?_t=${now}` : baseUrl;
+        const res = await proxiedFetch(url, { cache: 'no-store' });
+        if (res && res.ok) {
+          const json = await res.json();
+          if (json && (json.by_fp_id || json.profiles)) {
+            _publicProfilesRegistry = json;
+            storageSet({ fxnPublicProfilesRegistry: { ts: now, data: json } }).catch(() => {});
+            return _publicProfilesRegistry;
+          }
+        }
+      } catch (err) {
+        console.warn('[Foxen PD] Failed to load public profiles registry from', baseUrl, err);
+      }
+    }
+
+    return _publicProfilesRegistry;
   }
 
   async function serverGetProfile(id) {
-    const r = await proxiedFetch(SERVER + '/funpay/users/' + id + '/profile', {
-      method: 'GET', cache: 'no-store',
-    });
-    if (!r.ok) return { description: null, bannerId: null, lastDescUpdate: 0, lastBannerUpdate: 0 };
-    const j = await r.json();
-    return {
-      description: j && j.description != null ? j.description : null,
-      bannerId: j && j.bannerId != null ? j.bannerId : null,
-      lastDescUpdate: j && j.lastDescUpdate || 0,
-      lastBannerUpdate: j && j.lastBannerUpdate || 0,
-    };
+    // 1. Попытка получить из GitHub-реестра (если доступен)
+    try {
+      const reg = await loadPublicProfilesRegistry();
+      if (reg) {
+        const targetStr = String(id).trim();
+        const item = (reg.by_fp_id && reg.by_fp_id[targetStr]) ||
+                     (reg.by_username && reg.by_username[targetStr.toLowerCase()]) ||
+                     (reg.by_foxen_id && reg.by_foxen_id[targetStr.toUpperCase()]);
+        if (item && (item.description || item.banner_id || item.banner_url)) {
+          return {
+            description: item.description || null,
+            bannerId: item.banner_id || item.banner_url || null,
+            lastDescUpdate: item.updated_at ? new Date(item.updated_at).getTime() : 0,
+            lastBannerUpdate: item.updated_at ? new Date(item.updated_at).getTime() : 0,
+          };
+        }
+      }
+    } catch (_) {}
+
+    // 2. Прямой запрос к серверу api.foxen.site (Cloudflare KV)
+    try {
+      const r = await proxiedFetch(SERVER + '/funpay/users/' + id + '/profile', {
+        method: 'GET',
+        cache: 'no-store',
+      });
+      if (r && r.ok) {
+        const j = await r.json();
+        if (j) {
+          return {
+            description: j.description != null ? j.description : null,
+            bannerId: j.bannerId != null ? j.bannerId : (j.banner_id != null ? j.banner_id : null),
+            lastDescUpdate: j.lastDescUpdate || 0,
+            lastBannerUpdate: j.lastBannerUpdate || 0,
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('[Foxen PD] Failed to fetch profile from SERVER:', err);
+    }
+
+    const cached = await cacheRead(id);
+    if (cached) return cached;
+
+    return { description: null, bannerId: null, lastDescUpdate: 0, lastBannerUpdate: 0 };
   }
   async function serverLinkStart(id) {
     const r = await proxiedFetch(SERVER + '/me/funpay/link/start', {
@@ -177,6 +281,28 @@
       lastDescUpdate: j && j.lastDescUpdate || 0,
     };
   }
+  
+  const GH_SYNC_COOLDOWN_MS = 25 * 60 * 1000; // 25 минут кд
+  async function triggerGitHubBannerSync() {
+    try {
+      const data = await storageGet(['fxn_last_gh_sync_dispatch_ts']);
+      const lastTs = data?.fxn_last_gh_sync_dispatch_ts || 0;
+      const now = Date.now();
+      if (now - lastTs < GH_SYNC_COOLDOWN_MS) {
+        const minsLeft = Math.ceil((GH_SYNC_COOLDOWN_MS - (now - lastTs)) / 60000);
+        console.log(`[Foxen PD] GitHub sync on cooldown (${minsLeft} min remaining), scheduled cron will sync automatically.`);
+        return;
+      }
+      await storageSet({ fxn_last_gh_sync_dispatch_ts: now });
+      console.log('[Foxen PD] Triggering GitHub sync for updated banner...');
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({ action: 'fxnTriggerGithubSync', reason: 'banner_update' }, () => {});
+      }
+    } catch (e) {
+      console.warn('[Foxen PD] Could not dispatch GitHub sync:', e);
+    }
+  }
+
   async function serverSaveBanner(session, bannerId) {
     const r = await proxiedFetch(SERVER + '/me/funpay/banner', {
       method: 'PUT',
@@ -195,13 +321,39 @@
   /**
    * Загрузка свежего каталога баннеров с удаленного сервера
    */
+  const BANNER_CATALOG_SOURCES = [
+    'https://cdn.foxen.site/download/Catalog/Banners/banners-catalog.json',
+    'https://api.foxen.site/banners/catalog',
+    'https://raw.githubusercontent.com/SanoSenpay/Foxen/main/content/banners-catalog.json',
+    'https://cdn.jsdelivr.net/gh/SanoSenpay/Foxen@main/content/banners-catalog.json'
+  ];
+
   async function fetchServerCatalog() {
-    // 1. Попытка загрузки актуального каталога с CDN Foxen (Cloudflare R2)
     const t = Date.now();
-    const r2BannerCatalogUrl = `https://cdn.foxen.site/download/Catalog/Banners/banners-catalog.json?_t=${t}`;
+    // 1. Попытка загрузки каталога с GitHub Raw / jsDelivr / R2 через proxiedFetch
+    for (const baseUrl of BANNER_CATALOG_SOURCES) {
+      try {
+        const url = `${baseUrl}?_t=${t}`;
+        const r = await proxiedFetch(url, { cache: 'no-store' });
+        if (r && r.ok) {
+          const data = await r.json();
+          if (data && Array.isArray(data.banners) && data.banners.length > 0) {
+            _catalog = data;
+            await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
+            return _catalog;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. Воркер в качестве резерва
     try {
-      const r = await fetch(r2BannerCatalogUrl, { cache: 'no-store' });
-      if (r.ok) {
+      const r = await proxiedFetch(SERVER + '/banners/catalog', {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'X-FPT-Key': SHARED_KEY }
+      });
+      if (r && r.ok) {
         const data = await r.json();
         if (data && Array.isArray(data.banners) && data.banners.length > 0) {
           _catalog = data;
@@ -211,19 +363,17 @@
       }
     } catch (_) {}
 
-    // 2. Воркер в качестве резерва (при наличии развернутого эндпоинта)
+    // 3. Локальный встроенный файл
     try {
-      const r = await proxiedFetch(SERVER + '/banners/catalog', {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { 'X-FPT-Key': SHARED_KEY }
-      });
-      if (r.ok) {
-        const data = await r.json();
-        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
-          _catalog = data;
-          await storageSet({ [CATALOG_CACHE_KEY]: { catalog: data, t: Date.now() } });
-          return _catalog;
+      if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+        const u = chrome.runtime.getURL('content/banners-catalog.json');
+        const r = await fetch(u);
+        if (r.ok) {
+          const data = await r.json();
+          if (data && Array.isArray(data.banners)) {
+            _catalog = data;
+            return _catalog;
+          }
         }
       }
     } catch (_) {}
@@ -242,13 +392,13 @@
    * Полный цикл получения каталога (Локальный кэш -> Сервер -> Резервный файл расширения)
    */
   async function loadCatalog(forceRefresh = false) {
-    if (!forceRefresh && _catalog && Array.isArray(_catalog.banners) && _catalog.banners.length >= 4) return _catalog;
+    if (!forceRefresh && _catalog && Array.isArray(_catalog.banners) && _catalog.banners.length >= 20) return _catalog;
 
     // 1. Быстрое чтение из локального кэша
     if (!forceRefresh) {
       try {
         const cached = (await storageGet([CATALOG_CACHE_KEY]))[CATALOG_CACHE_KEY];
-        if (cached && cached.catalog && Array.isArray(cached.catalog.banners) && cached.catalog.banners.length >= 4) {
+        if (cached && cached.catalog && Array.isArray(cached.catalog.banners) && cached.catalog.banners.length >= 20) {
           _catalog = cached.catalog;
           if (Date.now() - (cached.t || 0) > CATALOG_CACHE_TTL) {
             refreshCatalogBackground();
@@ -281,9 +431,20 @@
     if (typeof bannerId === 'string' && (bannerId.startsWith('http://') || bannerId.startsWith('https://') || bannerId.startsWith('data:'))) {
       return bannerId;
     }
-    if (!_catalog || !Array.isArray(_catalog.banners)) return null;
-    const b = _catalog.banners.find(x => x.id === bannerId || x.canonicalId === bannerId);
-    return b ? b.url : null;
+    if (_catalog && Array.isArray(_catalog.banners)) {
+      const b = _catalog.banners.find(x => x.id === bannerId || x.canonicalId === bannerId);
+      if (b && b.url) return b.url;
+    }
+    if (typeof bannerId === 'string' && /^FXNB-\d+$/i.test(bannerId.trim())) {
+      return `https://cdn.foxen.site/download/Catalog/Banners/${bannerId.trim().toUpperCase()}.png`;
+    }
+    if (typeof bannerId === 'string' && /\.(gif|png|jpg|jpeg|webp)$/i.test(bannerId)) {
+      return `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/${bannerId}`;
+    }
+    if (typeof bannerId === 'string' && (["banner1", "banner2", "banner3", "foxen_blackhole", "foxen_blackhole2"].includes(bannerId) || bannerId.includes("anim") || bannerId.includes("gif"))) {
+      return `https://raw.githubusercontent.com/SanoSenpay/FoxenThemes/main/banners/${bannerId}.gif`;
+    }
+    return null;
   }
 
   async function safeErr(res) {
@@ -475,13 +636,21 @@
     const s = document.createElement('style');
     s.id = 'fxn-pd-styles';
     s.textContent =
-      '.' + CARD + '{background:rgba(18,18,18,0.4);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:16px;overflow:hidden;margin-bottom:24px;box-shadow:0 12px 40px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.06);position:relative;}' +
+      '.' + CARD + '{background:var(--fxn-theme-container-bg, rgba(18,18,18,0.75)) !important;border-radius:var(--fxn-theme-border-radius, 16px) !important;overflow:hidden;margin-bottom:24px;box-shadow:0 12px 40px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.08);position:relative;}' +
+      'html.fxn-glass-enabled .' + CARD + ', body.fxn-glass-enabled .' + CARD + '{backdrop-filter:blur(var(--fxn-theme-glass-blur, 12px)) saturate(140%) !important;-webkit-backdrop-filter:blur(var(--fxn-theme-glass-blur, 12px)) saturate(140%) !important;}' +
+      'html:not(.fxn-glass-enabled) .' + CARD + ', body:not(.fxn-glass-enabled) .' + CARD + '{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}' +
       '.' + CARD + ' .profile.fxn-profile-body{padding:80px 28px 32px;text-align:center;background:transparent;position:relative;}' +
       '.' + CARD + ' .profile h1, .' + CARD + ' h1.mb40, .' + CARD + ' .media-body > h1, .' + CARD + ' .profile > h1{display:none !important;}' +
-      '.' + IDENTITY + '{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}' +
-      '.fxn-profile-name{font-size:26px;font-weight:700;color:#fff;line-height:1.2;}' +
+      '.' + IDENTITY + '{display:grid !important;grid-template-columns:1fr auto 1fr !important;align-items:center !important;justify-items:center !important;margin-bottom:16px !important;width:100% !important;}' +
+      '.' + IDENTITY + '::before{content:"" !important;display:block !important;grid-column:1 !important;}' +
+      '.fxn-profile-name{grid-column:2 !important;text-align:center !important;font-size:26px !important;font-weight:700 !important;color:#fff !important;line-height:1.2 !important;white-space:nowrap !important;position:relative !important;}' +
       '.fxn-profile-status{display:none !important;}' +
-      '.' + IDENTITY + ' .user-badges{margin:0;}' +
+      '.' + IDENTITY + ' .fxn-profile-badges-slot, .' + IDENTITY + ' > .user-badges, .' + IDENTITY + ' > .fxn-custom-emoji-img, .' + IDENTITY + ' > .fxn-custom-emoji-badge{grid-column:3 !important;justify-self:start !important;display:inline-flex !important;align-items:center !important;gap:0px !important;margin:0 !important;line-height:1.2 !important;}' +
+      '.fxn-profile-badges-slot .user-badges, .fxn-profile-badges-slot .badge{font-size:13px !important;}' +
+      '.fxn-profile-badges-slot .fxn-custom-emoji-img, .fxn-profile-identity .fxn-custom-emoji-img, .fxn-profile-name > .fxn-custom-emoji-img, .profile-header .fxn-custom-emoji-img, .profile .fxn-custom-emoji-img, h1 .fxn-custom-emoji-img{width:48px !important;height:48px !important;max-width:40px !important;max-height:40px !important;min-width:32px !important;min-height:32px !important;display:inline-block !important;vertical-align:middle !important;position:relative !important;top:1px !important;margin-left:-6px !important;margin-right:0px !important;object-fit:contain !important;}' +
+      '.fxn-profile-badges-slot .fxn-custom-emoji-badge, .fxn-profile-identity .fxn-custom-emoji-badge, .fxn-profile-name > .fxn-custom-emoji-badge, .profile-header .fxn-custom-emoji-badge, .profile .fxn-custom-emoji-badge, h1 .fxn-custom-emoji-badge{font-size:36px !important;line-height:1 !important;display:inline-block !important;vertical-align:middle !important;position:relative !important;top:1px !important;margin-left:-6px !important;margin-right:0px !important;}' +
+      '.fxn-profile-name > .fxn-custom-emoji-img, .fxn-profile-name > .fxn-custom-emoji-badge{position:absolute !important;left:calc(100% - 6px) !important;top:calc(50% + 1px) !important;transform:translateY(-50%) !important;margin:0 !important;}' +
+      '.fxn-profile-name > .fxn-custom-emoji-img:hover, .fxn-profile-name > .fxn-custom-emoji-badge:hover{transform:translateY(-50%) scale(1.15) rotate(4deg) !important;}' +
       '.fxn-avatar-status{position:absolute !important;bottom:3px !important;right:3px !important;width:20px !important;height:20px !important;border-radius:50% !important;background-color:#23a55a !important;border:3.5px solid #121318 !important;box-sizing:border-box !important;z-index:15 !important;pointer-events:auto !important;box-shadow:0 2px 6px rgba(0,0,0,0.4) !important;}' +
       '.fxn-avatar-status.fxn-status-online{background-color:#23a55a !important;}' +
       '.fxn-avatar-status.fxn-status-offline{background-color:#80848e !important;}' +
@@ -615,12 +784,37 @@
         if (nameSrc) {
           const name = document.createElement('span');
           name.className = 'fxn-profile-name';
-          name.textContent = (nameSrc.textContent || '').trim();
+          let extractedText = '';
+          const walker = document.createTreeWalker(nameSrc, NodeFilter.SHOW_TEXT, null, false);
+          while (walker.nextNode()) {
+            const val = (walker.currentNode.nodeValue || '').trim();
+            if (val && !extractedText) extractedText = val;
+          }
+          name.textContent = extractedText || (nameSrc.textContent || '').trim();
           identity.appendChild(name);
         }
 
         const badges = h1.querySelector('.user-badges');
-        if (badges) identity.appendChild(badges.cloneNode(true));
+        const badgesSlot = document.createElement('div');
+        badgesSlot.className = 'fxn-profile-badges-slot';
+        const existingEmoji = h1.querySelector('.fxn-custom-emoji-img, .fxn-custom-emoji-badge');
+        if (existingEmoji) {
+          existingEmoji.style.setProperty('width', '48px', 'important');
+          existingEmoji.style.setProperty('height', '48px', 'important');
+          existingEmoji.style.setProperty('max-width', '40px', 'important');
+          existingEmoji.style.setProperty('max-height', '40px', 'important');
+          existingEmoji.style.setProperty('min-width', '32px', 'important');
+          existingEmoji.style.setProperty('min-height', '32px', 'important');
+          existingEmoji.style.setProperty('position', 'relative', 'important');
+          existingEmoji.style.setProperty('top', '1px', 'important');
+          existingEmoji.style.setProperty('margin-left', '-6px', 'important');
+          existingEmoji.style.setProperty('margin-right', '0px', 'important');
+          existingEmoji.style.setProperty('vertical-align', 'middle', 'important');
+          existingEmoji.style.setProperty('object-fit', 'contain', 'important');
+          badgesSlot.appendChild(existingEmoji);
+        }
+        if (badges) badgesSlot.appendChild(badges.cloneNode(true));
+        identity.appendChild(badgesSlot);
 
         if (h1.parentNode) {
           h1.parentNode.insertBefore(identity, h1);
@@ -1332,14 +1526,21 @@
     const isAdmin = await isCurrentUserAdmin(profileId);
     const now = Date.now();
     const lastUpdate = state.lastBannerUpdate || 0;
-    const cooldownMs = 30 * 60 * 1000;
-    const timePassed = now - lastUpdate;
+    const cooldownMs = 25 * 60 * 1000; // 25 минут строго по правилам защиты
+    // Читаем сохраненный таймстемп последнего обновления баннера из storage
+    let storedLastBannerUpdate = 0;
+    try {
+      const st = await storageGet(['fxn_last_banner_update_ts']);
+      if (st && st.fxn_last_banner_update_ts) storedLastBannerUpdate = Number(st.fxn_last_banner_update_ts) || 0;
+    } catch (_) {}
+    const effectiveLastUpdate = Math.max(lastUpdate || 0, storedLastBannerUpdate);
+    const timePassed = now - effectiveLastUpdate;
     let isOnCooldown = !isAdmin && (timePassed < cooldownMs);
     
     if (isOnCooldown) {
       const remaining = cooldownMs - timePassed;
       const m = Math.ceil(remaining / (60 * 1000));
-      hint.textContent = `Баннер можно менять раз в 30 минут. Осталось: ${m} мин.`;
+      hint.textContent = `Баннер можно менять раз в 25 минут. Осталось: ${m} мин.`;
     } else if (isAdmin) {
       hint.innerHTML = '<span style="color:#c084fc; font-weight:500;">⚡ Режим администратора: без задержки</span>';
     }
@@ -1551,8 +1752,19 @@
           state.bannerId = selectedId;
           state.lastBannerUpdate = res.lastBannerUpdate || Date.now();
           
+          await storageSet({ fxn_last_banner_update_ts: state.lastBannerUpdate });
+          if (_publicProfilesRegistry && _publicProfilesRegistry.by_fp_id) {
+            if (!_publicProfilesRegistry.by_fp_id[String(profileId)]) {
+              _publicProfilesRegistry.by_fp_id[String(profileId)] = {};
+            }
+            _publicProfilesRegistry.by_fp_id[String(profileId)].banner_id = selectedId;
+            _publicProfilesRegistry.by_fp_id[String(profileId)].banner_url = selectedUrl;
+            _publicProfilesRegistry.by_fp_id[String(profileId)].updated_at = new Date(state.lastBannerUpdate).toISOString();
+          }
+
           const cur = await cacheRead(profileId);
           await cacheWrite(profileId, Object.assign({}, cur, { bannerId: selectedId, lastBannerUpdate: state.lastBannerUpdate }));
+          triggerGitHubBannerSync().catch(() => {});
           
           toast('Баннер успешно обновлён', false);
           closeModal();
@@ -1692,7 +1904,7 @@
     let lastBannerUpdate = 0;
     const cached = await cacheRead(profileId);
     console.log('[Foxen PD] cache:', cached);
-    if (cached) { 
+    if (cached && (cached.description || cached.bannerId)) { 
       description = cached.description; 
       bannerId = cached.bannerId; 
       lastDescUpdate = cached.lastDescUpdate || 0;
@@ -1705,7 +1917,9 @@
       lastDescUpdate = prof.lastDescUpdate || 0;
       lastBannerUpdate = prof.lastBannerUpdate || 0;
       console.log('[Foxen PD] server profile:', prof);
-      await cacheWrite(profileId, prof);
+      if (prof && (prof.description || prof.bannerId)) {
+        await cacheWrite(profileId, prof);
+      }
     }
 
     const session = await loadSession(profileId);
@@ -1713,7 +1927,13 @@
     const bannerUrl = getBannerUrl(bannerId);
 
     if (bannerUrl) applyBanner(bannerUrl);
-    if (isOwn) mountBannerEditor(profileId, session, bannerId);
+    if (isOwn) {
+      mountBannerEditor(profileId, session, bannerId);
+    } else {
+      editorMount = null;
+      const overlay = document.querySelector('.fxn-banner-overlay');
+      if (overlay) overlay.remove();
+    }
 
     if (!description && !isOwn) {
       console.log('[Foxen PD] empty + not own → removing block');
@@ -1726,7 +1946,14 @@
   }
 
   function checkNav(getLast, setLast) {
-    if (location.pathname !== getLast()) { setLast(location.pathname); mounted = false; mount(); }
+    if (location.pathname !== getLast()) {
+      setLast(location.pathname);
+      mounted = false;
+      editorMount = null;
+      const overlay = document.querySelector('.fxn-banner-overlay');
+      if (overlay) overlay.remove();
+      mount();
+    }
   }
 
   async function earlyBanner() {

@@ -918,7 +918,7 @@ function getMainPopupHTML() {
                             Поддержите разработку Foxen подпиской Premium
                         </h3>
                         <p style="font-size:12.5px;line-height:1.55;margin:0 0 14px;color:#cbd5e1;">
-                            Расширение Foxen создаётся и развивается <strong>одним человеком</strong> (<a href="https://github.com/SanoSenpay" target="_blank" style="color:#ffffff;text-decoration:underline;">SanoSenpai</a>) — без сторонних инвесторов и без навязчивой рекламы. Приобретая <strong>Foxen Premium</strong>, вы напрямую помогаете мне оплачивать серверы Cloudflare Workers, базу данных Supabase и токены ИИ, получая доступ к расширенным функциям.
+                            Расширение Foxen создаётся и развивается <strong>одним человеком</strong> (<a href="https://github.com/SanoSenpay" target="_blank" style="color:#ffffff;text-decoration:underline;">SanoSenpai</a>) — без сторонних инвесторов и без навязчивой рекламы. Приобретая <strong>Foxen Premium</strong>, вы напрямую помогаете мне оплачивать серверы Cloudflare Workers, инфраструктуру базы данных и токены ИИ, получая доступ к расширенным функциям.
                         </p>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;">
                             <a href="https://web.foxen.site/" target="_blank" class="btn" style="background:#ffffff;color:#0a0a0a;border:1px solid #ffffff;justify-content:center;padding:9px 16px;font-weight:600;text-align:center;width:100%;box-sizing:border-box;">

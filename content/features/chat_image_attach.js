@@ -290,7 +290,8 @@
         setTimeout(() => document.addEventListener('mousedown', cellMenuOutside), 0);
     }
     function cellMenuOutside(e) {
-        if (!e.target.closest('.fxn-tg-cellmenu')) closeCellMenu();
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        if (!targetEl?.closest?.('.fxn-tg-cellmenu')) closeCellMenu();
     }
     function closeCellMenu() {
         document.removeEventListener('mousedown', cellMenuOutside);

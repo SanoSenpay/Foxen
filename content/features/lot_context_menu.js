@@ -307,9 +307,10 @@
         //              false → plain RMB = this menu, Shift+RMB = browser (default)
         const wantsMenu = _ctxInverted ? e.shiftKey : !e.shiftKey;
         if (!wantsMenu) { removeMenu(); return; }
-        const lotEl = e.target.closest('a.tc-item, .tc-item') ||
-                      e.target.closest('.chat-panel[data-type="c-p-u"] a[href*="lots/offer?id="]') ||
-                      e.target.closest('a[href*="lots/offer?id="]');
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        const lotEl = targetEl?.closest?.('a.tc-item, .tc-item') ||
+                      targetEl?.closest?.('.chat-panel[data-type="c-p-u"] a[href*="lots/offer?id="]') ||
+                      targetEl?.closest?.('a[href*="lots/offer?id="]');
         if (!lotEl) { removeMenu(); return; }
         e.preventDefault(); e.stopPropagation();
         const lot = parseLot(lotEl);
@@ -324,7 +325,10 @@
         }
     }, true);
 
-    document.addEventListener('click', (e) => { if (!e.target.closest(`#${MENU_ID}`)) removeMenu(); });
+    document.addEventListener('click', (e) => {
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        if (!targetEl?.closest?.(`#${MENU_ID}`)) removeMenu();
+    });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { removeMenu(); removeChatPanel(); } });
 
     // FIX: Don't call renderPinnedInTable() immediately - the lot rows (.tc-item)

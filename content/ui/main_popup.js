@@ -3,6 +3,15 @@
 // Foxen Modern Redesign UI — Main Window & Navigation Controller
 // =============================================================================
 
+function getFoxenExtensionVersion() {
+    try {
+        const ext = typeof browser !== 'undefined' ? browser : chrome;
+        return ext?.runtime?.getManifest?.()?.version || '4.0.6';
+    } catch (_) {
+        return '4.0.6';
+    }
+}
+
 function injectFoxenFonts() {
     if (document.getElementById('foxen-fonts')) return;
 
@@ -141,6 +150,7 @@ function createMainPopup() {
     if (popup) return popup;
 
     const logoUrl = getFoxenLogoUrl(false);
+    const extVersion = getFoxenExtensionVersion();
 
     const cachedScrim = (() => {
         try {
@@ -161,7 +171,7 @@ function createMainPopup() {
                     <span class="material-symbols-rounded">menu</span>
                     <span class="fxn-mobile-menu-text">Разделы</span>
                 </button>
-                <div class="titlebar-title" id="fxnTitlebarTitle">FOXEN</div>
+                <div class="titlebar-title" id="fxnTitlebarTitle">FOXEN v${extVersion}</div>
                 <div class="titlebar-actions" style="display:flex;align-items:center;gap:8px;margin-left:auto;">
                     <div class="traffic">
                         <span class="traffic-min" title="Превратить в стильный Dockbar (вместо кнопки в меню)"></span>
@@ -181,7 +191,7 @@ function createMainPopup() {
                         <img class="brand-logo" src="${logoUrl}" alt="Foxen Logo" onerror="this.src='https://funpay.com/img/layout/avatar.png'">
                         <div class="brand-name">
                             <div class="t1">FOXEN</div>
-                            <div class="t2">Extension</div>
+                            <div class="t2">Extension v${extVersion}</div>
                         </div>
                         <button type="button" class="fxn-mobile-sidebar-close" id="fxnMobileSidebarClose" title="Закрыть меню">
                             <span class="material-symbols-rounded">close</span>
@@ -206,6 +216,7 @@ function createMainPopup() {
                                 <div class="nav-chevron"></div>
                             </div>
                             <div class="nav-sub">
+                                <div class="nav-subitem" data-target="ai_msg_config"><span class="dot"></span>ИИ Настройка сообщений <span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:#ffffff;border:1px solid rgba(255,255,255,0.18);margin-left:auto;letter-spacing:0.04em;">DEV</span></div>
                                 <div class="nav-subitem active" data-target="general"><span class="dot"></span>Общие настройки</div>
                                 <div class="nav-subitem" data-target="accounts"><span class="dot"></span>Мульти-аккаунты</div>
                                 <div class="nav-subitem" data-target="settings_io"><span class="dot"></span>Экспорт / Импорт</div>
@@ -281,7 +292,7 @@ function createMainPopup() {
                             <div class="nav-sub">
                                 <div class="nav-subitem" data-target="theme"><span class="dot"></span>Внешний вид</div>
                                 <div class="nav-subitem" data-target="chat_sidebar"><span class="dot"></span>Sidebar в чате</div>
-                                <div class="nav-subitem" data-target="theme_gallery"><span class="dot"></span>Каталог тем <span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:#ffffff;border:1px solid rgba(255,255,255,0.18);margin-left:auto;letter-spacing:0.04em;">DEV</span></div>
+                                <div class="nav-subitem" data-target="theme_gallery"><span class="dot"></span>Каталог тем</div>
                                 <div class="nav-subitem" data-target="effects"><span class="dot"></span>Эффекты & Курсор</div>
                             </div>
                         </div>
@@ -440,6 +451,407 @@ function createMainPopup() {
                 <!-- ================= CONTENT PANELS ================= -->
                 <div class="content fxn-content-area" id="fxn-content-area">
 
+                    <!-- PANEL: НАСТРОЙКА СООБЩЕНИЙ (AI_MSG_CONFIG) -->
+                    <section class="panel foxen-page-content" id="ai_msg_config" data-page="ai_msg_config" style="position:relative;">
+                        <div class="panel-body">
+                            <div class="panel-header">
+                                <div class="panel-icon"><span class="material-symbols-rounded">tune</span></div>
+                                <div>
+                                    <div class="crumb">Главная &amp; Настройки</div>
+                                    <h1>ИИ Настройка сообщений</h1>
+                                    <p>Автоматическая генерация и настройка шаблонов и автоответов под ваш персональный стиль</p>
+                                </div>
+                                <div class="status-pill" style="color: #ffffff; border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06);">
+                                    <span class="material-symbols-rounded" style="font-size: 14px; color: #ffffff;">construction</span>
+                                    <span>В РАЗРАБОТКЕ</span>
+                                </div>
+                            </div>
+
+                            <div class="group fxn-empty-dev-card" style="padding: 48px 24px; text-align: center; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 16px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.16); border-radius: 16px; width: 100%; box-sizing: border-box;">
+                                <div style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); display: flex !important; align-items: center !important; justify-content: center !important; color: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.05); margin: 0 auto !important; align-self: center !important;">
+                                    <span class="material-symbols-rounded" style="font-size: 32px; color: #ffffff; display: flex; align-items: center; justify-content: center;">auto_awesome</span>
+                                </div>
+                                <div style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 6px; max-width: 480px; width: 100%; margin: 0 auto !important; text-align: center !important;">
+                                    <div style="font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em; text-align: center !important;">Данная функция требует доработки</div>
+                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); line-height: 1.55; text-align: center !important;">
+                                        В настоящее время модуль интеллектуальной конфигурации сообщений дорабатывается и улучшается. В следующей версии расширения он обязательно будет доступен.
+                                    </div>
+                                </div>
+                                <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 7px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; margin: 0 auto !important; align-self: center !important;">
+                                    <span class="material-symbols-rounded" style="font-size: 16px; color: rgba(255, 255, 255, 0.8);">schedule</span>
+                                    <span>В следующей версии обязательно будет доступно</span>
+                                </div>
+                            </div>
+
+                            <!-- [DEV: В РАЗРАБОТКЕ - СОДЕРЖИМОЕ ЗАКОММЕНТИРОВАНО]
+<!- - STEP 1: СТИЛЬ И ТОН - ->
+                            <div class="section-label">1. Стиль и тон сообщений</div>
+                            <div class="group" style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+                                <div style="width:100%;">
+                                    <div style="font-size:12px;font-weight:600;color:var(--fxn-text-main);margin-bottom:10px;">Готовые стили:</div>
+                                    <div class="fxn-aimsg-presets-grid" id="fxnAiMsgPresets" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;box-sizing:border-box;">
+                                        <button type="button" class="fxn-aimsg-preset-pill active" data-preset="polite_brief">
+                                            <span class="material-symbols-rounded fxn-aimsg-preset-ico">verified</span>
+                                            <span class="fxn-aimsg-preset-name">Вежливо, кратко</span>
+                                        </button>
+                                        <button type="button" class="fxn-aimsg-preset-pill" data-preset="friendly_creative">
+                                            <span class="material-symbols-rounded fxn-aimsg-preset-ico">waving_hand</span>
+                                            <span class="fxn-aimsg-preset-name">Дружелюбно</span>
+                                        </button>
+                                        <button type="button" class="fxn-aimsg-preset-pill" data-preset="premium_care">
+                                            <span class="material-symbols-rounded fxn-aimsg-preset-ico">star</span>
+                                            <span class="fxn-aimsg-preset-name">Премиум-сервис</span>
+                                        </button>
+                                        <button type="button" class="fxn-aimsg-preset-pill" data-preset="turbo_speed">
+                                            <span class="material-symbols-rounded fxn-aimsg-preset-ico">bolt</span>
+                                            <span class="fxn-aimsg-preset-name">Турбо-продавец</span>
+                                        </button>
+                                        <button type="button" class="fxn-aimsg-preset-pill" data-preset="gamer_vibe">
+                                            <span class="material-symbols-rounded fxn-aimsg-preset-ico">auto_awesome</span>
+                                            <span class="fxn-aimsg-preset-name">Игровой стиль</span>
+                                        </button>
+                                        <button type="button" class="fxn-aimsg-preset-pill" data-preset="trust_warranty">
+                                            <span class="material-symbols-rounded fxn-aimsg-preset-ico">verified_user</span>
+                                            <span class="fxn-aimsg-preset-name">Надёжность</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="field-label" for="fxnAiMsgCustomStyle" style="display:block;margin-bottom:8px;">Индивидуальные требования к тексту:</label>
+                                    <textarea id="fxnAiMsgCustomStyle" class="template-input fxn-aimsg-textarea" placeholder="Опишите желаемый стиль своими словами (например: Вежливо, коротко и по делу, на «Вы», без лишней вежливости, четкие инструкции)..."></textarea>
+                                </div>
+                            </div>
+
+                            <!- - STEP 2: ВЫБОРКА БЛОКОВ - ->
+                            <div class="section-label" style="display:flex;justify-content:space-between;align-items:center;">
+                                <span>2. Разделы для настройки</span>
+                                <div style="display:flex;gap:8px;">
+                                    <button type="button" id="fxnAiSelectAllBlocksBtn" class="fxn-aimsg-action-btn">Выбрать все</button>
+                                    <button type="button" id="fxnAiDeselectAllBlocksBtn" class="fxn-aimsg-action-btn">Снять все</button>
+                                </div>
+                            </div>
+                            <div class="group" style="padding:14px;display:flex;flex-direction:column;gap:12px;">
+                                <!- - CARD 1: ОТЗЫВЫ - ->
+                                <div class="fxn-aimsg-block-card selected" data-block="reviews">
+                                    <div class="fxn-aimsg-card-head">
+                                        <label class="fxn-aimsg-checkbox-container" title="Включить / выключить раздел">
+                                            <input type="checkbox" id="fxnAiBlockReviews" class="fxn-aimsg-native-cb" checked>
+                                            <span class="fxn-aimsg-custom-cb">
+                                                <svg class="fxn-aimsg-cb-svg" viewBox="0 0 16 16" fill="none">
+                                                    <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </span>
+                                        </label>
+                                        <div class="fxn-aimsg-head-content" data-toggle-expand="reviews">
+                                            <div class="fxn-aimsg-title-row">
+                                                <span class="material-symbols-rounded fxn-aimsg-title-ico">reviews</span>
+                                                <span class="fxn-aimsg-title-text">Ответы на отзывы (1–5 звезд)</span>
+                                                <span class="fxn-aimsg-tag">5 полей</span>
+                                                <span class="material-symbols-rounded fxn-aimsg-expand-arrow">keyboard_arrow_down</span>
+                                            </div>
+                                            <div class="fxn-aimsg-block-desc">
+                                                Индивидуальные автоответы под каждую оценку покупателя. Позволяет мгновенно благодарить за высокую оценку или оперативно решать вопросы при низкой оценке. Нажмите, чтобы посмотреть список входящих полей.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="fxn-aimsg-sublist" id="fxnAiSublist_reviews" style="display:none;">
+                                        <div class="fxn-aimsg-sublist-header">Состав раздела:</div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">star</span>
+                                            <span class="fxn-aimsg-sub-name">5 звезд:</span>
+                                            <span class="fxn-aimsg-sub-desc">Благодарность за покупку и приглашение вернуться</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">star</span>
+                                            <span class="fxn-aimsg-sub-name">4 звезды:</span>
+                                            <span class="fxn-aimsg-sub-desc">Спасибо за отзыв и предложение помощи в чате</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">star</span>
+                                            <span class="fxn-aimsg-sub-name">3 звезды:</span>
+                                            <span class="fxn-aimsg-sub-desc">Вежливое выяснение проблемы и готовность всё решить</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet warn">warning</span>
+                                            <span class="fxn-aimsg-sub-name">2 звезды:</span>
+                                            <span class="fxn-aimsg-sub-desc">Извинения за неудобство, замена или возврат средств</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet err">error</span>
+                                            <span class="fxn-aimsg-sub-name">1 звезда:</span>
+                                            <span class="fxn-aimsg-sub-desc">Срочное решение вопроса в личных сообщениях</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!- - CARD 2: АВТООТВЕТЧИК - ->
+                                <div class="fxn-aimsg-block-card selected" data-block="chatAr">
+                                    <div class="fxn-aimsg-card-head">
+                                        <label class="fxn-aimsg-checkbox-container" title="Включить / выключить раздел">
+                                            <input type="checkbox" id="fxnAiBlockChatAr" class="fxn-aimsg-native-cb" checked>
+                                            <span class="fxn-aimsg-custom-cb">
+                                                <svg class="fxn-aimsg-cb-svg" viewBox="0 0 16 16" fill="none">
+                                                    <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </span>
+                                        </label>
+                                        <div class="fxn-aimsg-head-content" data-toggle-expand="chatAr">
+                                            <div class="fxn-aimsg-title-row">
+                                                <span class="material-symbols-rounded fxn-aimsg-title-ico">forum</span>
+                                                <span class="fxn-aimsg-title-text">Автоответчик в чате</span>
+                                                <span class="fxn-aimsg-tag">3 поля</span>
+                                                <span class="material-symbols-rounded fxn-aimsg-expand-arrow">keyboard_arrow_down</span>
+                                            </div>
+                                            <div class="fxn-aimsg-block-desc">
+                                                Приветственные и сервисные сообщения в диалоге с клиентом: первое приветствие покупателя, сообщение сразу после оплаты заказа и финальное подтверждение сделки.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="fxn-aimsg-sublist" id="fxnAiSublist_chatAr" style="display:none;">
+                                        <div class="fxn-aimsg-sublist-header">Состав раздела:</div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">chat</span>
+                                            <span class="fxn-aimsg-sub-name">Приветствие:</span>
+                                            <span class="fxn-aimsg-sub-desc">Первое сообщение покупателю при открытии диалога</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">shopping_cart_checkout</span>
+                                            <span class="fxn-aimsg-sub-name">Новый заказ:</span>
+                                            <span class="fxn-aimsg-sub-desc">Мгновенное сообщение после оплаты заказа</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">task_alt</span>
+                                            <span class="fxn-aimsg-sub-name">Подтверждение сделки:</span>
+                                            <span class="fxn-aimsg-sub-desc">Благодарность за закрытие сделки и просьба отзыва</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!- - CARD 3: БОНУС - ->
+                                <div class="fxn-aimsg-block-card selected" data-block="bonus">
+                                    <div class="fxn-aimsg-card-head">
+                                        <label class="fxn-aimsg-checkbox-container" title="Включить / выключить раздел">
+                                            <input type="checkbox" id="fxnAiBlockBonus" class="fxn-aimsg-native-cb" checked>
+                                            <span class="fxn-aimsg-custom-cb">
+                                                <svg class="fxn-aimsg-cb-svg" viewBox="0 0 16 16" fill="none">
+                                                    <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </span>
+                                        </label>
+                                        <div class="fxn-aimsg-head-content" data-toggle-expand="bonus">
+                                            <div class="fxn-aimsg-title-row">
+                                                <span class="material-symbols-rounded fxn-aimsg-title-ico">redeem</span>
+                                                <span class="fxn-aimsg-title-text">Бонус за отзыв 5 звезд</span>
+                                                <span class="fxn-aimsg-tag">1 поле</span>
+                                                <span class="material-symbols-rounded fxn-aimsg-expand-arrow">keyboard_arrow_down</span>
+                                            </div>
+                                            <div class="fxn-aimsg-block-desc">
+                                                Автоматическая отправка персонального промокода, подарка или накопительной скидки после оставленного покупателем положительного отзыва на высшую оценку.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="fxn-aimsg-sublist" id="fxnAiSublist_bonus" style="display:none;">
+                                        <div class="fxn-aimsg-sublist-header">Состав раздела:</div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">redeem</span>
+                                            <span class="fxn-aimsg-sub-name">Текст бонуса:</span>
+                                            <span class="fxn-aimsg-sub-desc">Сообщение с промокодом, подарком или скидкой в чат</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!- - CARD 4: ШАБЛОНЫ - ->
+                                <div class="fxn-aimsg-block-card selected" data-block="templates">
+                                    <div class="fxn-aimsg-card-head">
+                                        <label class="fxn-aimsg-checkbox-container" title="Включить / выключить раздел">
+                                            <input type="checkbox" id="fxnAiBlockTemplates" class="fxn-aimsg-native-cb" checked>
+                                            <span class="fxn-aimsg-custom-cb">
+                                                <svg class="fxn-aimsg-cb-svg" viewBox="0 0 16 16" fill="none">
+                                                    <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </span>
+                                        </label>
+                                        <div class="fxn-aimsg-head-content" data-toggle-expand="templates">
+                                            <div class="fxn-aimsg-title-row">
+                                                <span class="material-symbols-rounded fxn-aimsg-title-ico">description</span>
+                                                <span class="fxn-aimsg-title-text">Шаблоны быстрых ответов</span>
+                                                <span class="fxn-aimsg-tag">7 шаблонов</span>
+                                                <span class="material-symbols-rounded fxn-aimsg-expand-arrow">keyboard_arrow_down</span>
+                                            </div>
+                                            <div class="fxn-aimsg-block-desc">
+                                                Кнопки быстрых заготовленных фраз в карточке чата сделки: статус готовности, инструкции по активации, просьба оставить отзыв и гарантийные обязательства.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="fxn-aimsg-sublist" id="fxnAiSublist_templates" style="display:none;">
+                                        <div class="fxn-aimsg-sublist-header">Состав раздела:</div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">chat</span>
+                                            <span class="fxn-aimsg-sub-name">Приветствие:</span>
+                                            <span class="fxn-aimsg-sub-desc">Стандартная фраза начала диалога</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">check_circle</span>
+                                            <span class="fxn-aimsg-sub-name">Заказ выполнен:</span>
+                                            <span class="fxn-aimsg-sub-desc">Инструкция по подтверждению заказа на FunPay</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">rate_review</span>
+                                            <span class="fxn-aimsg-sub-name">Попросить отзыв:</span>
+                                            <span class="fxn-aimsg-sub-desc">Вежливая просьба оставить оценку</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">favorite</span>
+                                            <span class="fxn-aimsg-sub-name">Спасибо за заказ:</span>
+                                            <span class="fxn-aimsg-sub-desc">Финальная благодарность покупателю с датой</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">description</span>
+                                            <span class="fxn-aimsg-sub-name">Инструкция:</span>
+                                            <span class="fxn-aimsg-sub-desc">Пошаговая инструкция по активации и получению</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">hourglass_top</span>
+                                            <span class="fxn-aimsg-sub-name">Ожидание:</span>
+                                            <span class="fxn-aimsg-sub-desc">Предупреждение о подготовке выдачи</span>
+                                        </div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">verified_user</span>
+                                            <span class="fxn-aimsg-sub-name">Гарантия:</span>
+                                            <span class="fxn-aimsg-sub-desc">Напоминание о гарантии и поддержке продавца</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!- - CARD 5: ЗАПРОС ОТЗЫВА В ЗАКАЗЕ - ->
+                                <div class="fxn-aimsg-block-card selected" data-block="reviewReq">
+                                    <div class="fxn-aimsg-card-head">
+                                        <label class="fxn-aimsg-checkbox-container" title="Включить / выключить раздел">
+                                            <input type="checkbox" id="fxnAiBlockReviewReq" class="fxn-aimsg-native-cb" checked>
+                                            <span class="fxn-aimsg-custom-cb">
+                                                <svg class="fxn-aimsg-cb-svg" viewBox="0 0 16 16" fill="none">
+                                                    <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </span>
+                                        </label>
+                                        <div class="fxn-aimsg-head-content" data-toggle-expand="reviewReq">
+                                            <div class="fxn-aimsg-title-row">
+                                                <span class="material-symbols-rounded fxn-aimsg-title-ico">send</span>
+                                                <span class="fxn-aimsg-title-text">Кнопка просьбы об отзыве в заказе</span>
+                                                <span class="fxn-aimsg-tag">1 поле</span>
+                                                <span class="material-symbols-rounded fxn-aimsg-expand-arrow">keyboard_arrow_down</span>
+                                            </div>
+                                            <div class="fxn-aimsg-block-desc">
+                                                Текст, который автоматически подставляется в чат по нажатию быстрой кнопки запроса отзыва в карточке завершенного заказа.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="fxn-aimsg-sublist" id="fxnAiSublist_reviewReq" style="display:none;">
+                                        <div class="fxn-aimsg-sublist-header">Состав раздела:</div>
+                                        <div class="fxn-aimsg-subitem">
+                                            <span class="material-symbols-rounded fxn-aimsg-sub-bullet">send</span>
+                                            <span class="fxn-aimsg-sub-name">Текст запроса:</span>
+                                            <span class="fxn-aimsg-sub-desc">Сообщение, вставляемое в чат по клику на кнопку в заказе</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!- - STEP 3: ПАРАМЕТРЫ - ->
+                            <div class="section-label">3. Параметры</div>
+                            <div class="group">
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">code</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Переменные FunPay</div>
+                                        <div class="row-sub">Автоматическая подстановка {buyername}, {lotname}, {welcome}, {orderlink}</div>
+                                    </div>
+                                    <button class="switch on" id="fxnAiOptionVars" data-toggle></button>
+                                </div>
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">text_fields</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Строго без эмодзи</div>
+                                        <div class="row-sub">Использовать только чистый текст и знаки препинания без смайлов</div>
+                                    </div>
+                                    <button class="switch on" id="fxnAiOptionNoEmoji" data-toggle></button>
+                                </div>
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">shuffle</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Spintax-рандомизация {вариант 1|вариант 2}</div>
+                                        <div class="row-sub">Генерировать альтернативные фразы для разнообразия автоответов</div>
+                                    </div>
+                                    <button class="switch" id="fxnAiOptionSpintax" data-toggle></button>
+                                </div>
+                            </div>
+
+                            <!- - ACTION BUTTON & STATUS - ->
+                            <div style="margin:20px 0 10px 0;">
+                                <button type="button" id="fxnAiMsgGenerateBtn" class="btn btn-solid fxn-aimsg-generate-btn">
+                                    <span class="material-symbols-rounded fxn-aimsg-btn-icon">auto_awesome</span>
+                                    <span class="fxn-aimsg-btn-text">Сгенерировать сообщения через ИИ</span>
+                                </button>
+                                <div id="fxnAiGenCooldownBadge" class="fxn-aimsg-cd-badge" style="display:flex;align-items:center;gap:6px;margin-top:7px;font-size:11.5px;color:var(--fxn-text-subtle);"></div>
+                            </div>
+
+                            <div id="fxnAiMsgStatus" class="fxn-aimsg-status-box" style="display:none;"></div>
+
+                            <!- - STEP 4: РЕЗУЛЬТАТЫ ПРЕДПРОСМОТРА И ПРИМЕНЕНИЕ - ->
+                            <div id="fxnAiMsgResults" class="fxn-aimsg-results-box" style="display:none;">
+                                <div class="fxn-aimsg-results-header">
+                                    <div class="fxn-aimsg-results-title-wrap">
+                                        <span class="material-symbols-rounded" style="color:var(--fxn-accent,#ffffff);">check_circle</span>
+                                        <div>
+                                            <div class="fxn-aimsg-results-title">Сообщения сформированы</div>
+                                            <div class="fxn-aimsg-results-sub">Отметьте нужные поля галочками или вставьте по отдельности</div>
+                                        </div>
+                                    </div>
+                                    <div class="fxn-aimsg-results-actions" style="display:flex;align-items:center;gap:8px;">
+                                        <button type="button" id="fxnAiResultsSelectAllBtn" class="fxn-aimsg-action-btn" title="Выбрать все карточки" style="padding:4px 9px;font-size:11.5px;">Все</button>
+                                        <button type="button" id="fxnAiResultsDeselectAllBtn" class="fxn-aimsg-action-btn" title="Снять выбор со всех карточек" style="padding:4px 9px;font-size:11.5px;">Снять</button>
+                                        <button type="button" id="fxnAiMsgApplyAllBtn" class="btn btn-solid fxn-aimsg-apply-btn" title="Вставить выбранные тексты и сохранить">
+                                            <span class="material-symbols-rounded">save</span>
+                                            <span id="fxnAiApplyBtnText">Применить выбранное</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="fxnAiMsgResultsCards" class="fxn-aimsg-cards-list"></div>
+
+                                <div class="fxn-aimsg-bottom-bar" style="margin-top:16px;">
+                                    <button type="button" id="fxnAiMsgApplyAllBottomBtn" class="btn btn-solid fxn-aimsg-apply-btn" style="width:100%;justify-content:center;">
+                                        <span class="material-symbols-rounded">done_all</span>
+                                        <span id="fxnAiApplyBottomBtnText">Применить выбранные поля</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!- - SUCCESS BANNER - ->
+                            <div id="fxnAiMsgSuccessBanner" class="fxn-aimsg-success-banner" style="display:none;">
+                                <div style="display:flex;align-items:center;gap:12px;">
+                                    <span class="material-symbols-rounded" style="font-size:26px;color:var(--fxn-accent,#ffffff);">task_alt</span>
+                                    <div>
+                                        <div style="font-weight:600;font-size:13.5px;color:var(--fxn-text-main);">Настройки успешно обновлены и сохранены</div>
+                                        <div style="font-size:12px;color:var(--fxn-text-subtle);">Все сгенерированные сообщения вставлены в поля расширения.</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                                    <button type="button" class="btn btn-outline" id="fxnAiJumpAutoReviewBtn" style="font-size:12px;padding:6px 14px;">
+                                        Открыть Авто-ответчик & Отзывы
+                                    </button>
+                                    <button type="button" class="btn btn-outline" id="fxnAiJumpTemplatesBtn" style="font-size:12px;padding:6px 14px;">
+                                        Открыть Шаблоны ответов
+                                    </button>
+                                </div>
+                            </div>
+
+                        
+                            -->
+                        </div>
+                    </section>
+
                     <!-- PANEL 1: ОБЩИЕ НАСТРОЙКИ (GENERAL) -->
                     <section class="panel active foxen-page-content" id="general" data-page="general">
                         <div class="panel-body">
@@ -534,6 +946,14 @@ function createMainPopup() {
                                         <div class="row-sub">Отображать ваши подсказки и заметки к товару прямо в диалоге</div>
                                     </div>
                                     <button class="switch on" id="foxenChatLotNotes" data-toggle></button>
+                                </div>
+                                <div class="row">
+                                    <div class="row-icon"><span class="material-symbols-rounded">blur_on</span></div>
+                                    <div class="row-text">
+                                        <div class="row-title">Размытие списка чатов</div>
+                                        <div class="row-sub">Скрывать имена и текст сообщений в левой панели (режим стримера / защита от показа)</div>
+                                    </div>
+                                    <button class="switch" id="foxenBlurChatContacts" data-toggle></button>
                                 </div>
                             </div>
 
@@ -860,7 +1280,7 @@ function createMainPopup() {
                                     Поддержите разработку Foxen подпиской Premium
                                 </div>
                                 <p style="font-size:12.5px;color:#9ca3af;margin-bottom:16px;line-height:1.6;">
-                                    Расширение Foxen создаётся и развивается <b>одним человеком</b> (<a href="https://github.com/SanoSenpay" target="_blank" style="color:#ffffff;text-decoration:underline;text-underline-offset:2px;">SanoSenpai</a>) — в свободное время, без сторонних инвесторов и без навязчивой рекламы. Приобретая <b>Foxen Premium</b>, вы напрямую помогаете мне оплачивать серверную инфраструктуру Cloudflare Workers, базу данных Supabase и токены нейросетей, а взамен получаете доступ ко всем эксклюзивным PRO-возможностям.
+                                    Расширение Foxen создаётся и развивается <b>одним человеком</b> (<a href="https://github.com/SanoSenpay" target="_blank" style="color:#ffffff;text-decoration:underline;text-underline-offset:2px;">SanoSenpai</a>) — в свободное время, без сторонних инвесторов и без навязчивой рекламы. Приобретая <b>Foxen Premium</b>, вы напрямую помогаете мне оплачивать серверную инфраструктуру Cloudflare Workers, инфраструктуру базы данных и токены нейросетей, а взамен получаете доступ ко всем эксклюзивным PRO-возможностям.
                                 </p>
 
                                 <div class="fxn-support-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;">
@@ -2601,35 +3021,8 @@ function createMainPopup() {
 
                     <!-- PANEL: КАТАЛОГ ТЕМ (THEME_GALLERY) -->
                     <section class="panel foxen-page-content" id="theme_gallery" data-page="theme_gallery">
-                        <div class="panel-body">
-                            <div class="panel-header">
-                                <div class="panel-icon"><span class="material-symbols-rounded">grid_view</span></div>
-                                <div>
-                                    <div class="crumb">Кастомизация & Стиль</div>
-                                    <h1>Каталог тем</h1>
-                                    <p>Подборка стильных тем и анимированных фонов сообщества</p>
-                                </div>
-                                <div class="status-pill" style="color: #ffffff; border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06);">
-                                    <span class="material-symbols-rounded" style="font-size: 14px; color: #ffffff;">construction</span>
-                                    <span>В РАЗРАБОТКЕ</span>
-                                </div>
-                            </div>
-
-                            <div class="group fxn-empty-dev-card" style="padding: 48px 24px; text-align: center; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 16px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.16); border-radius: 16px; width: 100%; box-sizing: border-box;">
-                                <div style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); display: flex !important; align-items: center !important; justify-content: center !important; color: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.05); margin: 0 auto !important; align-self: center !important;">
-                                    <span class="material-symbols-rounded" style="font-size: 32px; color: #ffffff; display: flex; align-items: center; justify-content: center;">construction</span>
-                                </div>
-                                <div style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 6px; max-width: 480px; width: 100%; margin: 0 auto !important; text-align: center !important;">
-                                    <div style="font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em; text-align: center !important;">Временно недоступно: находится в разработке</div>
-                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); line-height: 1.55; text-align: center !important;">
-                                        Мы полностью обновляем каталог тем Foxen Hub, онлайн-галерею пресетов и облачную синхронизацию тем сообщества.
-                                    </div>
-                                </div>
-                                <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 7px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; margin: 0 auto !important; align-self: center !important;">
-                                    <span class="material-symbols-rounded" style="font-size: 16px; color: rgba(255, 255, 255, 0.8);">schedule</span>
-                                    <span>Скоро появится в следующем обновлении</span>
-                                </div>
-                            </div>
+                        <div class="panel-body" id="fxn-theme-gallery-root">
+                            <!-- Динамически заполняется функцией loadThemeGallery() из content/features/theme_gallery.js -->
                         </div>
                     </section>
 
@@ -3027,7 +3420,7 @@ function createMainPopup() {
     });
 
     popup.addEventListener('click', (e) => {
-        if (e.target === popup || e.target.classList.contains('scrim')) {
+        if (e.target === popup || e.target?.classList?.contains('scrim')) {
             popup.classList.remove('active');
             popup.classList.remove('mobile-sidebar-open');
             document.body.classList.remove('fxn-popup-open');
@@ -3048,6 +3441,7 @@ function createMainPopup() {
 }
 
 function initMainPopupEvents(popup) {
+    const extVersion = getFoxenExtensionVersion();
     if (!popup) return;
     if (popup.dataset.fxnEventsInit === 'true') return;
     popup.dataset.fxnEventsInit = 'true';
@@ -3441,6 +3835,7 @@ function initMainPopupEvents(popup) {
                 } catch (_) {}
             }
         });
+
     };
     initWindowDragging();
 
@@ -3522,11 +3917,25 @@ function initMainPopupEvents(popup) {
                 set(val) { this.classList.toggle('on', !!val); },
                 configurable: true
             });
+            if (sw.id === 'foxenBlurChatContacts') {
+                const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                storage?.local?.get(['foxen_blur_chat_contacts'], (res) => {
+                    sw.classList.toggle('on', Boolean(res?.foxen_blur_chat_contacts));
+                });
+            }
             if (sw.id === 'headerPositionBottom') {
                 const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
                 storage?.local?.get(['headerPositionBottom', 'foxenTheme'], (res) => {
                     const isB = res?.headerPositionBottom === true || res?.foxenTheme?.headerPosition === 'bottom';
                     sw.classList.toggle('on', Boolean(isB));
+                });
+            }
+            if (sw.id && sw.id.startsWith('fxnAiOption')) {
+                const storage = (typeof browser !== 'undefined' ? browser : chrome).storage;
+                storage?.local?.get([sw.id], (res) => {
+                    if (res && res[sw.id] !== undefined) {
+                        sw.classList.toggle('on', Boolean(res[sw.id]));
+                    }
                 });
             }
             if (sw.id && sw.id.startsWith('fxnSb')) {
@@ -3603,6 +4012,15 @@ function initMainPopupEvents(popup) {
                     }
                     return;
                 }
+                if (sw.id === 'foxenBlurChatContacts') {
+                    document.documentElement.classList.toggle('fxn-blur-chats', isOn);
+                    document.body?.classList.toggle('fxn-blur-chats', isOn);
+                    try {
+                        sessionStorage.setItem('foxen_blur_chat_contacts', isOn ? '1' : '0');
+                        localStorage.setItem('foxen_blur_chat_contacts', isOn ? '1' : '0');
+                    } catch (_) {}
+                    window.dispatchEvent(new CustomEvent('foxen_blur_chat_changed', { detail: { enabled: isOn } }));
+                }
                 if (sw.id === 'headerPositionBottom') {
                     (async () => {
                         try {
@@ -3619,6 +4037,7 @@ function initMainPopupEvents(popup) {
                     'showSalesStatsCheckbox': 'showSalesStats',
                     'showFinanceStatsCheckbox': 'showFinanceStats',
                     'hideBalanceCheckbox': 'hideBalance',
+                    'foxenBlurChatContacts': 'foxen_blur_chat_contacts',
                     'enableRedesignedHomepageGeneral': 'enableRedesignedHomepage',
                     'fxnIdentifierEnabled': 'foxenIdentifierEnabled',
                     'fxnTelemetryEnabled': 'fpt_telemetry_enabled',
@@ -3648,6 +4067,16 @@ function initMainPopupEvents(popup) {
                 } catch (_) {}
             }
         });
+
+        const parentRow = sw.closest('.row');
+        if (parentRow && !parentRow.dataset.rowSwitchBound) {
+            parentRow.dataset.rowSwitchBound = 'true';
+            parentRow.style.cursor = 'pointer';
+            parentRow.addEventListener('click', (e) => {
+                if (e.target === sw || sw.contains(e.target) || e.target.closest('button, a, input, select, textarea')) return;
+                sw.click();
+            });
+        }
     };
 
     // Live Theme Controls & Real-Time Sync (Zero Reload Needed)
@@ -4064,7 +4493,7 @@ function initMainPopupEvents(popup) {
             const rawText = targetSub.textContent.trim().replace(/^●\s*/, '').replace(/DEV$/, '').trim();
             const tbTitle = root.querySelector('#fxnTitlebarTitle') || root.querySelector('.titlebar-title');
             if (tbTitle && rawText) {
-                tbTitle.textContent = `FOXEN • ${rawText}`;
+                tbTitle.textContent = `FOXEN v${extVersion} • ${rawText}`;
             }
             const parentGroup = targetSub.closest('.nav-group');
             if (parentGroup) {
@@ -4093,7 +4522,9 @@ function initMainPopupEvents(popup) {
         }
 
         // Trigger subtab initializers
-        if (effectiveId === 'accounts' && typeof renderAccountsList === 'function') {
+        if (effectiveId === 'ai_msg_config' && typeof initializeAIMsgConfigTab === 'function') {
+            initializeAIMsgConfigTab();
+        } else if (effectiveId === 'accounts' && typeof renderAccountsList === 'function') {
             renderAccountsList();
         } else if (effectiveId === 'tickets' && typeof initTicketsTab === 'function') {
             initTicketsTab();
@@ -4636,7 +5067,7 @@ async function fxnUpdateSidebarAccountWidget(popupEl) {
 
         fxnRenderSidebarProfileUI(popupEl, initialData);
 
-        // 3. Фоновый запрос актуальных данных из БД (Supabase / Worker / FunPay)
+        // 3. Фоновый запрос актуальных данных из БД (Worker / FunPay)
         fxnRefreshSidebarProfileData(popupEl, false);
     } catch (err) {
         console.warn('[Foxen Profile] Error updating sidebar account:', err);
@@ -5101,49 +5532,14 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
         const statsPromise = userId ? fxnFetchFpUserStats(userId) : Promise.resolve(null);
 
         let freshProfile = null;
-        const supabaseUrl = 'https://api.foxen.site';
-        const supabaseFallbackUrl = 'https://yoacfrbedwksnfksjjmv.supabase.co';
-        const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWNmcmJlZHdrc25ma3Nqam12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDIyNDcsImV4cCI6MjEwMjIxODI0N30.c7NDg02pHiHB-BuMbtQ_C6L12kxjkKhp2VJqH2DbfNQ';
 
-        // 1. Быстрый атомарный запрос через RPC get_public_profile (1 запрос для профиля и подписки)
-        try {
-            const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/get_public_profile`, {
-                method: 'POST',
-                headers: {
-                    'apikey': apiKey,
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ p_query: identifier })
-            });
-            if (rpcRes.ok) {
-                const pub = await rpcRes.json();
-                if (pub && pub.id) {
-                    freshProfile = {
-                        id: pub.id,
-                        FP_USER: pub.fp_user || username,
-                        FP_USER_ID: pub.fp_user_id || userId,
-                        FOXEN_ID: pub.foxen_id,
-                        TG_USER: pub.tg_username,
-                        avatar_url: pub.avatar_url,
-                        is_fp_verified: pub.is_fp_verified,
-                        nickname_effect: pub.nickname_effect,
-                        CREATED_AT: pub.created_at,
-                        is_premium: Boolean(pub.is_premium),
-                        subscription: pub.subscription || {}
-                    };
-                }
-            }
-        } catch (_) {}
-
-        // 2. Фоллбэк: supabase_client.js
-        if (!freshProfile && typeof fxnFetchProfileByFpUser === 'function') {
+        // Запрос профиля через API (Edge KV 300s + Firestore)
+        if (typeof fxnFetchProfileByFpUser === 'function') {
             try {
                 freshProfile = await fxnFetchProfileByFpUser(identifier);
             } catch (_) {}
         }
 
-        // 3. Фоллбэк к Worker API
         if (!freshProfile) {
             try {
                 const apiRes = await fetch(`https://api.foxen.site/api/users/${encodeURIComponent(identifier)}`, {
@@ -5155,11 +5551,11 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
                     if (json && json.ok && json.profile) {
                         const p = json.profile;
                         freshProfile = {
+                            id: p.id,
                             FP_USER: p.fp_user || username,
                             FP_USER_ID: p.fp_user_id || userId,
                             FOXEN_ID: p.foxen_id,
                             TG_USER: p.tg_username,
-                            SUBSCRIPTION: p.subscription,
                             avatar_url: p.avatar_url,
                             is_fp_verified: p.is_fp_verified,
                             nickname_effect: p.nickname_effect,
@@ -5167,105 +5563,6 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
                             is_premium: Boolean(p.is_premium || p.subscription?.is_active),
                             subscription: p.subscription || {}
                         };
-                    }
-                }
-            } catch (_) {}
-        }
-
-        // 4. Прямой запрос к Supabase profiles (если ещё не найден)
-        if (!freshProfile || (!freshProfile.subscription?.is_active && !freshProfile.is_premium)) {
-            try {
-                let orParts = [];
-                if (userId) orParts.push(`fp_user_id.eq.${encodeURIComponent(userId)}`);
-                if (username) orParts.push(`fp_user.ilike.${encodeURIComponent(username)}`);
-                if (identifier && identifier !== userId && identifier !== username) {
-                    orParts.push(`foxen_id.eq.${encodeURIComponent(identifier)}`);
-                }
-                const q = `or=(${orParts.join(',')})`;
-                const sbRes = await fetch(`${supabaseUrl}/rest/v1/profiles?${q}&select=*&limit=1`, {
-                    headers: {
-                        'apikey': apiKey,
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (sbRes.ok) {
-                    const sbList = await sbRes.json();
-                    if (sbList && sbList.length > 0) {
-                        const sbProf = sbList[0];
-                        if (!freshProfile) {
-                            freshProfile = {
-                                id: sbProf.id,
-                                FP_USER: sbProf.fp_user || username,
-                                FP_USER_ID: sbProf.fp_user_id || userId,
-                                FOXEN_ID: sbProf.foxen_id,
-                                TG_USER: sbProf.tg_username,
-                                avatar_url: sbProf.avatar_url,
-                                is_fp_verified: sbProf.is_fp_verified,
-                                nickname_effect: sbProf.nickname_effect,
-                                CREATED_AT: sbProf.created_at,
-                                is_premium: sbProf.is_premium,
-                                subscription: {}
-                            };
-                        } else {
-                            if (sbProf.id) freshProfile.id = sbProf.id;
-                        }
-                        if (sbProf.is_premium) {
-                            freshProfile.is_premium = true;
-                        }
-                        if (sbProf.foxen_id) freshProfile.FOXEN_ID = sbProf.foxen_id;
-                        if (sbProf.nickname_effect) freshProfile.nickname_effect = sbProf.nickname_effect;
-                    }
-                }
-            } catch (_) {}
-        }
-
-        // 5. Запрос к таблице subscriptions (сортировка по starts_at.desc!)
-        if (freshProfile && (!freshProfile.subscription || !freshProfile.subscription.is_active)) {
-            try {
-                const sbProfId = freshProfile?.id;
-                const activeFid = freshProfile?.FOXEN_ID || freshProfile?.foxen_id || cached?.foxen_id;
-                const activeUsername = freshProfile?.FP_USER || freshProfile?.fp_user || username;
-
-                let subOrParts = [];
-                if (sbProfId) subOrParts.push(`user_id.eq.${encodeURIComponent(sbProfId)}`);
-                if (activeFid && activeFid !== '—') {
-                    subOrParts.push(`foxen_id.eq.${encodeURIComponent(activeFid)}`);
-                }
-                if (activeUsername) {
-                    subOrParts.push(`fp_user.ilike.${encodeURIComponent(activeUsername)}`);
-                }
-
-                if (subOrParts.length > 0) {
-                    const subUrl = `${supabaseUrl}/rest/v1/subscriptions?or=(${subOrParts.join(',')})&order=starts_at.desc&limit=1`;
-                    const subRes = await fetch(subUrl, {
-                        headers: {
-                            'apikey': apiKey,
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    if (subRes.ok) {
-                        const sList = await subRes.json();
-                        if (sList && sList.length > 0) {
-                            const s = sList[0];
-                            const hasExp = Boolean(s.expires_at);
-                            const isExpired = hasExp && (new Date(s.expires_at).getTime() <= Date.now());
-                            const isSActive = (s.status === 'active' || s.is_lifetime || (hasExp && !isExpired)) && !isExpired;
-                            const isLife = isSActive && !hasExp && Boolean(s.is_lifetime || s.plan_id === 'lifetime');
-
-                            freshProfile.subscription = {
-                                is_active: isSActive,
-                                is_lifetime: isLife,
-                                plan_id: isLife ? 'lifetime' : (s.plan_id || (isSActive ? 'premium' : 'free')),
-                                status: s.status || (isSActive ? 'active' : 'inactive'),
-                                starts_at: s.starts_at || null,
-                                expires_at: s.expires_at || null
-                            };
-                            if (isSActive) {
-                                freshProfile.is_premium = true;
-                            }
-                        }
                     }
                 }
             } catch (_) {}
@@ -5345,27 +5642,20 @@ async function fxnRefreshSidebarProfileData(popupEl, isManual = false) {
                     freshProfile.avatar_url = domAvatar;
                     normalized.avatar = domAvatar;
                 }
-                // Асинхронно синхронизируем свежую аватарку с Supabase profiles для сайта
+                // Асинхронно синхронизируем свежую аватарку через API
                 (async () => {
                     try {
-                        const patchFilter = `or=(foxen_id.eq.${encodeURIComponent(normalized.foxenId)},fp_user_id.eq.${encodeURIComponent(normalized.userId)})`;
-                        await fetch(`${supabaseUrl}/rest/v1/profiles?${patchFilter}`, {
-                            method: 'PATCH',
-                            headers: {
-                                'apikey': apiKey,
-                                'Authorization': `Bearer ${apiKey}`,
-                                'Content-Type': 'application/json',
-                                'Prefer': 'return=minimal'
-                            },
+                        await fetch('https://api.foxen.site/api/link/confirm', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                avatar_url: domAvatar,
-                                updated_at: new Date().toISOString()
+                                fp_user_id: normalized.userId,
+                                foxen_id: normalized.foxenId,
+                                avatar_url: domAvatar
                             })
                         });
-                        console.log('[Foxen Profile] Synchronized updated avatar_url to Supabase profiles:', domAvatar);
-                    } catch(err) {
-                        console.warn('[Foxen Profile] Failed to sync avatar to Supabase:', err);
-                    }
+                        console.log('[Foxen Profile] Synchronized updated avatar_url via API:', domAvatar);
+                    } catch(err) {}
                 })();
             }
 
